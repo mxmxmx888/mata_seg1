@@ -4,10 +4,16 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-uWxY/CJNBR+1zjPWmfnSnVxwRheevXITnMqoEIeG1LJrdI0GlVs/9cVSyPYXdcSF" crossorigin="anonymous">
+   
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Rethink+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
     <link href="{% static 'custom.css' %}" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.5.0/font/bootstrap-icons.css">
-    <title>Recipify</title>
+    <title>Recipi</title>
 
     <!-- Global scaling + hero typography -->
     <style>
@@ -39,6 +45,25 @@
     </style>
        
   </head>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const nav = document.querySelector('.navbar-squarespace');
+      if (!nav) return;
+  
+      function toggleNavSolid() {
+        if (window.scrollY > 40) {
+          nav.classList.add('navbar-solid');
+        } else {
+          nav.classList.remove('navbar-solid');
+        }
+      }
+  
+      toggleNavSolid();                 // set initial state
+      window.addEventListener('scroll', toggleNavSolid);
+    });
+  </script>
+  
   <body>
     {% block body %}
     {% endblock %}

@@ -125,3 +125,117 @@ h3.profile-title {
   margin-top: 10rem;   
   padding-top: 1rem;
 }
+
+.navbar-palantir {
+  font-size: 0.85rem;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+
+.navbar-palantir .navbar-brand {
+  font-size: 0.9rem;
+}
+
+/* Squarespace-style flat tiles (no rounding) */
+.tile-box {
+  border-radius: 0;
+}
+
+/* Keep images softly rounded */
+.square-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 0.75rem; /* adjust up/down if you want more/less rounding */
+}
+
+/* Square off buttons too */
+.btn {
+  border-radius: 0;
+}
+
+
+/* Squarespace-style navbar: transparent at top, black when scrolled */
+.navbar-squarespace {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1030;
+  background-color: transparent;
+  border-bottom: none;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease, color 0.3s ease;
+}
+
+/* Make room for the fixed navbar so content isn't hidden */
+body {
+  padding-top: 64px;  /* keep this for the fixed navbar */
+  font-family: "Rethink Sans", system-ui, -apple-system, BlinkMacSystemFont,
+               "Segoe UI", sans-serif;
+  letter-spacing: -0.03em;
+}
+
+
+/* Larger brand like Squarespace logo */
+.navbar-squarespace .navbar-brand {
+  font-size: 1.8rem;         /* bigger than default */
+  font-weight: 600;
+  letter-spacing: 0.001em;
+  text-transform: none;
+}
+
+/* Default (top of page): light-on-light look */
+.navbar-squarespace .navbar-brand,
+.navbar-squarespace .nav-link {
+  color: #000;
+}
+
+/* When scrolled: solid black bar, white text, inverted buttons */
+.navbar-squarespace.navbar-solid {
+  background-color: #000;
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.4);
+}
+
+.navbar-squarespace.navbar-solid .navbar-brand,
+.navbar-squarespace.navbar-solid .nav-link {
+  color: #fff;
+}
+
+.navbar-squarespace.navbar-solid .btn.btn-outline-dark {
+  color: #fff;
+  border-color: #fff;
+  background-color: transparent;
+}
+
+.navbar-squarespace.navbar-solid .btn.btn-dark {
+  background-color: #fff;
+  color: #000;
+  border-color: #fff;
+}
+
+/* Tighter tracking for big headings / hero text */
+.hero-title,
+.display-1,
+.display-2,
+.display-3,
+.display-4,
+.display-5,
+.display-6 {
+  letter-spacing: -0.04em;   /* try -0.03em or -0.02em if this is too tight */
+}
+
+/* General headings a bit tighter than body text */
+h1, h2, h3 {
+  letter-spacing: -0.03em;
+}
+
+/* Looser tracking for small all-caps labels */
+.small.text-uppercase {
+  letter-spacing: 0.005em;   /* widen a bit */
+}
+
+/* Looser tracking for badges like "Marked as future work" */
+.badge.small,
+.badge.text-muted {
+  letter-spacing: 0.02em;
+}
