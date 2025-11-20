@@ -49,22 +49,40 @@
   <script>
     document.addEventListener('DOMContentLoaded', function () {
       const nav = document.querySelector('.navbar-squarespace');
-      if (!nav) return;
+      const isAuth = document.body.classList.contains('auth-body');
   
-      function toggleNavSolid() {
-        if (window.scrollY > 40) {
-          nav.classList.add('navbar-solid');
-        } else {
-          nav.classList.remove('navbar-solid');
+      // Only toggle solid navbar on NON-auth pages
+      if (nav && !isAuth) {
+        function toggleNavSolid() {
+          if (window.scrollY > 40) {
+            nav.classList.add('navbar-solid');
+          } else {
+            nav.classList.remove('navbar-solid');
+          }
         }
+        toggleNavSolid();
+        window.addEventListener('scroll', toggleNavSolid);
       }
   
-      toggleNavSolid();                 // set initial state
-      window.addEventListener('scroll', toggleNavSolid);
+      // Auth forms: move label text into placeholder
+      document.querySelectorAll('.auth-card form').forEach(function (form) {
+        form.querySelectorAll('label').forEach(function (label) {
+          const id = label.getAttribute('for');
+          if (!id) return;
+          const input = form.querySelector('#' + id);
+          if (!input) return;
+          if (!input.placeholder) {
+            input.placeholder = label.textContent.trim();
+          }
+          label.style.display = 'none';
+        });
+      });
     });
   </script>
   
-  <body>
+  
+  
+  <body class="{% block body_class %}{% endblock %}">
     {% block body %}
     {% endblock %}
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.10.2/dist/umd/popper.min.js" integrity="sha384-7+zCNj/IqJ95wo16oMtfsKbZ9ccEh31eOz1HGyDuCQ6wgnyJNSYdrPa03rtR1zdB" crossorigin="anonymous"></script>

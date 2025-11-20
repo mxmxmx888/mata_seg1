@@ -1,15 +1,57 @@
-{% extends 'base_content.html' %}
-{% block content %}
-<div class="container">
-  <div class="row">
-    <div class="col-sm-12 col-md-6 offset-md-3">
-      <h1>Log in</h1>
+{% extends "base.html" %}
+{% block body_class %}auth-body{% endblock %}
+{% load static %}
+
+{% block body %}
+{% include "partials/navbar_logo_only.html" %}
+<div class="auth-page-split">
+  <!-- Left visual area, replace with your animation or image later -->
+  <div class="auth-visual">
+    <div class="auth-visual-placeholder"></div>
+  </div>
+
+  <!-- Right login panel -->
+  <div class="auth-panel">
+    <div class="auth-card">
+      <h1 class="auth-title">Log in</h1>
+      <p class="auth-subtitle">
+        Access your saved recipes and cooking spaces.
+      </p>
+
+      <!-- Apple / Google sign-in -->
+      <div class="auth-oauth-buttons">
+        <button type="button" class="btn btn-auth btn-auth-apple">
+          <i class="bi bi-apple"></i>
+          <span>Continue with Apple</span>
+        </button>
+        <button type="button" class="btn btn-auth btn-auth-google">
+          <i class="bi bi-google"></i>
+          <span>Continue with Google</span>
+        </button>
+      </div>
+
+      <div class="auth-divider">
+        <span>or log in with email</span>
+      </div>
+
       <form action="{% url 'log_in' %}" method="post">
         {% csrf_token %}
         <input type="hidden" name="next" value="{{ next }}">
-        {% include 'partials/bootstrap_form.html' with form=form %}
-        <input type="submit" value="Log in" class="btn btn-primary">
+        {% include "partials/bootstrap_form.html" with form=form %}
+        <button type="submit" class="auth-primary-btn mt-2">
+          Enter
+        </button>
       </form>
+
+      <p class="auth-meta">
+        Trouble signing in?
+        <a href="#">Reset your password</a>
+      </p>
+
+      <p class="auth-footer-link">
+        New to Recipi?
+        <a href="{% url 'sign_up' %}">Create an account</a>
+      </p>
     </div>
   </div>
 </div>

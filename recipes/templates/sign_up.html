@@ -1,15 +1,47 @@
-{% extends 'base_content.html' %}
-{% block content %}
-<div class="container">
-  <div class="row">
-    <div class="col-12">
-      <h1>Sign up</h1>
-      <form action="{% url 'sign_up' %}" method="post">
-        {% csrf_token %}
-        {% include 'partials/bootstrap_form.html' with form=form %}
-        <input type="submit" value="Sign up" class="btn btn-primary">
-      </form>
+{% extends "base.html" %}
+{% block body_class %}auth-body{% endblock %}
+{% load static %}
+
+{% block body %}
+{% include "partials/navbar_logo_only.html" %}
+<div class="auth-page">
+  <div class="auth-card">
+    <h1 class="auth-title">Welcome to Recipi</h1>
+    <p class="auth-subtitle">Create an account to save and share your recipes.</p>
+
+    <!-- Apple / Google sign-in -->
+    <div class="auth-oauth-buttons">
+      <button type="button" class="btn btn-auth btn-auth-apple">
+        <i class="bi bi-apple"></i>
+        <span>Continue with Apple</span>
+      </button>
+      <button type="button" class="btn btn-auth btn-auth-google">
+        <i class="bi bi-google"></i>
+        <span>Continue with Google</span>
+      </button>
     </div>
+
+    <div class="auth-divider">
+      <span>or sign up with email</span>
+    </div>
+
+    <form action="{% url 'sign_up' %}" method="post">
+      {% csrf_token %}
+      {% include "partials/bootstrap_form.html" with form=form %}
+      <button type="submit" class="auth-primary-btn mt-2">
+        Continue
+      </button>
+    </form>
+
+    <p class="auth-meta">
+      By continuing, you agree to our
+      <a href="#">Terms</a> and <a href="#">Privacy Policy</a>.
+    </p>
+
+    <p class="auth-footer-link">
+      Already have an account?
+      <a href="{% url 'log_in' %}">Log in</a>
+    </p>
   </div>
 </div>
 {% endblock %}
