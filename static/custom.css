@@ -445,18 +445,6 @@ h1, h2, h3 {
   text-underline-offset: 3px;
 }
 
-.auth-footer-link {
-  margin-top: 1.6rem;
-  font-size: 0.85rem;
-  color: #a4a5b1;
-}
-
-.auth-footer-link a {
-  color: #f6f6f6;
-  text-decoration: underline;
-  text-underline-offset: 3px;
-}
-
 /* small screens */
 
 @media (max-width: 768px) {
@@ -487,6 +475,20 @@ h1, h2, h3 {
 :root {
   color-scheme: light dark;
 }
+
+/* Auth footer link – light mode */
+.auth-footer-link {
+  margin-top: 1.6rem;
+  font-size: 0.85rem;
+  color: #6b7280;          /* grey copy */
+}
+
+.auth-footer-link a {
+  color: #111827;          /* darker 'Log in' link */
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 
 /* System dark mode for normal (non-auth) pages */
 @media (prefers-color-scheme: dark) {
@@ -558,4 +560,181 @@ h1, h2, h3 {
   }
 }
 
+/* =================================== */
+/* Light + dark mode for auth pages    */
+/* =================================== */
+
+/* Base: LIGHT MODE (applies to sign up + log in) */
+body.auth-body {
+  background-color: #f5f5f7;
+  background-image: radial-gradient(circle at 0 0, #ffffff 0, #f5f5f7 55%);
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  overflow: hidden;
+}
+
+body.auth-body .navbar-squarespace .navbar-brand,
+body.auth-body .navbar-squarespace .nav-link {
+  color: #111827;
+}
+
+.auth-page,
+.auth-page-split {
+  color: #111827;
+}
+
+.auth-card {
+  background: #ffffff;
+  border-radius: 1.8rem;
+  padding: 2.5rem 2.4rem 2.8rem;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.12);
+  color: #111827;
+}
+
+.auth-card p.auth-subtitle {
+  color: #6b7280;
+}
+
+/* OAuth buttons in light mode */
+.btn-auth {
+  width: 100%;
+  border-radius: 999px;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  background-color: #111827;
+  color: #f9fafb;
+}
+
+.btn-auth-apple {
+  background-color: #111827;
+  color: #f9fafb;
+}
+
+.btn-auth-google {
+  background-color: #f3f4f6;
+  color: #111827;
+}
+
+/* Inputs in light mode */
+.auth-card .form-control {
+  border-radius: 999px;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  background-color: #f9fafb;
+  color: #111827;
+}
+
+.auth-card .form-control::placeholder {
+  color: #9ca3af;
+}
+
+.auth-card .form-control:focus {
+  background-color: #ffffff;
+  border-color: #111827;
+  box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.35);
+}
+
+/* Primary submit button (Continue / Enter) in light mode */
+.auth-primary-btn {
+  width: 100%;
+  border-radius: 999px;
+  padding: 0.9rem 1rem;
+  font-size: 0.98rem;
+  font-weight: 600;
+  border: none;
+  background-color: #111827;
+  color: #f9fafb;
+}
+
+/* =================================== */
+/* DARK MODE OVERRIDES (Cosmos style)  */
+/* =================================== */
+
+@media (prefers-color-scheme: dark) {
+
+  body.auth-body {
+    background-color: #050507;
+    background-image: radial-gradient(circle at 0 0, #16171d 0, #050507 55%);
+  }
+
+  body.auth-body .navbar-squarespace .navbar-brand,
+  body.auth-body .navbar-squarespace .nav-link {
+    color: #f6f6f6;
+  }
+
+  .auth-page,
+  .auth-page-split {
+    color: #f6f6f6;
+  }
+
+  .auth-card {
+    background: radial-gradient(
+      circle at top,
+      rgba(255, 255, 255, 0.05) 0,
+      rgba(7, 7, 9, 0.96) 40%,
+      rgba(7, 7, 9, 0.98) 100%
+    );
+    border-radius: 1.8rem;
+    padding: 2.5rem 2.4rem 2.8rem;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    box-shadow: 0 32px 80px rgba(0, 0, 0, 0.9);
+    color: #f6f6f6;
+  }
+
+  .auth-card p.auth-subtitle {
+    color: #b6b7c1;
+  }
+
+  /* OAuth buttons in dark mode */
+  .btn-auth {
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background-color: #101117;
+    color: #f6f6f6;
+  }
+
+  .btn-auth-apple {
+    background-color: #f6f6f6;
+    color: #050507;
+  }
+
+  .btn-auth-google {
+    background-color: #101117;
+    color: #f6f6f6;
+  }
+
+  /* Inputs in dark mode */
+  .auth-card .form-control {
+    border-radius: 999px;
+    border: 1px solid #171822;
+    background-color: #14151d;
+    color: #f6f6f6;
+  }
+
+  .auth-card .form-control::placeholder {
+    color: #7c7d88;
+  }
+
+  .auth-card .form-control:focus {
+    background-color: #181924;
+    border-color: #f6f6f6;
+    box-shadow: 0 0 0 1px rgba(246, 246, 246, 0.35);
+  }
+
+  /* Primary button in dark mode */
+  .auth-primary-btn {
+    background-color: #f6f6f6;
+    color: #050507;
+  }
+
+
+  .auth-footer-link {
+    color: #d4d4dc;       /* lighter grey for 'Already have an account?' */
+  }
+
+  .auth-footer-link a {
+    color: #ffffff;       /* bright 'Log in' link in dark mode */
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+}
 
