@@ -1,10 +1,63 @@
-{% extends 'base_content.html' %}
-{% block content %}
-<div class="container">
-  <div class="row">
-    <div class="col-12">
-      <h1>Welcome to your dashboard {{ user.username }}</h1>
+{% extends "base.html" %}
+{% load static %}
+
+{% block body_class %}dashboard-body{% endblock %}
+
+{% block body %}
+{% include "partials/navbar_app.html" %}
+
+<main class="cosmos-home">
+  <div class="container-fluid px-4 px-xl-5 py-4">
+
+    <!-- For you / Following toggle -->
+    <div class="row justify-content-center mb-4">
+      <div class="col-auto">
+        <ul class="nav nav-pills cosmos-toggle" id="cosmosFeedTabs" role="tablist">
+          <li class="nav-item" role="presentation">
+            <button
+              class="nav-link active"
+              id="forYou-tab"
+              data-bs-toggle="pill"
+              data-bs-target="#forYou"
+              type="button"
+              role="tab"
+              aria-selected="true"
+            >
+              For you
+            </button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button
+              class="nav-link"
+              id="following-tab"
+              data-bs-toggle="pill"
+              data-bs-target="#following"
+              type="button"
+              role="tab"
+              aria-selected="false"
+            >
+              Following
+            </button>
+          </li>
+        </ul>
+      </div>
     </div>
+
+    <!-- Grid panels -->
+    <div class="tab-content">
+      <div class="tab-pane fade show active" id="forYou" role="tabpanel" aria-labelledby="forYou-tab">
+        <div class="cosmos-grid">
+          {% include "partials/recipe_grid.html" with posts=for_you_posts %}
+        </div>
+      </div>
+
+      <div class="tab-pane fade" id="following" role="tabpanel" aria-labelledby="following-tab">
+        <div class="cosmos-grid">
+          {% include "partials/recipe_grid.html" with posts=following_posts %}
+        </div>
+      </div>
+    </div>
+
   </div>
-</div>
+</main>
 {% endblock %}
