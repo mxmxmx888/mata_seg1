@@ -9,12 +9,19 @@ https://docs.djangoproject.com/en/5.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
-
+import os
 from pathlib import Path
 from django.contrib.messages import constants as messages
+from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+load_dotenv(BASE_DIR / ".env")
+
+FIREBASE_API_KEY = "AIzaSyCTkRLt1-uQOsBOSSxWU1nj2YakYf0btQ0"
+
+FIREBASE_API_KEY = os.getenv("FIREBASE_API_KEY")
 
 
 # Quick-start development settings - unsuitable for production
@@ -28,6 +35,8 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
+SOCIALACCOUNT_LOGIN_ON_GET = True
+
 
 # Application definition
 
@@ -38,8 +47,14 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.sites',
     'widget_tweaks',
     'recipes',
+    'rest_framework',
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.google',
 ]
 
 MIDDLEWARE = [
@@ -48,6 +63,7 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'allauth.account.middleware.AccountMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
@@ -140,4 +156,37 @@ REDIRECT_URL_WHEN_LOGGED_IN = 'dashboard'
 # Convert Django ERROR messages to Bootstrap DANGER messages
 MESSAGE_TAGS = {
     messages.ERROR: 'danger',
+}
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'recipes.authentication.FirebaseAuthentication',
+    ]
+}
+
+SITE_ID = 2
+
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+    'allauth.account.auth_backends.AuthenticationBackend',
+]
+
+ACCOUNT_ADAPTER = 'recipes.adapters.CustomAccountAdapter'
+
+LOGIN_REDIRECT_URL = 'dashboard'
+
+ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_EMAIL_VERIFICATION = "none"
+ACCOUNT_AUTHENTICATION_METHOD = "username_email"
+
+SOCIALACCOUNT_PROVIDERS = {
+    "google": {
+        "SCOPE": [
+            "profile",
+            "email",
+        ],
+        "AUTH_PARAMS": {
+            "access_type": "online",
+        },
+    },
 }
