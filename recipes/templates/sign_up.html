@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% block body_class %}auth-body{% endblock %}
 {% load static %}
+{% load socialaccount %}
 
 {% block body %}
 {% include "partials/navbar_logo_only.html" %}
@@ -11,14 +12,11 @@
 
     <!-- Apple / Google sign-in -->
     <div class="auth-oauth-buttons">
-      <button type="button" class="btn btn-auth btn-auth-apple">
-        <i class="bi bi-apple"></i>
-        <span>Continue with Apple</span>
-      </button>
-      <button type="button" class="btn btn-auth btn-auth-google">
+      <a href="{% provider_login_url 'google' %}" class="btn btn-auth btn-auth-google">
         <i class="bi bi-google"></i>
         <span>Continue with Google</span>
-      </button>
+      </a>
+
     </div>
 
     <div class="auth-divider">
