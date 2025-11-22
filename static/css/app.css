@@ -1,0 +1,307 @@
+/* =========================== */
+/* Logged-in feed / dashboard  */
+/* =========================== */
+
+.feed-shell {
+  min-height: calc(100vh - 64px);
+}
+
+/* Tabs row for "For you" / "Following" in older layout */
+.feed-tabs .nav-link {
+  border-radius: 999px;
+  padding: 0.35rem 0.9rem;
+  font-size: 0.85rem;
+  color: #6b7280;
+  background-color: transparent;
+  border: 1px solid transparent;
+}
+
+.feed-tabs .nav-link.active {
+  background-color: #111827;
+  color: #f9fafb;
+}
+
+/* Search pill under the navbar (older feed layout) */
+
+.feed-search .input-group-text.feed-search-icon {
+  border-radius: 999px 0 0 999px;
+  border-right: 0;
+  background-color: #f3f4f6;
+}
+
+.feed-search-input {
+  border-radius: 0 999px 999px 0;
+  border-left: 0;
+  background-color: #f9fafb;
+}
+
+/* Feed cards */
+
+.feed-card {
+  border-radius: 1.5rem;
+  background-color: #ffffff;
+  border: 1px solid rgba(15, 23, 42, 0.06);
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
+}
+
+.feed-card-body {
+  padding: 1.2rem 1.4rem 1.1rem;
+}
+
+/* Avatar */
+
+.feed-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  overflow: hidden;
+  background-color: #111827;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  color: #f9fafb;
+}
+
+.feed-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.feed-meta span + span {
+  margin-left: 0.3rem;
+}
+
+/* Media inside feed cards */
+
+.feed-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 1.1rem;
+}
+
+/* Actions */
+
+.feed-actions .btn {
+  color: #6b7280;
+}
+
+.feed-actions .btn:hover {
+  color: #111827;
+}
+
+.feed-cook-btn {
+  border-radius: 999px;
+  padding-inline: 0.9rem;
+  font-size: 0.8rem;
+}
+
+/* Shop badge on a post */
+
+.feed-badge-shop {
+  background-color: #111827;
+  color: #f9fafb;
+  font-weight: 500;
+}
+
+/* Dark mode tweaks for the feed */
+
+@media (prefers-color-scheme: dark) {
+  body:not(.auth-body) .feed-card {
+    background-color: #101117;
+    border-color: #272730;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.7);
+    color: #f6f6f6;
+  }
+
+  body:not(.auth-body) .feed-tabs .nav-link {
+    color: #a5a6b5;
+  }
+
+  body:not(.auth-body) .feed-tabs .nav-link.active {
+    background-color: #f6f6f6;
+    color: #050507;
+  }
+
+  body:not(.auth-body) .feed-search .input-group-text.feed-search-icon {
+    background-color: #101117;
+    border-color: #272730;
+  }
+
+  body:not(.auth-body) .feed-search-input {
+    background-color: #050507;
+    border-color: #272730;
+    color: #f6f6f6;
+  }
+
+  body:not(.auth-body) .feed-search-input::placeholder {
+    color: #7c7d88;
+  }
+
+  body:not(.auth-body) .feed-actions .btn {
+    color: #a5a6b5;
+  }
+
+  body:not(.auth-body) .feed-actions .btn:hover {
+    color: #ffffff;
+  }
+
+  /* CTA buttons in dark mode should invert to a light fill on hover */
+  body:not(.auth-body) .cta-browse-btn.btn-outline-dark:hover,
+  body:not(.auth-body) .cta-browse-btn.btn-outline-dark:focus-visible {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+    border-color: #ffffff !important;
+  }
+
+  body:not(.auth-body) .btn.btn-outline-light:hover,
+  body:not(.auth-body) .btn.btn-outline-light:focus-visible {
+    background-color: #f6f6f6 !important;
+    color: #050507 !important;
+    border-color: #f6f6f6 !important;
+  }
+}
+
+/* Fallback for explicit theme toggle via data-theme */
+body[data-theme="dark"]:not(.auth-body) .cta-browse-btn.btn-outline-dark:hover,
+body[data-theme="dark"]:not(.auth-body) .cta-browse-btn.btn-outline-dark:focus-visible {
+  background-color: #ffffff !important;
+  color: #000000 !important;
+  border-color: #ffffff !important;
+}
+
+body[data-theme="dark"]:not(.auth-body) .btn.btn-outline-light:hover,
+body[data-theme="dark"]:not(.auth-body) .btn.btn-outline-light:focus-visible {
+  background-color: #f6f6f6 !important;
+  color: #050507 !important;
+  border-color: #f6f6f6 !important;
+}
+
+
+/* =========================== */
+/* Cosmos-style logged-in home */
+/* =========================== */
+
+.cosmos-home {
+  min-height: calc(100vh - 64px);
+  padding-top: 0.75rem;  /* smaller top padding than the Bootstrap pt-4 */
+}
+
+.cosmos-home .row.mt-3 {
+  margin-top: 0.75rem;
+}
+
+/* Search pill under navbar */
+
+.cosmos-search {
+  border-radius: 999px;
+  overflow: hidden;
+  background-color: #f3f4f6;
+}
+
+.cosmos-search-icon {
+  border: none;
+  background-color: transparent;
+}
+
+.cosmos-search-input {
+  border: none;
+  background-color: transparent;
+  font-size: 0.9rem;
+}
+
+.cosmos-search-input:focus {
+  box-shadow: none;
+}
+
+.cosmos-search-filter {
+  border: none;
+  border-radius: 0;
+  background-color: transparent;
+  font-size: 0.9rem;
+}
+
+/* For you / Following toggle – only the active one gets a pill */
+
+.cosmos-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0;
+  background: transparent;
+}
+
+.cosmos-toggle .nav-item {
+  margin: 0;
+}
+
+.cosmos-toggle .nav-link {
+  border-radius: 999px;
+  border: none;
+  background: transparent;
+  padding: 0.35rem 0.2rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #9ca3af;
+}
+
+.cosmos-toggle .nav-link.active {
+  padding: 0.35rem 1.6rem;
+  background-color: #ffffff;
+  color: #111217;
+  box-shadow: 0 0 0 1px rgba(148, 163, 184, 0.45);
+}
+
+/* Tile grid */
+
+.cosmos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 1rem;
+}
+
+/* Individual tiles */
+
+.cosmos-tile {
+  position: relative;
+  border-radius: 0.75rem;
+  overflow: hidden;
+  background-color: #e5e5e5;
+}
+
+.cosmos-tile-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.cosmos-tile-meta {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 0.6rem 0.7rem;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.65), transparent);
+  color: #f9fafb;
+}
+
+.cosmos-tile-title {
+  font-size: 0.9rem;
+  margin: 0 0 0.1rem;
+}
+
+.cosmos-tile-sub {
+  margin: 0;
+  font-size: 0.75rem;
+  opacity: 0.9;
+}
+
+/* Placeholder tiles when there are no posts yet */
+.cosmos-tile-placeholder {
+  background: radial-gradient(circle at top left, #4b5563, #111827);
+}
+
+
+/* =========================== */

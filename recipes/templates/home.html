@@ -11,11 +11,6 @@
       <div class="row justify-content-center">
         <div class="col-xxl-10">
 
-          <!-- Breadcrumb-style line -->
-          <p class="small text-muted mb-2">
-            Recipi / Community recipes / Web app
-          </p>
-
           <!-- Main heading + intro -->
           <h1 class="display-3 fw-semibold mb-3 hero-title">
             Proud to serve home cooks.
@@ -62,7 +57,7 @@
   </section>
 
   <!-- PLATFORM-LIKE SECTION: core spaces / flows -->
-  <section id="spaces">
+  <section id="spaces" class="home-section-spaces">
     <div class="container-fluid py-5 border-top px-4 px-xl-5">
       <div class="row justify-content-center">
         <div class="col-xxl-10">
@@ -163,13 +158,13 @@
   </section>
 
   <!-- WHY THIS MATTERS / CATEGORY-STYLE SECTION -->
-  <section>
+  <section class="home-section-why">
     <div class="container-fluid py-5 border-top px-4 px-xl-5">
       <div class="row justify-content-center">
         <div class="col-xxl-10">
 
           <p class="small text-muted text-uppercase mb-2">Why this matters</p>
-          <h2 class="h3 mb-4">Designed around how people actually cook.</h2>
+          <h2 class="display-4 fw-semibold mb-4">Designed around how people actually cook.</h2>
 
           <div class="row g-5">
             <div class="col-md-4">
@@ -210,7 +205,13 @@
 
           <div class="row gy-4 align-items-center mb-5">
             <div class="col-lg-5">
-              <div class="ratio ratio-16x9 bg-light border tile-box"></div>
+              <div class="ratio ratio-16x9 bg-light border tile-box overflow-hidden">
+                <img
+                  src="{% static 'img/couple-cooking.jpg' %}"
+                  class="impact-hero-img"
+                  alt="Cooking together in the kitchen"
+                >
+              </div>
             </div>
             <div class="col-lg-7">
               <p class="small text-muted text-uppercase mb-2">Latest impact</p>
@@ -282,13 +283,13 @@
           <div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-4">
             <div>
               <p class="small text-muted text-uppercase mb-1">Recipe browser preview</p>
-              <h2 class="h3 mb-2">What browsing could look like.</h2>
+              <h2 class="display-4 fw-semibold mb-2">What browsing could look like.</h2>
               <p class="text-muted small mb-0">
                 This section will later map directly onto the real “Browse recipes”
                 page in the MVP.
               </p>
             </div>
-            <a href="#" class="btn btn-outline-dark btn-sm">
+            <a href="{% url 'dashboard' %}" class="btn btn-outline-dark btn-sm cta-browse-btn">
               Open recipe browser (placeholder)
             </a>
           </div>
@@ -370,7 +371,6 @@
         <div class="col-xxl-10">
 
           <!-- Top row: CTA -->
-          <div class="border-top mb-5"></div>
           <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-5">
             <div>
               <!-- Big CTA, almost hero-sized -->

@@ -51,20 +51,18 @@ ul.errorlist {
   margin: 0;
 }
 
-/* Ortica Linear font for headings */
+/* Awesome Serif font for headings */
 @font-face {
-  font-family: "Ortica Linear";
-  src: url("/static/fonts/OrticaLinear-Regular.woff2") format("woff2"),
-       url("/static/fonts/OrticaLinear-Regular.woff") format("woff");
+  font-family: "Awesome Serif";
+  src: url("/static/fonts/Awesome%20font/AwesomeSerif-Regular.otf") format("opentype");
   font-weight: 400;
   font-style: normal;
   font-display: swap;
 }
 
 @font-face {
-  font-family: "Ortica Linear";
-  src: url("/static/fonts/OrticaLinear-Bold.woff2") format("woff2"),
-       url("/static/fonts/OrticaLinear-Bold.woff") format("woff");
+  font-family: "Awesome Serif";
+  src: url("/static/fonts/Awesome%20font/AwesomeSerif-BoldRegular.otf") format("opentype");
   font-weight: 700;
   font-style: normal;
   font-display: swap;
@@ -141,6 +139,66 @@ h3.profile-title {
   padding-top: 1rem;
 }
 
+.footer-cta {
+  position: relative;
+  overflow: hidden;
+  background-color: #0c0c0f;
+  color: #e7e7ea;
+}
+
+.footer-cta .container-fluid {
+  position: relative;
+  z-index: 1;
+}
+
+.footer-logo-mark {
+  position: absolute;
+  bottom: -32%;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--heading-font);
+  font-size: clamp(40rem, 80vw, 80rem);
+  line-height: 0.78;
+  letter-spacing: -0.08em;
+  color: #e7e7ea;
+  white-space: nowrap;
+  pointer-events: none;
+  user-select: none;
+  z-index: 0;
+}
+
+.footer-cta .text-muted {
+  color: rgba(231, 231, 234, 0.72) !important;
+}
+
+.footer-cta a {
+  color: #e7e7ea;
+}
+
+.footer-cta .btn-outline-light {
+  color: #e7e7ea;
+  border-color: #e7e7ea;
+}
+
+.footer-cta .btn-outline-light:hover,
+.footer-cta .btn-outline-light:focus-visible {
+  background-color: #e7e7ea;
+  color: #0c0c0f;
+  border-color: #e7e7ea;
+}
+
+.footer-cta .btn-outline-secondary {
+  color: #e7e7ea;
+  border-color: rgba(231, 231, 234, 0.35);
+}
+
+.footer-cta .btn-outline-secondary:hover,
+.footer-cta .btn-outline-secondary:focus-visible {
+  border-color: #e7e7ea;
+  color: #0c0c0f;
+  background-color: #e7e7ea;
+}
+
 /* =================================== */
 /* Navbar styles                       */
 /* =================================== */
@@ -183,7 +241,7 @@ body {
   padding-top: 64px; /* room for fixed navbar */
   font-family: "Rethink Sans", system-ui, -apple-system, BlinkMacSystemFont,
                "Segoe UI", sans-serif;
-  letter-spacing: -0.03em;
+  letter-spacing: -0.01em;
   background-color: #ffffff; /* normal pages */
 }
 
@@ -493,6 +551,23 @@ h4,
 h5,
 h6 {
   font-family: var(--heading-font);
+  word-spacing: 0.08em;
+}
+
+.home-section-spaces .display-5 {
+  font-size: calc(3rem + 2pt);
+}
+
+.home-section-spaces .h5 {
+  font-size: calc(1.25rem + 2pt);
+}
+
+.home-section-why .h3 {
+  font-size: calc(1.75rem + 2pt);
+}
+
+.home-section-why .h5 {
+  font-size: calc(1.25rem + 2pt);
 }
 
 .hero-title,
@@ -502,13 +577,13 @@ h6 {
 .display-4,
 .display-5,
 .display-6 {
-  letter-spacing: -0.04em;
+  letter-spacing: -0.015em;
 }
 
 h1,
 h2,
 h3 {
-  letter-spacing: -0.03em;
+  letter-spacing: -0.01em;
 }
 
 .small.text-uppercase {
@@ -544,7 +619,7 @@ h3 {
 
 :root {
   color-scheme: light dark;
-  --heading-font: "Ortica Linear", "Rethink Sans", system-ui, -apple-system,
+  --heading-font: "Awesome Serif", "Rethink Sans", system-ui, -apple-system,
                   BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
