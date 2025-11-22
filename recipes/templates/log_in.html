@@ -4,13 +4,7 @@
 
 {% block body %}
 {% include "partials/navbar_logo_only.html" %}
-<div class="auth-page-split">
-  <!-- Left visual area, replace with your animation or image later -->
-  <div class="auth-visual">
-    <div class="auth-visual-placeholder"></div>
-  </div>
-
-  <!-- Right login panel -->
+<div class="auth-page">
   <div class="auth-panel">
     <div class="auth-card">
       <h1 class="auth-title">Log in</h1>
@@ -21,7 +15,7 @@
       <!-- Apple / Google sign-in -->
       <div class="auth-oauth-buttons">
         <button type="button" class="btn btn-auth btn-auth-apple">
-          <i class="bi bi-apple"></i>
+          <span class="auth-apple-icon" aria-hidden="true"></span>
           <span>Continue with Apple</span>
         </button>
         <button type="button" class="btn btn-auth btn-auth-google">

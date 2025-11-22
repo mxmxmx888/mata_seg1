@@ -1,0 +1,1196 @@
+/*
+ * Alerts
+ */
+
+ .alert {
+  border-radius: 0;
+}
+
+
+/*
+ * General layout / cover page bits
+ */
+
+.content {
+  padding-top: 10px;
+}
+
+.h-100 {
+  min-height: 100vh;
+  height: 100vh;
+}
+
+.vcenter-item {
+  display: flex;
+  align-items: center;
+}
+
+/* Old cover-page styles (still used on the original landing template) */
+h1.cover-heading {
+  font-size: 4rem;
+}
+
+p.cover-text {
+  font-size: 1.7rem;
+}
+
+.cover-card {
+  background-color: rgba(245, 245, 245, 0.6);
+  max-width: 30rem;
+  padding: 30px 50px;
+  border-radius: 15%;
+}
+
+.cover-card-block {
+  opacity: 1;
+}
+
+ul.errorlist {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+}
+
+/* Ortica Linear font for headings */
+@font-face {
+  font-family: "Ortica Linear";
+  src: url("/static/fonts/OrticaLinear-Regular.woff2") format("woff2"),
+       url("/static/fonts/OrticaLinear-Regular.woff") format("woff");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Ortica Linear";
+  src: url("/static/fonts/OrticaLinear-Bold.woff2") format("woff2"),
+       url("/static/fonts/OrticaLinear-Bold.woff") format("woff");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+
+/*
+ * Type / text utilities
+ */
+
+.low-key {
+  color: #777777;
+  font-weight: 300;
+}
+
+.list-title {
+  margin-top: 10px;
+  margin-bottom: 20px;
+}
+
+/* Profile snippet on the old profile page */
+
+.profile-image {
+  width: 120px;
+  clear: both;
+  float: left;
+}
+
+.profile-text {
+  overflow: hidden;
+  padding-left: 20px;
+}
+
+h3.profile-title {
+  margin-bottom: 0;
+}
+
+.profile-username {
+  color: #777777;
+  font-weight: 300;
+  font-style: italic;
+}
+
+
+/*
+ * Links
+ */
+
+.content a {
+  text-decoration: none;
+  color: #0d6efd;
+}
+
+.content a:hover {
+  text-decoration: underline;
+  color: #0d6efd;
+}
+
+
+/*
+ * Images / tiles / buttons
+ */
+
+.square-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  border-radius: 0.75rem; /* soft corners on image tiles */
+}
+
+.footer-links-row {
+  margin-top: 10rem;
+  padding-top: 1rem;
+}
+
+/* =================================== */
+/* Navbar styles                       */
+/* =================================== */
+
+/* Older Palantir-style navbar (kept for reference) */
+.navbar-palantir {
+  font-size: 0.85rem;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+
+.navbar-palantir .navbar-brand {
+  font-size: 0.9rem;
+}
+
+/* Flat Squarespace-style tiles */
+.tile-box {
+  border-radius: 0;
+}
+
+/* Buttons default to square for that Squarespace look */
+.btn {
+  border-radius: 0;
+}
+
+
+/*
+ * Global body + base navbar
+ */
+
+/* Global reset so the app touches the window edges */
+html, body {
+  margin: 0;
+  padding: 0;
+}
+
+/* Default body */
+body {
+  margin: 0;
+  padding-top: 64px; /* room for fixed navbar */
+  font-family: "Rethink Sans", system-ui, -apple-system, BlinkMacSystemFont,
+               "Segoe UI", sans-serif;
+  letter-spacing: -0.03em;
+  background-color: #ffffff; /* normal pages */
+}
+
+/* Dashboard: navbar is not fixed, so no body top padding */
+body.dashboard-body {
+  padding-top: 0;
+}
+
+
+/* Auth pages get their own body class so I can treat them like a separate surface */
+body.auth-body {
+  background-color: #f5f5f7;
+  background-image: radial-gradient(circle at 0 0, #ffffff 0, #f5f5f7 55%);
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  overflow: hidden;
+}
+
+/* Shared navbar layout (landing + logged-in) */
+.navbar-squarespace {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1030;
+  background-color: transparent;
+  border-bottom: none;               /* no seam */
+  padding-top: 0.3rem;               /* thinner bar */
+  padding-bottom: 0.3rem;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease, color 0.3s ease;
+}
+
+/* Brand sizing (used across landing + app) */
+.navbar-squarespace .navbar-brand {
+  font-size: 1.8rem;
+  font-weight: 600;
+  letter-spacing: 0.001em;
+  text-transform: none;
+}
+
+/* Default (light page) navbar text */
+.navbar-squarespace .navbar-brand,
+.navbar-squarespace .nav-link {
+  color: #000;
+}
+
+/* Auth pages want light text on top of the dark background */
+body.auth-body .navbar-squarespace .navbar-brand,
+body.auth-body .navbar-squarespace .nav-link {
+  color: #111827;
+}
+
+/* When the landing page is scrolled, navbar goes solid */
+.navbar-squarespace.navbar-solid {
+  background-color: #000;
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.4);
+}
+
+.navbar-squarespace.navbar-solid .navbar-brand,
+.navbar-squarespace.navbar-solid .nav-link {
+  color: #fff;
+}
+
+.navbar-squarespace.navbar-solid .btn.btn-outline-dark {
+  color: #fff;
+  border-color: #fff;
+  background-color: transparent;
+}
+
+.navbar-squarespace.navbar-solid .btn.btn-dark {
+  background-color: #fff;
+  color: #000;
+  border-color: #fff;
+}
+
+
+/* =============================== */
+/* Cosmos-style app navbar         */
+/* =============================== */
+
+/* Logged-in navbar base (light mode) */
+.navbar-app {
+  background-color: #ffffff;         /* match page background in light */
+  border-bottom: none;               /* no line */
+  position: relative;
+  padding-top: 0.3rem;               /* same thin height */
+  padding-bottom: 0.3rem;
+}
+
+/* text colours in light mode */
+.navbar-app .navbar-brand,
+.navbar-app .nav-link {
+  color: #111827;
+}
+
+.navbar-app .navbar-brand {
+  font-size: 1.8rem;     /* keep Recipi consistent with main navbar */
+  font-weight: 600;
+  letter-spacing: 0.001em;
+  text-transform: none;
+}
+
+.navbar-app .nav-link {
+  padding: 0;
+  font-size: 0.85rem;
+  opacity: 0.7;
+}
+
+.navbar-app .nav-link.active {
+  opacity: 1;
+}
+
+/* “Create” button in light mode */
+.navbar-app .btn.btn-light {
+  background-color: #111827;
+  color: #f9fafb;
+  border: none;
+}
+
+/* Keep JS .navbar-solid from changing the colour */
+.navbar-app.navbar-solid {
+  background-color: inherit;
+  box-shadow: none;
+}
+
+/* Layout inside the logged-in navbar */
+.navbar-app .container-fluid {
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+
+/* Hard-centre the search bar */
+.navbar-search-wrapper {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 520px;
+  display: flex;
+  justify-content: center;
+}
+
+/* Keep the pill full width inside the wrapper */
+.navbar-search-wrapper .cosmos-nav-search {
+  width: 100%;
+}
+
+/* Navbar search pill – base (light mode) */
+.cosmos-nav-search {
+  max-width: 520px;
+  width: 100%;
+  height: 44px;
+  padding: 0 0.9rem;
+  border-radius: 20px;                 /* rounded rectangle, not a full pill */
+  background-color: #f1f1f3;           /* soft light grey */
+  border: 1px solid #e1e1e6;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  transition:
+    background-color 0.18s ease,
+    border-color 0.18s ease,
+    box-shadow 0.18s ease,
+    transform 0.18s ease;
+}
+
+.cosmos-nav-search-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;             /* no white cut-out */
+  color: #4b5563;
+  font-size: 0.9rem;
+}
+
+.cosmos-nav-search-input::placeholder {
+  color: #9ca3af;
+}
+
+/* Keep the search bar grey even when typing */
+.cosmos-nav-search-input:focus {
+  background-color: transparent !important;  /* stop the white cut-out */
+  box-shadow: none !important;              /* remove blue glow */
+  border-color: transparent !important;
+  outline: none;
+}
+
+.cosmos-nav-search .form-control:focus {
+  background-color: transparent !important;
+  box-shadow: none !important;
+  border-color: transparent !important;
+}
+
+/* Focus / typing state: gently expand + lift */
+.cosmos-nav-search:focus-within {
+  background-color: #ececf0;
+  border-color: #cbd5f5;
+  transform: scale(1.015);
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.12);
+}
+
+.cosmos-nav-search-icon {
+  border: none;
+  background: transparent;
+  color: #9ca3af;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+}
+
+/* Right-hand navbar icons + avatar */
+.icon-button {
+  border: none;
+  background: transparent;
+  color: #111827;
+  padding: 0.3rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.icon-button i {
+  font-size: 0.9rem;
+}
+
+.avatar-pill {
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  background: radial-gradient(circle at 30% 20%, #facc15, #4f46e5);
+}
+
+/* Dark mode variants for navbars */
+@media (prefers-color-scheme: dark) {
+  body:not(.auth-body) .navbar-squarespace .navbar-brand,
+  body:not(.auth-body) .navbar-squarespace .nav-link {
+    color: #f6f6f6;
+  }
+
+  body:not(.auth-body) .navbar-squarespace.navbar-solid {
+    background-color: #050507;
+    box-shadow: 0 1px 0 rgba(0, 0, 0, 0.7);
+  }
+
+  body:not(.auth-body) .navbar-squarespace.navbar-solid .navbar-brand,
+  body:not(.auth-body) .navbar-squarespace.navbar-solid .nav-link {
+    color: #f6f6f6;
+  }
+
+  body:not(.auth-body) .navbar-app {
+    background-color: #050507;
+    border-bottom: none;
+  }
+
+  body:not(.auth-body) .navbar-app .navbar-brand,
+  body:not(.auth-body) .navbar-app .nav-link,
+  body:not(.auth-body) .navbar-app .icon-button {
+    color: #f9fafb;
+  }
+
+  body:not(.auth-body) .navbar-app .btn.btn-light {
+    background-color: #f9fafb;
+    color: #050507;
+  }
+
+  body:not(.auth-body) .cosmos-nav-search {
+    background-color: #111217;
+    border-color: #27272f;
+  }
+
+  body:not(.auth-body) .cosmos-nav-search-input {
+    color: #e5e7eb;
+  }
+
+  body:not(.auth-body) .cosmos-nav-search-input::placeholder {
+    color: #71717a;
+  }
+
+  body:not(.auth-body) .cosmos-nav-search-icon {
+    color: #a1a1aa;
+  }
+
+  body:not(.auth-body) .cosmos-nav-search:focus-within {
+    background-color: #1f1f23;
+    border-color: #4b5563;
+    box-shadow: 0 14px 40px rgba(0, 0, 0, 0.7);
+    transform: scale(1.015);
+  }
+}
+
+/* Letter-spacing tweaks: headings a bit tighter, small caps a bit wider */
+
+.hero-title,
+.display-1,
+.display-2,
+.display-3,
+.display-4,
+.display-5,
+.display-6,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--heading-font);
+}
+
+.hero-title,
+.display-1,
+.display-2,
+.display-3,
+.display-4,
+.display-5,
+.display-6 {
+  letter-spacing: -0.04em;
+}
+
+h1,
+h2,
+h3 {
+  letter-spacing: -0.03em;
+}
+
+.small.text-uppercase {
+  letter-spacing: 0.005em;
+}
+
+.badge.small,
+.badge.text-muted {
+  letter-spacing: 0.02em;
+}
+
+.built-for-list {
+  gap: 1rem;
+  align-items: baseline;
+}
+
+.built-for-list .badge {
+  background-color: transparent !important;
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  color: inherit;
+  font-size: 1.15rem;
+  letter-spacing: 0.001em;
+  font-weight: 600;
+  text-transform: none;
+}
+
+
+/*
+ * System light / dark hint for the browser
+ */
+
+:root {
+  color-scheme: light dark;
+  --heading-font: "Ortica Linear", "Rethink Sans", system-ui, -apple-system,
+                  BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+
+/* =================================== */
+/* Auth layouts (sign up / log in)     */
+/* =================================== */
+
+/* Shared layout shells */
+
+.auth-page {
+  height: calc(100vh - 64px); /* viewport minus navbar */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 1.5rem;
+  color: #111827;
+  box-sizing: border-box;
+}
+
+/* Split layout for login (visual on the left, card on the right) */
+.auth-page-split {
+  height: calc(100vh - 64px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3.5rem 5vw;
+  color: #111827;
+  box-sizing: border-box;
+  max-width: 1200px;
+  margin: 0 auto;
+  column-gap: 4rem;
+}
+
+/* Placeholder for the blob / orb animation on login */
+.auth-visual {
+  flex: 0 0 480px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.auth-visual-placeholder {
+  width: 260px;
+  height: 260px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: radial-gradient(circle at 30% 20%, #555 0, #111 40%, #050507 70%);
+  opacity: 0.55;
+}
+
+/* Right-hand panel that holds the actual card */
+.auth-panel {
+  flex: 0 0 420px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Base card – light mode version */
+.auth-card {
+  width: 100%;
+  max-width: 420px;
+  background: #ffffff;
+  border-radius: 1.8rem;
+  padding: 2.5rem 2.4rem 2.8rem;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.12);
+  color: #111827;
+}
+
+.auth-card h1.auth-title {
+  font-size: clamp(1.8rem, 2.4vw, 2.2rem);
+  line-height: 1.1;
+  margin-bottom: 0.5rem;
+}
+
+.auth-card p.auth-subtitle {
+  font-size: 0.95rem;
+  color: #6b7280;
+  margin-bottom: 1.7rem;
+}
+
+/* OAuth buttons on auth pages */
+
+.auth-oauth-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-bottom: 1.3rem;
+}
+
+.btn-auth {
+  width: 100%;
+  border-radius: 999px;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  background-color: #111827;
+  color: #f9fafb;
+  font-size: 0.95rem;
+  font-weight: 500;
+  padding: 0.85rem 1.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+}
+
+.btn-auth-apple {
+  background-color: #111827;
+  color: #f9fafb;
+}
+
+.btn-auth-google {
+  background-color: #f3f4f6;
+  color: #111827;
+}
+
+/* Divider between OAuth and email form */
+
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0.3rem 0 1.4rem;
+  font-size: 0.8rem;
+  color: #80818c;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.16));
+}
+
+.auth-divider::after {
+  background: linear-gradient(to left, transparent, rgba(255, 255, 255, 0.16));
+}
+
+/* Email/password inputs */
+
+.auth-card .nolabel label {
+  display: none;
+}
+
+.auth-card .form-control {
+  border-radius: 999px;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  background-color: #f9fafb;
+  color: #111827;
+  padding: 0.85rem 1rem;
+  font-size: 0.95rem;
+}
+
+.auth-card .form-control::placeholder {
+  color: #9ca3af;
+}
+
+.auth-card .form-control:focus {
+  background-color: #ffffff;
+  border-color: #111827;
+  box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.35);
+}
+
+/* Primary auth button (Continue / Enter) */
+
+.auth-primary-btn {
+  width: 100%;
+  border-radius: 999px;
+  padding: 0.9rem 1rem;
+  font-size: 0.98rem;
+  font-weight: 600;
+  border: none;
+  background-color: #111827;
+  color: #f9fafb;
+}
+
+/* Copy under the button */
+
+.auth-meta {
+  margin-top: 0.9rem;
+  font-size: 0.75rem;
+  color: #80818c;
+}
+
+.auth-meta a {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+/* “Already have an account?” line */
+.auth-footer-link {
+  margin-top: 1.6rem;
+  font-size: 0.85rem;
+  color: #6b7280;
+}
+
+.auth-footer-link a {
+  color: #111827;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* Auth layout on smaller screens */
+
+@media (max-width: 768px) {
+  .auth-page {
+    height: calc(100vh - 64px);
+    padding: 2.5rem 1.5rem;
+  }
+
+  .auth-page-split {
+    height: calc(100vh - 64px);
+    flex-direction: column;
+    padding: 2.5rem 1.5rem;
+    column-gap: 0;
+  }
+
+  .auth-visual {
+    order: 2;
+    flex: 0 0 auto;
+    justify-content: center;
+    margin-top: 2rem;
+  }
+
+  .auth-panel {
+    flex: 0 0 auto;
+  }
+}
+
+
+/* =================================== */
+/* System dark mode – non-auth pages   */
+/* =================================== */
+
+@media (prefers-color-scheme: dark) {
+  /* Main site in dark mode (auth pages handled further down) */
+  body:not(.auth-body) {
+    background-color: #050507;
+    color: #f6f6f6;
+  }
+
+  body:not(.auth-body) .bg-white,
+  body:not(.auth-body) .bg-light {
+    background-color: #050507 !important;
+  }
+
+  body:not(.auth-body) .text-dark,
+  body:not(.auth-body) .text-body {
+    color: #f6f6f6 !important;
+  }
+
+  body:not(.auth-body) .text-muted {
+    color: #a5a6b5 !important;
+  }
+
+  body:not(.auth-body) .border,
+  body:not(.auth-body) .border-top,
+  body:not(.auth-body) .border-bottom {
+    border-color: #272730 !important;
+  }
+
+  body:not(.auth-body) .tile-box {
+    background-color: #101117;
+    border-color: #272730;
+    color: #f6f6f6;
+  }
+
+  body:not(.auth-body) .btn.btn-outline-dark {
+    color: #f6f6f6;
+    border-color: #f6f6f6;
+    background-color: transparent;
+  }
+
+  body:not(.auth-body) .btn.btn-dark {
+    background-color: #f6f6f6;
+    color: #050507;
+    border-color: #f6f6f6;
+  }
+
+}
+
+
+/* =================================== */
+/* Dark-mode overrides for auth pages  */
+/* =================================== */
+
+@media (prefers-color-scheme: dark) {
+  body.auth-body {
+    background-color: #050507;
+    background-image: radial-gradient(circle at 0 0, #16171d 0, #050507 55%);
+  }
+
+  body.auth-body .navbar-squarespace .navbar-brand,
+  body.auth-body .navbar-squarespace .nav-link {
+    color: #f6f6f6;
+  }
+
+  .auth-page,
+  .auth-page-split {
+    color: #f6f6f6;
+  }
+
+  .auth-card {
+    background: radial-gradient(
+      circle at top,
+      rgba(255, 255, 255, 0.05) 0,
+      rgba(7, 7, 9, 0.96) 40%,
+      rgba(7, 7, 9, 0.98) 100%
+    );
+    border-radius: 1.8rem;
+    padding: 2.5rem 2.4rem 2.8rem;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    box-shadow: 0 32px 80px rgba(0, 0, 0, 0.9);
+    color: #f6f6f6;
+  }
+
+  .auth-card p.auth-subtitle {
+    color: #b6b7c1;
+  }
+
+  .btn-auth {
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background-color: #101117;
+    color: #f6f6f6;
+  }
+
+  .btn-auth-apple {
+    background-color: #f6f6f6;
+    color: #050507;
+  }
+
+  .btn-auth-google {
+    background-color: #101117;
+    color: #f6f6f6;
+  }
+
+  .auth-card .form-control {
+    border-radius: 999px;
+    border: 1px solid #171822;
+    background-color: #14151d;
+    color: #f6f6f6;
+  }
+
+  .auth-card .form-control::placeholder {
+    color: #7c7d88;
+  }
+
+  .auth-card .form-control:focus {
+    background-color: #181924;
+    border-color: #f6f6f6;
+    box-shadow: 0 0 0 1px rgba(246, 246, 246, 0.35);
+  }
+
+  .auth-primary-btn {
+    background-color: #f6f6f6;
+    color: #050507;
+  }
+
+  .auth-footer-link {
+    color: #d4d4dc;
+  }
+
+  .auth-footer-link a {
+    color: #ffffff;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+}
+
+
+/* =========================== */
+/* Logged-in feed / dashboard  */
+/* =========================== */
+
+.feed-shell {
+  min-height: calc(100vh - 64px);
+}
+
+/* Tabs row for "For you" / "Following" in older layout */
+.feed-tabs .nav-link {
+  border-radius: 999px;
+  padding: 0.35rem 0.9rem;
+  font-size: 0.85rem;
+  color: #6b7280;
+  background-color: transparent;
+  border: 1px solid transparent;
+}
+
+.feed-tabs .nav-link.active {
+  background-color: #111827;
+  color: #f9fafb;
+}
+
+/* Search pill under the navbar (older feed layout) */
+
+.feed-search .input-group-text.feed-search-icon {
+  border-radius: 999px 0 0 999px;
+  border-right: 0;
+  background-color: #f3f4f6;
+}
+
+.feed-search-input {
+  border-radius: 0 999px 999px 0;
+  border-left: 0;
+  background-color: #f9fafb;
+}
+
+/* Feed cards */
+
+.feed-card {
+  border-radius: 1.5rem;
+  background-color: #ffffff;
+  border: 1px solid rgba(15, 23, 42, 0.06);
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
+}
+
+.feed-card-body {
+  padding: 1.2rem 1.4rem 1.1rem;
+}
+
+/* Avatar */
+
+.feed-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  overflow: hidden;
+  background-color: #111827;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  color: #f9fafb;
+}
+
+.feed-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.feed-meta span + span {
+  margin-left: 0.3rem;
+}
+
+/* Media inside feed cards */
+
+.feed-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 1.1rem;
+}
+
+/* Actions */
+
+.feed-actions .btn {
+  color: #6b7280;
+}
+
+.feed-actions .btn:hover {
+  color: #111827;
+}
+
+.feed-cook-btn {
+  border-radius: 999px;
+  padding-inline: 0.9rem;
+  font-size: 0.8rem;
+}
+
+/* Shop badge on a post */
+
+.feed-badge-shop {
+  background-color: #111827;
+  color: #f9fafb;
+  font-weight: 500;
+}
+
+/* Dark mode tweaks for the feed */
+
+@media (prefers-color-scheme: dark) {
+  body:not(.auth-body) .feed-card {
+    background-color: #101117;
+    border-color: #272730;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.7);
+    color: #f6f6f6;
+  }
+
+  body:not(.auth-body) .feed-tabs .nav-link {
+    color: #a5a6b5;
+  }
+
+  body:not(.auth-body) .feed-tabs .nav-link.active {
+    background-color: #f6f6f6;
+    color: #050507;
+  }
+
+  body:not(.auth-body) .feed-search .input-group-text.feed-search-icon {
+    background-color: #101117;
+    border-color: #272730;
+  }
+
+  body:not(.auth-body) .feed-search-input {
+    background-color: #050507;
+    border-color: #272730;
+    color: #f6f6f6;
+  }
+
+  body:not(.auth-body) .feed-search-input::placeholder {
+    color: #7c7d88;
+  }
+
+  body:not(.auth-body) .feed-actions .btn {
+    color: #a5a6b5;
+  }
+
+  body:not(.auth-body) .feed-actions .btn:hover {
+    color: #ffffff;
+  }
+}
+
+
+/* =========================== */
+/* Cosmos-style logged-in home */
+/* =========================== */
+
+.cosmos-home {
+  min-height: calc(100vh - 64px);
+  padding-top: 0.75rem;  /* smaller top padding than the Bootstrap pt-4 */
+}
+
+.cosmos-home .row.mt-3 {
+  margin-top: 0.75rem;
+}
+
+/* Search pill under navbar */
+
+.cosmos-search {
+  border-radius: 999px;
+  overflow: hidden;
+  background-color: #f3f4f6;
+}
+
+.cosmos-search-icon {
+  border: none;
+  background-color: transparent;
+}
+
+.cosmos-search-input {
+  border: none;
+  background-color: transparent;
+  font-size: 0.9rem;
+}
+
+.cosmos-search-input:focus {
+  box-shadow: none;
+}
+
+.cosmos-search-filter {
+  border: none;
+  border-radius: 0;
+  background-color: transparent;
+  font-size: 0.9rem;
+}
+
+/* For you / Following toggle – only the active one gets a pill */
+
+.cosmos-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0;
+  background: transparent;
+}
+
+.cosmos-toggle .nav-item {
+  margin: 0;
+}
+
+.cosmos-toggle .nav-link {
+  border-radius: 999px;
+  border: none;
+  background: transparent;
+  padding: 0.35rem 0.2rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #9ca3af;
+}
+
+.cosmos-toggle .nav-link.active {
+  padding: 0.35rem 1.6rem;
+  background-color: #ffffff;
+  color: #111217;
+  box-shadow: 0 0 0 1px rgba(148, 163, 184, 0.45);
+}
+
+/* Tile grid */
+
+.cosmos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 1rem;
+}
+
+/* Individual tiles */
+
+.cosmos-tile {
+  position: relative;
+  border-radius: 0.75rem;
+  overflow: hidden;
+  background-color: #e5e5e5;
+}
+
+.cosmos-tile-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.cosmos-tile-meta {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 0.6rem 0.7rem;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.65), transparent);
+  color: #f9fafb;
+}
+
+.cosmos-tile-title {
+  font-size: 0.9rem;
+  margin: 0 0 0.1rem;
+}
+
+.cosmos-tile-sub {
+  margin: 0;
+  font-size: 0.75rem;
+  opacity: 0.9;
+}
+
+/* Placeholder tiles when there are no posts yet */
+.cosmos-tile-placeholder {
+  background: radial-gradient(circle at top left, #4b5563, #111827);
+}

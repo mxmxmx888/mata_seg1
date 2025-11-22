@@ -1,0 +1,525 @@
+{% extends "base.html" %}
+
+{% block body_class %}dashboard-body{% endblock %}
+
+{% block body %}
+<main class="container-fluid px-4 px-xl-5 py-4 post-page position-relative">
+  <div class="post-primary" id="post-primary">
+  <div class="row g-5 align-items-start">
+    <!-- Left: image / video -->
+    <div class="col-xxl-5 col-lg-6">
+      <a class="post-back-button" href="javascript:history.back()" aria-label="Go back">
+        <i class="bi bi-chevron-left"></i>
+      </a>
+      <div class="post-media">
+        <img src="{{ image_url }}" alt="{{ title }}">
+      </div>
+
+      <!-- Additional media lives in the left column so it doesn't span the page -->
+      {% if gallery_images or video_url %}
+      <section class="post-media-extras mt-3">
+        <div class="post-media-masonry">
+          <div class="post-media-masonry-col"></div>
+          <div class="post-media-masonry-col"></div>
+          {% for gallery_image in gallery_images %}
+          <div class="post-media-masonry-item">
+            <img src="{{ gallery_image }}" alt="Gallery image {{ forloop.counter }}">
+          </div>
+          {% endfor %}
+          {% if video_url %}
+          <div class="post-media-masonry-item">
+            <div class="post-video">
+              <video controls playsinline poster="{{ image_url }}">
+                <source src="{{ video_url }}" type="video/mp4">
+                Your browser does not support the video tag.
+              </video>
+            </div>
+          </div>
+          {% endif %}
+        </div>
+      </section>
+      {% endif %}
+    </div>
+
+    <!-- Middle: recipe meta + ingredients + steps -->
+    <div class="col-xxl-4 col-lg-6">
+      <header class="mb-4">
+        <p class="post-author text-muted mb-1">by {{ author_handle }}</p>
+        <h1 class="post-title">{{ title }}</h1>
+        <div class="d-flex flex-wrap gap-3 post-meta">
+          <span>⏱ {{ cook_time }}</span>
+          <span>🥣 Serves {{ serves }}</span>
+          <span>🧂 {{ ingredients|length }} ingredients</span>
+        </div>
+      </header>
+
+      <p class="post-summary text-muted mb-4">{{ summary }}</p>
+
+      <section class="mb-4">
+        <h2 class="h6 mb-2">Ingredients</h2>
+        <ul class="post-ingredients">
+          {% for ingredient in ingredients %}
+          <li>{{ ingredient }}</li>
+          {% endfor %}
+        </ul>
+      </section>
+
+      <section class="mb-4">
+        <h2 class="h6 mb-2">Steps</h2>
+        <ol class="post-steps">
+          {% for step in steps %}
+          <li>{{ step }}</li>
+          {% endfor %}
+        </ol>
+      </section>
+
+      {% if tags %}
+      <section class="post-tags mb-4">
+        <button class="post-tags-toggle d-flex align-items-center gap-2" type="button" data-bs-toggle="collapse" data-bs-target="#post-tags-collapse" aria-expanded="false" aria-controls="post-tags-collapse">
+          <span class="fw-semibold">Tags</span>
+          <i class="bi bi-chevron-down post-tags-chevron" aria-hidden="true"></i>
+        </button>
+        <div id="post-tags-collapse" class="collapse">
+          <div class="d-flex flex-wrap gap-2 mt-2">
+            {% for tag in tags %}
+            <span class="post-tag-pill">#{{ tag }}</span>
+            {% endfor %}
+          </div>
+        </div>
+      </section>
+      {% endif %}
+
+      {% if pair_with %}
+      <section class="post-pair-with mb-4">
+        <h2 class="h6 mb-3">Pair with</h2>
+        <div class="row g-3">
+          {% for pairing in pair_with %}
+          <div class="col-sm-6">
+            <a href="{{ pairing.url }}" class="pair-card">
+              <div class="pair-card-media">
+                <img src="{{ pairing.image }}" alt="{{ pairing.title }}">
+              </div>
+              <p class="pair-card-title mb-1">{{ pairing.title }}</p>
+              <p class="pair-card-meta mb-0 text-muted small">{{ pairing.summary }}</p>
+            </a>
+          </div>
+          {% endfor %}
+        </div>
+      </section>
+      {% endif %}
+
+      <section class="d-flex gap-2">
+        <button class="btn btn-dark rounded-pill px-3">Cook this</button>
+      </section>
+    </div>
+
+    <!-- Right: comments / saves panel -->
+    <div class="col-xxl-3 col-lg-4">
+      <aside class="post-comments-panel">
+        <div class="d-flex justify-content-between align-items-start mb-4">
+          <div>
+            <p class="text-muted small mb-1">{{ post_date }}</p>
+            <p class="fw-semibold mb-0">{{ title }}</p>
+            <a class="post-source-link" href="{{ source_link }}">Shared via {{ source_label }}</a>
+          </div>
+          <button class="post-save-button" type="button" aria-label="Save recipe">+</button>
+        </div>
+        <h2 class="h6 text-uppercase text-muted mb-3 post-engagement-inline">
+          <span>{{ likes_count|default:0 }} likes</span>
+          <span>{{ comments|length }} comments</span>
+          <span>{{ saves_count|default:0 }} saves</span>
+        </h2>
+        <div class="post-comments-list">
+          {% for comment in comments %}
+          <div class="post-comment d-flex align-items-center justify-content-between">
+            <div class="d-flex align-items-center gap-3">
+              <div class="comment-avatar">
+                {{ comment.name|first|upper }}
+              </div>
+              <div>
+                <p class="mb-0 fw-semibold">{{ comment.name }}</p>
+                <p class="mb-0 text-muted small">{{ comment.handle }}</p>
+              </div>
+            </div>
+            <span class="small text-muted">{{ comment.time }}</span>
+          </div>
+          {% empty %}
+          <p class="text-muted small mb-0">No comments yet.</p>
+          {% endfor %}
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  </div>
+
+  <!-- Save to collection modal -->
+  <div class="modal fade" id="saveModal" tabindex="-1" aria-labelledby="saveModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content save-modal">
+        <div class="modal-header border-0 align-items-center">
+          <div class="d-flex flex-column">
+            <h5 class="modal-title" id="saveModalLabel">
+              <span data-save-title="list">Save to collection</span>
+              <span data-save-title="create" class="d-none">New collection</span>
+            </h5>
+            <p class="small text-muted mb-0" data-save-subtitle="list">Choose a collection for this recipe.</p>
+            <p class="small text-muted mb-0 d-none" data-save-subtitle="create">Name your new collection to save this recipe.</p>
+          </div>
+          <div class="save-modal-header-actions d-flex align-items-center gap-2">
+            <button type="button" class="save-modal-icon-btn" data-save-open-create data-hide-when-view="create" aria-label="Create new collection">
+              <i class="bi bi-plus-lg"></i>
+            </button>
+          </div>
+        </div>
+        <div class="modal-body">
+          <div class="save-modal-view" data-save-view="list">
+            <div class="save-modal-search mb-3">
+              <i class="bi bi-search"></i>
+              <input type="text" class="form-control" placeholder="Search collections" />
+            </div>
+            <ul class="save-modal-list list-unstyled mb-0">
+              <li class="save-modal-row">
+                <div class="save-modal-avatar" aria-hidden="true">W</div>
+            <div>
+              <p class="mb-0 fw-semibold">Weeknight dinners</p>
+              <p class="mb-0 text-muted small">Quick · Private</p>
+            </div>
+            <button type="button" class="save-modal-action" aria-label="Select Weeknight dinners" data-save-toggle>
+              <i class="bi bi-bookmark-fill"></i>
+            </button>
+          </li>
+          <li class="save-modal-row">
+            <div class="save-modal-avatar" aria-hidden="true">D</div>
+            <div>
+              <p class="mb-0 fw-semibold">Desserts</p>
+              <p class="mb-0 text-muted small">13 recipes</p>
+            </div>
+            <button type="button" class="save-modal-action" aria-label="Select Desserts" data-save-toggle>
+              <i class="bi bi-bookmark"></i>
+            </button>
+          </li>
+          <li class="save-modal-row">
+            <div class="save-modal-avatar" aria-hidden="true">M</div>
+            <div>
+              <p class="mb-0 fw-semibold">Meal prep</p>
+              <p class="mb-0 text-muted small">8 recipes</p>
+            </div>
+            <button type="button" class="save-modal-action" aria-label="Select Meal prep" data-save-toggle>
+              <i class="bi bi-bookmark"></i>
+            </button>
+          </li>
+            </ul>
+          </div>
+          <div class="save-modal-view d-none" data-save-view="create">
+            <form id="save-modal-create-form">
+              <div class="mb-3">
+                <label for="new-collection-name" class="form-label text-muted small">Collection name</label>
+                <input type="text" class="form-control save-modal-input" id="new-collection-name" name="name" placeholder="e.g. Cozy winter dishes" required>
+              </div>
+              <div class="d-flex justify-content-between align-items-center">
+                <button type="button" class="btn btn-outline-secondary rounded-pill px-3" data-save-back>Cancel</button>
+                <button type="submit" class="btn btn-dark rounded-pill px-3">Create</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {% if view_similar %}
+  <section class="post-view-similar mt-5">
+    <div class="d-flex align-items-center justify-content-center gap-2 mb-4">
+      <i class="bi bi-binoculars"></i>
+      <span class="fw-semibold text-uppercase small tracking-wide">View similar</span>
+    </div>
+    <div class="view-similar-grid view-similar-grid-wide">
+      {% for item in view_similar %}
+      <a href="{{ item.url }}" class="view-similar-card">
+        <div class="view-similar-media">
+          <img src="{{ item.image }}" alt="{{ item.title }}">
+        </div>
+        <p class="view-similar-title mb-1">{{ item.title }}</p>
+        <p class="view-similar-meta text-muted small mb-0">{{ item.description }}</p>
+      </a>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+</main>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const primary = document.getElementById('post-primary');
+  const similar = document.querySelector('.post-view-similar');
+  const video = document.querySelector('.post-video');
+
+  // Fallback collapse for tags if Bootstrap JS fails to load (e.g., CDN blocked)
+  const tagsToggle = document.querySelector('.post-tags-toggle');
+  const tagsCollapse = document.getElementById('post-tags-collapse');
+  const hasBootstrapCollapse = !!(window.bootstrap && bootstrap.Collapse);
+  const hasBootstrapModal = !!(window.bootstrap && bootstrap.Modal);
+  const syncTagsChevron = () => {
+    if (!tagsToggle || !tagsCollapse) return;
+    const isOpen = tagsCollapse.classList.contains('show');
+    tagsToggle.classList.toggle('open', isOpen);
+    tagsToggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+  };
+
+  if (tagsToggle && tagsCollapse) {
+    // Keep chevron in sync if Bootstrap collapse is present
+    if (hasBootstrapCollapse) {
+      tagsCollapse.addEventListener('shown.bs.collapse', syncTagsChevron);
+      tagsCollapse.addEventListener('hidden.bs.collapse', syncTagsChevron);
+    }
+
+    // Always sync after user clicks (covers both Bootstrap and fallback)
+    tagsToggle.addEventListener('click', function () {
+      if (!hasBootstrapCollapse) {
+        tagsCollapse.classList.toggle('show');
+      }
+      // sync after potential state change
+      window.setTimeout(syncTagsChevron, 0);
+    });
+  }
+
+  syncTagsChevron();
+
+  // Save modal open/close (works with or without Bootstrap JS)
+  const saveButton = document.querySelector('.post-save-button');
+  const saveModal = document.getElementById('saveModal');
+  const saveModalListView = saveModal ? saveModal.querySelector('[data-save-view="list"]') : null;
+  const saveModalCreateView = saveModal ? saveModal.querySelector('[data-save-view="create"]') : null;
+  const saveModalTitles = saveModal ? saveModal.querySelectorAll('[data-save-title]') : [];
+  const saveModalSubtitles = saveModal ? saveModal.querySelectorAll('[data-save-subtitle]') : [];
+  const saveOpenCreate = saveModal ? saveModal.querySelector('[data-save-open-create]') : null;
+  const saveHideOnCreate = saveModal ? saveModal.querySelectorAll('[data-hide-when-view="create"]') : [];
+  const saveToggleButtons = saveModal ? saveModal.querySelectorAll('[data-save-toggle]') : [];
+  const saveBackBtn = saveModal ? saveModal.querySelector('[data-save-back]') : null;
+  const saveCreateForm = document.getElementById('save-modal-create-form');
+  const saveNameInput = document.getElementById('new-collection-name');
+  let saveModalInstance = null;
+  let fallbackOutsideHandler = null;
+
+  const ensureBackdrop = (show) => {
+    const existing = document.querySelector('.modal-backdrop');
+    if (show) {
+      if (existing) return existing;
+      const backdrop = document.createElement('div');
+      backdrop.className = 'modal-backdrop fade show';
+      document.body.appendChild(backdrop);
+      return backdrop;
+    }
+    if (existing) existing.remove();
+    return null;
+  };
+
+  const setSaveView = (view) => {
+    if (!saveModal) return;
+    saveModal.dataset.saveView = view;
+    if (saveModalListView) saveModalListView.classList.toggle('d-none', view !== 'list');
+    if (saveModalCreateView) saveModalCreateView.classList.toggle('d-none', view !== 'create');
+    saveModalTitles.forEach((el) => el.classList.toggle('d-none', el.getAttribute('data-save-title') !== view));
+    saveModalSubtitles.forEach((el) => el.classList.toggle('d-none', el.getAttribute('data-save-subtitle') !== view));
+    saveHideOnCreate.forEach((el) => el.classList.toggle('d-none', view === 'create'));
+  };
+
+  const showSaveModal = (view = 'list') => {
+    if (!saveModal) return;
+    setSaveView(view);
+    if (saveNameInput) saveNameInput.value = '';
+    document.body.classList.add('modal-open');
+    if (hasBootstrapModal) {
+      saveModalInstance = bootstrap.Modal.getOrCreateInstance(saveModal);
+      saveModalInstance.show();
+    } else {
+      saveModal.classList.add('show');
+      saveModal.style.display = 'block';
+      saveModal.removeAttribute('aria-hidden');
+      ensureBackdrop(true);
+      // Attach outside-click listener after this tick so the launch click doesn't immediately close it
+      window.setTimeout(() => {
+        fallbackOutsideHandler = (e) => {
+          const dialog = saveModal.querySelector('.modal-dialog');
+          const launchedFromButton = saveButton && (saveButton === e.target || saveButton.contains(e.target));
+          if (launchedFromButton) return;
+          if (dialog && dialog.contains(e.target)) return;
+          hideSaveModal();
+        };
+        document.addEventListener('click', fallbackOutsideHandler);
+      }, 0);
+    }
+  };
+
+  const hideSaveModal = () => {
+    if (!saveModal) return;
+    if (hasBootstrapModal && saveModalInstance) {
+      saveModalInstance.hide();
+    } else {
+      saveModal.classList.remove('show');
+      saveModal.style.display = 'none';
+      saveModal.setAttribute('aria-hidden', 'true');
+      document.body.classList.remove('modal-open');
+      ensureBackdrop(false);
+      if (fallbackOutsideHandler) {
+        document.removeEventListener('click', fallbackOutsideHandler);
+        fallbackOutsideHandler = null;
+      }
+    }
+  };
+
+  if (saveButton && saveModal) {
+    saveButton.addEventListener('click', function (e) {
+      e.preventDefault();
+      showSaveModal();
+    });
+    saveModal.querySelectorAll('[data-dismiss-save-modal]').forEach((btn) => {
+      btn.addEventListener('click', hideSaveModal);
+    });
+
+    if (saveOpenCreate) {
+      saveOpenCreate.addEventListener('click', function (e) {
+        e.preventDefault();
+        setSaveView('create');
+        if (saveNameInput) saveNameInput.focus();
+      });
+    }
+
+    if (saveBackBtn) {
+      saveBackBtn.addEventListener('click', function (e) {
+        e.preventDefault();
+        setSaveView('list');
+      });
+    }
+
+    if (saveCreateForm) {
+      saveCreateForm.addEventListener('submit', function (e) {
+        e.preventDefault();
+        hideSaveModal();
+      });
+    }
+
+    saveToggleButtons.forEach((btn) => {
+      btn.addEventListener('click', function (e) {
+        e.preventDefault();
+        const icon = btn.querySelector('i');
+        if (!icon) return;
+        if (icon.classList.contains('bi-bookmark-fill')) {
+          icon.classList.remove('bi-bookmark-fill');
+          icon.classList.add('bi-bookmark');
+        } else {
+          icon.classList.remove('bi-bookmark');
+          icon.classList.add('bi-bookmark-fill');
+        }
+      });
+    });
+
+    if (hasBootstrapModal) {
+      saveModal.addEventListener('shown.bs.modal', () => setSaveView('list'));
+    }
+  }
+
+  // Masonry balancing into two columns (balanced heights)
+  const masonry = document.querySelector('.post-media-masonry');
+  const masonryItems = masonry ? Array.from(masonry.querySelectorAll('.post-media-masonry-item')) : [];
+
+  const buildMasonry = () => {
+    if (!masonry || masonryItems.length === 0) return;
+    const cols = Array.from(masonry.querySelectorAll('.post-media-masonry-col'));
+    if (cols.length < 2) return;
+
+    // Reset columns
+    cols.forEach((col) => col.innerHTML = '');
+
+    // Decide column count based on viewport
+    const colCount = window.innerWidth <= 991 ? 1 : 2;
+    const activeCols = cols.slice(0, colCount);
+    const heights = activeCols.map(() => 0);
+
+    masonryItems.forEach((item) => {
+      const media = item.querySelector('img, video');
+      const height = media && media.getBoundingClientRect().height ? media.getBoundingClientRect().height : item.getBoundingClientRect().height || 1;
+      const target = colCount === 1 ? 0 : (heights[0] <= heights[1] ? 0 : 1);
+      activeCols[target].appendChild(item);
+      heights[target] += height;
+    });
+  };
+
+  const requestMasonry = () => window.requestAnimationFrame(buildMasonry);
+
+  masonryItems.forEach((item) => {
+    const media = item.querySelector('img, video');
+    if (media) {
+      if (media.complete) {
+        requestMasonry();
+      } else {
+        media.addEventListener('load', requestMasonry, { once: true });
+      }
+    }
+  });
+
+  window.addEventListener('resize', requestMasonry);
+  requestMasonry();
+
+  // Track fade progress; only start once the video panel is off-screen
+  let fadeOffset = null;
+
+  // Dynamically adjust "View similar" columns to respond to zoom/resize
+  const similarGrids = Array.from(document.querySelectorAll('.view-similar-grid, .view-similar-grid-wide'));
+  const baselineWidths = new Map();
+
+  const setBaselines = () => {
+    similarGrids.forEach((grid) => {
+      const baseCols = grid.classList.contains('view-similar-grid-wide') ? 4 : 3;
+      const width = grid.clientWidth || grid.offsetWidth;
+      if (!width) return;
+      baselineWidths.set(grid, width / baseCols);
+    });
+  };
+
+  const updateSimilarColumns = () => {
+    similarGrids.forEach((grid) => {
+      const baseWidth = baselineWidths.get(grid);
+      const width = grid.clientWidth || grid.offsetWidth;
+      if (!baseWidth || !width) return;
+      const cols = Math.max(1, Math.round(width / baseWidth));
+      grid.style.setProperty('--similar-cols', cols);
+    });
+  };
+
+  const handleScroll = () => {
+    if (!primary || !similar) return;
+    const rect = similar.getBoundingClientRect();
+    const windowHeight = window.innerHeight || document.documentElement.clientHeight;
+    const distance = Math.max(0, windowHeight - rect.top);
+
+    let ratio;
+    if (video) {
+      const videoRect = video.getBoundingClientRect();
+      const videoCovered = videoRect.bottom <= 0;
+
+      if (!videoCovered) {
+        fadeOffset = null;
+        ratio = 0;
+      } else {
+        if (fadeOffset === null) {
+          fadeOffset = distance;
+        }
+        const adjustedDistance = Math.max(0, distance - fadeOffset);
+        ratio = Math.min(1, adjustedDistance / (windowHeight * 0.8));
+      }
+    } else {
+      ratio = Math.min(1, distance / (windowHeight * 0.8));
+    }
+    primary.style.setProperty('--post-fade-amount', ratio.toFixed(2));
+  };
+
+  window.addEventListener('scroll', handleScroll);
+  window.addEventListener('resize', updateSimilarColumns);
+
+  setBaselines();
+  updateSimilarColumns();
+  handleScroll();
+});
+</script>
+{% endblock %}
