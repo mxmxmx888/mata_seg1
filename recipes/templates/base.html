@@ -52,7 +52,7 @@
   </head>
 
   <script>
-    document.addEventListener('DOMContentLoaded', function () {
+      document.addEventListener('DOMContentLoaded', function () {
       const nav = document.querySelector('.navbar-squarespace');
       const isAuth = document.body.classList.contains('auth-body');
       const prefersDark = window.matchMedia &&
@@ -79,6 +79,19 @@
       applyThemeFromSystem();
       if (prefersDark) {
         prefersDark.addEventListener('change', applyThemeFromSystem);
+      }
+
+      // Fallback: keep the navbar collapse working even if Bootstrap JS fails
+      if (!window.bootstrap || !window.bootstrap.Collapse) {
+        document.querySelectorAll('.navbar-toggler[data-bs-target]').forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            const targetSelector = btn.getAttribute('data-bs-target');
+            if (!targetSelector) return;
+            const target = document.querySelector(targetSelector);
+            if (!target) return;
+            target.classList.toggle('show');
+          });
+        });
       }
 
       // Auth forms: move label text into placeholder
