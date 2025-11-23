@@ -18,6 +18,19 @@
   border-radius: 0.75rem;
 }
 
+/* Larger serif headings inside tile-style cards */
+.tile-box h5,
+.tile-box .h5 {
+  font-size: 1.5rem;
+  line-height: 1.2;
+}
+
+.tile-box h6,
+.tile-box .h6 {
+  font-size: 1.35rem;
+  line-height: 1.2;
+}
+
 /* Buttons default to square for that Squarespace look */
 .btn {
   border-radius: 0;
@@ -31,10 +44,11 @@
   left: 0;
   right: 0;
   z-index: 1030;
-  background-color: transparent;
-  border-bottom: none;               /* no seam */
+  background-color: transparent;     /* let the page background show through */
+  border-bottom: none !important;    /* kill the hairline in light mode */
   padding-top: 0.3rem;               /* thinner bar */
   padding-bottom: 0.3rem;
+  box-shadow: none !important;       /* override any inherited shadow */
   transition: background-color 0.3s ease, box-shadow 0.3s ease, color 0.3s ease;
 }
 
@@ -61,25 +75,32 @@ body.auth-body .navbar-squarespace .nav-link {
 
 /* When the landing page is scrolled, navbar goes solid */
 .navbar-squarespace.navbar-solid {
-  background-color: #000;
-  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.4);
+  background-color: #ffffff;
+  box-shadow: none !important; /* keep the bar flush to the page */
 }
 
 .navbar-squarespace.navbar-solid .navbar-brand,
 .navbar-squarespace.navbar-solid .nav-link {
-  color: #fff;
+  color: #000;
 }
 
 .navbar-squarespace.navbar-solid .btn.btn-outline-dark {
-  color: #fff;
-  border-color: #fff;
+  color: #000;
+  border-color: #000;
   background-color: transparent;
 }
 
+.navbar-squarespace .btn.btn-outline-dark:hover,
+.navbar-squarespace .btn.btn-outline-dark:focus-visible {
+  background-color: #000000;
+  color: #ffffff;
+  border-color: #000000;
+}
+
 .navbar-squarespace.navbar-solid .btn.btn-dark {
-  background-color: #fff;
-  color: #000;
-  border-color: #fff;
+  background-color: #000;
+  color: #fff;
+  border-color: #000;
 }
 
 /* Make the mobile toggler visible so collapsed links stay reachable */
@@ -103,7 +124,7 @@ body.auth-body .navbar-squarespace .nav-link {
 }
 
 .navbar-squarespace.navbar-solid .navbar-toggler-icon {
-  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba(255,255,255,0.9)' stroke-linecap='round' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba(0,0,0,0.85)' stroke-linecap='round' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
 }
 
 /* Keep hamburger visible on dark hero before nav goes solid */
@@ -115,6 +136,9 @@ body[data-theme="dark"] .navbar-squarespace .navbar-toggler-icon {
   .navbar-squarespace .navbar-toggler-icon {
     background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba(255,255,255,0.92)' stroke-linecap='round' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
   }
+  .navbar-squarespace.navbar-solid .navbar-toggler-icon {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba(255,255,255,0.92)' stroke-linecap='round' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+  }
 }
 
 @media (max-width: 991.98px) {
@@ -122,22 +146,23 @@ body[data-theme="dark"] .navbar-squarespace .navbar-toggler-icon {
   .navbar-squarespace .navbar-collapse {
     position: absolute;
     top: 100%;
-    left: 1rem;
-    right: 1rem;
-    background-color: rgba(255, 255, 255, 0.96);
-    padding: 0.75rem 0;
-    border-radius: 0.65rem;
-    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.2);
+    left: 0;
+    right: 0;
+    background-color: #ffffff;
+    padding: 0.75rem 1rem;
+    border-radius: 0;
+    box-shadow: none;
     z-index: 1050;
   }
 
   .navbar-squarespace.navbar-solid .navbar-collapse {
-    background-color: #000;
+    background-color: #ffffff;
   }
 
   .navbar-squarespace .navbar-collapse .d-flex {
     flex-direction: column;
     gap: 0.5rem;
+    padding: 0 0.25rem;
   }
 
   .navbar-squarespace .navbar-collapse .btn {
@@ -148,7 +173,10 @@ body[data-theme="dark"] .navbar-squarespace .navbar-toggler-icon {
 @media (max-width: 991.98px) and (prefers-color-scheme: dark) {
   /* Dark-mode default when navbar is transparent */
   .navbar-squarespace:not(.navbar-solid) .navbar-collapse {
-    background-color: rgba(12, 12, 14, 0.95);
+    background-color: #050507;
+  }
+  .navbar-squarespace.navbar-solid .navbar-collapse {
+    background-color: #050507;
   }
 }
 
@@ -315,14 +343,30 @@ body[data-theme="dark"] .navbar-squarespace .navbar-toggler-icon {
 
 /* Dark mode variants for navbars */
 @media (prefers-color-scheme: dark) {
+  body:not(.auth-body) .navbar-squarespace {
+    background-color: #050507;
+    box-shadow: none;
+  }
+
   body:not(.auth-body) .navbar-squarespace .navbar-brand,
   body:not(.auth-body) .navbar-squarespace .nav-link {
     color: #f6f6f6;
   }
+  body:not(.auth-body) .navbar-squarespace .btn.btn-outline-dark {
+    color: #f6f6f6;
+    border-color: #f6f6f6;
+    background-color: transparent;
+  }
+  body:not(.auth-body) .navbar-squarespace .btn.btn-outline-dark:hover,
+  body:not(.auth-body) .navbar-squarespace .btn.btn-outline-dark:focus-visible {
+    background-color: #f6f6f6;
+    color: #050507;
+    border-color: #f6f6f6;
+  }
 
   body:not(.auth-body) .navbar-squarespace.navbar-solid {
     background-color: #050507;
-    box-shadow: 0 1px 0 rgba(0, 0, 0, 0.7);
+    box-shadow: none;
   }
 
   body:not(.auth-body) .navbar-squarespace.navbar-solid .navbar-brand,

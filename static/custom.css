@@ -169,6 +169,19 @@ h3.profile-title {
   border-radius: 0;
 }
 
+/* Make serif headings in tile-style cards more legible */
+.tile-box h5,
+.tile-box .h5 {
+  font-size: 1.35rem;
+  line-height: 1.2;
+}
+
+.tile-box h6,
+.tile-box .h6 {
+  font-size: 1.1rem;
+  line-height: 1.2;
+}
+
 /* Buttons default to square for that Squarespace look */
 .btn {
   border-radius: 0;
@@ -236,9 +249,10 @@ body.auth-body {
   right: 0;
   z-index: 1030;
   background-color: transparent;
-  border-bottom: none;               /* no seam */
+  border-bottom: none !important;    /* kill any hairline */
   padding-top: 0.3rem;               /* thinner bar */
   padding-bottom: 0.3rem;
+  box-shadow: none !important;       /* ensure no shadow is left */
   transition: background-color 0.3s ease, box-shadow 0.3s ease, color 0.3s ease;
 }
 
@@ -266,7 +280,7 @@ body.auth-body .navbar-squarespace .nav-link {
 /* When the landing page is scrolled, navbar goes solid */
 .navbar-squarespace.navbar-solid {
   background-color: #000;
-  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.4);
+  box-shadow: none !important; /* remove the 1px line */
 }
 
 .navbar-squarespace.navbar-solid .navbar-brand,
@@ -449,58 +463,75 @@ body.auth-body .navbar-squarespace .nav-link {
 
 /* Dark mode variants for navbars */
 @media (prefers-color-scheme: dark) {
-  body:not(.auth-body) .navbar-squarespace .navbar-brand,
-  body:not(.auth-body) .navbar-squarespace .nav-link {
+  /* Auth pages stay dark in system dark mode */
+  body.auth-body .navbar-squarespace {
+    background-color: transparent;
+    box-shadow: none !important;
+  }
+
+  body.auth-body .navbar-squarespace .navbar-brand,
+  body.auth-body .navbar-squarespace .nav-link {
     color: #f6f6f6;
   }
 
+  /* Main site navbars stay white in system dark mode */
+  body:not(.auth-body) .navbar-squarespace {
+    background-color: #ffffff;
+    box-shadow: none !important;
+  }
+
+  body:not(.auth-body) .navbar-squarespace .navbar-brand,
+  body:not(.auth-body) .navbar-squarespace .nav-link {
+    color: #0f172a;
+  }
+
   body:not(.auth-body) .navbar-squarespace.navbar-solid {
-    background-color: #050507;
-    box-shadow: 0 1px 0 rgba(0, 0, 0, 0.7);
+    background-color: #ffffff;
+    box-shadow: none !important;
   }
 
   body:not(.auth-body) .navbar-squarespace.navbar-solid .navbar-brand,
   body:not(.auth-body) .navbar-squarespace.navbar-solid .nav-link {
-    color: #f6f6f6;
+    color: #0f172a;
   }
 
   body:not(.auth-body) .navbar-app {
-    background-color: #050507;
+    background-color: #ffffff;
     border-bottom: none;
   }
 
   body:not(.auth-body) .navbar-app .navbar-brand,
   body:not(.auth-body) .navbar-app .nav-link,
   body:not(.auth-body) .navbar-app .icon-button {
-    color: #f9fafb;
+    color: #111827;
   }
 
   body:not(.auth-body) .navbar-app .btn.btn-light {
-    background-color: #f9fafb;
-    color: #050507;
+    background-color: #111827;
+    color: #f9fafb;
   }
 
   body:not(.auth-body) .cosmos-nav-search {
-    background-color: #111217;
-    border-color: #27272f;
+    background-color: #f1f1f3;
+    border-color: #e1e1e6;
   }
 
   body:not(.auth-body) .cosmos-nav-search-input {
-    color: #e5e7eb;
+    color: #4b5563;
   }
 
   body:not(.auth-body) .cosmos-nav-search-input::placeholder {
-    color: #71717a;
+    color: #9ca3af;
   }
 
   body:not(.auth-body) .cosmos-nav-search-icon {
-    color: #a1a1aa;
+    color: #9ca3af;
   }
 
   body:not(.auth-body) .cosmos-nav-search:focus-within {
-    background-color: #1f1f23;
-    border-color: #4b5563;
-    box-shadow: 0 14px 40px rgba(0, 0, 0, 0.7);
+    background-color: #ececf0;
+    border-color: #cbd5f5;
+    box-shadow: 0 14px 40px rgba(15, 23, 42, 0.12);
     transform: scale(1.015);
   }
 }
@@ -2061,4 +2092,15 @@ body[data-theme="dark"]:not(.auth-body) .comment-avatar {
 
 body[data-theme="dark"]:not(.auth-body) .view-similar-meta {
   color: #a5a6b5;
+}
+
+/* Giant responsive wordmark at the very end of the page */
+.footer-giant-logo {
+  font-family: "Awesome Serif", "Rethink Sans", system-ui, -apple-system, sans-serif;
+  font-size: clamp(6rem, 18vw, 22rem);
+  line-height: 0.9;
+  color: #0b0c0f;
+  margin: 0;
+  padding: 0 1rem 0.3rem;
+  user-select: none;
 }

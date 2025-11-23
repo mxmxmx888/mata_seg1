@@ -12,12 +12,8 @@
         Access your saved recipes and cooking spaces.
       </p>
 
-      <!-- Apple / Google sign-in -->
+      <!-- Google sign-in -->
       <div class="auth-oauth-buttons">
-        <button type="button" class="btn btn-auth btn-auth-apple">
-          <span class="auth-apple-icon" aria-hidden="true"></span>
-          <span>Continue with Apple</span>
-        </button>
         <button type="button" class="btn btn-auth btn-auth-google">
           <i class="bi bi-google"></i>
           <span>Continue with Google</span>
@@ -39,7 +35,7 @@
 
       <p class="auth-meta">
         Trouble signing in?
-        <a href="#">Reset your password</a>
+        <a href="{% url 'password_reset' %}">Reset your password</a>
       </p>
 
       <p class="auth-footer-link">

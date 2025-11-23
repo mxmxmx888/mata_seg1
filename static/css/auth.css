@@ -63,6 +63,7 @@
   border: 1px solid rgba(15, 23, 42, 0.08);
   box-shadow: 0 24px 60px rgba(15, 23, 42, 0.12);
   color: #111827;
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
 .auth-card h1.auth-title {
@@ -197,6 +198,62 @@
   margin-top: 1.6rem;
   font-size: 0.85rem;
   color: #6b7280;
+}
+
+/* =================================== */
+/* Dark mode overrides                 */
+/* =================================== */
+
+body[data-theme="dark"].auth-body {
+  background: radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.04), transparent 32%), #0b0d11;
+  color: #e5e7eb;
+}
+
+body[data-theme="dark"] .auth-card {
+  background: #0f172a;
+  color: #e5e7eb;
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
+}
+
+body[data-theme="dark"] .auth-card .form-control {
+  background-color: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #f8fafc;
+}
+
+body[data-theme="dark"] .auth-card .form-control::placeholder {
+  color: #94a3b8;
+}
+
+body[data-theme="dark"] .auth-card .form-control:focus {
+  background-color: rgba(255, 255, 255, 0.08);
+  border-color: #60a5fa;
+  box-shadow: 0 0 0 1px rgba(96, 165, 250, 0.6);
+}
+
+body[data-theme="dark"] .auth-divider {
+  color: #9ca3af;
+}
+
+body[data-theme="dark"] .auth-divider::before,
+body[data-theme="dark"] .auth-divider::after {
+  background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.2));
+}
+
+body[data-theme="dark"] .auth-divider::after {
+  background: linear-gradient(to left, transparent, rgba(255, 255, 255, 0.2));
+}
+
+body[data-theme="dark"] .auth-meta,
+body[data-theme="dark"] .auth-footer-link {
+  color: #9ca3af;
+}
+
+body[data-theme="dark"] .btn-auth-google {
+  background-color: rgba(255, 255, 255, 0.08);
+  color: #e5e7eb;
+  border-color: rgba(255, 255, 255, 0.12);
 }
 
 .auth-footer-link a {
@@ -421,4 +478,3 @@ body[data-theme="dark"]:not(.auth-body) .btn.btn-dark {
   color: #050507;
   border-color: #f6f6f6;
 }
-
