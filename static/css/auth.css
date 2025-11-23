@@ -205,31 +205,60 @@
 /* =================================== */
 
 body[data-theme="dark"].auth-body {
-  background: radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.04), transparent 32%), #0b0d11;
-  color: #e5e7eb;
+  background-color: #050507;
+  background-image: radial-gradient(circle at 0 0, #16171d 0, #050507 55%);
+  color: #f6f6f6;
 }
 
 body[data-theme="dark"] .auth-card {
-  background: #0f172a;
-  color: #e5e7eb;
-  border-color: rgba(255, 255, 255, 0.08);
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
+  background: radial-gradient(
+    circle at top,
+    rgba(255, 255, 255, 0.05) 0,
+    rgba(7, 7, 9, 0.96) 40%,
+    rgba(7, 7, 9, 0.98) 100%
+  );
+  color: #f6f6f6;
+  border-color: rgba(255, 255, 255, 0.06);
+  box-shadow: 0 32px 80px rgba(0, 0, 0, 0.9);
+}
+
+body[data-theme="dark"] .auth-card p.auth-subtitle {
+  color: #b6b7c1;
+}
+
+body[data-theme="dark"] .btn-auth {
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background-color: #101117;
+  color: #f6f6f6;
+}
+
+body[data-theme="dark"] .btn-auth-apple {
+  background-color: #f6f6f6;
+  color: #050507;
+}
+
+body[data-theme="dark"] .btn-auth-google {
+  background-color: #101117;
+  color: #f6f6f6;
+  border-color: rgba(255, 255, 255, 0.12);
 }
 
 body[data-theme="dark"] .auth-card .form-control {
-  background-color: rgba(255, 255, 255, 0.04);
-  border-color: rgba(255, 255, 255, 0.12);
-  color: #f8fafc;
+  border-radius: 999px;
+  border: 1px solid #171822;
+  background-color: #14151d;
+  color: #f6f6f6;
 }
 
 body[data-theme="dark"] .auth-card .form-control::placeholder {
-  color: #94a3b8;
+  color: #7c7d88;
 }
 
 body[data-theme="dark"] .auth-card .form-control:focus {
-  background-color: rgba(255, 255, 255, 0.08);
-  border-color: #60a5fa;
-  box-shadow: 0 0 0 1px rgba(96, 165, 250, 0.6);
+  background-color: #181924;
+  border-color: #f6f6f6;
+  box-shadow: 0 0 0 1px rgba(246, 246, 246, 0.35);
 }
 
 body[data-theme="dark"] .auth-divider {
@@ -250,10 +279,19 @@ body[data-theme="dark"] .auth-footer-link {
   color: #9ca3af;
 }
 
-body[data-theme="dark"] .btn-auth-google {
-  background-color: rgba(255, 255, 255, 0.08);
-  color: #e5e7eb;
-  border-color: rgba(255, 255, 255, 0.12);
+body[data-theme="dark"] .auth-primary-btn {
+  background-color: #f6f6f6;
+  color: #050507;
+}
+
+body[data-theme="dark"] .auth-footer-link {
+  color: #d4d4dc;
+}
+
+body[data-theme="dark"] .auth-footer-link a {
+  color: #ffffff;
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 .auth-footer-link a {

@@ -106,6 +106,10 @@ h3.profile-title {
   font-style: italic;
 }
 
+.built-for-list .badge {
+  border-radius: 0;
+}
+
 
 /*
  * Links
@@ -131,7 +135,19 @@ h3.profile-title {
   height: 100%;
   object-fit: cover;
   display: block;
-  border-radius: 0.75rem; /* soft corners on image tiles */
+  border-radius: 0; /* keep image edges square */
+}
+
+.impact-hero-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;      /* keep aspect ratio without stretching */
+  display: block;
+  border-radius: 0 !important; /* no rounded corners on the home impact image */
+}
+
+.impact-hero-frame {
+  border-radius: 0 !important; /* keep the container square */
 }
 
 .footer-links-row {
@@ -199,13 +215,18 @@ h3.profile-title {
   background-color: #e7e7ea;
 }
 
+.footer-cta-title {
+  font-size: clamp(3.75rem, 7vw, 6.25rem);
+  line-height: 0.96;
+}
+
 /* Giant responsive wordmark at the very end of the page */
 .footer-giant-logo {
   font-family: "Awesome Serif", "Rethink Sans", system-ui, -apple-system, sans-serif !important;
-  font-size: clamp(12rem, 48vw, 70rem) !important; /* large enough to crop at page bottom */
-  line-height: 0.9;
+  font-size: clamp(12rem, 40vw, 58rem) !important; /* scale to fit while leaving side space */
+  line-height: 0.92;
   color: #0b0c0f;
-  margin: 6vh 0 0;
+  margin: 4vh 0 0;
   padding: 0 2vw 0;
   user-select: none;
   font-weight: 400;
@@ -215,13 +236,40 @@ h3.profile-title {
   justify-content: center;
   align-items: flex-start;
   white-space: nowrap;
-  height: 50vh;          /* lock a slice of the word (slightly less cropped) */
+  height: 0.6em;         /* show roughly the top half of the word */
   overflow: hidden;      /* crop the lower portion */
   width: 100%;
-  max-width: 100vw;
+  max-width: 88vw;       /* leave breathing room at the edges */
+  margin-left: auto;
+  margin-right: auto;
   box-sizing: border-box;
   padding-left: 0;
   transform: none;
+}
+
+@media (max-width: 768px) {
+  .footer-giant-logo {
+    font-size: clamp(12rem, 44vw, 40rem) !important;  /* larger while fitting the link width */
+    height: 0.62em;                                   /* crop halfway on phones */
+    margin-top: 2vh;
+    line-height: 0.94;
+    transform: none;
+    max-width: 96vw;                                  /* align with link width */
+    overflow: hidden;                                 /* crop the lower portion */
+  }
+}
+
+/* Tablet / narrow aspect ratios: increase scale and reduce the visible slice */
+@media (max-aspect-ratio: 4/3) and (min-width: 769px) {
+  .footer-giant-logo {
+    font-size: clamp(14rem, 42vw, 58rem) !important;
+    height: 0.6em;
+    margin-top: 3vh;
+    line-height: 0.93;
+    transform: translateY(0);
+    max-width: 90vw;
+    overflow: hidden;
+  }
 }
 
 @media (prefers-color-scheme: dark) {
@@ -334,4 +382,138 @@ h3 {
   color-scheme: light dark;
   --heading-font: "Awesome Serif", "Rethink Sans", system-ui, -apple-system,
                   BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+/* Home: browse preview carousel */
+.browse-carousel {
+  position: relative;
+}
+
+.browse-carousel-viewport {
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+  mask-image: linear-gradient(90deg, transparent 0%, rgba(0, 0, 0, 0.5) 8%, #000 20%, #000 80%, rgba(0, 0, 0, 0.5) 92%, transparent 100%);
+  -webkit-mask-image: linear-gradient(90deg, transparent 0%, rgba(0, 0, 0, 0.5) 8%, #000 20%, #000 80%, rgba(0, 0, 0, 0.5) 92%, transparent 100%);
+  cursor: pointer;
+}
+
+.browse-carousel-viewport::-webkit-scrollbar {
+  display: none;
+}
+
+.browse-carousel-track {
+  display: flex;
+  gap: 1.5rem;
+  padding: 0.75rem clamp(1.5rem, 10vw, 8rem) 1.5rem;
+  scroll-snap-type: x mandatory;
+}
+
+.browse-carousel .browse-card {
+  flex: 0 0 clamp(18rem, 60vw, 26rem);
+  background: #f7f7f9;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 18px;
+  padding: 1.5rem;
+  scroll-snap-align: center;
+  box-shadow: 0 16px 60px rgba(0, 0, 0, 0.08);
+  transition: transform 0.5s ease, box-shadow 0.5s ease, border-color 0.4s ease;
+}
+
+.browse-carousel .browse-card .ratio {
+  border-radius: 12px;
+}
+
+.browse-carousel .browse-card.is-active {
+  transform: translateY(-6px) scale(1.02);
+  box-shadow: 0 20px 90px rgba(0, 0, 0, 0.12);
+  border-color: rgba(0, 0, 0, 0.12);
+}
+
+.browse-carousel-dots {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 1.25rem;
+}
+
+.browse-hover-tip {
+  position: absolute;
+  top: 0;
+  left: 0;
+  padding: 0.35rem 0.65rem;
+  border-radius: 999px;
+  background: rgba(12, 12, 15, 0.92);
+  color: #fff;
+  font-size: 0.78rem;
+  letter-spacing: 0.01em;
+  pointer-events: none;
+  transform: translate(-9999px, -9999px);
+  opacity: 0;
+  transition: opacity 0.12s ease;
+  z-index: 5;
+}
+
+.browse-hover-tip[data-visible="true"] {
+  opacity: 0.9;
+}
+
+[data-theme="dark"] .browse-hover-tip {
+  background: rgba(255, 255, 255, 0.94);
+  color: #0c0c0f;
+}
+
+@media (prefers-color-scheme: dark) {
+  body:not([data-theme="light"]) .browse-hover-tip {
+    background: rgba(255, 255, 255, 0.94);
+    color: #0c0c0f;
+  }
+}
+
+.browse-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  border: none;
+  background: rgba(12, 12, 15, 0.25);
+  opacity: 0.8;
+  transition: width 0.25s ease, background 0.25s ease, opacity 0.25s ease;
+}
+
+.browse-dot.is-active {
+  width: 28px;
+  background: #0c0c0f;
+  opacity: 1;
+}
+
+/* Dark mode: keep dots visible */
+[data-theme="dark"] .browse-dot {
+  background: rgba(255, 255, 255, 0.5);
+}
+
+[data-theme="dark"] .browse-dot.is-active {
+  background: #ffffff;
+  opacity: 1;
+}
+
+@media (prefers-color-scheme: dark) {
+  body:not([data-theme="light"]) .browse-dot {
+    background: rgba(255, 255, 255, 0.5);
+  }
+  body:not([data-theme="light"]) .browse-dot.is-active {
+    background: #ffffff;
+    opacity: 1;
+  }
+}
+
+@media (max-width: 768px) {
+  .browse-carousel-track {
+    padding: 0.5rem 1.1rem 1.25rem;
+    gap: 1rem;
+  }
+
+  .browse-carousel .browse-card {
+    flex-basis: 82vw;
+    padding: 1.25rem;
+  }
 }

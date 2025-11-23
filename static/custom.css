@@ -1305,6 +1305,7 @@ h3 {
 .post-page {
   min-height: calc(100vh - 40px);
   background-color: #f9f9fb;
+  margin-top: 1.25rem;
 }
 
 .post-media {
@@ -1857,7 +1858,8 @@ h3 {
   }
 
   .post-media-masonry {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
   }
 }
 
@@ -1884,6 +1886,8 @@ h3 {
   border-radius: 1rem;
   overflow: hidden;
   width: 100%;
+  aspect-ratio: 4 / 5;
+  break-inside: avoid;
 }
 
 .post-media-masonry-item img,

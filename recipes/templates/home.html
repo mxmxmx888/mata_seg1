@@ -25,8 +25,8 @@
           <div class="row align-items-start g-4 mt-4">
             <div class="col-lg-8">
               <!-- Hero image / video placeholder -->
-              <div class="ratio ratio-16x9 rounded-3 overflow-hidden bg-light border">
-                <div class="ratio ratio-1x1 rounded-3 overflow-hidden">
+              <div class="ratio ratio-16x9 overflow-hidden bg-light">
+                <div class="ratio ratio-1x1 overflow-hidden">
                   <img
                     src="{% static 'img/hero-salad.jpg' %}"
                     class="square-img"
@@ -205,7 +205,7 @@
 
           <div class="row gy-4 align-items-center mb-5">
             <div class="col-lg-5">
-              <div class="ratio ratio-16x9 bg-light border tile-box overflow-hidden">
+              <div class="ratio ratio-16x9 bg-light border tile-box overflow-hidden impact-hero-frame">
                 <img
                   src="{% static 'img/couple-cooking.jpg' %}"
                   class="impact-hero-img"
@@ -233,10 +233,10 @@
             <div class="col-lg-4">
               <p class="small text-muted text-uppercase mb-2">Built for</p>
               <div class="d-flex flex-wrap built-for-list mb-3">
-                <span class="badge rounded-pill text-bg-dark">Students</span>
-                <span class="badge rounded-pill text-bg-dark">Families</span>
-                <span class="badge rounded-pill text-bg-dark">Friends</span>
-                <span class="badge rounded-pill text-bg-dark">Cooks</span>
+                <span class="badge text-bg-dark">Students</span>
+                <span class="badge text-bg-dark">Families</span>
+                <span class="badge text-bg-dark">Friends</span>
+                <span class="badge text-bg-dark">Cooks</span>
               </div>
               <p class="small text-muted mb-0">
                 The first version of the platform is scoped for small groups who
@@ -260,8 +260,8 @@
                   <div class="p-4 bg-light border tile-box">
                     <h3 class="h6 mb-2">Planning ahead</h3>
                     <p class="small text-muted mb-0">
-                      Filters for time, difficulty and meal type help users plan
-                      what to cook for the week, not just tonight.
+                      Filters for time, difficulty and meal type help users plan and prepare
+                      what to cook for the whole week, not just tonight.
                     </p>
                   </div>
                 </div>
@@ -294,70 +294,307 @@
             </a>
           </div>
 
-          <div class="row g-4">
-            <!-- Card 1 -->
-            <div class="col-md-4">
-              <div class="p-4 bg-light border tile-box">
-                <p class="small text-muted mb-1">Quick dinner</p>
-                <h3 class="h5 mb-1">One-pan lemon chicken</h3>
-                <p class="small text-muted mb-3">
-                  Chicken, potatoes and greens on a single tray for easy cleanup.
-                </p>
-                <p class="small text-muted mb-3">
-                  30 min · Easy · Serves 2–3
-                </p>
-                <div class="ratio ratio-1x1 rounded-3 overflow-hidden">
-                  <img
-                    src="{% static 'img/lemon-chicken.jpg' %}"
-                    class="square-img"
-                    alt="One-pan lemon chicken"
-                  >
-                </div>
-              </div>
-            </div>
+            <div class="browse-carousel" data-autoplay="true">
+              <div class="browse-carousel-viewport">
+                <div class="browse-carousel-track">
+                <!-- Card 1 -->
+                <article class="browse-card tile-box">
+                  <p class="small text-muted mb-1">Quick dinner</p>
+                  <h3 class="h5 mb-1">One-pan lemon chicken</h3>
+                  <p class="small text-muted mb-3">
+                    Chicken, potatoes and greens on a single tray for easy cleanup.
+                  </p>
+                  <p class="small text-muted mb-3">
+                    30 min · Easy · Serves 2–3
+                  </p>
+                  <div class="ratio ratio-1x1 overflow-hidden">
+                    <img
+                      src="{% static 'img/lemon-chicken.jpg' %}"
+                      class="square-img"
+                      alt="One-pan lemon chicken"
+                    >
+                  </div>
+                </article>
 
-            <!-- Card 2 -->
-            <div class="col-md-4">
-              <div class="p-4 bg-light border tile-box">
-                <p class="small text-muted mb-1">Make ahead</p>
-                <h3 class="h5 mb-1">Slow baked lasagne</h3>
-                <p class="small text-muted mb-3">
-                  Layers of pasta, tomato and béchamel for a weekend cook.
-                </p>
-                <p class="small text-muted mb-3">
-                  90 min · Medium · Serves 4–6
-                </p>
-                <div class="ratio ratio-1x1 rounded-3 overflow-hidden">
-                  <img
-                    src="{% static 'img/lasagne.jpg' %}"
-                    class="square-img"
-                    alt="Slow baked lasagne"
-                  >
-                </div>
-              </div>
-            </div>
+                <!-- Card 2 -->
+                <article class="browse-card tile-box">
+                  <p class="small text-muted mb-1">Make ahead</p>
+                  <h3 class="h5 mb-1">Slow baked lasagne</h3>
+                  <p class="small text-muted mb-3">
+                    Layers of pasta, tomato and béchamel for a weekend cook.
+                  </p>
+                  <p class="small text-muted mb-3">
+                    90 min · Medium · Serves 4–6
+                  </p>
+                  <div class="ratio ratio-1x1 overflow-hidden">
+                    <img
+                      src="{% static 'img/lasagne.jpg' %}"
+                      class="square-img"
+                      alt="Slow baked lasagne"
+                    >
+                  </div>
+                </article>
 
-            <!-- Card 3 -->
-            <div class="col-md-4">
-              <div class="p-4 bg-light border tile-box">
-                <p class="small text-muted mb-1">Dessert</p>
-                <h3 class="h5 mb-1">Dark chocolate brownies</h3>
-                <p class="small text-muted mb-3">
-                  Dense, fudgy brownies with a short ingredient list.
-                </p>
-                <p class="small text-muted mb-3">
-                  45 min · Easy · Serves 8–10
-                </p>
-                <div class="ratio ratio-1x1 rounded-3 overflow-hidden">
-                  <img
-                    src="{% static 'img/brownies.jpg' %}"
-                    class="square-img"
-                    alt="Dark chocolate brownies"
-                  >
-                </div>
+                <!-- Card 3 -->
+                <article class="browse-card tile-box">
+                  <p class="small text-muted mb-1">Dessert</p>
+                  <h3 class="h5 mb-1">Dark chocolate brownies</h3>
+                  <p class="small text-muted mb-3">
+                    Dense, fudgy brownies with a super short ingredient list.
+                  </p>
+                  <p class="small text-muted mb-3">
+                    45 min · Easy · Serves 8–10
+                  </p>
+                  <div class="ratio ratio-1x1 overflow-hidden">
+                    <img
+                      src="{% static 'img/brownies.jpg' %}"
+                      class="square-img"
+                      alt="Dark chocolate brownies"
+                    >
+                  </div>
+                </article>
+
+                <!-- Card 4 -->
+                <article class="browse-card tile-box">
+                  <p class="small text-muted mb-1">Breakfast</p>
+                  <h3 class="h5 mb-1">Buttermilk pancakes</h3>
+                  <p class="small text-muted mb-3">
+                    Fluffy weekend pancakes with crispy edges and a touch of vanilla.
+                  </p>
+                  <p class="small text-muted mb-3">
+                    25 min · Easy · Serves 4
+                  </p>
+                  <div class="ratio ratio-1x1 overflow-hidden">
+                    <img
+                      src="{% static 'img/pancakes.jpg' %}"
+                      class="square-img"
+                      alt="Stack of buttermilk pancakes"
+                    >
+                  </div>
+                </article>
               </div>
+              <div class="browse-hover-tip" data-visible="false">Next</div>
             </div>
+            <div class="browse-carousel-dots" aria-hidden="true"></div>
           </div>
+
+          <script>
+            // Lightweight autoplay carousel that keeps sliding forward forever
+            // (infinite loop) while centering the active card and showing edge hints.
+            document.addEventListener('DOMContentLoaded', function () {
+              const carousels = document.querySelectorAll('.browse-carousel');
+              if (!carousels.length) return;
+
+              carousels.forEach(function (carousel) {
+                const viewport = carousel.querySelector('.browse-carousel-viewport');
+                const track = carousel.querySelector('.browse-carousel-track');
+                const realSlides = Array.from(track.children); // originals only
+                const dotsWrap = carousel.querySelector('.browse-carousel-dots');
+                const hoverTip = carousel.querySelector('.browse-hover-tip');
+                if (!viewport || !track || !realSlides.length) return;
+
+                // Clone the edges so wrapping is seamless without repeating every card.
+                function makeClone(slide) {
+                  const clone = slide.cloneNode(true);
+                  clone.setAttribute('aria-hidden', 'true');
+                  clone.dataset.clone = 'true';
+                  return clone;
+                }
+                const firstClone = makeClone(realSlides[0]);
+                const lastClone = makeClone(realSlides[realSlides.length - 1]);
+                track.appendChild(firstClone);
+                track.insertBefore(lastClone, track.firstChild);
+
+                dotsWrap.innerHTML = realSlides.map(function (_s, idx) {
+                  return '<button type="button" class="browse-dot" aria-label="Show slide ' + (idx + 1) + '"></button>';
+                }).join('');
+                const dots = Array.from(dotsWrap.children);
+
+                const allowAutoplay = carousel.dataset.autoplay === 'true';
+                let index = 0;
+                let timer = null;
+                let scrollTicking = false;
+                let spacing = 0;
+                let pendingWrap = null;
+
+                function centerOn(el, smooth = true) {
+                  const offset = el.offsetLeft - (viewport.clientWidth - el.clientWidth) / 2;
+                  viewport.scrollTo({ left: offset, behavior: smooth ? 'smooth' : 'auto' });
+                }
+
+                function positionFor(el) {
+                  return el.offsetLeft - (viewport.clientWidth - el.clientWidth) / 2;
+                }
+
+                function markActive(realIndex) {
+                  realSlides.forEach(function (slide, i) {
+                    slide.classList.toggle('is-active', i === realIndex);
+                  });
+                  dots.forEach(function (dot, i) {
+                    dot.classList.toggle('is-active', i === realIndex);
+                  });
+                }
+
+                function measureSpacing() {
+                  if (realSlides.length > 1) {
+                    return realSlides[1].offsetLeft - realSlides[0].offsetLeft;
+                  }
+                  const styles = getComputedStyle(track);
+                  const gapValue = parseFloat(styles.columnGap || styles.gap || '0');
+                  return realSlides[0].clientWidth + gapValue;
+                }
+
+                function goTo(targetIndex, smooth = true) {
+                  const boundedIndex = ((targetIndex % realSlides.length) + realSlides.length) % realSlides.length;
+                  let targetSlide;
+                  if (targetIndex >= realSlides.length) {
+                    targetSlide = firstClone;
+                    pendingWrap = 'first';
+                  } else if (targetIndex < 0) {
+                    targetSlide = lastClone;
+                    pendingWrap = 'last';
+                  } else {
+                    targetSlide = realSlides[boundedIndex];
+                    pendingWrap = null;
+                  }
+
+                  centerOn(targetSlide, smooth);
+                  index = boundedIndex;
+                  markActive(index);
+                }
+
+                function wrapIfNeeded() {
+                  if (!spacing) return;
+                  const scrollLeft = viewport.scrollLeft;
+                  const firstClonePos = positionFor(firstClone);
+                  const lastClonePos = positionFor(lastClone);
+                  const threshold = spacing * 0.6;
+
+                  if (Math.abs(scrollLeft - firstClonePos) <= threshold) {
+                    centerOn(realSlides[0], false);
+                    index = 0;
+                    markActive(index);
+                    pendingWrap = null;
+                    return;
+                  }
+
+                  if (Math.abs(scrollLeft - lastClonePos) <= threshold) {
+                    centerOn(realSlides[realSlides.length - 1], false);
+                    index = realSlides.length - 1;
+                    markActive(index);
+                    pendingWrap = null;
+                    return;
+                  }
+
+                  if (pendingWrap === 'first' && scrollLeft > firstClonePos) {
+                    centerOn(realSlides[0], false);
+                    pendingWrap = null;
+                  } else if (pendingWrap === 'last' && scrollLeft < lastClonePos) {
+                    centerOn(realSlides[realSlides.length - 1], false);
+                    pendingWrap = null;
+                  }
+                }
+
+                function syncActiveFromScroll() {
+                  const scrollLeft = viewport.scrollLeft;
+                  let closestIndex = index;
+                  let smallestDelta = Infinity;
+
+                  realSlides.forEach(function (slide, i) {
+                    const delta = Math.abs(positionFor(slide) - scrollLeft);
+                    if (delta < smallestDelta) {
+                      smallestDelta = delta;
+                      closestIndex = i;
+                    }
+                  });
+
+                  if (closestIndex !== index) {
+                    index = closestIndex;
+                    markActive(index);
+                  }
+                }
+
+                function startAutoplay() {
+                  if (!allowAutoplay) return;
+                  if (timer) return;
+                  timer = setInterval(function () {
+                    goTo(index + 1);
+                  }, 5200);
+                }
+
+                function stopAutoplay() {
+                  clearInterval(timer);
+                  timer = null;
+                }
+
+                dots.forEach(function (dot, idx) {
+                  dot.addEventListener('click', function () {
+                    stopAutoplay();
+                    goTo(idx);
+                    startAutoplay();
+                  });
+                });
+
+                viewport.addEventListener('mouseenter', function () {
+                  stopAutoplay();
+                  if (hoverTip) hoverTip.dataset.visible = 'true';
+                });
+
+                viewport.addEventListener('mouseleave', function () {
+                  startAutoplay();
+                  if (hoverTip) hoverTip.dataset.visible = 'false';
+                });
+
+                viewport.addEventListener('pointerdown', stopAutoplay);
+                viewport.addEventListener('pointerup', startAutoplay);
+                viewport.addEventListener('touchstart', stopAutoplay, { passive: true });
+                viewport.addEventListener('touchend', startAutoplay, { passive: true });
+
+                viewport.addEventListener('mousemove', function (evt) {
+                  if (!hoverTip) return;
+                  const rect = viewport.getBoundingClientRect();
+                  const isNext = evt.clientX >= rect.left + rect.width / 2;
+                  hoverTip.textContent = isNext ? 'Next' : 'Previous';
+                  const x = evt.clientX - rect.left;
+                  const y = evt.clientY - rect.top;
+                  hoverTip.style.transform = 'translate(' + x + 'px,' + (y - 18) + 'px)';
+                  hoverTip.dataset.side = isNext ? 'next' : 'prev';
+                });
+
+                viewport.addEventListener('click', function (evt) {
+                  const rect = viewport.getBoundingClientRect();
+                  const isNext = evt.clientX >= rect.left + rect.width / 2;
+                  stopAutoplay();
+                  goTo(isNext ? index + 1 : index - 1);
+                  startAutoplay();
+                });
+
+                viewport.addEventListener('scroll', function () {
+                  if (scrollTicking) return;
+                  scrollTicking = true;
+                  requestAnimationFrame(function () {
+                    wrapIfNeeded();
+                    syncActiveFromScroll();
+                    scrollTicking = false;
+                  });
+                });
+
+                window.addEventListener('resize', function () {
+                  goTo(index, false);
+                  wrapIfNeeded();
+                });
+
+                requestAnimationFrame(function () {
+                  spacing = measureSpacing();
+                  goTo(0, false);
+                  wrapIfNeeded();
+                  if (carousel.dataset.autoplay === 'true') {
+                    startAutoplay();
+                  }
+                });
+              });
+            });
+          </script>
 
         </div>
       </div>
@@ -374,7 +611,7 @@
           <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-5">
             <div>
               <!-- Big CTA, almost hero-sized -->
-              <h2 class="display-4 fw-semibold mb-2">Get started now.</h2>
+              <h2 class="display-4 fw-semibold mb-2 footer-cta-title">Get started now!</h2>
               <p class="lead text-muted mb-0">
                 Start saving recipes, sharing ideas and cooking together.
               </p>
@@ -393,9 +630,9 @@
               <p class="small text-muted mb-3">All rights reserved.</p>
 
               <div class="d-flex flex-wrap gap-2">
-                <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill">Instagram</button>
-                <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill">TikTok</button>
-                <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill">YouTube</button>
+                <button type="button" class="btn btn-sm btn-outline-secondary">Instagram</button>
+                <button type="button" class="btn btn-sm btn-outline-secondary">TikTok</button>
+                <button type="button" class="btn btn-sm btn-outline-secondary">YouTube</button>
               </div>
             </div>
 
