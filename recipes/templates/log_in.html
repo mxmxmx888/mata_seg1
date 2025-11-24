@@ -34,7 +34,7 @@
 
       <form action="{% url 'log_in' %}" method="post">
         {% csrf_token %}
-        <input type="hidden" name="next" value="{{ next }}">
+        <input type="hidden" name="next" value="{{ next|default_if_none:'' }}">
         {% include "partials/bootstrap_form.html" with form=form %}
         <button type="submit" class="auth-primary-btn mt-2">
           Enter
