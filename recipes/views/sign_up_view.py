@@ -1,39 +1,46 @@
-from django.conf import settings
-from django.contrib.auth import login
+# recipes/views/sign_up_view.py
+from django.contrib.auth import login as auth_login
+from django.shortcuts import redirect, render
+from django.urls import reverse_lazy
 from django.views.generic.edit import FormView
-from django.urls import reverse
+
 from recipes.forms import SignUpForm
 from recipes.views.decorators import LoginProhibitedMixin
+from recipes.firebase_admin_client import ensure_firebase_user
 
 
 class SignUpView(LoginProhibitedMixin, FormView):
     """
-    Handle new user registration.
-
-    This class-based view displays a registration form for new users and handles
-    the creation of their accounts. Authenticated users are automatically
-    redirected away using `LoginProhibitedMixin`.
+    Handles user registration via the custom SignUpForm.
     """
 
-    form_class = SignUpForm
     template_name = "sign_up.html"
-    redirect_when_logged_in_url = settings.REDIRECT_URL_WHEN_LOGGED_IN
+    form_class = SignUpForm
+    success_url = reverse_lazy("dashboard")
+
+    def get(self, request, *args, **kwargs):
+        form = self.form_class()
+        return render(request, self.template_name, {"form": form})
 
     def form_valid(self, form):
-        """
-        Handle valid signup form submissions.
+        # 1) Create the Django user in the local DB
+        user = form.save()
 
-        When the signup form is submitted and validated successfully, a new
-        user account is created, and the user is automatically logged in.
-        Afterward, the method continues to the success URL defined by
-        `get_success_url()`.
-        """
-        self.object = form.save()
-        login(self.request, self.object)
-        return super().form_valid(form)
+        # 2) Make sure a Firebase Auth user exists for this email
+        ensure_firebase_user(
+            email=user.email,
+            display_name=user.get_full_name() or user.username,
+        )
 
-    def get_success_url(self):
-        """
-        Determine the redirect URL after successful registration.
-        """
-        return reverse(settings.REDIRECT_URL_WHEN_LOGGED_IN)
+        # 3) Log them into Django using the explicit backend
+        auth_login(
+            self.request,
+            user,
+            backend="django.contrib.auth.backends.ModelBackend",
+        )
+
+        # 4) Redirect to dashboard (or whatever success_url you have)
+        return redirect(self.get_success_url())
+
+    def form_invalid(self, form):
+        return render(self.request, self.template_name, {"form": form})
