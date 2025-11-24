@@ -314,7 +314,8 @@ body.auth-body {
   background-image: radial-gradient(circle at 0 0, #ffffff 0, #f5f5f7 55%);
   background-repeat: no-repeat;
   background-attachment: fixed;
-  overflow: hidden;
+  min-height: 100vh;
+  overflow-y: auto !important; /* allow auth pages to scroll on short viewports */
 }
 /* Letter-spacing tweaks: headings a bit tighter, small caps a bit wider */
 
