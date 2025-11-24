@@ -353,6 +353,36 @@ body[data-theme="dark"] .navbar-squarespace .navbar-toggler-icon {
   font-size: 0.9rem;
 }
 
+.navbar-squarespace .nav-account-trigger {
+  padding: 0.3rem 0.5rem;
+  border-radius: 999px;
+  gap: 0.35rem;
+  color: inherit;
+  transition: background-color 0.18s ease, transform 0.18s ease;
+}
+
+.navbar-squarespace .nav-account-trigger:hover,
+.navbar-squarespace .nav-account-trigger:focus-visible {
+  background-color: rgba(0, 0, 0, 0.05);
+  text-decoration: none;
+  outline: none;
+}
+
+body[data-theme="dark"] .navbar-squarespace .nav-account-trigger:hover,
+body[data-theme="dark"] .navbar-squarespace .nav-account-trigger:focus-visible {
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+.navbar-squarespace .nav-account-avatar {
+  font-size: 1.35rem;
+  line-height: 1;
+}
+
+.navbar-squarespace .nav-account-caret {
+  font-size: 0.95rem;
+  line-height: 1;
+}
+
 .avatar-pill {
   width: 28px;
   height: 28px;
