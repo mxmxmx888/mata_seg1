@@ -1,59 +1,38 @@
 # recipes/views/log_in_view.py
-from django.contrib.auth import login as auth_login
-from django.shortcuts import redirect, render
-from django.views.generic import View
 
-from recipes.forms import LogInForm
+from django.shortcuts import render, redirect
+from django.urls import reverse
+from django.contrib.auth import login
+from django.views import View
+
+from recipes.forms.log_in_form import LogInForm
 from recipes.views.decorators import LoginProhibitedMixin
 
 
 class LogInView(LoginProhibitedMixin, View):
-    """
-    Username + password login.
-
-    - Uses LogInForm.get_user(), which first tries Firebase,
-      then falls back to Django's password check.
-    - On success, logs in via the ModelBackend and redirects to `dashboard`
-      (or the ?next= URL if provided).
-    """
-
-    template_name = "log_in.html"
-
     def dispatch(self, request, *args, **kwargs):
-        # Capture ?next=/some/url so we can redirect there after login
-        self.next = request.GET.get("next") or request.POST.get("next")
+        # store ?next= from GET or POST
+        self.next = request.POST.get("next") or request.GET.get("next") or None
         return super().dispatch(request, *args, **kwargs)
 
-    def get(self, request, *args, **kwargs):
+    def get(self, request):
         form = LogInForm()
-        return render(
-            request,
-            self.template_name,
-            {
-                "form": form,
-                "next": self.next,
-            },
-        )
+        return render(request, "log_in.html", {"form": form, "next": self.next})
 
-    def post(self, request, *args, **kwargs):
+    def post(self, request):
         form = LogInForm(request.POST)
 
         if form.is_valid():
             user = form.get_user()
             if user is not None:
-                auth_login(
-                    request,
-                    user,
-                    backend="django.contrib.auth.backends.ModelBackend",
-                )
-                return redirect(self.next or "dashboard")
+                login(request, user)
 
-        # If we get here, login failed
-        return render(
-            request,
-            self.template_name,
-            {
-                "form": form,
-                "next": self.next,
-            },
-        )
+                # clean up the next URL
+                next_url = self.next
+                if not next_url or next_url == "None":
+                    next_url = reverse("dashboard")
+
+                return redirect(next_url)
+
+        # if invalid, re-render form
+        return render(request, "log_in.html", {"form": form, "next": self.next})
