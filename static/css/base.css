@@ -51,6 +51,10 @@ ul.errorlist {
   margin: 0;
 }
 
+.invalid-feedback {
+  font-weight: 300;
+}
+
 /* Awesome Serif font for headings */
 @font-face {
   font-family: "Awesome Serif";
@@ -158,7 +162,7 @@ h3.profile-title {
 .footer-cta {
   position: relative;
   overflow: hidden;
-  background-color: #0c0c0f;
+  background-color: #0c0c0c;
   color: #e7e7ea;
 }
 
@@ -199,7 +203,7 @@ h3.profile-title {
 .footer-cta .btn-outline-light:hover,
 .footer-cta .btn-outline-light:focus-visible {
   background-color: #e7e7ea;
-  color: #0c0c0f;
+  color: #0c0c0c;
   border-color: #e7e7ea;
 }
 
@@ -211,7 +215,7 @@ h3.profile-title {
 .footer-cta .btn-outline-secondary:hover,
 .footer-cta .btn-outline-secondary:focus-visible {
   border-color: #e7e7ea;
-  color: #0c0c0f;
+  color: #0c0c0c;
   background-color: #e7e7ea;
 }
 
@@ -225,7 +229,7 @@ h3.profile-title {
   font-family: "Awesome Serif", "Rethink Sans", system-ui, -apple-system, sans-serif !important;
   font-size: clamp(12rem, 40vw, 58rem) !important; /* scale to fit while leaving side space */
   line-height: 0.92;
-  color: #0b0c0f;
+  color: #0c0c0c;
   margin: 4vh 0 0;
   padding: 0 2vw 0;
   user-select: none;
@@ -460,13 +464,13 @@ h3 {
 
 [data-theme="dark"] .browse-hover-tip {
   background: rgba(255, 255, 255, 0.94);
-  color: #0c0c0f;
+  color: #0c0c0c;
 }
 
 @media (prefers-color-scheme: dark) {
   body:not([data-theme="light"]) .browse-hover-tip {
     background: rgba(255, 255, 255, 0.94);
-    color: #0c0c0f;
+    color: #0c0c0c;
   }
 }
 
@@ -482,7 +486,7 @@ h3 {
 
 .browse-dot.is-active {
   width: 28px;
-  background: #0c0c0f;
+  background: #0c0c0c;
   opacity: 1;
 }
 

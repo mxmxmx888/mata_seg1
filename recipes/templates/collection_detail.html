@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block body_class %}dashboard-body profile-body{% endblock %}
+
+{% block body %}
+{% include "partials/navbar_app.html" %}
+
+<main class="collection-shell container-fluid px-4 px-xl-5 pb-5">
+  <header class="collection-header text-center">
+    <a href="{% url 'profile' %}" class="collection-back d-inline-flex align-items-center gap-2 mb-3">
+      <i class="bi bi-arrow-left"></i>
+      <span>Back to profile</span>
+    </a>
+    <p class="collection-owner text-muted small mb-1">
+      {{ collection.followers|default:0 }} Follower{% if collection.followers|default:0 != 1 %}s{% endif %} · {{ profile.handle }}
+    </p>
+    <h1 class="collection-title mb-1">{{ collection.title }}</h1>
+    {% if collection.description %}
+      <p class="collection-description mb-3">{{ collection.description }}</p>
+    {% endif %}
+    <div class="collection-actions d-flex align-items-center justify-content-center gap-2">
+      <span class="collection-chip">My journeys</span>
+      <button type="button" class="collection-round-btn" aria-label="Toggle dark">
+        <i class="bi bi-moon-stars"></i>
+      </button>
+      <button type="button" class="collection-round-btn" aria-label="Share">
+        <i class="bi bi-upload"></i>
+      </button>
+      <button type="button" class="collection-round-btn" aria-label="Add">
+        <i class="bi bi-plus-lg"></i>
+      </button>
+      <button type="button" class="collection-round-btn" aria-label="More">
+        <i class="bi bi-three-dots"></i>
+      </button>
+    </div>
+  </header>
+
+  <section class="collection-grid">
+    {% for item in collection.items %}
+      <article class="collection-item">
+        <div class="collection-item-thumb" style="background-image: url('{{ item }}');"></div>
+        {% if forloop.first %}
+          <div class="collection-check">
+            <span>Traverse</span>
+            <i class="bi bi-check2"></i>
+          </div>
+        {% endif %}
+      </article>
+    {% endfor %}
+  </section>
+
+  <div class="find-similar text-center">
+    <button type="button" class="find-similar-btn">
+      Find similar <i class="bi bi-chevron-down"></i>
+    </button>
+  </div>
+</main>
+{% endblock %}

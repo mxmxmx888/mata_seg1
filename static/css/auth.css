@@ -41,7 +41,7 @@
   height: 260px;
   border-radius: 999px;
   border: 1px solid rgba(255, 255, 255, 0.08);
-  background: radial-gradient(circle at 30% 20%, #555 0, #111 40%, #050507 70%);
+  background: radial-gradient(circle at 30% 20%, #555 0, #111 40%, #050505 70%);
   opacity: 0.55;
 }
 
@@ -205,8 +205,8 @@
 /* =================================== */
 
 body[data-theme="dark"].auth-body {
-  background-color: #050507;
-  background-image: radial-gradient(circle at 0 0, #16171d 0, #050507 55%);
+  background-color: #050505;
+  background-image: radial-gradient(circle at 0 0, #16171d 0, #050505 55%);
   color: #f6f6f6;
 }
 
@@ -229,17 +229,17 @@ body[data-theme="dark"] .auth-card p.auth-subtitle {
 body[data-theme="dark"] .btn-auth {
   border-radius: 999px;
   border: 1px solid rgba(255, 255, 255, 0.12);
-  background-color: #101117;
+  background-color: #111111;
   color: #f6f6f6;
 }
 
 body[data-theme="dark"] .btn-auth-apple {
   background-color: #f6f6f6;
-  color: #050507;
+  color: #050505;
 }
 
 body[data-theme="dark"] .btn-auth-google {
-  background-color: #101117;
+  background-color: #111111;
   color: #f6f6f6;
   border-color: rgba(255, 255, 255, 0.12);
 }
@@ -281,7 +281,7 @@ body[data-theme="dark"] .auth-footer-link {
 
 body[data-theme="dark"] .auth-primary-btn {
   background-color: #f6f6f6;
-  color: #050507;
+  color: #050505;
 }
 
 body[data-theme="dark"] .auth-footer-link {
@@ -335,13 +335,13 @@ body[data-theme="dark"] .auth-footer-link a {
 @media (prefers-color-scheme: dark) {
   /* Main site in dark mode (auth pages handled further down) */
   body:not(.auth-body) {
-    background-color: #050507;
+    background-color: #050505;
     color: #f6f6f6;
   }
 
   body:not(.auth-body) .bg-white,
   body:not(.auth-body) .bg-light {
-    background-color: #050507 !important;
+    background-color: #050505 !important;
   }
 
   body:not(.auth-body) .text-dark,
@@ -360,7 +360,7 @@ body[data-theme="dark"] .auth-footer-link a {
   }
 
   body:not(.auth-body) .tile-box {
-    background-color: #101117;
+    background-color: #111111;
     border-color: #272730;
     color: #f6f6f6;
   }
@@ -374,7 +374,7 @@ body[data-theme="dark"] .auth-footer-link a {
   body:not(.auth-body) .btn.btn-outline-dark:hover,
   body:not(.auth-body) .btn.btn-outline-dark:focus-visible {
     background-color: #f6f6f6;
-    color: #050507;
+    color: #050505;
     border-color: #f6f6f6;
   }
 
@@ -388,13 +388,13 @@ body[data-theme="dark"] .auth-footer-link a {
   body:not(.auth-body) .btn.btn-outline-light:hover,
   body:not(.auth-body) .btn.btn-outline-light:focus-visible {
     background-color: #f6f6f6;
-    color: #050507;
+    color: #050505;
     border-color: #f6f6f6;
   }
 
   body:not(.auth-body) .btn.btn-dark {
     background-color: #f6f6f6;
-    color: #050507;
+    color: #050505;
     border-color: #f6f6f6;
   }
 
@@ -407,8 +407,8 @@ body[data-theme="dark"] .auth-footer-link a {
 
 @media (prefers-color-scheme: dark) {
   body.auth-body {
-    background-color: #050507;
-    background-image: radial-gradient(circle at 0 0, #16171d 0, #050507 55%);
+    background-color: #050505;
+    background-image: radial-gradient(circle at 0 0, #16171d 0, #050505 55%);
   }
 
   body.auth-body .navbar-squarespace .navbar-brand,
@@ -442,17 +442,17 @@ body[data-theme="dark"] .auth-footer-link a {
   .btn-auth {
     border-radius: 999px;
     border: 1px solid rgba(255, 255, 255, 0.12);
-    background-color: #101117;
+    background-color: #111111;
     color: #f6f6f6;
   }
 
   .btn-auth-apple {
     background-color: #f6f6f6;
-    color: #050507;
+    color: #050505;
   }
 
   .btn-auth-google {
-    background-color: #101117;
+    background-color: #111111;
     color: #f6f6f6;
   }
 
@@ -475,7 +475,7 @@ body[data-theme="dark"] .auth-footer-link a {
 
   .auth-primary-btn {
     background-color: #f6f6f6;
-    color: #050507;
+    color: #050505;
   }
 
   .auth-footer-link {
@@ -493,7 +493,7 @@ body[data-theme="dark"] .auth-footer-link a {
 body[data-theme="dark"]:not(.auth-body) .btn.btn-outline-dark:hover,
 body[data-theme="dark"]:not(.auth-body) .btn.btn-outline-dark:focus-visible {
   background-color: #f6f6f6;
-  color: #050507;
+  color: #050505;
   border-color: #f6f6f6;
 }
 
@@ -507,12 +507,12 @@ body[data-theme="dark"]:not(.auth-body) .cta-browse-btn.btn-outline-dark:focus-v
 body[data-theme="dark"]:not(.auth-body) .btn.btn-outline-light:hover,
 body[data-theme="dark"]:not(.auth-body) .btn.btn-outline-light:focus-visible {
   background-color: #f6f6f6;
-  color: #050507;
+  color: #050505;
   border-color: #f6f6f6;
 }
 
 body[data-theme="dark"]:not(.auth-body) .btn.btn-dark {
   background-color: #f6f6f6;
-  color: #050507;
+  color: #050505;
   border-color: #f6f6f6;
 }

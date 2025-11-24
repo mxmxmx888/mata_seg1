@@ -192,10 +192,10 @@ body[data-theme="dark"] .navbar-squarespace .navbar-toggler-icon {
 @media (max-width: 991.98px) and (prefers-color-scheme: dark) {
   /* Dark-mode default when navbar is transparent */
   .navbar-squarespace:not(.navbar-solid) .navbar-collapse {
-    background-color: #050507;
+    background-color: #050505;
   }
   .navbar-squarespace.navbar-solid .navbar-collapse {
-    background-color: #050507;
+    background-color: #050505;
   }
 }
 
@@ -363,7 +363,7 @@ body[data-theme="dark"] .navbar-squarespace .navbar-toggler-icon {
 /* Dark mode variants for navbars */
 @media (prefers-color-scheme: dark) {
   body:not(.auth-body) .navbar-squarespace {
-    background-color: #050507;
+    background-color: #050505;
     box-shadow: none;
   }
 
@@ -379,12 +379,12 @@ body[data-theme="dark"] .navbar-squarespace .navbar-toggler-icon {
   body:not(.auth-body) .navbar-squarespace .btn.btn-outline-dark:hover,
   body:not(.auth-body) .navbar-squarespace .btn.btn-outline-dark:focus-visible {
     background-color: #f6f6f6;
-    color: #050507;
+    color: #050505;
     border-color: #f6f6f6;
   }
 
   body:not(.auth-body) .navbar-squarespace.navbar-solid {
-    background-color: #050507;
+    background-color: #050505;
     box-shadow: none;
   }
 
@@ -394,7 +394,7 @@ body[data-theme="dark"] .navbar-squarespace .navbar-toggler-icon {
   }
 
   body:not(.auth-body) .navbar-app {
-    background-color: #050507;
+    background-color: #050505;
     border-bottom: none;
   }
 
@@ -406,11 +406,11 @@ body[data-theme="dark"] .navbar-squarespace .navbar-toggler-icon {
 
   body:not(.auth-body) .navbar-app .btn.btn-light {
     background-color: #f9fafb;
-    color: #050507;
+    color: #050505;
   }
 
   body:not(.auth-body) .cosmos-nav-search {
-    background-color: #111217;
+    background-color: #121212;
     border-color: #27272f;
   }
 
