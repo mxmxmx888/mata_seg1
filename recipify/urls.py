@@ -17,7 +17,7 @@ Including another URLconf
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, include
 from recipes import views
 from recipes.views.post_mock_view import mock_post_detail
 
@@ -25,6 +25,7 @@ from recipes.views.post_mock_view import mock_post_detail
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('accounts/', include('allauth.urls')),
     path('', views.home, name='home'),
     path('dashboard/', views.dashboard, name='dashboard'),
     path('log_in/', views.LogInView.as_view(), name='log_in'),
@@ -35,5 +36,6 @@ urlpatterns = [
     path('profile/', views.ProfileUpdateView.as_view(), name='profile'),
     path('sign_up/', views.SignUpView.as_view(), name='sign_up'),
     path("post/mock/", mock_post_detail, name="post_mock"),
+    path('api/profile', views.profile_api, name='profile_api'),
 ]
 urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

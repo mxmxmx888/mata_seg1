@@ -6,3 +6,4 @@ from .password_view import *
 from .password_reset_views import *
 from .profile_view import *
 from .sign_up_view import *
+from .api_views import *
