@@ -2,14 +2,13 @@
 
 ## Team members
 The members of the team are:
-- *enter full name 1 here*
-- *enter full name 2 here*
-- *enter full name 3 here*
-- *enter full name 4 here*
-- *enter full name 5 here (or delete if not applicable)*
+- Ayan Mamun
+- Amir Guliyev
+- Maksym Byelko
+- Tunjay Seyidali
 
 ## Project structure
-The project is called `recipify`.  It currently consists of a single app `recipes`.
+The project is called `recipi`.  It currently consists of a single app `recipes`.
 
 ## Deployed version of the application
 The deployed version of the application can be found at [*enter url here*](*enter_url_here*).
