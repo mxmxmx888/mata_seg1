@@ -1,0 +1,108 @@
+{% comment %}
+  posts: iterable of recipe-like objects with fields you support, e.g.
+  - post.author.username
+  - post.author.avatar_url (optional)
+  - post.title
+  - post.subtitle / short_description
+  - post.image_url
+  - post.cook_time_minutes
+  - post.difficulty
+  - post.num_ingredients
+  - post.likes
+  - post.saves
+{% endcomment %}
+
+{% if posts %}
+  {% for post in posts %}
+    <article class="feed-card mb-3">
+      <div class="feed-card-body">
+
+        <!-- Author row -->
+        <div class="d-flex align-items-center justify-content-between mb-2">
+          <div class="d-flex align-items-center gap-2">
+            <div class="feed-avatar">
+              {% if post.author.avatar_url %}
+                <img src="{{ post.author.avatar_url }}" alt="{{ post.author.username }}">
+              {% else %}
+                <span class="feed-avatar-fallback">
+                  {{ post.author.username|first|upper }}
+                </span>
+              {% endif %}
+            </div>
+            <div>
+              <div class="small fw-semibold">
+                {{ post.author.display_name|default:post.author.username }}
+              </div>
+              <div class="small text-muted">
+                {{ post.created_at|timesince }} ago · {{ post.author.handle|default:"@creator" }}
+              </div>
+            </div>
+          </div>
+
+          {% if show_shop_badge and post.is_shoppable %}
+            <span class="badge rounded-pill feed-badge-shop">Shop</span>
+          {% endif %}
+        </div>
+
+        <!-- Title + summary -->
+        <h2 class="h6 mb-1">{{ post.title }}</h2>
+        {% if post.short_description %}
+          <p class="small text-muted mb-2">
+            {{ post.short_description }}
+          </p>
+        {% endif %}
+
+        <!-- Recipe meta row -->
+        <div class="feed-meta small mb-2">
+          {% if post.cook_time_minutes %}
+            <span>⏱ {{ post.cook_time_minutes }} min</span>
+          {% endif %}
+          {% if post.difficulty %}
+            <span>• {{ post.difficulty }}</span>
+          {% endif %}
+          {% if post.num_ingredients %}
+            <span>• {{ post.num_ingredients }} ingredients</span>
+          {% endif %}
+          {% if post.serves %}
+            <span>• serves {{ post.serves }}</span>
+          {% endif %}
+        </div>
+
+        <!-- Image / video placeholder -->
+        {% if post.image_url %}
+          <div class="feed-media ratio ratio-16x9 mb-2">
+            <img src="{{ post.image_url }}" alt="{{ post.title }}">
+          </div>
+        {% endif %}
+
+        <!-- Actions -->
+        <div class="d-flex align-items-center justify-content-between mt-2">
+          <div class="d-flex align-items-center gap-3 feed-actions">
+            <button type="button" class="btn btn-link btn-sm p-0">
+              <i class="bi bi-heart"></i>
+              <span class="small">{{ post.likes|default:0 }}</span>
+            </button>
+            <button type="button" class="btn btn-link btn-sm p-0">
+              <i class="bi bi-bookmark"></i>
+              <span class="small">{{ post.saves|default:0 }}</span>
+            </button>
+            <button type="button" class="btn btn-link btn-sm p-0">
+              <i class="bi bi-share"></i>
+              <span class="small">Share</span>
+            </button>
+          </div>
+
+          <button type="button" class="btn btn-sm btn-outline-secondary feed-cook-btn">
+            Open cooking view
+          </button>
+        </div>
+
+      </div>
+    </article>
+  {% endfor %}
+{% else %}
+  <p class="small text-muted mt-4">
+    Nothing here yet. Once you and the people you follow start posting recipes,
+    they’ll appear in this feed.
+  </p>
+{% endif %}

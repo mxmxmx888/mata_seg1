@@ -2,6 +2,7 @@ from django import forms
 from django.contrib.auth import authenticate
 from django.core.validators import RegexValidator
 from recipes.models import User
+from recipes.firebase_auth_services import create_firebase_user
 
 class UserForm(forms.ModelForm):
     """
@@ -183,11 +184,24 @@ class SignUpForm(NewPasswordMixin, forms.ModelForm):
         """
 
         super().save(commit=False)
+
+        username = self.cleaned_data.get('username')
+        first_name = self.cleaned_data.get('first_name')
+        last_name = self.cleaned_data.get('last_name')
+        email = self.cleaned_data.get('email')
+        password = self.cleaned_data.get('new_password')
+
         user = User.objects.create_user(
-            self.cleaned_data.get('username'),
-            first_name=self.cleaned_data.get('first_name'),
-            last_name=self.cleaned_data.get('last_name'),
-            email=self.cleaned_data.get('email'),
-            password=self.cleaned_data.get('new_password'),
+            username,
+            first_name = first_name,
+            last_name = last_name,
+            email = email,
+            password = password,
         )
+
+        try:
+            create_firebase_user(uid = username, email = email, password = password)
+        except Exception:
+            pass
+        
         return user
