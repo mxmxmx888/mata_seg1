@@ -3,9 +3,15 @@
 import os
 import sys
 
-
 def main():
     """Run administrative tasks."""
+    
+    try:
+        import certifi
+        os.environ["SSL_CERT_FILE"] = certifi.where()
+    except ImportError:
+        pass
+
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'recipify.settings')
     try:
         from django.core.management import execute_from_command_line

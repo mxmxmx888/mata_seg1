@@ -1,8 +1,11 @@
 from django.conf import settings
+from django.core.mail import send_mail
 from django.urls import reverse_lazy
 from django.views.generic import FormView, TemplateView
 from recipes.forms import PasswordResetRequestForm, UsernameResetRequestForm
+from recipes.models import User
 from recipes.views.decorators import LoginProhibitedMixin
+from recipes.firebase_auth_services import generate_password_reset_link
 
 
 class PasswordResetRequestView(LoginProhibitedMixin, FormView):
@@ -21,10 +24,24 @@ class PasswordResetRequestView(LoginProhibitedMixin, FormView):
     def form_valid(self, form):
         """
         Accept the email and proceed to the confirmation step.
-
-        Hook for future email delivery can be added here without changing
-        the user-facing flow.
         """
+        email = form.cleaned_data['email']
+        
+        user = User.objects.filter(email=email).first()
+        
+        if user:
+            link = generate_password_reset_link(email)
+            
+            if link:
+                send_mail(
+                    subject='Password Reset Request',
+                    message=f'Click the following link to reset your password: {link}',
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    recipient_list=[email],
+                    fail_silently=False,
+                )
+            else:
+                print(f"Failed to generate Firebase reset link for {email}")
 
         return super().form_valid(form)
 
@@ -52,9 +69,19 @@ class UsernameResetRequestView(LoginProhibitedMixin, FormView):
     def form_valid(self, form):
         """
         Accept the email and proceed to the confirmation step.
-
-        Hook for future delivery of username reminder can be added here.
         """
+        email = form.cleaned_data['email']
+        
+        user = User.objects.filter(email=email).first()
+        
+        if user:
+            send_mail(
+                subject='Username Recovery',
+                message=f'Hello! The username associated with this email is: {user.username}',
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[email],
+                fail_silently=False,
+            )
 
         return super().form_valid(form)
 
