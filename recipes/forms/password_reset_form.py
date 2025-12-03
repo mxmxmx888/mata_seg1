@@ -10,3 +10,13 @@ class PasswordResetRequestForm(forms.Form):
     """
 
     email = forms.EmailField(label="Email address")
+
+
+class UsernameResetRequestForm(forms.Form):
+    """
+    Collect an email address to help a user recover their username.
+
+    We keep the behaviour neutral to avoid revealing whether an account exists.
+    """
+
+    email = forms.EmailField(label="Email address")

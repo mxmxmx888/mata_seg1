@@ -5,27 +5,42 @@
 /* Shared layout shells */
 
 .auth-page {
-  height: calc(100vh - 64px); /* viewport minus navbar */
+  --auth-card-width: clamp(320px, 36vw, 400px);
+  --auth-card-pad-y: clamp(1.5rem, 2.6vh, 2.05rem);
+  --auth-card-pad-x: clamp(1.45rem, 3vw, 1.9rem);
+  --auth-card-radius: clamp(1.2rem, 1.8vw, 1.55rem);
+  --auth-card-scale: clamp(0.86, 0.64 + 0.03vw + 0.03vh, 0.95);
+  min-height: 100vh; /* fill the viewport so nothing is clipped */
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 3rem 1.5rem;
+  padding: clamp(3rem, 6vh, 4rem) clamp(1.5rem, 4vw, 3rem);
   color: #111827;
   box-sizing: border-box;
 }
 
 /* Split layout for login (visual on the left, card on the right) */
 .auth-page-split {
-  height: calc(100vh - 64px);
+  min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 3.5rem 5vw;
+  padding: clamp(3rem, 6vh, 4.25rem) 5vw;
   color: #111827;
   box-sizing: border-box;
   max-width: 1200px;
   margin: 0 auto;
   column-gap: 4rem;
+}
+
+/* Allow scrolling on shorter viewports by relaxing centering */
+@media (max-height: 840px) {
+  .auth-page,
+  .auth-page-split {
+    align-items: flex-start;
+    padding-top: 2rem;
+    padding-bottom: 2rem;
+  }
 }
 
 /* Placeholder for the blob / orb animation on login */
@@ -47,7 +62,7 @@
 
 /* Right-hand panel that holds the actual card */
 .auth-panel {
-  flex: 0 0 420px;
+  flex: 1 1 420px;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -55,11 +70,18 @@
 
 /* Base card – light mode version */
 .auth-card {
+<<<<<<< ours
+  width: min(100%, var(--auth-card-width));
+  background: #ffffff;
+  border-radius: var(--auth-card-radius);
+  padding: var(--auth-card-pad-y) var(--auth-card-pad-x);
+=======
   width: 100%;
   max-width: 420px;
   background: #ffffff;
   border-radius: 1.8rem;
   padding: 2.5rem 2.4rem 2.8rem;
+>>>>>>> theirs
   border: 1px solid rgba(15, 23, 42, 0.08);
   box-shadow: 0 24px 60px rgba(15, 23, 42, 0.12);
   color: #111827;
@@ -304,15 +326,19 @@ body[data-theme="dark"] .auth-footer-link a {
 
 @media (max-width: 768px) {
   .auth-page {
-    height: calc(100vh - 64px);
+    --auth-card-width: clamp(300px, 80vw, 380px);
+    --auth-card-pad-y: clamp(1.8rem, 3.2vh, 2.2rem);
+    --auth-card-pad-x: clamp(1.5rem, 5vw, 2rem);
+    --auth-card-radius: clamp(1.2rem, 3vw, 1.6rem);
     padding: 2.5rem 1.5rem;
+    align-items: flex-start;
   }
 
   .auth-page-split {
-    height: calc(100vh - 64px);
     flex-direction: column;
     padding: 2.5rem 1.5rem;
     column-gap: 0;
+    align-items: flex-start;
   }
 
   .auth-visual {
@@ -325,6 +351,26 @@ body[data-theme="dark"] .auth-footer-link a {
   .auth-panel {
     flex: 0 0 auto;
   }
+}
+
+/* Shrink padding and allow easier scroll on short screens */
+@media (max-height: 760px) {
+  .auth-page,
+  .auth-page-split {
+    --auth-card-width: clamp(300px, 75vw, 370px);
+    --auth-card-pad-y: clamp(1.6rem, 3vh, 2rem);
+    --auth-card-pad-x: clamp(1.4rem, 4vw, 1.8rem);
+    --auth-card-radius: clamp(1.2rem, 3vw, 1.5rem);
+    padding: 1.5rem 1.25rem;
+    align-items: flex-start;
+  }
+<<<<<<< ours
+=======
+
+  .auth-card {
+    padding: 2rem 1.75rem 2.3rem;
+  }
+>>>>>>> theirs
 }
 
 

@@ -94,6 +94,26 @@
         });
       }
 
+      // Fallback: open dropdown menus (e.g., account arrow) if Bootstrap JS is missing
+      if (!window.bootstrap || !window.bootstrap.Dropdown) {
+        document.querySelectorAll('[data-bs-toggle="dropdown"]').forEach(function (toggle) {
+          const menu = toggle.nextElementSibling;
+          if (!menu || !menu.classList.contains('dropdown-menu')) return;
+
+          toggle.addEventListener('click', function (event) {
+            event.preventDefault();
+            menu.classList.toggle('show');
+          });
+
+          document.addEventListener('click', function (event) {
+            if (!toggle.closest('.dropdown')) return;
+            if (!toggle.closest('.dropdown').contains(event.target)) {
+              menu.classList.remove('show');
+            }
+          });
+        });
+      }
+
       // Auth forms: move label text into placeholder
       document.querySelectorAll('.auth-card form').forEach(function (form) {
         form.querySelectorAll('label').forEach(function (label) {

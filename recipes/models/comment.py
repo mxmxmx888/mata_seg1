@@ -27,7 +27,7 @@ class Comment(models.Model):
     # text (1–2000)
     text = models.TextField(max_length=2000)
 
-    # optional: timestamp when the comment was created
+    
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

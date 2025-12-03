@@ -1,8 +1,11 @@
 <div class="collapse navbar-collapse" id="navbarSupportedContent">
   <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
     <li class="nav-item dropdown">
-      <a class="nav-link" href="#" id="user-account-dropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-        <span class="bi-person-circle"></span>
+      <a class="nav-link nav-account-trigger d-flex align-items-center gap-2" href="#" id="user-account-dropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+        <span class="bi-person-circle nav-account-avatar"></span>
+        <svg class="nav-account-caret" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <path d="m6 9 6 6 6-6" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
       </a>
       <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="user-account-dropdown">
         <li><a class="dropdown-item" href="{% url 'profile' %}">Profile</a></li>
