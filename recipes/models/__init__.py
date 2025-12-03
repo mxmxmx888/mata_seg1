@@ -3,3 +3,7 @@ from .ingredient import Ingredient
 from .recipe_post import RecipePost
 from .recipe_step import RecipeStep
 from .like import Like
+from .comment import Comment
+from .favourite import Favourite 
+from .follows import Follows
+from .followers import Follower
