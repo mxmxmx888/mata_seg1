@@ -40,5 +40,6 @@ urlpatterns = [
     path('sign_up/', views.SignUpView.as_view(), name='sign_up'),
     path("post/mock/", mock_post_detail, name="post_mock"),
     path('api/profile', views.profile_api, name='profile_api'),
+    path('report/<str:content_type>/<uuid:object_id>/', views.report_content, name='report_content'),
 ]
 urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

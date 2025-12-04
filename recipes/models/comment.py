@@ -30,6 +30,8 @@ class Comment(models.Model):
     
     created_at = models.DateTimeField(auto_now_add=True)
 
+    is_hidden = models.BooleanField(default = False, help_text = "Hidden by admin due to reports")
+
     class Meta:
         db_table = "comment"
 
