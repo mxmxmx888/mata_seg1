@@ -2107,4 +2107,5 @@ body[data-theme="dark"]:not(.auth-body) .view-similar-meta {
   margin: 0;
   padding: 0 1rem 0.3rem;
   user-select: none;
+  text-align: center;
 }
