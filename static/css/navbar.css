@@ -44,18 +44,18 @@
   left: 0;
   right: 0;
   z-index: 1030;
-  background-color: transparent;     /* let the page background show through */
-  border-bottom: none !important;    /* kill the hairline in light mode */
-  padding-top: 0.3rem;               /* thinner bar */
+  background-color: transparent;
+  border-bottom: none !important;
+  padding-top: 0.3rem;
   padding-bottom: 0.3rem;
-  box-shadow: none !important;       /* override any inherited shadow */
+  box-shadow: none !important;
   border: 0 !important;
   --bs-navbar-border-width: 0;
   --bs-navbar-border-color: transparent;
   transition: background-color 0.3s ease, box-shadow 0.3s ease, color 0.3s ease;
 }
 
-/* Strip any bootstrap hairlines the component might inherit */
+/* Strip any bootstrap hairlines */
 .navbar,
 .navbar::before,
 .navbar::after,
@@ -65,9 +65,9 @@
   box-shadow: none !important;
 }
 
-/* Brand sizing (used across landing + app) */
+/* Brand sizing */
 .navbar-squarespace .navbar-brand {
-  position: relative;      /* lift the wordmark slightly for optical centering */
+  position: relative;
   top: -1px;
   font-size: 1.8rem;
   font-weight: 500;
@@ -76,26 +76,22 @@
   font-family: var(--heading-font);
 }
 
-/* Default (light page) navbar text */
 .navbar-squarespace .navbar-brand,
 .navbar-squarespace .nav-link {
   color: #000;
 }
 
-/* Auth pages want light text on top of the dark background */
 body.auth-body .navbar-squarespace .navbar-brand,
 body.auth-body .navbar-squarespace .nav-link {
   color: #111827;
 }
 
-/* When the landing page is scrolled, navbar goes solid */
+/* When scrolled */
 .navbar-squarespace.navbar-solid {
   background-color: #ffffff;
-  border-bottom: none !important;  /* ensure no divider shows on scroll */
-  box-shadow: none !important;     /* keep the bar flush to the page */
+  border-bottom: none !important;
+  box-shadow: none !important;
   border: 0 !important;
-  --bs-navbar-border-width: 0;
-  --bs-navbar-border-color: transparent;
 }
 
 .navbar-squarespace.navbar-solid .navbar-brand,
@@ -103,6 +99,7 @@ body.auth-body .navbar-squarespace .nav-link {
   color: #000;
 }
 
+/* Outline button */
 .navbar-squarespace.navbar-solid .btn.btn-outline-dark {
   color: #000;
   border-color: #000;
@@ -116,13 +113,14 @@ body.auth-body .navbar-squarespace .nav-link {
   border-color: #000000;
 }
 
+/* Create button */
 .navbar-squarespace.navbar-solid .btn.btn-dark {
   background-color: #000;
   color: #fff;
   border-color: #000;
 }
 
-/* Make the mobile toggler visible so collapsed links stay reachable */
+/* Mobile toggler */
 .navbar-squarespace .navbar-toggler {
   border: none;
   padding: 0.25rem 0.35rem;
@@ -138,30 +136,17 @@ body.auth-body .navbar-squarespace .nav-link {
   background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba(0,0,0,0.85)' stroke-linecap='round' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
 }
 
-.navbar-squarespace.navbar-solid .navbar-toggler {
-  border-color: transparent;
-}
-
 .navbar-squarespace.navbar-solid .navbar-toggler-icon {
   background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba(0,0,0,0.85)' stroke-linecap='round' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
 }
 
-/* Keep hamburger visible on dark hero before nav goes solid */
+/* Dark-mode toggler */
 body[data-theme="dark"] .navbar-squarespace .navbar-toggler-icon {
   background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba(255,255,255,0.92)' stroke-linecap='round' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
 }
 
-@media (prefers-color-scheme: dark) {
-  .navbar-squarespace .navbar-toggler-icon {
-    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba(255,255,255,0.92)' stroke-linecap='round' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
-  }
-  .navbar-squarespace.navbar-solid .navbar-toggler-icon {
-    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba(255,255,255,0.92)' stroke-linecap='round' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
-  }
-}
-
+/* Mobile collapsed menu */
 @media (max-width: 991.98px) {
-  /* Give the collapsed menu a surface so the CTA buttons do not disappear */
   .navbar-squarespace .navbar-collapse {
     position: absolute;
     top: 100%;
@@ -172,10 +157,6 @@ body[data-theme="dark"] .navbar-squarespace .navbar-toggler-icon {
     border-radius: 0;
     box-shadow: none;
     z-index: 1050;
-  }
-
-  .navbar-squarespace.navbar-solid .navbar-collapse {
-    background-color: #ffffff;
   }
 
   .navbar-squarespace .navbar-collapse .d-flex {
@@ -190,45 +171,37 @@ body[data-theme="dark"] .navbar-squarespace .navbar-toggler-icon {
 }
 
 @media (max-width: 991.98px) and (prefers-color-scheme: dark) {
-  /* Dark-mode default when navbar is transparent */
   .navbar-squarespace:not(.navbar-solid) .navbar-collapse {
     background-color: #050505;
   }
-  .navbar-squarespace.navbar-solid .navbar-collapse {
-    background-color: #050505;
-  }
 }
 
-
 /* =============================== */
-/* Cosmos-style app navbar         */
+/* Cosmos App Navbar               */
 /* =============================== */
 
-/* Logged-in navbar base (light mode) */
 .navbar-app {
-  background-color: #ffffff;         /* match page background in light */
-  border-bottom: none;               /* no line */
+  background-color: #ffffff;
+  border-bottom: none;
   position: relative;
-  padding-top: 0.3rem;               /* same thin height */
+  padding-top: 0.3rem;
   padding-bottom: 0.3rem;
-  overflow: visible;                 /* let dropdowns render outside the bar */
-  z-index: 1040;                     /* keep menus above nearby content */
+  overflow: visible;
+  z-index: 1040;
 }
 
-/* text colours in light mode */
 .navbar-app .navbar-brand,
 .navbar-app .nav-link {
   color: #111827;
 }
 
 .navbar-app .navbar-brand {
-  font-size: 1.8rem;     /* keep Recipi consistent with main navbar */
+  font-size: 1.8rem;
   font-weight: 500;
   letter-spacing: -0.01em;
-  text-transform: none;
   font-family: var(--heading-font);
   position: relative;
-  top: -5px;             /* small lift for visual centering */
+  top: -5px;
 }
 
 .navbar-app .nav-link {
@@ -241,143 +214,115 @@ body[data-theme="dark"] .navbar-squarespace .navbar-toggler-icon {
   opacity: 1;
 }
 
-/* “Create” button in light mode */
 .navbar-app .btn.btn-light {
   background-color: #111827;
   color: #f9fafb;
   border: none;
 }
 
-/* Hover state: subtle grey */
-.navbar-app .btn.btn-light:hover,
-.navbar-app .btn.btn-light:focus-visible {
+.navbar-app .btn.btn-light:hover {
   background-color: #e5e7eb;
   color: #111827;
-}
-
-/* Slightly taller create pill for better tap target */
-.navbar-app .btn.btn-light.rounded-pill {
-  padding: 0.45rem 1.15rem;
-  min-height: 40px;
-  line-height: 1.1;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
 }
 
 .navbar-actions {
   display: inline-flex;
   align-items: center;
-  gap: 0.9rem;  /* equal spacing between Create, icons, and avatar */
+  gap: 0.9rem;
 }
 
-/* Slightly tighten space between avatar and caret */
 .navbar-actions .nav-account-caret-btn {
-  margin-left: -1rem;
+  margin-left: 0.25rem;
 }
 
-/* Keep JS .navbar-solid from changing the colour */
 .navbar-app.navbar-solid {
   background-color: inherit;
   box-shadow: none;
 }
 
-/* Layout inside the logged-in navbar */
+/* =============================== */
+/* SEARCH BAR — CENTERED / SHIFTED */
+/* =============================== */
+
 .navbar-app .container-fluid {
   display: flex;
   align-items: center;
   position: relative;
 }
 
-/* Hard-centre the search bar */
 .navbar-search-wrapper {
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
-  width: clamp(240px, 50vw, 520px);   /* shrink as viewport narrows */
+  width: clamp(240px, 50vw, 520px);
   max-width: 520px;
   display: flex;
   justify-content: center;
 }
 
-/* Keep the pill full width inside the wrapper */
-.navbar-search-wrapper .cosmos-nav-search {
-  width: 100%;
-  max-width: 100%;
-}
-
-/* Navbar search pill – base (light mode) */
 .cosmos-nav-search {
-  max-width: 100%;
   width: 100%;
   height: 44px;
   padding: 0 0.9rem;
-  border-radius: 20px;                 /* rounded rectangle, not a full pill */
-  background-color: #f1f1f3;           /* soft light grey */
+  border-radius: 20px;
+  background-color: #f1f1f3;
   border: 1px solid #e1e1e6;
   display: flex;
   align-items: center;
   gap: 0.45rem;
-  transition:
-    background-color 0.18s ease,
-    border-color 0.18s ease,
-    box-shadow 0.18s ease,
-    transform 0.18s ease;
 }
 
 .cosmos-nav-search-input {
   flex: 1;
   border: none;
   outline: none;
-  background: transparent;             /* no white cut-out */
+  background: transparent;
   color: #4b5563;
   font-size: 0.85rem;
 }
 
-.cosmos-nav-search-input::placeholder {
-  color: #9ca3af;
-  font-size: 0.82rem;
+/* Shift search slightly left so it doesn't crash into My recipes */
+.navbar-app .navbar-search-wrapper {
+  left: 40%;
+  transform: translateX(-40%);
+  max-width: 460px;
 }
 
-/* Keep the search bar grey even when typing */
-.cosmos-nav-search-input:focus {
-  background-color: transparent !important;  /* stop the white cut-out */
-  box-shadow: none !important;              /* remove blue glow */
-  border-color: transparent !important;
-  outline: none;
+@media (max-width: 1400px) {
+  .navbar-app .navbar-search-wrapper {
+    left: 38%;
+    transform: translateX(-38%);
+    max-width: 430px;
+  }
 }
 
-.cosmos-nav-search .form-control:focus {
-  background-color: transparent !important;
-  box-shadow: none !important;
-  border-color: transparent !important;
+@media (max-width: 1200px) {
+  .navbar-app .navbar-search-wrapper {
+    left: 34%;
+    transform: translateX(-34%);
+    max-width: 400px;
+  }
 }
 
-/* Focus / typing state: gently expand + lift */
-.cosmos-nav-search:focus-within {
-  background-color: #ececf0;
-  border-color: #cbd5f5;
-  transform: scale(1.015);
-  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.12);
+@media (max-width: 992px) {
+  .navbar-app .navbar-search-wrapper {
+    display: none;
+  }
 }
 
-.cosmos-nav-search-icon {
-  border: none;
-  background: transparent;
-  color: #9ca3af;
-  padding: 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1rem;
+/* Ensure buttons never overlap search */
+.navbar-actions {
+  margin-left: auto;
 }
 
-/* Right-hand navbar icons + avatar */
+/* =============================== */
+/* ICON BUTTONS                    */
+/* =============================== */
+
 .icon-button {
   border: none;
   background: transparent;
   color: #111827;
-  padding: 0;
   width: 36px;
   height: 36px;
   border-radius: 50%;
@@ -386,56 +331,74 @@ body[data-theme="dark"] .navbar-squarespace .navbar-toggler-icon {
   justify-content: center;
 }
 
-.icon-button i {
-  font-size: 0.9rem;
-}
-
-/* Nudge heart icon down slightly without moving its circle */
-.navbar-app .icon-button .bi-heart {
-  transform: translateY(1px);
-}
-
-/* Grey halo on hover for icon pills */
-.navbar-app .icon-button:hover,
-.navbar-app .icon-button:focus-visible {
+.icon-button:hover {
   background-color: rgba(0, 0, 0, 0.08);
-  border-radius: 50%;
 }
 
-.navbar-squarespace .nav-account-trigger {
-  padding: 0.3rem 0.5rem;
-  border-radius: 999px;
-  gap: 0.35rem;
-  color: inherit;
-  transition: background-color 0.18s ease, transform 0.18s ease;
-  border: none;
-  background: transparent;
+/* =============================== */
+/* DARK MODE                       */
+/* =============================== */
+
+@media (prefers-color-scheme: dark) {
+  body:not(.auth-body) .navbar-app {
+    background-color: #050505;
+  }
+
+  .navbar-app .navbar-brand,
+  .navbar-app .icon-button {
+    color: #f9fafb;
+  }
+
+  .navbar-app .nav-link {
+    color: #b0b3ba;
+  }
+
+  .navbar-app .nav-link:hover {
+    color: #ffffff;
+  }
 }
 
-.navbar-squarespace .nav-account-trigger:hover,
-.navbar-squarespace .nav-account-trigger:focus-visible {
-  background-color: rgba(0, 0, 0, 0.05);
-  text-decoration: none;
-  outline: none;
+/* My recipes pill – keep text dark in all modes */
+.navbar-app .btn-outline-dark {
+  background-color: #ffffff;
+  color: #111827;
+  border-color: #111827;
 }
 
-body[data-theme="dark"] .navbar-squarespace .nav-account-trigger:hover,
-body[data-theme="dark"] .navbar-squarespace .nav-account-trigger:focus-visible {
-  background-color: rgba(255, 255, 255, 0.08);
+.navbar-app .btn-outline-dark:hover,
+.navbar-app .btn-outline-dark:focus-visible {
+  background-color: #111827;
+  color: #ffffff;
 }
 
-.navbar-squarespace .nav-account-avatar {
-  font-size: 1.35rem;
-  line-height: 1;
+/* Force specifically the My recipes link to stay dark-text */
+.navbar-actions a[href$="/my-recipes/"] {
+  background-color: #ffffff;
+  color: #111827 !important;
+  border-color: #111827;
 }
 
-.navbar-squarespace .nav-account-caret {
+.navbar-actions a[href$="/my-recipes/"]:hover,
+.navbar-actions a[href$="/my-recipes/"]:focus-visible {
+  background-color: #111827;
+  color: #ffffff !important;
+}
+
+/* Avatar round button (same as original) */
+.navbar-app .avatar-pill {
   width: 28px;
   height: 28px;
-  display: block;                    /* prevent inline shrink */
-  transform: translateY(2px);        /* nudge arrow lower */
+  border-radius: 999px;
+  background: radial-gradient(circle at 30% 20%, #facc15, #4f46e5);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  overflow: hidden;
+  clip-path: circle(50%);
 }
 
+/* ===== Original account menu styles (restores old behaviour) ===== */
 
 .nav-account-caret-btn {
   width: 36px;
@@ -448,13 +411,13 @@ body[data-theme="dark"] .navbar-squarespace .nav-account-trigger:focus-visible {
 }
 
 .nav-account-menu {
-  transform: translate(-200px, 16px); /* pull menu far left and drop slightly */
-  border-radius: 16px;               /* keep border and panel curvature aligned */
+  transform: translate(-200px, 16px);
+  border-radius: 16px;
   min-width: 230px;
   padding: 0.8rem;
   background-color: #252525;
   color: #f5f5f5;
-  border: 3px solid #1c1c1c;         /* visible outer border */
+  border: 3px solid #1c1c1c;
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02);
 }
 
@@ -486,8 +449,8 @@ body[data-theme="dark"] .nav-account-menu .dropdown-divider {
   background: radial-gradient(circle at 30% 20%, #facc15, #4f46e5);
   border: 2px solid rgba(255, 255, 255, 0.08);
   box-shadow: 0 8px 22px rgba(0, 0, 0, 0.35);
-  overflow: hidden;              /* keep square images perfectly round */
-  clip-path: circle(50%);        /* fallback to enforce circle in all browsers */
+  overflow: hidden;
+  clip-path: circle(50%);
 }
 
 .nav-account-menu-avatar,
@@ -495,8 +458,6 @@ body[data-theme="dark"] .nav-account-menu .dropdown-divider {
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
-  overflow: hidden;
-  clip-path: circle(50%);
 }
 
 .nav-account-menu-avatar img,
@@ -515,45 +476,6 @@ body[data-theme="dark"] .nav-account-menu .dropdown-divider {
   color: inherit;
 }
 
-.nav-account-pill-shell {
-  display: inline-flex;
-  padding: 4px;
-  border-radius: 999px;
-  background: rgba(0, 0, 0, 0.2);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05);
-}
-
-.nav-account-pill {
-  display: inline-flex;
-  position: relative;
-  padding: 5px;
-  border-radius: 999px;
-  background: radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.04));
-  box-shadow:
-    0 16px 32px rgba(0, 0, 0, 0.35),
-    0 0 22px rgba(116, 63, 255, 0.24),
-    0 0 30px rgba(23, 213, 255, 0.26);
-}
-
-.nav-account-pill-inner {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.4rem 1.05rem;
-  border-radius: 999px;
-  background: #ffffff;
-  color: #151515;
-  font-weight: 700;
-  text-decoration: none;
-  border: none;
-}
-
-.nav-account-pill-inner:hover,
-.nav-account-pill-inner:focus-visible {
-  text-decoration: none;
-  opacity: 0.85;
-}
-
 .nav-account-menu .dropdown-item {
   padding: 0.55rem 0.2rem;
   font-weight: 400;
@@ -569,111 +491,5 @@ body[data-theme="dark"] .nav-account-menu .dropdown-divider {
   opacity: 0.7;
 }
 
-.avatar-pill {
-  width: 28px;
-  height: 28px;
-  border-radius: 999px;
-  background: radial-gradient(circle at 30% 20%, #facc15, #4f46e5);
-   display: inline-flex;
-   align-items: center;
-   justify-content: center;
-   flex-shrink: 0;
-}
 
-/* Dark mode variants for navbars */
-@media (prefers-color-scheme: dark) {
-  body:not(.auth-body) .navbar-squarespace {
-    background-color: #050505;
-    box-shadow: none;
-  }
 
-  body:not(.auth-body) .navbar-squarespace .navbar-brand,
-  body:not(.auth-body) .navbar-squarespace .nav-link {
-    color: #f6f6f6;
-  }
-  body:not(.auth-body) .navbar-squarespace .btn.btn-outline-dark {
-    color: #f6f6f6;
-    border-color: #f6f6f6;
-    background-color: transparent;
-  }
-  body:not(.auth-body) .navbar-squarespace .btn.btn-outline-dark:hover,
-  body:not(.auth-body) .navbar-squarespace .btn.btn-outline-dark:focus-visible {
-    background-color: #f6f6f6;
-    color: #050505;
-    border-color: #f6f6f6;
-  }
-
-  body:not(.auth-body) .navbar-squarespace.navbar-solid {
-    background-color: #050505;
-    box-shadow: none;
-  }
-
-  body:not(.auth-body) .navbar-squarespace.navbar-solid .navbar-brand,
-  body:not(.auth-body) .navbar-squarespace.navbar-solid .nav-link {
-    color: #f6f6f6;
-  }
-
-  body:not(.auth-body) .navbar-app {
-    background-color: #050505;
-    border-bottom: none;
-  }
-
-  body:not(.auth-body) .navbar-app .navbar-brand,
-  body:not(.auth-body) .navbar-app .icon-button {
-    color: #f9fafb;
-  }
-
-  body:not(.auth-body) .navbar-app .icon-button:hover,
-  body:not(.auth-body) .navbar-app .icon-button:focus-visible {
-    background-color: rgba(255, 255, 255, 0.08);
-  }
-
-  /* Nav links default grey, turn white on hover/focus (including active link) */
-  body:not(.auth-body) .navbar-app .nav-link,
-  body:not(.auth-body) .navbar-app .nav-link.active {
-    color: #b0b3ba;
-  }
-
-  body:not(.auth-body) .navbar-app .nav-link:hover,
-  body:not(.auth-body) .navbar-app .nav-link:focus-visible,
-  body:not(.auth-body) .navbar-app .nav-link.active:hover,
-  body:not(.auth-body) .navbar-app .nav-link.active:focus-visible {
-    color: #ffffff;
-    opacity: 1;
-  }
-
-  body:not(.auth-body) .navbar-app .btn.btn-light {
-    background-color: #f9fafb;
-    color: #050505;
-  }
-
-  body:not(.auth-body) .navbar-app .btn.btn-light:hover,
-  body:not(.auth-body) .navbar-app .btn.btn-light:focus-visible {
-    background-color: #cccccd;
-    color: #050505;
-  }
-
-  body:not(.auth-body) .cosmos-nav-search {
-    background-color: #121212;
-    border-color: #27272f;
-  }
-
-  body:not(.auth-body) .cosmos-nav-search-input {
-    color: #e5e7eb;
-  }
-
-  body:not(.auth-body) .cosmos-nav-search-input::placeholder {
-    color: #71717a;
-  }
-
-  body:not(.auth-body) .cosmos-nav-search-icon {
-    color: #a1a1aa;
-  }
-
-  body:not(.auth-body) .cosmos-nav-search:focus-within {
-    background-color: #1f1f23;
-    border-color: #4b5563;
-    box-shadow: 0 14px 40px rgba(0, 0, 0, 0.7);
-    transform: scale(1.015);
-  }
-}

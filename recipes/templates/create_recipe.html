@@ -1,0 +1,38 @@
+{# recipes/templates/create_recipe.html #}
+{% extends "base.html" %}
+{% load static %}
+{% block body_class %}app-body{% endblock %}
+
+{% block body %}
+  {% include "partials/navbar_app.html" %}
+
+  <main class="app-page">
+    <div class="container-lg">
+
+      <h1 class="hero-title create-recipe-title">Create a recipe</h1>
+      <p class="hero-lead create-recipe-lead">
+        Give it a title, a short description, then list ingredients and steps.
+      </p>
+
+      <div class="create-recipe-card">
+        <form method="post" enctype="multipart/form-data">
+          {% csrf_token %}
+
+          {% include "partials/bootstrap_form.html" with form=form %}
+
+          <div class="small text-muted mb-2">
+            Tip: add tags like <code>#food</code>, <code>#dinner</code>, or <code>#private</code> in the tags field to control how your recipes are discovered.
+          </div>
+
+          <div class="mt-3 text-center">
+            <button type="submit" class="btn-save-recipe">
+              Save recipe
+            </button>
+          </div>
+        </form>
+      </div>
+
+    </div>
+  </main>
+{% endblock %}
+

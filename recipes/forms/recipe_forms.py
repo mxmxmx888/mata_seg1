@@ -1,0 +1,103 @@
+# recipes/forms/recipe_forms.py
+
+from django import forms
+
+try:
+    from recipes.models import RecipePost, Ingredient, RecipeStep
+except Exception:
+    from recipes.models.recipe_post import RecipePost
+    from recipes.models.ingredient import Ingredient
+    from recipes.models.recipe_step import RecipeStep
+
+CATEGORIES = [
+    ("breakfast", "Breakfast"),
+    ("lunch", "Lunch"),
+    ("dinner", "Dinner"),
+    ("dessert", "Dessert"),
+    ("vegan", "Vegan"),
+]
+
+class RecipePostForm(forms.ModelForm):
+
+    category = forms.ChoiceField(
+        choices=CATEGORIES,
+        required=True,
+        label="Category",
+        help_text="Pick one main category for this recipe.",
+    )
+
+    tags_text = forms.CharField(
+        label="Tags",
+        required=False,
+        help_text="Separate tags with commas, e.g. pasta, quick, vegetarian",
+    )
+    ingredients_text = forms.CharField(
+        label="Ingredients",
+        required=False,
+        widget=forms.Textarea(attrs={"rows": 5}),
+        help_text="One ingredient per line.",
+    )
+    steps_text = forms.CharField(
+        label="Steps",
+        required=False,
+        widget=forms.Textarea(attrs={"rows": 6}),
+        help_text="One step per line.",
+    )
+
+    class Meta:
+        model = RecipePost
+        # NOTE: category is placed directly after description
+        fields = [
+            "title",
+            "description",
+            "category",       
+            "image",
+            "prep_time_min",
+            "cook_time_min",
+            "nutrition",
+        ]
+
+    def parse_tags(self):
+        """
+        Turn the free-text tag field into a clean list,
+        and also attach the chosen category as a special tag
+        like `category:dinner`.
+        """
+        raw = (self.cleaned_data.get("tags_text") or "").strip()
+        tags = []
+        if raw:
+            parts = [p.strip() for p in raw.split(",")]
+            tags = [p for p in parts if p]
+
+        category = self.cleaned_data.get("category")
+        if category:
+            tags.append(f"category:{category.lower()}")
+
+        return tags
+
+    def _split_lines(self, key):
+        text = (self.cleaned_data.get(key) or "").strip()
+        if not text:
+            return []
+        lines = [line.strip() for line in text.splitlines()]
+        return [l for l in lines if l]
+
+    def create_ingredients(self, recipe):
+        Ingredient.objects.filter(recipe_post=recipe).delete()
+        lines = self._split_lines("ingredients_text")
+        for idx, line in enumerate(lines, start=1):
+            Ingredient.objects.create(
+                recipe_post=recipe,
+                name=line,
+                position=idx,
+            )
+
+    def create_steps(self, recipe):
+        RecipeStep.objects.filter(recipe_post=recipe).delete()
+        lines = self._split_lines("steps_text")
+        for idx, line in enumerate(lines, start=1):
+            RecipeStep.objects.create(
+                recipe_post=recipe,
+                description=line,
+                position=idx,
+            )

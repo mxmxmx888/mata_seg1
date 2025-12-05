@@ -1,32 +1,42 @@
-{% load static %}
-
-{% comment %}
-Each post can later have: title, image_url, cook_time_minutes, num_ingredients, etc.
-This template also handles the "no posts yet" case by showing placeholder tiles.
-{% endcomment %}
-
+{# recipes/templates/partials/recipe_grid.html #}
 {% if posts %}
-  {% for post in posts %}
-    <article class="cosmos-tile">
-      <div class="cosmos-tile-media ratio ratio-4x5">
-        {% if post.image_url %}
-          <img src="{{ post.image_url }}" alt="{{ post.title }}">
-        {% else %}
-          <img src="{% static 'img/placeholder-recipe.jpg' %}" alt="{{ post.title }}">
+  <div class="my-recipes-grid">
+    {% for post in posts %}
+      <article class="my-recipe-card">
+        <h2 class="my-recipe-title">
+          <a href="{% url 'recipe_detail' post.id %}">
+            {{ post.title }}
+          </a>
+        </h2>
+
+        {% if post.description %}
+          <p class="my-recipe-description">
+            {{ post.description|truncatewords:18 }}
+          </p>
         {% endif %}
-      </div>
-      <div class="cosmos-tile-meta">
-        <h2 class="cosmos-tile-title">{{ post.title }}</h2>
-        <p class="cosmos-tile-sub small">
-          {% if post.cook_time_minutes %}⏱ {{ post.cook_time_minutes }} min{% endif %}
-          {% if post.num_ingredients %} • {{ post.num_ingredients }} ingredients{% endif %}
+
+        <p class="my-recipe-meta mb-0">
+          <span>Prep: {{ post.prep_time_min }} min</span>
+          <span>Cook: {{ post.cook_time_min }} min</span>
         </p>
-      </div>
-    </article>
-  {% endfor %}
+
+        <div class="my-recipe-actions">
+          <a href="{% url 'recipe_detail' post.id %}" class="btn btn-sm btn-outline-light rounded-pill px-3">
+            View
+          </a>
+          {% if request.user.is_authenticated and request.user == post.author %}
+            <form method="post" action="{% url 'recipe_delete' post.id %}">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3">
+                Delete
+              </button>
+            </form>
+          {% endif %}
+        </div>
+      </article>
+    {% endfor %}
+  </div>
 {% else %}
-  {# simple placeholders so you can see the layout before the backend exists #}
-  {% for i in "123456789012" %}
-    <article class="cosmos-tile cosmos-tile-placeholder"></article>
-  {% endfor %}
+  <p class="text-muted mt-3">You haven’t created any recipes yet.</p>
 {% endif %}
+

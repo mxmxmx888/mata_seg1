@@ -1,17 +1,209 @@
-from django.contrib.auth.decorators import login_required
+# recipes/views/dashboard_view.py
+
 from django.shortcuts import render
+from django.db.models import Q
+from django.utils import timezone
+
+try:
+    # most likely setup
+    from recipes.models import RecipePost, Favourite, Like
+except Exception:
+    # fallback if models are split by module
+    from recipes.models.recipe_post import RecipePost
+    from recipes.models.favourite import Favourite
+    from recipes.models.like import Like
+
+try:
+    from recipes.models.followers import Follower
+except Exception:
+    # if Follower is re-exported from recipes.models
+    from recipes.models import Follower
 
 
-#@login_required /* switched off/on for testing */
+def _normalise_tags(tags):
+    """
+    Make sure tags are always a simple list of lowercase strings.
+    """
+    if not tags:
+        return []
+    if isinstance(tags, str):
+        parts = [p.strip() for p in tags.split(",")]
+        return [p.lower() for p in parts if p]
+    if isinstance(tags, list):
+        return [str(t).strip().lower() for t in tags if str(t).strip()]
+    return []
+
+
+def _user_preference_tags(user):
+    """
+    Collect tags from recipes the user liked or saved.
+    Very small and simple “preference profile”.
+    """
+    tags = []
+
+    fav_qs = Favourite.objects.filter(user=user).select_related("recipe_post")
+    like_qs = Like.objects.filter(user=user).select_related("recipe_post")
+
+    for fav in fav_qs:
+        tags.extend(_normalise_tags(getattr(fav.recipe_post, "tags", [])))
+    for like in like_qs:
+        tags.extend(_normalise_tags(getattr(like.recipe_post, "tags", [])))
+
+    seen = set()
+    result = []
+    for t in tags:
+        if t not in seen:
+            seen.add(t)
+            result.append(t)
+    return result
+
+
+def _base_posts_queryset():
+    """
+    Only posts that are actually published, newest first.
+    """
+    return (
+        RecipePost.objects.filter(published_at__isnull=False)
+        .select_related("author")
+        .order_by("-published_at", "-created_at")
+    )
+
+
+def _score_post_for_user(post, preferred_tags, followed_author_ids):
+    """
+    Tiny scoring function – nothing fancy, just enough to look “smart”.
+    """
+    score = 0
+
+    post_tags = set(_normalise_tags(getattr(post, "tags", [])))
+    pref_set = set(preferred_tags)
+
+    if post_tags & pref_set:
+        score += 3
+
+    if getattr(post, "author_id", None) in followed_author_ids:
+        score += 2
+
+    saved_count = getattr(post, "saved_count", 0) or 0
+    score += saved_count
+
+    if getattr(post, "published_at", None):
+        age_days = (timezone.now() - post.published_at).days
+    else:
+        age_days = 999
+    score += max(0, 10 - age_days)
+
+    return score
+
+
+def _get_for_you_posts(user, query=None, limit=12):
+    qs = _base_posts_queryset()
+
+    if query:
+        qs = qs.filter(
+            Q(title__icontains=query)
+            | Q(description__icontains=query)
+            | Q(tags__icontains=query)
+        )
+
+    preferred_tags = _user_preference_tags(user)
+
+    followed_author_ids = list(
+        Follower.objects.filter(follower=user).values_list("author_id", flat=True)
+    )
+
+    posts = list(qs[:100])
+
+    if preferred_tags or followed_author_ids:
+        scored = [
+            (_score_post_for_user(p, preferred_tags, followed_author_ids), p)
+            for p in posts
+        ]
+        scored.sort(key=lambda x: x[0], reverse=True)
+        posts = [p for _, p in scored]
+
+    return posts[:limit]
+
+
+def _get_following_posts(user, query=None, limit=12):
+    followed_ids = list(
+        Follower.objects.filter(follower=user).values_list("author_id", flat=True)
+    )
+    if not followed_ids:
+        return []
+
+    qs = _base_posts_queryset().filter(author_id__in=followed_ids)
+
+    if query:
+        qs = qs.filter(
+            Q(title__icontains=query)
+            | Q(description__icontains=query)
+            | Q(tags__icontains=query)
+        )
+
+    return list(qs[:limit])
+
+
 def dashboard(request):
     """
-    Display the current user's dashboard.
-
-    This view renders the dashboard page for the authenticated user.
-    It ensures that only logged-in users can access the page. If a user
-    is not authenticated, they are automatically redirected to the login
-    page.
+    Main “Discover” page.
     """
+    if not request.user.is_authenticated:
+        return render(request, "discover_logged_out.html")
 
-    current_user = request.user
-    return render(request, 'dashboard.html', {'user': current_user})
+    q = (request.GET.get("q") or "").strip()
+    category = (request.GET.get("category") or "all").strip()
+    ingredient_q = (request.GET.get("ingredient") or "").strip()
+    sort = (request.GET.get("sort") or "newest").strip()
+
+    discover_qs = (
+        RecipePost.objects.filter(published_at__isnull=False)
+        .select_related("author")
+    )
+
+    if request.user.is_authenticated:
+        discover_qs = discover_qs.exclude(
+            Q(tags__icontains="#private") & ~Q(author=request.user)
+        )
+
+    combined_keyword = " ".join(
+        part for part in [q, ingredient_q] if part
+    ).strip()
+
+    if combined_keyword:
+        discover_qs = discover_qs.filter(
+            Q(title__icontains=combined_keyword)
+            | Q(description__icontains=combined_keyword)
+            | Q(tags__icontains=combined_keyword)
+        )
+
+    if category and category != "all":
+        discover_qs = discover_qs.filter(
+            tags__icontains=f"category:{category.lower()}"
+        )
+
+    if sort == "popular":
+        discover_qs = discover_qs.order_by(
+            "-saved_count", "-published_at", "-created_at"
+        )
+    elif sort == "oldest":
+        discover_qs = discover_qs.order_by("published_at", "created_at")
+    else:
+        discover_qs = discover_qs.order_by("-published_at", "-created_at")
+
+    popular_recipes = list(discover_qs[:18])
+
+    for_you_posts = _get_for_you_posts(request.user, query=q)
+    following_posts = _get_following_posts(request.user, query=q)
+
+    context = {
+        "current_user": request.user,
+        "search_query": q,
+        "popular_recipes": popular_recipes,
+        "for_you_posts": for_you_posts,
+        "following_posts": following_posts,
+        "category": category,
+        "ingredient": ingredient_q,
+        "sort": sort,
+    }
+    return render(request, "dashboard.html", context)

@@ -3,7 +3,6 @@
 <nav class="navbar navbar-expand-lg navbar-squarespace navbar-app">
   <div class="container-fluid px-4 px-xl-5">
 
-    <!-- Left: logo + sections -->
     <div class="d-flex align-items-center gap-4">
       <a class="navbar-brand fw-semibold mb-0" href="{% url 'dashboard' %}">
         Recipi
@@ -19,33 +18,38 @@
       </ul>
     </div>
 
-    <!-- Center: search pill -->
-    <div class="navbar-search-wrapper mx-auto">
-        <form class="cosmos-nav-search d-none d-lg-flex mx-auto" method="get" action="#">
-            <button class="cosmos-nav-search-icon" type="button">
-              <i class="bi bi-stars"></i>
-            </button>
-          
-            <input
-              class="form-control cosmos-nav-search-input"
-              type="search"
-              name="q"
-              placeholder="Try ‘15 minute pasta’ or ‘one-pan chicken’"
-            >
-          
-            <button class="cosmos-nav-search-icon" type="button">
-              <i class="bi bi-bullseye"></i>      <!-- visual search -->
-            </button>
-            <button class="cosmos-nav-search-icon" type="button">
-              <i class="bi bi-clock-history"></i> <!-- timer -->
-            </button>
-          </form>          
-    </div>
-      
+    <div class="navbar-search-wrapper d-none d-lg-flex">
+      <form
+        class="cosmos-nav-search w-100"
+        method="get"
+        action="{% url 'dashboard' %}"
+      >
+        <button class="cosmos-nav-search-icon" type="submit">
+          <i class="bi bi-stars"></i>
+        </button>
 
-    <!-- Right: create + icons + avatar -->
-    <div class="navbar-actions ms-auto">
-      <a href="#" class="btn btn-sm btn-light rounded-pill px-3">
+        <input
+          class="form-control cosmos-nav-search-input"
+          type="search"
+          name="q"
+          placeholder="Try ‘15 minute pasta’ or ‘one-pan chicken’"
+          value="{{ search_query|default:'' }}"
+        >
+
+        <button class="cosmos-nav-search-icon" type="button">
+          <i class="bi bi-bullseye"></i>
+        </button>
+        <button class="cosmos-nav-search-icon" type="button">
+          <i class="bi bi-clock-history"></i>
+        </button>
+      </form>
+    </div>
+
+    <div class="navbar-actions ms-auto d-flex align-items-center gap-2">
+      <a href="{% url 'my_recipes' %}" class="btn btn-outline-dark rounded-pill px-3">
+        My recipes
+      </a>
+      <a href="{% url 'recipe_create' %}" class="btn btn-dark rounded-pill px-3">
         Create
       </a>
 

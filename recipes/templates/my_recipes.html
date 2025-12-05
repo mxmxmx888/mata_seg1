@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% load static %}
+{% block body_class %}app-body{% endblock %}
+
+{% block body %}
+  {% include "partials/navbar_app.html" %}
+
+  <main class="container-lg app-page">
+    <h1 class="hero-title mb-4">My recipes</h1>
+
+    {% if posts %}
+      <div class="row g-4">
+        {% for post in posts %}
+          <div class="col-12 col-md-6 col-lg-4">
+            <article class="my-recipe-card h-100">
+              {% if post.image %}
+                <div class="my-recipe-thumb" style="background-image: url('{{ post.image.url }}');"></div>
+              {% endif %}
+
+              <div class="my-recipe-body">
+                <h2 class="my-recipe-title">
+                  <a href="{% url 'recipe_detail' post.id %}">
+                    {{ post.title }}
+                  </a>
+                </h2>
+
+                {% if post.description %}
+                  <p class="my-recipe-desc">
+                    {{ post.description|truncatechars:90 }}
+                  </p>
+                {% endif %}
+
+                <p class="my-recipe-meta mb-3">
+                  {% if post.prep_time_min %}Prep: {{ post.prep_time_min }} min{% endif %}
+                  {% if post.prep_time_min and post.cook_time_min %} · {% endif %}
+                  {% if post.cook_time_min %}Cook: {{ post.cook_time_min }} min{% endif %}
+                </p>
+
+                <div class="d-flex gap-2">
+                  <a href="{% url 'recipe_detail' post.id %}" class="btn btn-sm btn-outline-light rounded-pill px-3">
+                    View
+                  </a>
+                  <form method="post" action="{% url 'recipe_delete' post.id %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3">
+                      Delete
+                    </button>
+                  </form>
+                </div>
+              </div>
+            </article>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p class="text-muted mt-4">You haven’t created any recipes yet.</p>
+    {% endif %}
+  </main>
+{% endblock %}
