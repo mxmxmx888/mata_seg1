@@ -8,11 +8,14 @@ is swallowed and generation continues.
 """
 
 
-
+from typing import Set, Tuple
 from faker import Faker
-from random import randint, random
-from django.core.management.base import BaseCommand, CommandError
+from random import sample
+from django.core.management.base import BaseCommand
+from django.db import transaction
 from recipes.models import User
+from recipes.models.followers import Follower
+from recipes.models.follows import Follows
 
 
 user_fixtures = [
@@ -54,6 +57,7 @@ class Command(BaseCommand):
         post-processing or debugging (not required for operation).
         """
         self.create_users()
+        self.seed_followers_and_follows(follow_k=5)
         self.users = User.objects.all()
 
     def create_users(self):
@@ -108,6 +112,31 @@ class Command(BaseCommand):
             self.create_user(data)
         except:
             pass
+
+    def seed_followers_and_follows(self, follow_k: int = 5) -> None:
+        ids = list(User.objects.values_list("id", flat=True))
+        n = len(ids)
+        if n < 2:
+            return
+
+        k = max(0, min(follow_k, n - 1))
+        edges: set[tuple[str, str]] = set()
+
+        for author in ids:
+            pool = [x for x in ids if x != author]
+            followees = sample(pool, k) if k else []
+            for f in followees:
+                edges.add((author, f))
+
+        follower_rows = [Follower(follower_id=a, author_id=b) for (a, b) in edges]
+        follows_rows = [Follows(author_id=a, followee_id=b) for (a, b) in edges]
+
+        
+        with transaction.atomic():
+            Follower.objects.bulk_create(follower_rows, ignore_conflicts=True, batch_size=1000)
+            Follows.objects.bulk_create(follows_rows, ignore_conflicts=True, batch_size=1000)
+
+
 
     def create_user(self, data):
         """
