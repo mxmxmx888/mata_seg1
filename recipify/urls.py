@@ -14,10 +14,12 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import path, include
+
 from recipes import views
 from recipes.views.post_mock_view import mock_post_detail
 from recipes.views.recipe_views import (
@@ -27,8 +29,8 @@ from recipes.views.recipe_views import (
     saved_recipes,
     toggle_favourite,
     toggle_like,
-    recipe_delete, 
-    toggle_follow,             
+    delete_my_recipe,
+    toggle_follow,
 )
 
 urlpatterns = [
@@ -49,10 +51,10 @@ urlpatterns = [
     path("post/mock/", mock_post_detail, name="post_mock"),
     path('recipes/create/', recipe_create, name='recipe_create'),
     path('recipes/<uuid:post_id>/', recipe_detail, name='recipe_detail'),
-    path('recipes/<uuid:post_id>/delete/', recipe_delete, name='recipe_delete'),  
     path('recipes/<uuid:post_id>/favourite/', toggle_favourite, name='toggle_favourite'),
     path('recipes/<uuid:post_id>/like/', toggle_like, name='toggle_like'),
     path('my-recipes/', my_recipes, name='my_recipes'),
+    path('my-recipes/<uuid:post_id>/delete/', delete_my_recipe, name='delete_my_recipe'),
     path('saved/', saved_recipes, name='saved_recipes'),
     path('api/profile', views.profile_api, name='profile_api'),
     path('u/<str:username>/follow/', toggle_follow, name='toggle_follow'),

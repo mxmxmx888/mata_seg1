@@ -1,11 +1,13 @@
+# recipes/views/recipe_views.py
+
 from django.contrib import messages
+from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
-from recipes.models.followers import Follower
-from recipes.models import User
+
 from recipes.forms.recipe_forms import RecipePostForm
 
 try:
@@ -17,6 +19,13 @@ except Exception:
     from recipes.models.favourite import Favourite
     from recipes.models.like import Like
 
+try:
+    from recipes.models.followers import Follower
+except Exception:
+    from recipes.models import Follower
+
+User = get_user_model()
+
 
 @login_required
 def recipe_create(request):
@@ -24,18 +33,17 @@ def recipe_create(request):
         form = RecipePostForm(request.POST, request.FILES or None)
         if form.is_valid():
             cleaned = form.cleaned_data
-
-            tags = form.parse_tags()
+            tags_list = form.parse_tags()
 
             recipe = RecipePost.objects.create(
                 author=request.user,
                 title=cleaned["title"],
                 description=cleaned.get("description") or "",
-                image=cleaned.get("image") or "",
+                image=cleaned.get("image") or None,
                 prep_time_min=cleaned.get("prep_time_min") or 0,
                 cook_time_min=cleaned.get("cook_time_min") or 0,
                 nutrition=cleaned.get("nutrition") or "",
-                tags=tags,
+                tags=tags_list,
                 published_at=timezone.now(),
             )
 
@@ -49,6 +57,7 @@ def recipe_create(request):
 
     return render(request, "create_recipe.html", {"form": form})
 
+
 def recipe_detail(request, post_id):
     recipe = get_object_or_404(RecipePost, id=post_id)
     ingredients = Ingredient.objects.filter(recipe_post=recipe).order_by("position")
@@ -61,12 +70,10 @@ def recipe_detail(request, post_id):
     if request.user.is_authenticated:
         user_liked = Like.objects.filter(user=request.user, recipe_post=recipe).exists()
         user_saved = Favourite.objects.filter(user=request.user, recipe_post=recipe).exists()
-
-        if recipe.author_id != request.user.id:
-            is_following_author = Follower.objects.filter(
-                follower_id=request.user.id,
-                author_id=recipe.author_id,
-            ).exists()
+        is_following_author = Follower.objects.filter(
+            follower=request.user,
+            author=recipe.author,
+        ).exists()
 
     context = {
         "post": recipe,
@@ -78,12 +85,11 @@ def recipe_detail(request, post_id):
     }
     return render(request, "recipe_detail.html", context)
 
+
 @login_required
 def my_recipes(request):
     posts = RecipePost.objects.filter(author=request.user).order_by("-created_at")
-    if not posts.exists():
-        posts = RecipePost.objects.all().order_by("-created_at")
-    return render(request, "my_recipes.html", {"posts": posts, "my_recipes_page": True})
+    return render(request, "my_recipes.html", {"posts": posts})
 
 
 @login_required
@@ -93,6 +99,18 @@ def saved_recipes(request):
     )
     posts = RecipePost.objects.filter(id__in=fav_ids).order_by("-created_at")
     return render(request, "saved_recipes.html", {"posts": posts})
+
+
+@login_required
+def delete_my_recipe(request, post_id):
+    recipe = get_object_or_404(RecipePost, id=post_id, author=request.user)
+
+    if request.method == "POST":
+        recipe.delete()
+        messages.success(request, "Recipe deleted.")
+        return redirect("my_recipes")
+
+    return redirect("recipe_detail", post_id=recipe.id)
 
 
 @login_required
@@ -134,31 +152,20 @@ def toggle_like(request, post_id):
 
 
 @login_required
-def recipe_delete(request, post_id):
-    recipe = get_object_or_404(RecipePost, id=post_id, author=request.user)
-    if request.method == "POST":
-        recipe.delete()
-        messages.success(request, "Recipe deleted.")
-        return redirect("my_recipes")
-    return redirect("recipe_detail", post_id=post_id)
-
-@login_required
 def toggle_follow(request, username):
-    target = get_object_or_404(User, username=username)
-    if target == request.user:
-        return redirect(request.META.get("HTTP_REFERER") or "dashboard")
+    target_user = get_object_or_404(User, username=username)
+
+    if target_user == request.user:
+        return redirect(request.META.get("HTTP_REFERER") or reverse("dashboard"))
 
     existing = Follower.objects.filter(
-        follower_id=request.user.id,
-        author_id=target.id,
+        follower=request.user,
+        author=target_user,
     )
 
     if existing.exists():
         existing.delete()
     else:
-        Follower.objects.create(
-            follower_id=request.user.id,
-            author_id=target.id,
-        )
+        Follower.objects.create(follower=request.user, author=target_user)
 
-    return redirect(request.META.get("HTTP_REFERER") or "dashboard")
+    return redirect(request.META.get("HTTP_REFERER") or reverse("dashboard"))
