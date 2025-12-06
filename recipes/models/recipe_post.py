@@ -2,6 +2,7 @@ import uuid
 from django.db import models
 from django.utils import timezone
 from .user import User
+from django.db import models
 
 
 class RecipePost(models.Model):
@@ -38,6 +39,8 @@ class RecipePost(models.Model):
     published_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    is_hidden = models.BooleanField(default = False, help_text = "Hidden by admin due to reports")
 
     class Meta:
         db_table = 'recipe_post'

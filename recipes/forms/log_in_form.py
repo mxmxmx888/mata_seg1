@@ -1,5 +1,5 @@
 from django import forms
-from django.contrib.auth import authenticate   # <- add this
+from django.contrib.auth import authenticate
 from recipes.models import User
 from recipes.firebase_auth_services import sign_in_with_email_and_password
 
@@ -23,7 +23,6 @@ class LogInForm(forms.Form):
                 print("DEBUG: No Django user with that username")
                 return None
 
-            # 1) Try Firebase first
             firebase_result = sign_in_with_email_and_password(
                 email=django_user.email,
                 password=password,
@@ -32,9 +31,9 @@ class LogInForm(forms.Form):
             if firebase_result is not None:
                 print("DEBUG: Firebase login succeeded")
                 user = django_user
+                user.backend = 'django.contrib.auth.backends.ModelBackend'
             else:
                 print("DEBUG: Firebase login FAILED, trying Django authenticate()")
-                # 2) Fallback: use Django auth so we can at least log in
                 user = authenticate(username=username, password=password)
 
         print("DEBUG: get_user returning:", user)

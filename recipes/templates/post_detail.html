@@ -120,7 +120,13 @@
       <aside class="post-comments-panel">
         <div class="d-flex justify-content-between align-items-start mb-4">
           <div>
-            <p class="text-muted small mb-1">{{ post_date }}</p>
+            <p class="text-muted small mb-1">
+              {{ post_date }}
+              <span class = "mx-1">&middot;</span>
+              <a href="{% url 'report_content' 'recipe' recipe.id %}" class="text-danger text-decoration-none" title="Report this recipe">
+                <i class="bi bi-flag"></i> Report
+              </a>
+            </p>
             <p class="fw-semibold mb-0">{{ title }}</p>
             <a class="post-source-link" href="{{ source_link }}">Shared via {{ source_label }}</a>
           </div>
@@ -143,11 +149,17 @@
                 <p class="mb-0 text-muted small">{{ comment.handle }}</p>
               </div>
             </div>
-            <span class="small text-muted">{{ comment.time }}</span>
+
+            <div class="d-flex align-items-center gap-2">
+              <span class="small text-muted">{{ comment.time }}</span>
+                <a href="{% url 'report_content' 'comment' comment.id %}" class="text-secondary" title="Report this comment">
+                  <i class="bi bi-flag"></i>
+                </a>
+            </div>
           </div>
-          {% empty %}
-          <p class="text-muted small mb-0">No comments yet.</p>
-          {% endfor %}
+            {% empty %}
+            <p class="text-muted small mb-0">No comments yet.</p>
+            {% endfor %}
         </div>
       </aside>
     </div>

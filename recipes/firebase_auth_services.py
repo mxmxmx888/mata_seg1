@@ -40,3 +40,19 @@ def sign_in_with_email_and_password(email: str, password: str):
     print("DEBUG: Status:", response.status_code)
     print("DEBUG: Body:", response.text)
     return None
+
+
+def generate_password_reset_link(email: str):
+    """
+    Generate a password reset link for the given email using Firebase Admin SDK.
+    """
+    get_app()
+    try:
+        link = firebase_auth.generate_password_reset_link(email)
+        return link
+    except firebase_auth.UserNotFoundError:
+        print(f"DEBUG: Firebase user not found for email {email}")
+        return None
+    except Exception as e:
+        print(f"DEBUG: Error generating password reset link: {e}")
+        return None

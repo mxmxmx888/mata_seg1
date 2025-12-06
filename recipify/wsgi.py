@@ -1,15 +1,11 @@
-"""
-WSGI config for recipify project.
-
-It exposes the WSGI callable as a module-level variable named ``application``.
-
-For more information on this file, see
-https://docs.djangoproject.com/en/5.2/howto/deployment/wsgi/
-"""
-
 import os
-
 from django.core.wsgi import get_wsgi_application
+
+try:
+    import certifi
+    os.environ["SSL_CERT_FILE"] = certifi.where()
+except ImportError:
+    pass
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'recipify.settings')
 
