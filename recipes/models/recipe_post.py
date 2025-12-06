@@ -30,6 +30,9 @@ class RecipePost(models.Model):
 
     # nutrition summary (free text or JSON string)
     nutrition = models.TextField(blank=True, null=True)
+    
+    # category (breakfast, lunch, etc.)
+    category = models.TextField(blank=True, null= True)
 
     # saved count
     saved_count = models.PositiveIntegerField(default=0)

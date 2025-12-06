@@ -8,14 +8,20 @@ is swallowed and generation continues.
 """
 
 
-from typing import Set, Tuple
+from typing import Any, Dict, List, Set, Tuple
+from random import sample, randint, choice
+from uuid import uuid4
+
 from faker import Faker
-from random import sample
 from django.core.management.base import BaseCommand
 from django.db import transaction
+from django.utils import timezone
+
 from recipes.models import User
 from recipes.models.followers import Follower
 from recipes.models.follows import Follows
+from recipes.models.recipe_post import RecipePost
+
 
 
 user_fixtures = [
@@ -23,6 +29,9 @@ user_fixtures = [
     {'username': '@janedoe', 'email': 'jane.doe@example.org', 'first_name': 'Jane', 'last_name': 'Doe'},
     {'username': '@charlie', 'email': 'charlie.johnson@example.org', 'first_name': 'Charlie', 'last_name': 'Johnson'},
 ]
+
+categories = ["Breakfast", "Lunch", "Dinner", "Dessert", "Vegan"]
+tags_pool = ["quick", "family", "spicy", "budget", "comfort", "healthy", "high_protein", "low_carb"]
 
 
 class Command(BaseCommand):
@@ -58,7 +67,9 @@ class Command(BaseCommand):
         """
         self.create_users()
         self.seed_followers_and_follows(follow_k=5)
+        self.seed_recipe_posts(per_user=2)
         self.users = User.objects.all()
+        self.stdout.write(self.style.SUCCESS("Seeding complete"))
 
     def create_users(self):
         """
@@ -136,7 +147,40 @@ class Command(BaseCommand):
             Follower.objects.bulk_create(follower_rows, ignore_conflicts=True, batch_size=1000)
             Follows.objects.bulk_create(follows_rows, ignore_conflicts=True, batch_size=1000)
 
+    def seed_recipe_posts(self, *, per_user: int = 3) -> None:
+        user_ids = list(User.objects.values_list("id", flat=True))
+        if not user_ids:
+            return
 
+        rows: List[RecipePost] = []
+        for author_id in user_ids:
+            count = randint(1, max(1, per_user))
+            for _ in range(count):
+                title = self.faker.sentence(nb_words=5).rstrip(".")[:255]
+                description = self.faker.paragraph(nb_sentences=3)[:4000]
+                image = f"https://picsum.photos/seed/{uuid4()}/800/600"  
+                prep = randint(0, 60)
+                cook = randint(0, 90)
+                tags = list(set(sample(tags_pool, randint(0, min(4, len(tags_pool))))))
+                nutrition = f"kcal={randint(250, 800)}; protein={randint(5, 40)}g"
+                category = choice(categories)
+
+                rows.append(RecipePost(
+                    author_id=author_id,
+                    title=title,
+                    description=description,
+                    image=image,
+                    prep_time_min=prep,
+                    cook_time_min=cook,
+                    tags=tags,
+                    nutrition=nutrition,
+                    category=category,
+                    saved_count=0,
+                    published_at=timezone.now(),
+                ))
+
+        RecipePost.objects.bulk_create(rows, ignore_conflicts=True, batch_size=500)
+        self.stdout.write(f"Recipe posts created: {len(rows)}")
 
     def create_user(self, data):
         """
