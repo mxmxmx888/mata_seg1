@@ -2,7 +2,7 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 
 
-@login_required
+#@login_required /* switched off/on for testing */
 def dashboard(request):
     """
     Display the current user's dashboard.
