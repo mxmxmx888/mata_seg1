@@ -158,18 +158,18 @@
 
   body:not(.auth-body) .btn.btn-outline-light:hover,
   body:not(.auth-body) .btn.btn-outline-light:focus-visible {
-    background-color: #f6f6f6 !important;
-    color: #050505 !important;
-    border-color: #f6f6f6 !important;
+    background-color: transparent !important;
+    color: inherit !important;
+    border-color: currentColor !important;
   }
 }
 
 /* Fallback for explicit theme toggle via data-theme */
-body[data-theme="dark"]:not(.auth-body) .cta-browse-btn.btn-outline-dark:hover,
-body[data-theme="dark"]:not(.auth-body) .cta-browse-btn.btn-outline-dark:focus-visible {
-  background-color: #ffffff !important;
-  color: #000000 !important;
-  border-color: #ffffff !important;
+body[data-theme="dark"]:not(.auth-body) .btn.btn-outline-light:hover,
+body[data-theme="dark"]:not(.auth-body) .btn.btn-outline-light:focus-visible {
+  background-color: transparent !important;
+  color: inherit !important;
+  border-color: currentColor !important;
 }
 
 body[data-theme="dark"]:not(.auth-body) .btn.btn-outline-light:hover,

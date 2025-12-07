@@ -16,9 +16,11 @@
     <p class="profile-handle small mb-1">{{ profile.handle }} · {{ profile.following }} Following</p>
     <p class="profile-tagline mb-3">{{ profile.tagline }}</p>
     <div class="profile-actions d-flex justify-content-center gap-2 flex-wrap">
+      {% if is_own_profile %}
       <button type="button" class="profile-pill" data-bs-toggle="modal" data-bs-target="#editProfileModal">
         Edit Profile
       </button>
+      {% endif %}
     </div>
   </section>
 
@@ -40,6 +42,7 @@
   </section>
 </main>
 
+{% if is_own_profile and form %}
 <div class="modal fade edit-profile-modal" id="editProfileModal" tabindex="-1" aria-labelledby="editProfileModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
@@ -63,4 +66,5 @@
     </div>
   </div>
 </div>
+{% endif %}
 {% endblock %}
