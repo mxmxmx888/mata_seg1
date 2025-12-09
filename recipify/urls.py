@@ -19,6 +19,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import path, include
+from recipes.views import profile_view
 
 from recipes import views
 from recipes.views.post_mock_view import mock_post_detail

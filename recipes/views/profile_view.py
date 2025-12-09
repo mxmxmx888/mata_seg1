@@ -3,9 +3,12 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from django.http import Http404
 from django.shortcuts import redirect, render
+from django.urls import reverse
+
 from recipes.forms import UserForm
 from recipes.repos.post_repo import PostRepo
 from recipes.repos.user_repo import UserRepo
+from recipes.models import Follower
 
 User = get_user_model()
 post_repo = PostRepo()
@@ -148,7 +151,27 @@ def profile(request):
     else:
         profile_user = request.user
 
+    is_own_profile = profile_user == request.user
+
+    followers_qs = Follower.objects.filter(author=profile_user).select_related("follower")
+    following_qs = Follower.objects.filter(follower=profile_user).select_related("author")
+
+    followers_count = followers_qs.count()
+    following_count = following_qs.count()
+
+    followers_users = [relation.follower for relation in followers_qs]
+    following_users = [relation.author for relation in following_qs]
+
+    is_following = False
+    if not is_own_profile:
+        is_following = Follower.objects.filter(
+            follower=request.user,
+            author=profile_user,
+        ).exists()
+
     profile_data = _profile_data_for_user(profile_user)
+    profile_data["followers"] = followers_count
+    profile_data["following"] = following_count
 
     if request.method == "POST":
         if profile_user != request.user:
@@ -178,9 +201,15 @@ def profile(request):
             "form": form,
             "profile_user": profile_user,
             "is_own_profile": profile_user == request.user,
+            "is_following": is_following,
+            "followers_count": followers_count,
+            "following_count": following_count,
+            "followers_users": followers_users,
+            "following_users": following_users,
             "posts": posts,
         },
     )
+
 
 @login_required
 def collection_detail(request, slug):
