@@ -2,10 +2,14 @@ from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from django.http import Http404
-from django.shortcuts import get_object_or_404, redirect, render
+from django.shortcuts import redirect, render
 from recipes.forms import UserForm
+from recipes.repos.post_repo import PostRepo
+from recipes.repos.user_repo import UserRepo
 
 User = get_user_model()
+post_repo = PostRepo()
+user_repo = UserRepo()
 
 COMMON_COLLECTION_ITEMS = [
     "https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=1200&q=80",
@@ -120,7 +124,6 @@ PROFILE_COLLECTIONS = [
     },
 ]
 
-
 def _profile_data_for_user(user):
     fallback_handle = "@anmzn"
     handle = user.username or fallback_handle
@@ -134,12 +137,14 @@ def _profile_data_for_user(user):
         "avatar_url": user.gravatar(size=200),
     }
 
-
 @login_required
 def profile(request):
     profile_username = request.GET.get("user")
     if profile_username:
-        profile_user = get_object_or_404(User, username=profile_username)
+        try:
+            profile_user = user_repo.get_by_username(profile_username)
+        except User.DoesNotExist:
+            raise Http404("User not found")
     else:
         profile_user = request.user
 
@@ -159,6 +164,11 @@ def profile(request):
         else:
             form = None
 
+    posts = post_repo.list_for_user(
+        profile_user.id,
+        order_by=("-created_at",),
+    )
+
     return render(
         request,
         "profile.html",
@@ -168,9 +178,9 @@ def profile(request):
             "form": form,
             "profile_user": profile_user,
             "is_own_profile": profile_user == request.user,
+            "posts": posts,
         },
     )
-
 
 @login_required
 def collection_detail(request, slug):

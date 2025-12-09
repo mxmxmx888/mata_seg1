@@ -1,5 +1,3 @@
-# recipes/views/recipe_views.py
-
 from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
@@ -7,8 +5,8 @@ from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
-
 from recipes.forms.recipe_forms import RecipePostForm
+from recipes.repos.post_repo import PostRepo
 
 try:
     from recipes.models import RecipePost, Ingredient, RecipeStep, Favourite, Like
@@ -25,6 +23,7 @@ except Exception:
     from recipes.models import Follower
 
 User = get_user_model()
+post_repo = PostRepo()
 
 
 @login_required
@@ -88,7 +87,10 @@ def recipe_detail(request, post_id):
 
 @login_required
 def my_recipes(request):
-    posts = RecipePost.objects.filter(author=request.user).order_by("-created_at")
+    posts = post_repo.list_for_user(
+        request.user.id,
+        order_by=("-created_at",),
+    )
     return render(request, "my_recipes.html", {"posts": posts})
 
 

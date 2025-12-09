@@ -40,9 +40,18 @@
       {% endfor %}
     </div>
   </section>
+
+  {% if posts %}
+  <section class="mt-4">
+    <h2 class="h5 mb-3">Recipes</h2>
+    <div class="cosmos-grid">
+      {% include "partials/recipe_grid.html" with posts=posts %}
+    </div>
+  </section>
+  {% endif %}
 </main>
 
-{% if is_own_profile and form %}
+{% if is_own_profile %}
 <div class="modal fade edit-profile-modal" id="editProfileModal" tabindex="-1" aria-labelledby="editProfileModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
@@ -68,3 +77,4 @@
 </div>
 {% endif %}
 {% endblock %}
+
