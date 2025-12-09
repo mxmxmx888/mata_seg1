@@ -19,7 +19,6 @@ class Ingredient(models.Model):
     # position in the recipe
     position = models.PositiveIntegerField()
     
-
     quantity = models.DecimalField(
         max_digits=10,
         decimal_places=2,
@@ -27,18 +26,16 @@ class Ingredient(models.Model):
         blank=True
     )
 
-
     unit = models.CharField(max_length=50, null=True, blank=True)
     
+    # NEW: Link to buy the product
+    shop_url = models.URLField(max_length=500, blank=True, null=True, help_text="Link to buy this product online")
 
     class Meta:
-        # Composite primary key is simulated in Django using unique_together
-        # because Django does not support real composite PKs.
         unique_together = (
             ('recipe_post', 'name'),
             ('recipe_post', 'position'),
         )
-        # This preserves DB column naming while letting Django manage the PK internally
         constraints = [
             models.CheckConstraint(
                 check=models.Q(position__gt=0),

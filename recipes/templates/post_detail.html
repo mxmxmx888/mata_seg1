@@ -6,7 +6,6 @@
 <main class="container-fluid px-4 px-xl-5 py-4 post-page position-relative">
   <div class="post-primary" id="post-primary">
   <div class="row g-5 align-items-start">
-    <!-- Left: image / video -->
     <div class="col-xxl-5 col-xl-5 col-lg-5">
       <div class="post-media-wrap position-relative">
         <a class="post-back-button" href="{% url 'dashboard' %}" aria-label="Go back">
@@ -17,7 +16,6 @@
         </div>
       </div>
 
-      <!-- Additional media lives in the left column so it doesn't span the page -->
       {% if gallery_images or video_url %}
       <section class="post-media-extras">
         <div class="post-media-masonry">
@@ -43,15 +41,14 @@
       {% endif %}
     </div>
 
-    <!-- Middle: recipe meta + ingredients + steps -->
     <div class="col-xxl-4 col-xl-4 col-lg-4">
       <header class="mb-4">
         <p class="post-author text-muted mb-1">by {{ author_handle }}</p>
         <h1 class="post-title">{{ title }}</h1>
         <div class="d-flex flex-wrap gap-3 post-meta">
           <span>⏱ {{ cook_time }}</span>
-          <span>🥣 Serves {{ serves }}</span>
-          <span>🧂 {{ ingredients|length }} ingredients</span>
+          <span>� Serves {{ serves }}</span>
+          <span>� {{ ingredients|length }} ingredients</span>
         </div>
       </header>
 
@@ -61,10 +58,40 @@
         <h2 class="h4 fw-semibold mb-2">Ingredients</h2>
         <ul class="post-ingredients mt-1">
           {% for ingredient in ingredients %}
-          <li>{{ ingredient }}</li>
+          <li class="d-flex align-items-center justify-content-between">
+            <span>{{ ingredient.name|title }}</span>
+            
+            {% if ingredient.shop_url %}
+            <a href="{{ ingredient.shop_url }}" target="_blank" class="btn btn-sm btn-outline-primary py-0 px-2 ms-2 rounded-pill" style="font-size: 0.75rem;">
+              <i class="bi bi-cart-fill me-1"></i>Shop
+            </a>
+            {% endif %}
+          </li>
           {% endfor %}
         </ul>
       </section>
+
+      {% if ingredients %}
+        {% for ing in ingredients %}
+          {% if ing.shop_url and forloop.first %}
+          <section class="mb-4 p-3 bg-light rounded-3">
+            <h2 class="h6 fw-bold text-uppercase mb-3 text-muted">
+              <i class="bi bi-bag-heart-fill text-danger me-2"></i>Shop this recipe
+            </h2>
+            <div class="d-flex flex-wrap gap-2">
+          {% endif %}
+          
+          {% if ing.shop_url %}
+              <a href="{{ ing.shop_url }}" target="_blank" class="badge bg-white text-dark border text-decoration-none p-2 d-flex align-items-center gap-2 shadow-sm">
+                {{ ing.name|title }} <i class="bi bi-box-arrow-up-right small text-muted"></i>
+              </a>
+          {% endif %}
+          
+          {% if forloop.last %}
+            </div> {% for i in ingredients %}{% if i.shop_url and forloop.first %}</section>{% endif %}{% endfor %}
+          {% endif %}
+        {% endfor %}
+      {% endif %}
 
       <section class="mb-4">
         <h2 class="h4 fw-semibold mb-2">Steps</h2>
@@ -91,38 +118,18 @@
       </section>
       {% endif %}
 
-      {% if pair_with %}
-      <section class="post-pair-with mb-4">
-        <h2 class="h4 fw-semibold mb-3">Pair with</h2>
-        <div class="row g-3">
-          {% for pairing in pair_with %}
-          <div class="col-sm-6">
-            <a href="{{ pairing.url }}" class="pair-card">
-              <div class="pair-card-media">
-                <img src="{{ pairing.image }}" alt="{{ pairing.title }}">
-              </div>
-              <p class="pair-card-title mb-1">{{ pairing.title }}</p>
-              <p class="pair-card-meta mb-0 text-muted small">{{ pairing.summary }}</p>
-            </a>
-          </div>
-          {% endfor %}
-        </div>
-      </section>
-      {% endif %}
-
       <section class="d-flex gap-2">
         <button class="btn btn-dark rounded-pill px-3">Cook this</button>
       </section>
     </div>
 
-    <!-- Right: comments / saves panel -->
     <div class="col-xxl-3 col-xl-3 col-lg-3">
       <aside class="post-comments-panel">
         <div class="d-flex justify-content-between align-items-start mb-4">
           <div>
             <p class="text-muted small mb-1">
               {{ post_date }}
-              <span class = "mx-1">&middot;</span>
+              <span class="mx-1">&middot;</span>
               <a href="{% url 'report_content' 'recipe' recipe.id %}" class="text-danger text-decoration-none" title="Report this recipe">
                 <i class="bi bi-flag"></i> Report
               </a>
@@ -149,17 +156,16 @@
                 <p class="mb-0 text-muted small">{{ comment.handle }}</p>
               </div>
             </div>
-
             <div class="d-flex align-items-center gap-2">
               <span class="small text-muted">{{ comment.time }}</span>
-                <a href="{% url 'report_content' 'comment' comment.id %}" class="text-secondary" title="Report this comment">
-                  <i class="bi bi-flag"></i>
-                </a>
+              <a href="{% url 'report_content' 'comment' comment.id %}" class="text-secondary" title="Report this comment">
+                <i class="bi bi-flag"></i>
+              </a>
             </div>
           </div>
-            {% empty %}
-            <p class="text-muted small mb-0">No comments yet.</p>
-            {% endfor %}
+          {% empty %}
+          <p class="text-muted small mb-0">No comments yet.</p>
+          {% endfor %}
         </div>
       </aside>
     </div>
@@ -167,7 +173,6 @@
 
   </div>
 
-  <!-- Save to collection modal -->
   <div class="modal fade" id="saveModal" tabindex="-1" aria-labelledby="saveModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content save-modal">

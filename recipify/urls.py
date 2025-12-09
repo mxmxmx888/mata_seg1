@@ -59,6 +59,7 @@ urlpatterns = [
     path('api/profile', views.profile_api, name='profile_api'),
     path('u/<str:username>/follow/', toggle_follow, name='toggle_follow'),
     path('report/<str:content_type>/<uuid:object_id>/', views.report_content, name='report_content'),
+    path('shop/', views.shop, name='shop'),
 ]
 
 urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

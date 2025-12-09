@@ -76,13 +76,14 @@ def recipe_detail(request, post_id):
 
     context = {
         "post": recipe,
+        "recipe": recipe,  # <--- THIS LINE IS REQUIRED FOR THE REPORT LINK
         "ingredients": ingredients,
         "steps": steps,
         "user_liked": user_liked,
         "user_saved": user_saved,
         "is_following_author": is_following_author,
     }
-    return render(request, "recipe_detail.html", context)
+    return render(request, "post_detail.html", context)
 
 
 @login_required

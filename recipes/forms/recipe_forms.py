@@ -34,8 +34,8 @@ class RecipePostForm(forms.ModelForm):
     ingredients_text = forms.CharField(
         label="Ingredients",
         required=False,
-        widget=forms.Textarea(attrs={"rows": 5}),
-        help_text="One ingredient per line.",
+        widget=forms.Textarea(attrs={"rows": 5, "placeholder": "Example:\n2 cups Flour\nMatcha Powder | https://amazon.com/matcha"}),
+        help_text="One ingredient per line. To add a shop link, use '|' separator (e.g., 'Ingredient | https://link.com').",
     )
     steps_text = forms.CharField(
         label="Steps",
@@ -85,10 +85,28 @@ class RecipePostForm(forms.ModelForm):
     def create_ingredients(self, recipe):
         Ingredient.objects.filter(recipe_post=recipe).delete()
         lines = self._split_lines("ingredients_text")
+        
         for idx, line in enumerate(lines, start=1):
+            name = line
+            url = None
+            
+            # Check for link separator "|"
+            if "|" in line:
+                parts = line.split("|", 1)
+                name = parts[0].strip()
+                raw_url = parts[1].strip()
+                
+                # IMPROVED: Automatically add https:// if missing
+                if raw_url:
+                    if raw_url.startswith("http://") or raw_url.startswith("https://"):
+                        url = raw_url
+                    else:
+                        url = f"https://{raw_url}"
+
             Ingredient.objects.create(
                 recipe_post=recipe,
-                name=line,
+                name=name,
+                shop_url=url,
                 position=idx,
             )
 
