@@ -13,16 +13,16 @@
         <p class="recipe-detail-author">
           By <span class="recipe-detail-author-link">@{{ post.author.username }}</span>
           {% if request.user.is_authenticated and request.user != post.author %}
-           <form
-           method="post"
-           action="{% url 'toggle_follow' post.author.username %}"
-           class="d-inline"
-           >
-            {% csrf_token %}
-            <button type="submit" class="btn btn-sm btn-outline-light ms-2">
-             {% if is_following_author %}Following{% else %}Follow{% endif %}
-            </button>
-           </form>
+            <form
+              method="post"
+              action="{% url 'toggle_follow' post.author.username %}"
+              class="d-inline"
+            >
+              {% csrf_token %}
+              <button type="submit" class="btn btn-sm btn-outline-light ms-2">
+                {% if is_following_author %}Following{% else %}Follow{% endif %}
+              </button>
+            </form>
           {% endif %}
         </p>
 
@@ -72,7 +72,7 @@
             <form method="post" action="{% url 'toggle_favourite' post.id %}" class="d-inline">
               {% csrf_token %}
               <button type="submit"
-                      class="btn btn-sm rounded-pill {% if user_saved %}btn-light text-dark{% else %}btn-outline-light{% endif %} me-2">
+                      class="btn btn-sm btn-outline-light rounded-pill me-2">
                 {% if user_saved %}Saved{% else %}Save{% endif %}
               </button>
             </form>
@@ -80,7 +80,7 @@
             <form method="post" action="{% url 'toggle_like' post.id %}" class="d-inline">
               {% csrf_token %}
               <button type="submit"
-                      class="btn btn-sm rounded-pill {% if user_liked %}btn-light text-dark{% else %}btn-outline-light{% endif %}">
+                      class="btn btn-sm btn-outline-light rounded-pill">
                 {% if user_liked %}Liked{% else %}Like{% endif %}
               </button>
             </form>
@@ -90,9 +90,15 @@
         <div class="recipe-meta-card">
           <div class="recipe-meta-label mb-1">About the author</div>
           <div class="recipe-author-name">{{ post.author.username }}</div>
-          <a href="#" class="recipe-author-link">View profile</a>
+
+          <!-- View profile button -->
+          <a href="{% url 'profile' %}?user={{ post.author.username }}"
+             class="btn btn-sm btn-outline-light rounded-pill mt-2">
+            View profile
+          </a>
         </div>
       </aside>
     </div>
   </main>
 {% endblock %}
+

@@ -8,7 +8,8 @@ from .home_view import *
 from .log_in_view import *
 from .log_out_view import *
 from .password_view import *
-from .password_reset_views import *
 from .profile_view import *
 from .sign_up_view import *
+from .password_reset_views import *
 from .api_views import *
+from .report_view import *

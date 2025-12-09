@@ -242,7 +242,7 @@ body {
   font-family: "Rethink Sans", system-ui, -apple-system, BlinkMacSystemFont,
                "Segoe UI", sans-serif;
   letter-spacing: -0.01em;
-  background-color: #ffffff; /* normal pages */
+  background-color: #ffffff;/* normal pages */
 }
 
 /* Dashboard: navbar is not fixed, so no body top padding */
@@ -285,7 +285,7 @@ body.auth-body {
 /* Default (light page) navbar text */
 .navbar-squarespace .navbar-brand,
 .navbar-squarespace .nav-link {
-  color: #000;
+  color: #ffffff;
 }
 
 /* Auth pages want light text on top of the dark background */
@@ -296,7 +296,7 @@ body.auth-body .navbar-squarespace .nav-link {
 
 /* When the landing page is scrolled, navbar goes solid */
 .navbar-squarespace.navbar-solid {
-  background-color: #000;
+  background-color: #ffffff;
   box-shadow: 0 1px 0 rgba(0, 0, 0, 0.4);
 }
 
@@ -313,7 +313,7 @@ body.auth-body .navbar-squarespace .nav-link {
 
 .navbar-squarespace.navbar-solid .btn.btn-dark {
   background-color: #fff;
-  color: #000;
+  color: #ffffff;
   border-color: #fff;
 }
 
@@ -324,7 +324,7 @@ body.auth-body .navbar-squarespace .nav-link {
 
 /* Logged-in navbar base (light mode) */
 .navbar-app {
-  background-color: #ffffff;         /* match page background in light */
+  background-color: #ffffff;      /* match page background in light */
   border-bottom: none;               /* no line */
   position: relative;
   padding-top: 0.3rem;               /* same thin height */
