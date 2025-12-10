@@ -1,7 +1,8 @@
 from django.shortcuts import get_object_or_404, redirect, render
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from recipes.models import RecipePost, Comment
+from recipes.models.recipe_post import RecipePost
+from recipes.models.comment import Comment
 from recipes.forms.report_form import ReportForm
 
 @login_required
@@ -32,11 +33,14 @@ def report_content(request, content_type, object_id):
             report.save()
             messages.success(request, "Thank you. The content has been reported to administrators.")
             
-            # Redirect back to the recipe page
+            # --- FIX STARTS HERE ---
+            # Use 'recipe_detail' (the name in urls.py) and 'post_id' (the url parameter)
             if recipe:
-                return redirect('post_detail', pk=recipe.id) # Assuming you have this url
+                return redirect('recipe_detail', post_id=recipe.id)
             else:
-                return redirect('post_detail', pk=comment.recipe_post.id)
+                return redirect('recipe_detail', post_id=comment.recipe_post.id)
+            # --- FIX ENDS HERE ---
+
     else:
         form = ReportForm()
 
