@@ -43,6 +43,7 @@ def recipe_create(request):
                 cook_time_min=cleaned.get("cook_time_min") or 0,
                 nutrition=cleaned.get("nutrition") or "",
                 tags=tags_list,
+                category=cleaned.get("category") or "",
                 published_at=timezone.now(),
             )
 
@@ -57,10 +58,11 @@ def recipe_create(request):
     return render(request, "create_recipe.html", {"form": form})
 
 
+@login_required
 def recipe_detail(request, post_id):
     recipe = get_object_or_404(RecipePost, id=post_id)
-    ingredients = Ingredient.objects.filter(recipe_post=recipe).order_by("position")
-    steps = RecipeStep.objects.filter(recipe_post=recipe).order_by("position")
+    ingredients_qs = Ingredient.objects.filter(recipe_post=recipe).order_by("position")
+    steps_qs = RecipeStep.objects.filter(recipe_post=recipe).order_by("position")
 
     user_liked = False
     user_saved = False
@@ -74,14 +76,51 @@ def recipe_detail(request, post_id):
             author=recipe.author,
         ).exists()
 
+    likes_count = Like.objects.filter(recipe_post=recipe).count()
+    saves_count = Favourite.objects.filter(recipe_post=recipe).count()
+
+    image_url = recipe.image or "https://placehold.co/1200x800/0f0f14/ffffff?text=Recipe"
+    author_handle = getattr(recipe.author, "username", "")
+    total_time = (recipe.prep_time_min or 0) + (recipe.cook_time_min or 0)
+    cook_time = f"{total_time} min" if total_time else "N/A"
+    serves = getattr(recipe, "serves", None) or 1
+    summary = recipe.description or ""
+    tags_list = recipe.tags or []
+    post_date = (recipe.published_at or recipe.created_at or timezone.now()).strftime("%b %d, %Y")
+    source_link = request.build_absolute_uri(reverse("recipe_detail", args=[recipe.id]))
+    source_label = "Recipi"
+
+    ingredients = list(ingredients_qs)
+    shop_ingredients = [
+        ing for ing in ingredients if ing.shop_url and ing.shop_url.strip()
+    ]
+    steps = [s.description for s in steps_qs]
+
     context = {
+        "recipe": recipe,
         "post": recipe,
-        "recipe": recipe,  # <--- THIS LINE IS REQUIRED FOR THE REPORT LINK
+        "image_url": image_url,
+        "author_handle": author_handle,
+        "title": recipe.title,
+        "cook_time": cook_time,
+        "serves": serves,
         "ingredients": ingredients,
+        "shop_ingredients": shop_ingredients,
         "steps": steps,
+        "summary": summary,
+        "tags": tags_list,
+        "post_date": post_date,
+        "source_link": source_link,
+        "source_label": source_label,
         "user_liked": user_liked,
         "user_saved": user_saved,
         "is_following_author": is_following_author,
+        "likes_count": likes_count,
+        "saves_count": saves_count,
+        "comments": [],
+        "gallery_images": [],
+        "video_url": None,
+        "view_similar": [],
     }
     return render(request, "post_detail.html", context)
 
