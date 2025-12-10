@@ -54,6 +54,30 @@
 
       <p class="post-summary text-muted mb-4">{{ summary }}</p>
 
+      {% if ingredients %}
+        {% for ing in ingredients %}
+          {% if ing.shop_url and forloop.first %}
+          <section class="mb-4">
+            <h2 class="h6 fw-bold text-uppercase mb-2 text-muted small tracking-wide">
+              <i class="bi bi-bag-fill me-1"></i>Shop this recipe
+            </h2>
+            <div class="d-flex flex-wrap gap-2">
+          {% endif %}
+          
+          {% if ing.shop_url %}
+              <a href="{{ ing.shop_url }}" target="_blank" class="btn btn-dark rounded-pill d-inline-flex align-items-center gap-2 py-1 px-3 shadow-sm border-white" style="font-size: 0.85rem; border: 1px solid rgba(255,255,255,0.2);">
+                <span>{{ ing.name|title }}</span>
+                <i class="bi bi-arrow-up-right small text-white-50"></i>
+              </a>
+          {% endif %}
+          
+          {% if forloop.last %}
+            </div> 
+            {% for i in ingredients %}{% if i.shop_url and forloop.first %}</section>{% endif %}{% endfor %}
+          {% endif %}
+        {% endfor %}
+      {% endif %}
+
       <section class="mb-4">
         <h2 class="h4 fw-semibold mb-2">Ingredients</h2>
         <ul class="post-ingredients mt-1">
@@ -62,36 +86,14 @@
             <span>{{ ingredient.name|title }}</span>
             
             {% if ingredient.shop_url %}
-            <a href="{{ ingredient.shop_url }}" target="_blank" class="btn btn-sm btn-outline-primary py-0 px-2 ms-2 rounded-pill" style="font-size: 0.75rem;">
-              <i class="bi bi-cart-fill me-1"></i>Shop
+            <a href="{{ ingredient.shop_url }}" target="_blank" class="text-decoration-none text-muted" title="Buy {{ ingredient.name }}">
+              <i class="bi bi-bag-fill"></i>
             </a>
             {% endif %}
           </li>
           {% endfor %}
         </ul>
       </section>
-
-      {% if ingredients %}
-        {% for ing in ingredients %}
-          {% if ing.shop_url and forloop.first %}
-          <section class="mb-4 p-3 bg-light rounded-3">
-            <h2 class="h6 fw-bold text-uppercase mb-3 text-muted">
-              <i class="bi bi-bag-heart-fill text-danger me-2"></i>Shop this recipe
-            </h2>
-            <div class="d-flex flex-wrap gap-2">
-          {% endif %}
-          
-          {% if ing.shop_url %}
-              <a href="{{ ing.shop_url }}" target="_blank" class="badge bg-white text-dark border text-decoration-none p-2 d-flex align-items-center gap-2 shadow-sm">
-                {{ ing.name|title }} <i class="bi bi-box-arrow-up-right small text-muted"></i>
-              </a>
-          {% endif %}
-          
-          {% if forloop.last %}
-            </div> {% for i in ingredients %}{% if i.shop_url and forloop.first %}</section>{% endif %}{% endfor %}
-          {% endif %}
-        {% endfor %}
-      {% endif %}
 
       <section class="mb-4">
         <h2 class="h4 fw-semibold mb-2">Steps</h2>

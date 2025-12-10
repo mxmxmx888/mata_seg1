@@ -1,41 +1,195 @@
 {% extends "base.html" %}
 
-{% block body_class %}dashboard-body{% endblock %}
+{% block body_class %}shop-body{% endblock %}
 
 {% block body %}
 {% include 'partials/navbar_app.html' %}
 
-<main class="container-fluid px-4 px-xl-5 py-4">
-  <div class="row mb-4">
-    <div class="col-12">
-      <h1 class="h3 fw-bold">Shop Ingredients</h1>
-      <p class="text-muted">Browse products linked in recipes.</p>
+<main class="container shop-wrapper py-5">
+  <div class="row mb-5 text-center">
+    <div class="col-12 col-md-8 offset-md-2">
+      <span class="text-uppercase tracking-wide text-muted small fw-bold mb-2 d-block">Curated Kitchen</span>
+      <h1 class="display-5 fw-bold mb-3">Shop Ingredients</h1>
+      <p class="lead text-muted">Discover and buy the products used in our favorite recipes.</p>
     </div>
   </div>
 
   <div class="row g-4">
     {% for item in items %}
-    <div class="col-6 col-md-4 col-lg-3 col-xl-2">
-      <div class="card h-100 border-0 shadow-sm">
-        <div class="card-body d-flex flex-column">
-          <h5 class="card-title h6 fw-bold mb-2">{{ item.name|title }}</h5>
-          <p class="card-text small text-muted mb-3">
-            From: <a href="{% url 'recipe_detail' item.recipe_post.id %}" class="text-decoration-none text-muted">{{ item.recipe_post.title }}</a>
-          </p>
-          <a href="{{ item.shop_url }}" target="_blank" class="btn btn-dark btn-sm mt-auto w-100">
-            <i class="bi bi-cart-fill me-1"></i> Buy Now
+    <div class="col-12 col-sm-6 col-md-4 col-lg-3 col-xl-2">
+      <div class="shop-card position-relative">
+        
+        <div class="shop-card-image-wrap">
+          {% if item.recipe_post.image %}
+            <img src="{{ item.recipe_post.image }}" alt="{{ item.recipe_post.title }}" class="shop-card-img">
+          {% else %}
+            <div class="shop-card-placeholder">
+              <i class="bi bi-basket3"></i>
+            </div>
+          {% endif %}
+          
+          <span class="shop-card-badge">
+            <i class="bi bi-check2-circle"></i> Verified
+          </span>
+        </div>
+
+        <div class="shop-card-body">
+          <div class="mb-2">
+            <h5 class="shop-card-title text-truncate" title="{{ item.name|title }}">
+              {{ item.name|title }}
+            </h5>
+            <p class="shop-card-subtitle text-truncate">
+              used in <a href="{% url 'recipe_detail' item.recipe_post.id %}" class="text-decoration-none">{{ item.recipe_post.title }}</a>
+            </p>
+          </div>
+
+          <a href="{{ item.shop_url }}" target="_blank" class="btn w-100 shop-btn stretched-link">
+            Buy Now <i class="bi bi-arrow-up-right ms-1 small"></i>
           </a>
         </div>
+
       </div>
     </div>
     {% empty %}
     <div class="col-12 text-center py-5">
-      <div class="display-1 text-muted mb-3"><i class="bi bi-basket"></i></div>
-      <h3 class="h5">No shop items yet</h3>
-      <p class="text-muted">Ingredients with shop links added to recipes will appear here.</p>
-      <a href="{% url 'recipe_create' %}" class="btn btn-outline-dark">Create a Recipe</a>
+      <div class="empty-state">
+        <div class="mb-4 text-muted display-4"><i class="bi bi-shop"></i></div>
+        <h3>Your shop is empty</h3>
+        <p class="text-muted mb-4">Add ingredients with shop links to your recipes to see them here.</p>
+        <a href="{% url 'recipe_create' %}" class="btn btn-primary rounded-pill px-4">Create a Recipe</a>
+      </div>
     </div>
     {% endfor %}
   </div>
 </main>
+
+<style>
+/* Scoped CSS for the Shop Page */
+.shop-body {
+  background: #0b0b0e;
+  color: #f5f5f5;
+}
+
+.tracking-wide { letter-spacing: 0.1em; }
+
+.shop-wrapper {
+  max-width: 1200px;
+}
+
+.shop-card {
+  background: #0f0f14;
+  border-radius: 18px;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.1); /* subtle white edge */
+  box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  max-height: 420px;   /* keep cards from getting too long */
+  max-width: 320px;
+  margin: 0 auto;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.shop-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 28px rgba(0,0,0,0.35);
+}
+
+.shop-card-image-wrap {
+  position: relative;
+  height: 150px;
+  background-color: #16161d;
+  overflow: hidden;
+}
+
+.shop-card-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.4s ease;
+}
+
+.shop-card:hover .shop-card-img { transform: scale(1.04); }
+
+.shop-card-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  color: #9ca3af;
+  background: #1d1d26;
+}
+
+.shop-card-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: rgba(255,255,255,0.08);
+  padding: 4px 9px;
+  border-radius: 20px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #6deca0;
+  border: 1px solid rgba(255,255,255,0.15);
+  backdrop-filter: blur(4px);
+}
+
+.shop-card-body {
+  padding: 1rem 1rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  flex: 1;
+  color: #e7e7ec;
+  background: transparent;
+}
+
+.shop-card-title {
+  font-size: 1rem;
+  font-weight: 700;
+  margin-bottom: 0.1rem;
+  color: #ffffff;
+}
+
+.shop-card-subtitle {
+  font-size: 0.82rem;
+  color: #b1b1bd;
+  margin-bottom: 0;
+}
+
+.shop-card-subtitle a {
+  color: #d5d5df;
+  font-weight: 500;
+  border-bottom: 1px dotted rgba(255,255,255,0.2);
+}
+
+.shop-card-subtitle a:hover {
+  color: #ffffff;
+  border-bottom-color: #ffffff;
+}
+
+.shop-btn {
+  border-radius: 10px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  padding: 0.65rem;
+  transition: background-color 0.2s, color 0.2s;
+  background: #ffffff;
+  color: #0f0f14;
+  border: 1px solid rgba(255,255,255,0.15);
+}
+
+.shop-btn:hover {
+  background-color: #f2f2f2;
+  color: #000;
+}
+
+@media (max-width: 576px) {
+  .shop-card-image-wrap { height: 180px; }
+  .shop-card { max-width: 100%; }
+}
+</style>
 {% endblock %}
