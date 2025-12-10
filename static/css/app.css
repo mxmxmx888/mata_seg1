@@ -187,6 +187,7 @@ body[data-theme="dark"]:not(.auth-body) .btn.btn-outline-light:focus-visible {
 .cosmos-home {
   min-height: calc(100vh - 64px);
   padding-top: 0.75rem;  
+  padding-top: 0.75rem;  
 }
 
 .cosmos-home .row.mt-3 {
@@ -245,6 +246,66 @@ body.shop-body .navbar-app {
   border-radius: 0;
   background-color: transparent;
   font-size: 0.9rem;
+}
+
+/* Dashboard filters at the top of Discover */
+
+.dashboard-filters {
+  gap: 1.1rem;
+  max-width: 520px;
+  margin-inline: auto;
+}
+
+.dashboard-filter-select,
+.dashboard-filter-input {
+  border: none;
+  border-radius: 999px;
+  padding: 0.35rem 0.9rem;
+  font-size: 0.85rem;
+  color: #9ca3af;
+  box-shadow: none;
+  width: auto;
+  flex: 0 0 auto;
+  background-color: transparent;
+}
+
+.dashboard-filter-select {
+  padding-right: 1.5rem;
+  display: inline-block;
+  min-width: 0;
+}
+
+.dashboard-filter-input {
+  min-width: 190px;
+}
+
+.dashboard-filter-select:focus,
+.dashboard-filter-input:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+.dashboard-filter-select:hover,
+.dashboard-filter-select:focus,
+.dashboard-filter-input:hover,
+.dashboard-filter-input:focus {
+  background-color: #18181b;
+  color: #f9fafb;
+}
+
+/* Light mode: soft grey pill + black text on hover */
+body[data-theme="light"] .dashboard-filter-select:hover,
+body[data-theme="light"] .dashboard-filter-select:focus,
+body[data-theme="light"] .dashboard-filter-input:hover,
+body[data-theme="light"] .dashboard-filter-input:focus,
+body[data-theme="light"] .dashboard-filter-select-wrapper:hover,
+body[data-theme="light"] .dashboard-filter-select-wrapper:focus-within {
+  background-color: #f3f4f6;
+  color: #111827;
+}
+
+.dashboard-filter-input::placeholder {
+  color: #9ca3af;
 }
 
 /* Dashboard filters at the top of Discover */
@@ -476,6 +537,132 @@ body.profile-body .cosmos-nav-search-input::placeholder {
 .profile-tagline {
   color: #d2d2da;
   font-size: 0.85rem;
+}
+
+.profile-follow-count {
+  border: none;
+  background: transparent;
+  color: inherit;
+  font-size: 0.85rem;
+  font-weight: 400;
+  padding: 0;
+  margin: 0 0.1rem;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.profile-follow-count:hover,
+.profile-follow-count:focus-visible {
+  color: #f4f4f7;
+  text-decoration: none;
+}
+
+.follow-modal .modal-content {
+  border-radius: 18px;
+  min-height: 260px;
+  max-height: 70vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.follow-modal .btn-close {
+  filter: invert(1);
+  opacity: 0.6;
+}
+
+.follow-modal .btn-close:hover {
+  opacity: 1;
+}
+
+.follow-user-link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.follow-user-link:hover {
+  color: inherit;
+  text-decoration: none;
+}
+
+.follow-toggle-form {
+  margin-left: 1rem;
+}
+
+.follow-toggle-btn {
+  border: none;
+  background-color: transparent;
+  color: #c5c6ce;
+  font-size: 0.75rem;
+  font-weight: 400;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.18s ease;
+}
+
+.follow-toggle-btn:hover,
+.follow-toggle-btn:focus-visible {
+  color: #f4f4f7;
+  outline: none;
+}
+
+body.modal-open {
+  overflow: hidden;
+}
+
+.modal-backdrop,
+.modal-backdrop.custom-modal-backdrop {
+  background-color: #000000;
+}
+
+.modal-backdrop.show,
+.modal-backdrop.custom-modal-backdrop.show {
+  opacity: 0.65;
+}
+
+body[data-theme="light"] .modal-backdrop.show,
+body[data-theme="light"] .modal-backdrop.custom-modal-backdrop.show {
+  opacity: 0.45;
+}
+
+body.profile-body .follow-modal .modal-content {
+  background-color: #101010;
+  color: #f4f4f7;
+  border-radius: 18px;
+  border: 1px solid #23242c;
+}
+
+.follow-modal .modal-header {
+  justify-content: center;
+  position: relative;
+}
+
+.follow-modal .follow-modal-title {
+  text-align: center;
+  font-size: 1.1rem;
+  letter-spacing: 0.04em;
+}
+
+.follow-modal .btn-close {
+  position: absolute;
+  right: 1.25rem;
+  top: 1.1rem;
+}
+
+.follow-empty-text {
+  font-size: 0.78rem;
+}
+
+.follow-modal .modal-body {
+  overflow-y: auto;
+}
+
+body.profile-body .follow-modal .follow-user-name {
+  color: #f4f4f7;
+}
+
+body.profile-body .follow-modal .follow-user-handle {
+  color: #a8a9b3;
 }
 
 .profile-follow-count {

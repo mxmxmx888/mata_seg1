@@ -1,10 +1,9 @@
-# recipes/views/dashboard_view.py
-
 from django.shortcuts import render
 from django.db.models import Q
 from django.utils import timezone
 
 try:
+    from recipes.models import RecipePost, Favourite, Like, Follower
     from recipes.models import RecipePost, Favourite, Like, Follower
 except Exception:
     from recipes.models.recipe_post import RecipePost
@@ -14,9 +13,6 @@ except Exception:
 
 
 def _normalise_tags(tags):
-    """
-    Make sure tags are always a simple list of lowercase strings.
-    """
     if not tags:
         return []
     if isinstance(tags, str):
@@ -26,12 +22,7 @@ def _normalise_tags(tags):
         return [str(t).strip().lower() for t in tags if str(t).strip()]
     return []
 
-
 def _user_preference_tags(user):
-    """
-    Collect tags from recipes the user liked or saved.
-    Very small and simple “preference profile”.
-    """
     tags = []
 
     fav_qs = Favourite.objects.filter(user=user).select_related("recipe_post")
@@ -50,22 +41,14 @@ def _user_preference_tags(user):
             result.append(t)
     return result
 
-
 def _base_posts_queryset():
-    """
-    Only posts that are actually published, newest first.
-    """
     return (
         RecipePost.objects.filter(published_at__isnull=False)
         .select_related("author")
         .order_by("-published_at", "-created_at")
     )
 
-
 def _score_post_for_user(post, preferred_tags):
-    """
-    Tiny scoring function – nothing fancy, just enough to look “smart”.
-    """
     score = 0
 
     post_tags = set(_normalise_tags(getattr(post, "tags", [])))
@@ -85,7 +68,6 @@ def _score_post_for_user(post, preferred_tags):
 
     return score
 
-
 def _get_for_you_posts(user, query=None, limit=12):
     qs = _base_posts_queryset()
 
@@ -95,7 +77,7 @@ def _get_for_you_posts(user, query=None, limit=12):
             | Q(description__icontains=query)
             | Q(tags__icontains=query)
         )
-
+        
     preferred_tags = _user_preference_tags(user)
 
     posts = list(qs[:100])
@@ -109,7 +91,6 @@ def _get_for_you_posts(user, query=None, limit=12):
         posts = [p for _, p in scored]
 
     return posts[:limit]
-
 
 def _get_following_posts(user, query=None, limit=12):
     followed_ids = list(
@@ -129,11 +110,7 @@ def _get_following_posts(user, query=None, limit=12):
 
     return list(qs[:limit])
 
-
 def dashboard(request):
-    """
-    Main “Discover” page.
-    """
     if not request.user.is_authenticated:
         return render(request, "discover_logged_out.html")
 
@@ -141,6 +118,13 @@ def dashboard(request):
     category = (request.GET.get("category") or "all").strip()
     ingredient_q = (request.GET.get("ingredient") or "").strip()
     sort = (request.GET.get("sort") or "newest").strip()
+    mode = (request.GET.get("mode") or "feed").strip()
+
+    combined_keyword = " ".join(
+        part for part in [q, ingredient_q] if part
+    ).strip()
+
+    has_search = mode == "search"
 
     discover_qs = (
         RecipePost.objects.filter(published_at__isnull=False)
@@ -151,10 +135,6 @@ def dashboard(request):
         discover_qs = discover_qs.exclude(
             Q(tags__icontains="#private") & ~Q(author=request.user)
         )
-
-    combined_keyword = " ".join(
-        part for part in [q, ingredient_q] if part
-    ).strip()
 
     if combined_keyword:
         discover_qs = discover_qs.filter(
@@ -179,8 +159,12 @@ def dashboard(request):
 
     popular_recipes = list(discover_qs[:18])
 
-    for_you_posts = _get_for_you_posts(request.user, query=q)
-    following_posts = _get_following_posts(request.user, query=q)
+    if has_search:
+        for_you_posts = []
+        following_posts = []
+    else:
+        for_you_posts = _get_for_you_posts(request.user)
+        following_posts = _get_following_posts(request.user)
 
     context = {
         "current_user": request.user,
@@ -191,5 +175,6 @@ def dashboard(request):
         "category": category,
         "ingredient": ingredient_q,
         "sort": sort,
+        "has_search": has_search,
     }
     return render(request, "dashboard.html", context)

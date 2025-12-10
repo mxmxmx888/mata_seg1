@@ -56,32 +56,190 @@
     </div>    
   </section>
 
-  <section class="profile-collections-grid">
-    <div class="profile-collections">
-      {% for collection in collections %}
-      <a class="collection-card" href="{% url 'collection_detail' collection.slug %}">
-        <div class="collection-thumb" style="background-image: url('{{ collection.cover }}');"></div>
-        <div class="collection-overlay"></div>
-        <div class="collection-meta">
-          <p class="collection-title mb-0">{{ collection.title }}</p>
-          <p class="collection-sub mb-0">
-            {{ collection.count }} recipes{% if collection.privacy %} · {{ collection.privacy }}{% endif %}
-          </p>
-        </div>
-      </a>
-      {% endfor %}
-    </div>
-  </section>
-
-  {% if posts %}
   <section class="mt-4">
-    <h2 class="h5 mb-3">Recipes</h2>
-    <div class="cosmos-grid">
-      {% include "partials/recipe_grid.html" with posts=posts %}
-    </div>
+    {% if posts %}
+      <div class="my-recipes-grid mt-3">
+        {% for post in posts %}
+          <article class="my-recipe-card">
+            <h2 class="my-recipe-title">
+              <a href="{% url 'recipe_detail' post.id %}">
+                {{ post.title }}
+              </a>
+            </h2>
+
+            <div class="my-recipe-meta">
+              {% if post.prep_time_min %}
+                <span>Prep {{ post.prep_time_min }} min</span>
+              {% endif %}
+              {% if post.cook_time_min %}
+                <span>Cook {{ post.cook_time_min }} min</span>
+              {% endif %}
+            </div>
+
+            {% if post.description %}
+              <p class="my-recipe-description">
+                {{ post.description|truncatechars:140 }}
+              </p>
+            {% endif %}
+
+            <div class="my-recipe-actions">
+              <a href="{% url 'recipe_detail' post.id %}" class="btn btn-sm btn-outline-light">
+                View
+              </a>
+              {% if is_own_profile %}
+                <form method="post" action="{% url 'delete_my_recipe' post.id %}">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-sm btn-outline-danger">
+                    Delete
+                  </button>
+                </form>
+              {% endif %}
+            </div>
+          </article>
+        {% endfor %}
+      </div>
+    {% else %}
+      {% if is_own_profile %}
+        <p class="text-muted mt-4">You haven't created any recipes yet.</p>
+      {% else %}
+        <p class="text-muted mt-4">This user hasn't created any recipes yet.</p>
+      {% endif %}
+    {% endif %}
   </section>
-  {% endif %}
 </main>
+
+<div
+  class="modal fade follow-modal"
+  id="followersModal"
+  tabindex="-1"
+  aria-labelledby="followersModalLabel"
+  aria-hidden="true"
+>
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header border-0">
+        <h5 class="modal-title mb-0 follow-modal-title" id="followersModalLabel">Followers</h5>
+        <button
+          type="button"
+          class="btn-close btn-close-white"
+          data-bs-dismiss="modal"
+          aria-label="Close"
+        ></button>
+      </div>
+      <div class="modal-body">
+        {% if followers_users %}
+          <ul class="list-unstyled mb-0">
+            {% for u in followers_users %}
+              <li class="mb-3">
+                <div class="d-flex align-items-center justify-content-between gap-3">
+                  <a
+                    href="{% url 'profile' %}?user={{ u.username }}"
+                    class="follow-user-link d-flex align-items-center text-decoration-none flex-grow-1"
+                  >
+                    <div class="me-3">
+                      <img
+                        src="{{ u.mini_gravatar }}"
+                        alt="{{ u.username }} avatar"
+                        class="rounded-circle"
+                        width="40"
+                        height="40"
+                      >
+                    </div>
+                    <div class="text-start">
+                      <div class="fw-semibold follow-user-name">
+                        {{ u.get_full_name|default:u.username }}
+                      </div>
+                      <div class="small follow-user-handle">
+                        {{ u.username }}
+                      </div>
+                    </div>
+                  </a>
+                </div>
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p class="text-muted mb-0 follow-empty-text">No followers yet.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<div
+  class="modal fade follow-modal"
+  id="followingModal"
+  tabindex="-1"
+  aria-labelledby="followingModalLabel"
+  aria-hidden="true"
+>
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header border-0">
+        <h5 class="modal-title mb-0 follow-modal-title" id="followingModalLabel">Following</h5>
+        <button
+          type="button"
+          class="btn-close btn-close-white"
+          data-bs-dismiss="modal"
+          aria-label="Close"
+        ></button>
+      </div>
+      <div class="modal-body">
+        {% if following_users %}
+          <ul class="list-unstyled mb-0">
+            {% for u in following_users %}
+              <li class="mb-3">
+                <div class="d-flex align-items-center justify-content-between gap-3">
+                  <a
+                    href="{% url 'profile' %}?user={{ u.username }}"
+                    class="follow-user-link d-flex align-items-center text-decoration-none flex-grow-1"
+                  >
+                    <div class="me-3">
+                      <img
+                        src="{{ u.mini_gravatar }}"
+                        alt="{{ u.username }} avatar"
+                        class="rounded-circle"
+                        width="40"
+                        height="40"
+                      >
+                    </div>
+                    <div class="text-start">
+                      <div class="fw-semibold follow-user-name">
+                        {{ u.get_full_name|default:u.username }}
+                      </div>
+                      <div class="small follow-user-handle">
+                        {{ u.username }}
+                      </div>
+                    </div>
+                  </a>
+                  {% if is_own_profile %}
+                    <form
+                      method="post"
+                      action="{% url 'toggle_follow' u.username %}"
+                      class="follow-toggle-form"
+                    >
+                      {% csrf_token %}
+                      <button
+                        type="submit"
+                        class="follow-toggle-btn"
+                        data-label-following="Following"
+                        data-label-unfollow="Unfollow"
+                      >
+                        Following
+                      </button>
+                    </form>
+                  {% endif %}
+                </div>
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p class="text-muted mb-0 follow-empty-text">Not following anyone yet.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
 
 <div
   class="modal fade follow-modal"
@@ -310,6 +468,141 @@
     wireFollowModal('[data-bs-target="#followingModal"]', "followingModal");
 
     // Hover + AJAX behaviour for "Following" / "Unfollow" buttons
+    document.querySelectorAll(".follow-toggle-form").forEach(function (form) {
+      var btn = form.querySelector(".follow-toggle-btn");
+      if (!btn) return;
+
+      var followingLabel = btn.getAttribute("data-label-following") || "Following";
+      var unfollowLabel = btn.getAttribute("data-label-unfollow") || "Unfollow";
+
+      btn.addEventListener("mouseenter", function () {
+        btn.textContent = unfollowLabel;
+      });
+
+      btn.addEventListener("mouseleave", function () {
+        btn.textContent = followingLabel;
+      });
+
+      form.addEventListener("submit", function (event) {
+        event.preventDefault();
+
+        var url = form.getAttribute("action");
+        if (!url) return;
+
+        var formData = new FormData(form);
+
+        fetch(url, {
+          method: "POST",
+          body: formData,
+          headers: {
+            "X-Requested-With": "XMLHttpRequest",
+          },
+          credentials: "same-origin",
+        }).then(function (response) {
+          if (response.ok) {
+            var li = form.closest("li");
+            if (li) {
+              li.remove();
+            }
+          }
+        }).catch(function () {
+          form.submit();
+        });
+      });
+    });
+  })();
+</script>
+
+<script>
+  (function () {
+    var usingBootstrap = !!(window.bootstrap && window.bootstrap.Modal);
+    var fallbackBackdrop = null;
+    var currentFallbackModal = null;
+
+    function ensureBackdrop() {
+      if (fallbackBackdrop) return fallbackBackdrop;
+      var el = document.createElement("div");
+      el.className = "modal-backdrop fade custom-modal-backdrop";
+      document.body.appendChild(el);
+      fallbackBackdrop = el;
+      return el;
+    }
+
+    function showFallbackModal(modalEl) {
+      currentFallbackModal = modalEl;
+      var backdrop = ensureBackdrop();
+      backdrop.style.display = "block";
+      window.setTimeout(function () {
+        backdrop.classList.add("show");
+      }, 0);
+
+      modalEl.classList.add("show");
+      modalEl.style.display = "block";
+      modalEl.removeAttribute("aria-hidden");
+
+      document.body.classList.add("modal-open");
+      document.body.style.overflow = "hidden";
+
+      backdrop.onclick = function () {
+        hideFallbackModal();
+      };
+    }
+
+    function hideFallbackModal() {
+      if (!currentFallbackModal) return;
+
+      currentFallbackModal.classList.remove("show");
+      currentFallbackModal.style.display = "none";
+      currentFallbackModal.setAttribute("aria-hidden", "true");
+
+      if (fallbackBackdrop) {
+        fallbackBackdrop.classList.remove("show");
+        fallbackBackdrop.style.display = "none";
+        fallbackBackdrop.onclick = null;
+      }
+
+      document.body.classList.remove("modal-open");
+      document.body.style.overflow = "";
+      currentFallbackModal = null;
+    }
+
+    function wireFollowModal(buttonSelector, modalId) {
+      var buttons = document.querySelectorAll(buttonSelector);
+      var modalEl = document.getElementById(modalId);
+      if (!buttons.length || !modalEl) return;
+
+      if (!usingBootstrap) {
+        modalEl.addEventListener("click", function (event) {
+          if (event.target === modalEl) {
+            hideFallbackModal();
+          }
+        });
+
+        var closeBtn = modalEl.querySelector("[data-bs-dismiss='modal'], .btn-close");
+        if (closeBtn) {
+          closeBtn.addEventListener("click", function (event) {
+            event.preventDefault();
+            hideFallbackModal();
+          });
+        }
+      }
+
+      buttons.forEach(function (btn) {
+        btn.addEventListener("click", function (event) {
+          event.preventDefault();
+          if (usingBootstrap) {
+            var instance = window.bootstrap.Modal.getOrCreateInstance(modalEl);
+            instance.show();
+          } else {
+            showFallbackModal(modalEl);
+          }
+        });
+      });
+    }
+
+    wireFollowModal('[data-bs-target="#followersModal"]', "followersModal");
+    wireFollowModal('[data-bs-target="#followingModal"]', "followingModal");
+
     document.querySelectorAll(".follow-toggle-form").forEach(function (form) {
       var btn = form.querySelector(".follow-toggle-btn");
       if (!btn) return;

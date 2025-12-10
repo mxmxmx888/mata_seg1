@@ -7,10 +7,6 @@
 
 <main class="collection-shell container-fluid px-4 px-xl-5 pb-5">
   <header class="collection-header text-center">
-    <a href="{% url 'profile' %}" class="collection-back d-inline-flex align-items-center gap-2 mb-3">
-      <i class="bi bi-arrow-left"></i>
-      <span>Back to profile</span>
-    </a>
     <p class="collection-owner text-muted small mb-1">
       {{ collection.followers|default:0 }} Follower{% if collection.followers|default:0 != 1 %}s{% endif %} · {{ profile.handle }}
     </p>

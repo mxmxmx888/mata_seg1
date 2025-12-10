@@ -10,6 +10,7 @@
   <div class="container-fluid px-4 px-xl-5 py-4">
 
     <form method="get" class="mb-4 d-flex align-items-center justify-content-center dashboard-filters">
+      <input type="hidden" name="mode" value="search">
 
       <!-- Category -->
       <select
@@ -27,7 +28,6 @@
         <option value="vegan"{% if category == "vegan" %} selected{% endif %}>Vegan</option>
       </select>
 
-      <!-- Ingredient text filter -->
       <input
         type="text"
         name="ingredient"
@@ -36,7 +36,6 @@
         value="{{ ingredient|default:'' }}"
       >
 
-      <!-- Sorting -->
       <select
         name="sort"
         class="form-select dashboard-filter-select"
@@ -55,48 +54,53 @@
 
     </form>
 
-    {% if popular_recipes %}
-      <h4 class="mb-3">Most Popular</h4>
-      {% include "partials/recipe_grid.html" with posts=popular_recipes %}
-    {% endif %}
+    {% if has_search %}
+      {% if popular_recipes %}
+        {% include "partials/recipe_grid.html" with posts=popular_recipes %}
+      {% else %}
+        <div class="text-center py-5" style="color: #8b8c9a;">
+          No recipes found for this search.
+        </div>
+      {% endif %}
+    {% else %}
 
-    <div class="row justify-content-center mb-4">
-      <div class="col-auto">
-        <ul class="nav nav-pills cosmos-toggle" id="cosmosFeedTabs" role="tablist">
+      <div class="row justify-content-center mb-4">
+        <div class="col-auto">
+          <ul class="nav nav-pills cosmos-toggle" id="cosmosFeedTabs" role="tablist">
 
-          <li class="nav-item" role="presentation">
-            <button
-              class="nav-link active"
-              id="forYou-tab"
-              data-bs-toggle="pill"
-              data-bs-target="#forYou"
-              type="button"
-              role="tab"
-              aria-selected="true"
-            >
-              For you
-            </button>
-          </li>
+            <li class="nav-item" role="presentation">
+              <button
+                class="nav-link active"
+                id="forYou-tab"
+                data-bs-toggle="pill"
+                data-bs-target="#forYou"
+                type="button"
+                role="tab"
+                aria-selected="true"
+              >
+                For you
+              </button>
+            </li>
 
-          <li class="nav-item" role="presentation">
-            <button
-              class="nav-link"
-              id="following-tab"
-              data-bs-toggle="pill"
-              data-bs-target="#following"
-              type="button"
-              role="tab"
-              aria-selected="false"
-            >
-              Following
-            </button>
-          </li>
+            <li class="nav-item" role="presentation">
+              <button
+                class="nav-link"
+                id="following-tab"
+                data-bs-toggle="pill"
+                data-bs-target="#following"
+                type="button"
+                role="tab"
+                aria-selected="false"
+              >
+                Following
+              </button>
+            </li>
 
-        </ul>
+          </ul>
+        </div>
       </div>
-    </div>
 
-    <div class="tab-content">
+      <div class="tab-content">
 
       <div class="tab-pane fade show active" id="forYou" role="tabpanel" aria-labelledby="forYou-tab">
         {% if for_you_posts %}
@@ -118,7 +122,9 @@
         {% endif %}
       </div>
 
-    </div>
+      </div>
+
+    {% endif %}
 
   </div>
 </main>
