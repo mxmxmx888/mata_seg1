@@ -2,7 +2,10 @@
 {% if posts %}
   <div class="my-recipes-grid">
     {% for post in posts %}
-      <article class="my-recipe-card">
+      <article
+        class="my-recipe-card"
+        onclick="window.location.href='{% url 'recipe_detail' post.id %}'"
+      >
         <h2 class="my-recipe-title">
           <a href="{% url 'recipe_detail' post.id %}">
             {{ post.title }}
@@ -20,23 +23,23 @@
           <span>Cook: {{ post.cook_time_min }} min</span>
         </p>
 
-        <div class="my-recipe-actions">
-          <a href="{% url 'recipe_detail' post.id %}" class="btn btn-sm btn-outline-light rounded-pill px-3">
-            View
-          </a>
-          {% if request.user.is_authenticated and request.user == post.author %}
-            <form method="post" action="{% url 'delete_my_recipe' post.id %}">
+        {% if request.user.is_authenticated and request.user == post.author %}
+          <div class="my-recipe-actions">
+            <form
+              method="post"
+              action="{% url 'delete_my_recipe' post.id %}"
+              onclick="event.stopPropagation()"
+            >
               {% csrf_token %}
               <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3">
                 Delete
               </button>
             </form>
-          {% endif %}
-        </div>
+          </div>
+        {% endif %}
       </article>
     {% endfor %}
   </div>
 {% else %}
   <p class="text-muted mt-3">You haven’t created any recipes yet.</p>
 {% endif %}
-
