@@ -5,19 +5,12 @@ from django.db.models import Q
 from django.utils import timezone
 
 try:
-    # most likely setup
-    from recipes.models import RecipePost, Favourite, Like
+    from recipes.models import RecipePost, Favourite, Like, Follower
 except Exception:
-    # fallback if models are split by module
     from recipes.models.recipe_post import RecipePost
     from recipes.models.favourite import Favourite
     from recipes.models.like import Like
-
-try:
     from recipes.models.followers import Follower
-except Exception:
-    # if Follower is re-exported from recipes.models
-    from recipes.models import Follower
 
 
 def _normalise_tags(tags):
@@ -69,7 +62,7 @@ def _base_posts_queryset():
     )
 
 
-def _score_post_for_user(post, preferred_tags, followed_author_ids):
+def _score_post_for_user(post, preferred_tags):
     """
     Tiny scoring function – nothing fancy, just enough to look “smart”.
     """
@@ -80,9 +73,6 @@ def _score_post_for_user(post, preferred_tags, followed_author_ids):
 
     if post_tags & pref_set:
         score += 3
-
-    if getattr(post, "author_id", None) in followed_author_ids:
-        score += 2
 
     saved_count = getattr(post, "saved_count", 0) or 0
     score += saved_count
@@ -108,15 +98,11 @@ def _get_for_you_posts(user, query=None, limit=12):
 
     preferred_tags = _user_preference_tags(user)
 
-    followed_author_ids = list(
-        Follower.objects.filter(follower=user).values_list("author_id", flat=True)
-    )
-
     posts = list(qs[:100])
 
-    if preferred_tags or followed_author_ids:
+    if preferred_tags:
         scored = [
-            (_score_post_for_user(p, preferred_tags, followed_author_ids), p)
+            (_score_post_for_user(p, preferred_tags), p)
             for p in posts
         ]
         scored.sort(key=lambda x: x[0], reverse=True)

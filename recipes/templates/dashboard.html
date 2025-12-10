@@ -9,62 +9,55 @@
 <main class="cosmos-home">
   <div class="container-fluid px-4 px-xl-5 py-4">
 
-    <form method="get" class="mb-4">
-      <div class="row g-2">
+    <form method="get" class="mb-4 d-flex align-items-center justify-content-center dashboard-filters">
 
-        <!-- Category -->
-        <div class="col-md-3">
-          <select name="category" class="form-select">
-            <option value="all"{% if not category or category == "all" %} selected{% endif %}>
-              All categories
-            </option>
-            <option value="breakfast"{% if category == "breakfast" %} selected{% endif %}>Breakfast</option>
-            <option value="lunch"{% if category == "lunch" %} selected{% endif %}>Lunch</option>
-            <option value="dinner"{% if category == "dinner" %} selected{% endif %}>Dinner</option>
-            <option value="dessert"{% if category == "dessert" %} selected{% endif %}>Dessert</option>
-            <option value="vegan"{% if category == "vegan" %} selected{% endif %}>Vegan</option>
-          </select>
-        </div>
+      <!-- Category -->
+      <select
+        name="category"
+        class="form-select dashboard-filter-select"
+        onchange="this.form.submit()"
+      >
+        <option value="all"{% if not category or category == "all" %} selected{% endif %}>
+          All categories
+        </option>
+        <option value="breakfast"{% if category == "breakfast" %} selected{% endif %}>Breakfast</option>
+        <option value="lunch"{% if category == "lunch" %} selected{% endif %}>Lunch</option>
+        <option value="dinner"{% if category == "dinner" %} selected{% endif %}>Dinner</option>
+        <option value="dessert"{% if category == "dessert" %} selected{% endif %}>Dessert</option>
+        <option value="vegan"{% if category == "vegan" %} selected{% endif %}>Vegan</option>
+      </select>
 
-        <!-- Ingredient text filter -->
-        <div class="col-md-3">
-          <input
-            type="text"
-            name="ingredient"
-            class="form-control"
-            placeholder="Filter by ingredient (e.g. chicken)"
-            value="{{ ingredient|default:'' }}"
-          >
-        </div>
+      <!-- Ingredient text filter -->
+      <input
+        type="text"
+        name="ingredient"
+        class="form-control dashboard-filter-input"
+        placeholder="Filter by ingredient (e.g. chicken)"
+        value="{{ ingredient|default:'' }}"
+      >
 
-        <!-- Sorting -->
-        <div class="col-md-3">
-          <select name="sort" class="form-select">
-            <option value="newest"{% if not sort or sort == "newest" %} selected{% endif %}>
-              Newest
-            </option>
-            <option value="popular"{% if sort == "popular" %} selected{% endif %}>
-              Most popular
-            </option>
-            <option value="oldest"{% if sort == "oldest" %} selected{% endif %}>
-              Oldest
-            </option>
-          </select>
-        </div>
+      <!-- Sorting -->
+      <select
+        name="sort"
+        class="form-select dashboard-filter-select"
+        onchange="this.form.submit()"
+      >
+        <option value="newest"{% if not sort or sort == "newest" %} selected{% endif %}>
+          Newest
+        </option>
+        <option value="popular"{% if sort == "popular" %} selected{% endif %}>
+          Most popular
+        </option>
+        <option value="oldest"{% if sort == "oldest" %} selected{% endif %}>
+          Oldest
+        </option>
+      </select>
 
-        <!-- Apply button -->
-        <div class="col-md-3">
-          <button class="btn btn-dark w-100" type="submit">Apply</button>
-        </div>
-
-      </div>
     </form>
 
     {% if popular_recipes %}
       <h4 class="mb-3">Most Popular</h4>
-      <div class="cosmos-grid mb-4">
-        {% include "partials/recipe_grid.html" with posts=popular_recipes %}
-      </div>
+      {% include "partials/recipe_grid.html" with posts=popular_recipes %}
     {% endif %}
 
     <div class="row justify-content-center mb-4">
@@ -107,9 +100,7 @@
 
       <div class="tab-pane fade show active" id="forYou" role="tabpanel" aria-labelledby="forYou-tab">
         {% if for_you_posts %}
-          <div class="cosmos-grid">
-            {% include "partials/recipe_grid.html" with posts=for_you_posts %}
-          </div>
+          {% include "partials/recipe_grid.html" with posts=for_you_posts %}
         {% else %}
           <div class="text-center py-5" style="color: #8b8c9a;">
             Nothing here yet — your personalised feed will appear here soon.
@@ -119,12 +110,10 @@
 
       <div class="tab-pane fade" id="following" role="tabpanel" aria-labelledby="following-tab">
         {% if following_posts %}
-          <div class="cosmos-grid">
-            {% include "partials/recipe_grid.html" with posts=following_posts %}
-          </div>
+          {% include "partials/recipe_grid.html" with posts=following_posts %}
         {% else %}
           <div class="text-center py-5" style="color: #8b8c9a;">
-            No following posts yet.
+            Follow some cullinarians to get started!
           </div>
         {% endif %}
       </div>
@@ -134,4 +123,3 @@
   </div>
 </main>
 {% endblock %}
-

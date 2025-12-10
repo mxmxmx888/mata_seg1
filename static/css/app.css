@@ -186,11 +186,33 @@ body[data-theme="dark"]:not(.auth-body) .btn.btn-outline-light:focus-visible {
 
 .cosmos-home {
   min-height: calc(100vh - 64px);
-  padding-top: 0.75rem;  /* smaller top padding than the Bootstrap pt-4 */
+  padding-top: 0.75rem;  
 }
 
 .cosmos-home .row.mt-3 {
   margin-top: 0.75rem;
+}
+
+/* Dashboard page background + navbar matching */
+
+body.dashboard-body {
+  background-color: #050505;
+  color: #f5f5f5;
+}
+
+body[data-theme="light"].dashboard-body {
+  background-color: #ffffff;
+  color: #111827;
+}
+
+body[data-theme="dark"].dashboard-body {
+  background-color: #050505;
+  color: #f5f5f5;
+}
+
+body.dashboard-body .navbar-squarespace,
+body.dashboard-body .navbar-app {
+  background-color: inherit !important;
 }
 
 /* Search pill under navbar */
@@ -221,6 +243,66 @@ body[data-theme="dark"]:not(.auth-body) .btn.btn-outline-light:focus-visible {
   border-radius: 0;
   background-color: transparent;
   font-size: 0.9rem;
+}
+
+/* Dashboard filters at the top of Discover */
+
+.dashboard-filters {
+  gap: 1.1rem;
+  max-width: 520px;
+  margin-inline: auto;
+}
+
+.dashboard-filter-select,
+.dashboard-filter-input {
+  border: none;
+  border-radius: 999px;
+  padding: 0.35rem 0.9rem;
+  font-size: 0.85rem;
+  color: #9ca3af;
+  box-shadow: none;
+  width: auto;
+  flex: 0 0 auto;
+  background-color: transparent;
+}
+
+.dashboard-filter-select {
+  padding-right: 1.5rem;
+  display: inline-block;
+  min-width: 0;
+}
+
+.dashboard-filter-input {
+  min-width: 190px;
+}
+
+.dashboard-filter-select:focus,
+.dashboard-filter-input:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+.dashboard-filter-select:hover,
+.dashboard-filter-select:focus,
+.dashboard-filter-input:hover,
+.dashboard-filter-input:focus {
+  background-color: #18181b;
+  color: #f9fafb;
+}
+
+/* Light mode: soft grey pill + black text on hover */
+body[data-theme="light"] .dashboard-filter-select:hover,
+body[data-theme="light"] .dashboard-filter-select:focus,
+body[data-theme="light"] .dashboard-filter-input:hover,
+body[data-theme="light"] .dashboard-filter-input:focus,
+body[data-theme="light"] .dashboard-filter-select-wrapper:hover,
+body[data-theme="light"] .dashboard-filter-select-wrapper:focus-within {
+  background-color: #f3f4f6;
+  color: #111827;
+}
+
+.dashboard-filter-input::placeholder {
+  color: #9ca3af;
 }
 
 /* For you / Following toggle – only the active one gets a pill */
@@ -394,6 +476,132 @@ body.profile-body .cosmos-nav-search-input::placeholder {
   font-size: 0.85rem;
 }
 
+.profile-follow-count {
+  border: none;
+  background: transparent;
+  color: inherit;
+  font-size: 0.85rem;
+  font-weight: 400;
+  padding: 0;
+  margin: 0 0.1rem;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.profile-follow-count:hover,
+.profile-follow-count:focus-visible {
+  color: #f4f4f7;
+  text-decoration: none;
+}
+
+.follow-modal .modal-content {
+  border-radius: 18px;
+  min-height: 260px;
+  max-height: 70vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.follow-modal .btn-close {
+  filter: invert(1);
+  opacity: 0.6;
+}
+
+.follow-modal .btn-close:hover {
+  opacity: 1;
+}
+
+.follow-user-link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.follow-user-link:hover {
+  color: inherit;
+  text-decoration: none;
+}
+
+.follow-toggle-form {
+  margin-left: 1rem;
+}
+
+.follow-toggle-btn {
+  border: none;
+  background-color: transparent;
+  color: #c5c6ce;
+  font-size: 0.75rem;
+  font-weight: 400;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.18s ease;
+}
+
+.follow-toggle-btn:hover,
+.follow-toggle-btn:focus-visible {
+  color: #f4f4f7;
+  outline: none;
+}
+
+body.modal-open {
+  overflow: hidden;
+}
+
+.modal-backdrop,
+.modal-backdrop.custom-modal-backdrop {
+  background-color: #000000;
+}
+
+.modal-backdrop.show,
+.modal-backdrop.custom-modal-backdrop.show {
+  opacity: 0.65;
+}
+
+body[data-theme="light"] .modal-backdrop.show,
+body[data-theme="light"] .modal-backdrop.custom-modal-backdrop.show {
+  opacity: 0.45;
+}
+
+body.profile-body .follow-modal .modal-content {
+  background-color: #101010;
+  color: #f4f4f7;
+  border-radius: 18px;
+  border: 1px solid #23242c;
+}
+
+.follow-modal .modal-header {
+  justify-content: center;
+  position: relative;
+}
+
+.follow-modal .follow-modal-title {
+  text-align: center;
+  font-size: 1.1rem;
+  letter-spacing: 0.04em;
+}
+
+.follow-modal .btn-close {
+  position: absolute;
+  right: 1.25rem;
+  top: 1.1rem;
+}
+
+.follow-empty-text {
+  font-size: 0.78rem;
+}
+
+.follow-modal .modal-body {
+  overflow-y: auto;
+}
+
+body.profile-body .follow-modal .follow-user-name {
+  color: #f4f4f7;
+}
+
+body.profile-body .follow-modal .follow-user-handle {
+  color: #a8a9b3;
+}
+
 .profile-actions {
   margin-top: 1.25rem;
   margin-bottom: 2.75rem;
@@ -514,6 +722,58 @@ body.profile-body .cosmos-nav-search-input::placeholder {
   background-color: #0d0d0d;
   border-color: #4f46e5;
   box-shadow: 0 0 0 0.2rem rgba(79, 70, 229, 0.25);
+}
+
+/* Light theme overrides for profile + collections */
+body[data-theme="light"].profile-body {
+  background-color: #f5f5f7;
+  color: #111827;
+}
+
+body[data-theme="light"].profile-body .navbar-app {
+  background-color: #ffffff;
+}
+
+body[data-theme="light"].profile-body .navbar-app .navbar-brand,
+body[data-theme="light"].profile-body .navbar-app .nav-link,
+body[data-theme="light"].profile-body .navbar-app .icon-button {
+  color: #111827;
+}
+
+body[data-theme="light"].profile-body .navbar-app .btn.btn-light {
+  background-color: #111827;
+  color: #f9fafb;
+}
+
+body[data-theme="light"].profile-body .cosmos-nav-search {
+  background-color: #f1f1f3;
+  border-color: #e1e1e6;
+}
+
+body[data-theme="light"].profile-body .cosmos-nav-search:focus-within {
+  background-color: #ececf0;
+  border-color: #cbd5f5;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.12);
+}
+
+body[data-theme="light"].profile-body .cosmos-nav-search-input {
+  color: #4b5563;
+}
+
+body[data-theme="light"].profile-body .cosmos-nav-search-input::placeholder {
+  color: #9ca3af;
+}
+
+body[data-theme="light"].profile-body .profile-collections .collection-title {
+  color: #111827;
+}
+
+body[data-theme="light"].profile-body .collection-sub {
+  color: #6b7280;
+}
+
+body[data-theme="light"].profile-body .profile-footer {
+  color: #6b7280 !important;
 }
 
 /* Let profile collections grow on wider, landscape-heavy viewports */
@@ -961,26 +1221,27 @@ body.profile-body .cosmos-nav-search-input::placeholder {
 
 /*  3-COLUMN MY RECIPES GRID */
 .my-recipes-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);   /* always 3 per row */
-  gap: 1.8rem;                              /* spacing between cards */
-  align-items: start;                       /* prevent large cards pushing others down */
+  column-count: 3;
+  column-gap: 1.8rem;
 }
 
 @media (max-width: 1200px) {
   .my-recipes-grid {
-    grid-template-columns: repeat(2, 1fr);  /* tablet view */
+    column-count: 2;  /* tablet view */
   }
 }
 
 @media (max-width: 700px) {
   .my-recipes-grid {
-    grid-template-columns: 1fr;           
+    column-count: 1;
   }
 }
 
 
 .my-recipe-card {
+  break-inside: avoid;
+  -webkit-column-break-inside: avoid;
+  margin-bottom: 1.8rem;
   border-radius: 18px;
   border: 1px solid #262633;
   background-color: #050509;
@@ -988,6 +1249,7 @@ body.profile-body .cosmos-nav-search-input::placeholder {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  cursor: pointer;
 }
 
 .my-recipe-title {
@@ -1001,7 +1263,7 @@ body.profile-body .cosmos-nav-search-input::placeholder {
 }
 
 .my-recipe-title a:hover {
-  text-decoration: underline;
+  text-decoration: none;
 }
 
 .my-recipe-meta {
@@ -1028,5 +1290,14 @@ body.profile-body .cosmos-nav-search-input::placeholder {
   margin: 0;
 }
 
+/* Light-mode styling for dashboard recipe cards */
 
+body[data-theme="light"].dashboard-body .my-recipe-card {
+  background-color: #f5f5f7;
+  border-color: #e4e4ef;
+  color: #111827;
+}
 
+body[data-theme="light"].dashboard-body .my-recipe-title a {
+  color: #111827;
+}

@@ -198,6 +198,8 @@ def toggle_follow(request, username):
     target_user = get_object_or_404(User, username=username)
 
     if target_user == request.user:
+        if request.headers.get("HX-Request") or request.headers.get("x-requested-with") == "XMLHttpRequest":
+            return HttpResponse(status=204)
         return redirect(request.META.get("HTTP_REFERER") or reverse("dashboard"))
 
     existing = Follower.objects.filter(
@@ -209,5 +211,8 @@ def toggle_follow(request, username):
         existing.delete()
     else:
         Follower.objects.create(follower=request.user, author=target_user)
+
+    if request.headers.get("HX-Request") or request.headers.get("x-requested-with") == "XMLHttpRequest":
+        return HttpResponse(status=204)
 
     return redirect(request.META.get("HTTP_REFERER") or reverse("dashboard"))

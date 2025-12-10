@@ -2,6 +2,7 @@ from typing import Any, Dict, List, Optional, Sequence
 from django.db.models import QuerySet
 from recipes.db_accessor import DB_Accessor
 from recipes.models.recipe_post import RecipePost
+from recipes.models import Follows
 
 
 class PostRepo(DB_Accessor):
@@ -50,3 +51,18 @@ class PostRepo(DB_Accessor):
             limit=limit,
             offset=offset,
         )
+    
+    def list_for_following(self, user_id, limit=50):
+        followee_ids = (
+            Follows.objects
+            .filter(author_id=user_id)
+            .values_list("followee_id", flat=True)
+        )
+
+        if not followee_ids:
+            from recipes.models import Post
+            return Post.objects.none()
+
+        qs = self.list_for_feed(user_id) if hasattr(self, "list_for_feed") else self.list_all()
+
+        return qs.filter(author_id__in=followee_ids).order_by("-created_at")[:limit]
