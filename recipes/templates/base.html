@@ -135,6 +135,44 @@
           label.style.display = 'none';
         });
       });
+
+      // Auto-size dashboard filter pills based on selected option text
+      const dashboardSelects = document.querySelectorAll('.dashboard-filter-select');
+
+      function autosizeDashboardFilter(select) {
+        if (!select) return;
+
+        const selectedOption = select.options[select.selectedIndex];
+        if (!selectedOption) return;
+
+        const measuringSpan = document.createElement('span');
+        const computed = window.getComputedStyle(select);
+
+        measuringSpan.textContent = selectedOption.text;
+        measuringSpan.style.position = 'fixed';
+        measuringSpan.style.visibility = 'hidden';
+        measuringSpan.style.whiteSpace = 'nowrap';
+        measuringSpan.style.font = computed.font;
+
+        document.body.appendChild(measuringSpan);
+        const textWidth = measuringSpan.getBoundingClientRect().width;
+        document.body.removeChild(measuringSpan);
+
+        // Add horizontal padding + caret spacing
+        const horizontalPadding =
+          parseFloat(computed.paddingLeft || '0') +
+          parseFloat(computed.paddingRight || '0') +
+          20; // extra space for the dropdown arrow
+
+        select.style.width = `${textWidth + horizontalPadding}px`;
+      }
+
+      dashboardSelects.forEach(function (select) {
+        autosizeDashboardFilter(select);
+        select.addEventListener('change', function () {
+          autosizeDashboardFilter(select);
+        });
+      });
     });
   </script>
   
@@ -152,5 +190,4 @@
         integrity="..."
         crossorigin="anonymous">
 </script>
-
 

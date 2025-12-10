@@ -193,7 +193,7 @@ body[data-theme="dark"]:not(.auth-body) .btn.btn-outline-light:focus-visible {
   margin-top: 0.75rem;
 }
 
-/* Dashboard page background + navbar matching */
+/* Dashboard + Shop page background + navbar matching */
 
 body.dashboard-body {
   background-color: #050505;
@@ -211,7 +211,9 @@ body[data-theme="dark"].dashboard-body {
 }
 
 body.dashboard-body .navbar-squarespace,
-body.dashboard-body .navbar-app {
+body.dashboard-body .navbar-app,
+body.shop-body .navbar-squarespace,
+body.shop-body .navbar-app {
   background-color: inherit !important;
 }
 
@@ -416,7 +418,7 @@ body.profile-body .cosmos-nav-search {
 }
 
 body.profile-body .cosmos-nav-search:focus-within {
-  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.65);
+  box-shadow: none;
   border-color: #30303a;
 }
 
@@ -445,7 +447,6 @@ body.profile-body .cosmos-nav-search-input::placeholder {
   border-radius: 50%;
   padding: 3px;
   background: radial-gradient(circle at 30% 30%, #6ee7ff, #4f46e5, #0c0c0c);
-  box-shadow: 0 16px 60px rgba(0, 0, 0, 0.55);
   overflow: hidden;
 }
 
@@ -467,8 +468,9 @@ body.profile-body .cosmos-nav-search-input::placeholder {
 }
 
 .profile-name {
-  font-size: clamp(1.5rem, 2vw, 1.9rem);
+  font-size: clamp(1.3rem, 1.9vw, 1.7rem);
   letter-spacing: -0.02em;
+  margin-bottom: 0.9rem;
 }
 
 .profile-tagline {
@@ -612,8 +614,8 @@ body.profile-body .follow-modal .follow-user-handle {
   background: linear-gradient(135deg, #1c1c1c, #121212);
   color: #f4f4f7;
   border-radius: 999px;
-  padding: 0.4rem 0.95rem;
-  font-size: 0.82rem;
+  padding: 0.35rem 0.9rem;
+  font-size: 0.78rem;
   font-weight: 600;
   letter-spacing: 0.01em;
 }
@@ -709,7 +711,6 @@ body.profile-body .follow-modal .follow-user-handle {
   background-color: #101010;
   color: #f4f4f7;
   border-radius: 18px;
-  border: 1px solid #23242c;
 }
 
 .edit-profile-modal .form-control {
@@ -753,7 +754,7 @@ body[data-theme="light"].profile-body .cosmos-nav-search {
 body[data-theme="light"].profile-body .cosmos-nav-search:focus-within {
   background-color: #ececf0;
   border-color: #cbd5f5;
-  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.12);
+  box-shadow: none;
 }
 
 body[data-theme="light"].profile-body .cosmos-nav-search-input {
@@ -768,12 +769,136 @@ body[data-theme="light"].profile-body .profile-collections .collection-title {
   color: #111827;
 }
 
+body[data-theme="light"].profile-body .profile-tagline {
+  color: #111827;
+}
+
 body[data-theme="light"].profile-body .collection-sub {
   color: #6b7280;
 }
 
 body[data-theme="light"].profile-body .profile-footer {
   color: #6b7280 !important;
+}
+
+body[data-theme="light"].profile-body .profile-pill {
+  border: none;
+  background: #e5e7eb;
+  color: #111827;
+}
+
+body[data-theme="light"].profile-body .profile-pill:hover,
+body[data-theme="light"].profile-body .profile-pill:focus-visible {
+  border: none;
+  background: #d1d5db;
+  color: #111827;
+}
+
+/* Light theme overrides for edit profile modal */
+body[data-theme="light"] .edit-profile-modal .modal-content {
+  background-color: #ffffff;
+  color: #111827;
+  border-radius: 24px;
+  padding: 1.75rem 1.9rem;
+}
+
+body[data-theme="light"] .edit-profile-modal .form-control {
+  background-color: transparent;
+  border-color: transparent;
+  color: #111827;
+  border-radius: 0;
+  padding: 0;
+  font-size: 0.95rem;
+  box-shadow: none;
+}
+
+body[data-theme="light"] .edit-profile-modal .form-control:focus {
+  background-color: transparent;
+  border-color: transparent;
+  outline: none;
+  box-shadow: none;
+}
+
+body[data-theme="light"] .edit-profile-modal .btn-close {
+  filter: none;
+  opacity: 0.6;
+}
+
+body[data-theme="light"] .edit-profile-modal .btn-close:hover {
+  opacity: 1;
+}
+
+body[data-theme="light"] .edit-profile-modal .modal-header {
+  padding-bottom: 1.5rem;
+}
+
+body[data-theme="light"] .edit-profile-modal .modal-header p {
+  margin: 0 0 0.4rem 0.15rem;
+  font-size: 1.2rem;
+  font-weight: 400;
+  text-transform: none !important;
+  letter-spacing: 0;
+  color: #000000;
+  font-family: "Awesome Serif", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+body[data-theme="light"] .edit-profile-modal .modal-header .modal-title {
+  display: none;
+}
+
+body[data-theme="light"] .edit-profile-modal .modal-body .mb-3 {
+  margin-bottom: 1rem;
+  padding: 0.75rem 1.3rem 0.7rem;
+  background-color: #ffffff;
+  border-radius: 18px;
+}
+
+body[data-theme="light"] .edit-profile-modal .modal-body label {
+  display: block;
+  margin-bottom: 0.15rem;
+  font-size: 0.8rem;
+  font-weight: 400;
+  color: #6b7280;
+}
+
+body[data-theme="light"] .edit-profile-modal .form-control::placeholder {
+  color: #b5b5c0;
+}
+
+body[data-theme="light"] .edit-profile-modal textarea.form-control {
+  min-height: 120px;
+  resize: vertical;
+}
+
+body[data-theme="light"] .edit-profile-modal .modal-footer {
+  border-top: none;
+  padding-top: 1.25rem;
+}
+
+body[data-theme="light"] .edit-profile-modal .btn.btn-outline-light {
+  border-radius: 999px;
+  border: none;
+  background-color: transparent;
+  color: #6b7280;
+}
+
+body[data-theme="light"] .edit-profile-modal .btn.btn-outline-light:hover,
+body[data-theme="light"] .edit-profile-modal .btn.btn-outline-light:focus-visible {
+  background-color: transparent;
+  color: #111827;
+}
+
+body[data-theme="light"] .edit-profile-modal .btn.btn-light {
+  border-radius: 999px;
+  border: none;
+  background-color: #111827;
+  color: #ffffff;
+}
+
+body[data-theme="light"] .edit-profile-modal .btn.btn-light:hover,
+body[data-theme="light"] .edit-profile-modal .btn.btn-light:focus-visible {
+  background-color: #000000;
+  color: #ffffff;
 }
 
 /* Let profile collections grow on wider, landscape-heavy viewports */
@@ -811,6 +936,7 @@ body[data-theme="light"].profile-body .profile-footer {
 .edit-profile-modal .btn-close {
   filter: invert(1);
   opacity: 0.6;
+  transform: scale(0.8);
 }
 
 .edit-profile-modal .btn-close:hover {
@@ -1139,7 +1265,6 @@ body[data-theme="light"].profile-body .profile-footer {
 
 .recipe-meta-label {
   font-size: 0.8rem;
-  text-transform: uppercase;
   letter-spacing: 0.12em;
   color: #9c9db0;
 }
