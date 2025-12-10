@@ -46,9 +46,6 @@
     </div>
 
     <div class="navbar-actions ms-auto d-flex align-items-center gap-2">
-      <a href="{% url 'my_recipes' %}" class="btn btn-outline-dark rounded-pill px-3">
-        My recipes
-      </a>
       <a href="{% url 'recipe_create' %}" class="btn btn-dark rounded-pill px-3">
         Create
       </a>
@@ -56,9 +53,9 @@
       <button class="icon-button d-none d-md-inline-flex" type="button">
         <i class="bi bi-heart"></i>
       </button>
-      <button class="icon-button d-none d-md-inline-flex" type="button">
+      <a href="{% url 'collections' %}" class="icon-button d-none d-md-inline-flex">
         <i class="bi bi-bookmark"></i>
-      </button>
+      </a>
 
       <a
         href="{% url 'profile' %}"

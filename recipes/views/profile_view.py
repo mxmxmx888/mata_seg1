@@ -3,8 +3,6 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from django.http import Http404
 from django.shortcuts import redirect, render
-from django.urls import reverse
-
 from recipes.forms import UserForm
 from recipes.repos.post_repo import PostRepo
 from recipes.repos.user_repo import UserRepo
@@ -127,6 +125,7 @@ PROFILE_COLLECTIONS = [
     },
 ]
 
+
 def _profile_data_for_user(user):
     fallback_handle = "@anmzn"
     handle = user.username or fallback_handle
@@ -200,7 +199,7 @@ def profile(request):
             "collections": PROFILE_COLLECTIONS,
             "form": form,
             "profile_user": profile_user,
-            "is_own_profile": profile_user == request.user,
+            "is_own_profile": is_own_profile,
             "is_following": is_following,
             "followers_count": followers_count,
             "following_count": following_count,
@@ -210,6 +209,13 @@ def profile(request):
         },
     )
 
+@login_required
+def collections_overview(request):
+    context = {
+        "profile": _profile_data_for_user(request.user),
+        "collections": PROFILE_COLLECTIONS,
+    }
+    return render(request, "collections.html", context)
 
 @login_required
 def collection_detail(request, slug):

@@ -56,31 +56,56 @@
     </div>    
   </section>
 
-  <section class="profile-collections-grid">
-    <div class="profile-collections">
-      {% for collection in collections %}
-      <a class="collection-card" href="{% url 'collection_detail' collection.slug %}">
-        <div class="collection-thumb" style="background-image: url('{{ collection.cover }}');"></div>
-        <div class="collection-overlay"></div>
-        <div class="collection-meta">
-          <p class="collection-title mb-0">{{ collection.title }}</p>
-          <p class="collection-sub mb-0">
-            {{ collection.count }} recipes{% if collection.privacy %} · {{ collection.privacy }}{% endif %}
-          </p>
-        </div>
-      </a>
-      {% endfor %}
-    </div>
-  </section>
-
-  {% if posts %}
   <section class="mt-4">
-    <h2 class="h5 mb-3">Recipes</h2>
-    <div class="cosmos-grid">
-      {% include "partials/recipe_grid.html" with posts=posts %}
-    </div>
+    {% if posts %}
+      <div class="my-recipes-grid mt-3">
+        {% for post in posts %}
+          <article class="my-recipe-card">
+            <h2 class="my-recipe-title">
+              <a href="{% url 'recipe_detail' post.id %}">
+                {{ post.title }}
+              </a>
+            </h2>
+
+            <div class="my-recipe-meta">
+              {% if post.prep_time_min %}
+                <span>Prep {{ post.prep_time_min }} min</span>
+              {% endif %}
+              {% if post.cook_time_min %}
+                <span>Cook {{ post.cook_time_min }} min</span>
+              {% endif %}
+            </div>
+
+            {% if post.description %}
+              <p class="my-recipe-description">
+                {{ post.description|truncatechars:140 }}
+              </p>
+            {% endif %}
+
+            <div class="my-recipe-actions">
+              <a href="{% url 'recipe_detail' post.id %}" class="btn btn-sm btn-outline-light">
+                View
+              </a>
+              {% if is_own_profile %}
+                <form method="post" action="{% url 'delete_my_recipe' post.id %}">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-sm btn-outline-danger">
+                    Delete
+                  </button>
+                </form>
+              {% endif %}
+            </div>
+          </article>
+        {% endfor %}
+      </div>
+    {% else %}
+      {% if is_own_profile %}
+        <p class="text-muted mt-4">You haven't created any recipes yet.</p>
+      {% else %}
+        <p class="text-muted mt-4">This user hasn't created any recipes yet.</p>
+      {% endif %}
+    {% endif %}
   </section>
-  {% endif %}
 </main>
 
 <div
@@ -332,7 +357,6 @@
     wireFollowModal('[data-bs-target="#followersModal"]', "followersModal");
     wireFollowModal('[data-bs-target="#followingModal"]', "followingModal");
 
-    // Hover + AJAX behaviour for "Following" / "Unfollow" buttons
     document.querySelectorAll(".follow-toggle-form").forEach(function (form) {
       var btn = form.querySelector(".follow-toggle-btn");
       if (!btn) return;
