@@ -9,6 +9,7 @@ from recipes.forms import UserForm
 from recipes.repos.post_repo import PostRepo
 from recipes.repos.user_repo import UserRepo
 from recipes.models import Follower
+from recipes.models import Follower
 
 User = get_user_model()
 post_repo = PostRepo()
@@ -127,6 +128,7 @@ PROFILE_COLLECTIONS = [
     },
 ]
 
+
 def _profile_data_for_user(user):
     fallback_handle = "@anmzn"
     handle = user.username or fallback_handle
@@ -169,7 +171,27 @@ def profile(request):
             author=profile_user,
         ).exists()
 
+    is_own_profile = profile_user == request.user
+
+    followers_qs = Follower.objects.filter(author=profile_user).select_related("follower")
+    following_qs = Follower.objects.filter(follower=profile_user).select_related("author")
+
+    followers_count = followers_qs.count()
+    following_count = following_qs.count()
+
+    followers_users = [relation.follower for relation in followers_qs]
+    following_users = [relation.author for relation in following_qs]
+
+    is_following = False
+    if not is_own_profile:
+        is_following = Follower.objects.filter(
+            follower=request.user,
+            author=profile_user,
+        ).exists()
+
     profile_data = _profile_data_for_user(profile_user)
+    profile_data["followers"] = followers_count
+    profile_data["following"] = following_count
     profile_data["followers"] = followers_count
     profile_data["following"] = following_count
 
@@ -210,6 +232,13 @@ def profile(request):
         },
     )
 
+@login_required
+def collections_overview(request):
+    context = {
+        "profile": _profile_data_for_user(request.user),
+        "collections": PROFILE_COLLECTIONS,
+    }
+    return render(request, "collections.html", context)
 
 @login_required
 def collection_detail(request, slug):

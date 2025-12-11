@@ -43,7 +43,7 @@
   left: 0;
   right: 0;
   z-index: 1030;
-  background-color: #000000;        
+  background-color: #ffffff;
   border-bottom: none !important;
   padding-top: 0.3rem;
   padding-bottom: 0.3rem;
@@ -88,7 +88,7 @@ body.auth-body .navbar-squarespace .nav-link {
 
 /* When scrolled */
 .navbar-squarespace.navbar-solid {
-  background-color: #000000;        
+  background-color: #ffffff;
   border-bottom: none !important;
   box-shadow: none !important;
   border: 0 !important;
@@ -183,7 +183,6 @@ body[data-theme="dark"] .navbar-squarespace .navbar-toggler-icon {
 .navbar-app {
   background-color: #000000;
   border-bottom: none;
-  position: relative;
   padding-top: 0.3rem;
   padding-bottom: 0.3rem;
   overflow: visible;
@@ -202,7 +201,7 @@ body[data-theme="dark"] .navbar-squarespace .navbar-toggler-icon {
   letter-spacing: -0.01em;
   font-family: var(--heading-font);
   position: relative;
-  top: -5px;
+  top: -6px;
 }
 
 .navbar-app .nav-link {
@@ -230,6 +229,7 @@ body[data-theme="dark"] .navbar-squarespace .navbar-toggler-icon {
   display: inline-flex;
   align-items: center;
   gap: 0.9rem;
+  margin-top: 0.2rem;
 }
 
 .navbar-actions .nav-account-caret-btn {
@@ -248,15 +248,10 @@ body[data-theme="dark"] .navbar-squarespace .navbar-toggler-icon {
 .navbar-app .container-fluid {
   display: flex;
   align-items: center;
-  position: relative;
 }
 
 .navbar-search-wrapper {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  width: clamp(240px, 50vw, 520px);
-  max-width: 520px;
+  flex: 1;
   display: flex;
   justify-content: center;
 }
@@ -282,25 +277,20 @@ body[data-theme="dark"] .navbar-squarespace .navbar-toggler-icon {
   font-size: 0.85rem;
 }
 
-/* Shift search slightly left so it doesn't crash into My recipes */
+/* Center search bar in the navbar (no translations) */
 .navbar-app .navbar-search-wrapper {
-  left: 40%;
-  transform: translateX(-40%);
   max-width: 460px;
+  margin: 0.7rem auto 0;
 }
 
 @media (max-width: 1400px) {
   .navbar-app .navbar-search-wrapper {
-    left: 38%;
-    transform: translateX(-38%);
     max-width: 430px;
   }
 }
 
 @media (max-width: 1200px) {
   .navbar-app .navbar-search-wrapper {
-    left: 34%;
-    transform: translateX(-34%);
     max-width: 400px;
   }
 }
@@ -337,6 +327,14 @@ body[data-theme="dark"] .navbar-squarespace .navbar-toggler-icon {
 .icon-button svg {
   color: #ffffff;
   fill: #ffffff;
+}
+
+/* In explicit light mode, make like/save icons black */
+body[data-theme="light"] .navbar-app .icon-button,
+body[data-theme="light"] .navbar-app .icon-button i,
+body[data-theme="light"] .navbar-app .icon-button svg {
+  color: #000000;
+  fill: #000000;
 }
 
 /* =============================== */
@@ -405,17 +403,35 @@ body[data-theme="dark"] .navbar-squarespace .navbar-toggler-icon {
 /* ===== Original account menu styles (restores old behaviour) ===== */
 
 .nav-account-caret-btn {
-  width: 36px;
-  height: 36px;
+  width: auto;
+  height: auto;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   padding: 0;
-  border-radius: 50%;
+  border-radius: 0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+.nav-account-caret-btn:focus,
+.nav-account-caret-btn:focus-visible,
+.nav-account-caret-btn:active {
+  outline: none;
+  box-shadow: none;
+  border: none;
+}
+
+.nav-account-caret {
+  width: 20px;
+  height: 20px;
+  transform: translateY(1px);
 }
 
 .nav-account-menu {
-  transform: translate(-200px, 16px);
+  /* Position the account dropdown directly under the caret button */
+  transform: translate(0, 16px);
   border-radius: 16px;
   min-width: 230px;
   padding: 0.8rem;
@@ -439,6 +455,21 @@ body[data-theme="dark"] .nav-account-menu .dropdown-item {
 
 body[data-theme="dark"] .nav-account-menu .dropdown-divider {
   border-color: #303030;
+}
+
+/* Light-mode dropdown styling */
+body[data-theme="light"] .nav-account-menu {
+  background-color: #dfdfdf;
+  color: #111827;
+  border: 10px solid #ebebeb;
+}
+
+body[data-theme="light"] .nav-account-menu .dropdown-item {
+  color: inherit;
+}
+
+body[data-theme="light"] .nav-account-menu .dropdown-divider {
+  border-color: #d1d5db;
 }
 
 .nav-account-menu-header {
@@ -478,6 +509,7 @@ body[data-theme="dark"] .nav-account-menu .dropdown-divider {
   font-weight: 500;
   font-size: 0.95rem;
   color: inherit;
+  font-family: var(--heading-font);
 }
 
 .nav-account-menu .dropdown-item {
@@ -495,20 +527,29 @@ body[data-theme="dark"] .nav-account-menu .dropdown-divider {
   opacity: 0.7;
 }
 
-/* Force main Squarespace navbar to be black with light text */
-.navbar-squarespace,
-.navbar-squarespace.navbar-solid,
-.navbar-squarespace.bg-white,
-.navbar-squarespace.bg-light {
-  background-color: #000000 !important;
+/* Dark mode: make Squarespace navbar black with light text */
+@media (prefers-color-scheme: dark) {
+  body:not(.auth-body) .navbar-squarespace,
+  body:not(.auth-body) .navbar-squarespace.navbar-solid,
+  body:not(.auth-body) .navbar-squarespace.bg-white,
+  body:not(.auth-body) .navbar-squarespace.bg-light {
+    background-color: #050507;
+  }
+
+  body:not(.auth-body) .navbar-squarespace .navbar-brand,
+  body:not(.auth-body) .navbar-squarespace .nav-link {
+    color: #ffffff;
+  }
 }
 
-.navbar-squarespace .navbar-brand,
-.navbar-squarespace .nav-link {
+body[data-theme="dark"]:not(.auth-body) .navbar-squarespace,
+body[data-theme="dark"]:not(.auth-body) .navbar-squarespace.navbar-solid,
+body[data-theme="dark"]:not(.auth-body) .navbar-squarespace.bg-white,
+body[data-theme="dark"]:not(.auth-body) .navbar-squarespace.bg-light {
+  background-color: #050507 !important;
+}
+
+body[data-theme="dark"]:not(.auth-body) .navbar-squarespace .navbar-brand,
+body[data-theme="dark"]:not(.auth-body) .navbar-squarespace .nav-link {
   color: #ffffff !important;
 }
-
-
-
-
-
