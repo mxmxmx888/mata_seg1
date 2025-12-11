@@ -1,6 +1,7 @@
 """Unit tests for the User model."""
 from django.core.exceptions import ValidationError
 from django.test import TestCase
+from recipes.forms import UserForm
 from recipes.models import User
 
 class UserModelTestCase(TestCase):
@@ -142,6 +143,39 @@ class UserModelTestCase(TestCase):
         actual_gravatar_url = self.user.mini_gravatar()
         expected_gravatar_url = self._gravatar_url(size=60)
         self.assertEqual(actual_gravatar_url, expected_gravatar_url)
+
+    def test_avatar_url_prefers_uploaded_avatar(self):
+        self.user.avatar = "avatars/custom.png"
+        self.user.save()
+
+        self.assertEqual(self.user.avatar_url, self.user.avatar.url)
+        self.assertNotIn("gravatar.com", self.user.avatar_url)
+
+    def test_mini_avatar_url_falls_back_to_gravatar_when_empty(self):
+        self.user.avatar = None
+        self.user.save()
+
+        self.assertEqual(self.user.mini_avatar_url, self._gravatar_url(size=60))
+
+    def test_remove_avatar_flag_clears_avatar(self):
+        self.user.avatar = "avatars/existing.png"
+        self.user.save()
+
+        form = UserForm(
+            data={
+                "first_name": self.user.first_name,
+                "last_name": self.user.last_name,
+                "username": self.user.username,
+                "email": self.user.email,
+                "remove_avatar": True,
+            },
+            instance=self.user,
+        )
+
+        self.assertTrue(form.is_valid())
+        updated_user = form.save()
+        self.assertFalse(updated_user.avatar)
+        self.assertIn("gravatar.com", updated_user.avatar_url)
 
     def _gravatar_url(self, size):
         gravatar_url = f"{UserModelTestCase.GRAVATAR_URL}?size={size}&default=mp"

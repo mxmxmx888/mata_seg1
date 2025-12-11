@@ -4,6 +4,10 @@ from django.core.validators import RegexValidator
 from recipes.models import User
 from recipes.firebase_auth_services import create_firebase_user
 
+class AvatarFileInput(forms.FileInput):
+    template_name = "widgets/avatar_file_input.html"
+
+
 class UserForm(forms.ModelForm):
     """
     Form to update user profile information.
@@ -13,11 +17,41 @@ class UserForm(forms.ModelForm):
     It is typically used in a profile settings or account management page.
     """
 
+    avatar = forms.ImageField(required=False, widget=AvatarFileInput())
+    remove_avatar = forms.BooleanField(required=False, widget=forms.HiddenInput())
+
     class Meta:
         """Form options."""
 
         model = User
-        fields = ['first_name', 'last_name', 'username', 'email']
+        fields = ['first_name', 'last_name', 'username', 'email', 'avatar']
+
+    def save(self, commit=True):
+        existing_avatar = self.instance.avatar if self.instance and self.instance.pk else None
+        user = super().save(commit=False)
+        remove_avatar = self.cleaned_data.get('remove_avatar')
+        new_avatar = self.cleaned_data.get('avatar')
+
+        if remove_avatar:
+            if existing_avatar:
+                existing_avatar.delete(save=False)
+            user.avatar = None
+        elif new_avatar:
+            if existing_avatar and existing_avatar != new_avatar:
+                existing_avatar.delete(save=False)
+            user.avatar = new_avatar
+        else:
+            user.avatar = existing_avatar
+
+        # Ensure we don't accidentally keep the initial file when clearing
+        if remove_avatar:
+            if existing_avatar:
+                existing_avatar.delete(save=False)
+            user.avatar = None
+
+        if commit:
+            user.save()
+        return user
 
 class NewPasswordMixin(forms.Form):
     """

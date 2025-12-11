@@ -22,7 +22,6 @@
 }
 
 /* Search pill under the navbar (older feed layout) */
-
 .feed-search .input-group-text.feed-search-icon {
   border-radius: 999px 0 0 999px;
   border-right: 0;
@@ -36,7 +35,6 @@
 }
 
 /* Feed cards */
-
 .feed-card {
   border-radius: 1.5rem;
   background-color: #ffffff;
@@ -49,7 +47,6 @@
 }
 
 /* Avatar */
-
 .feed-avatar {
   width: 32px;
   height: 32px;
@@ -74,7 +71,6 @@
 }
 
 /* Media inside feed cards */
-
 .feed-media img {
   width: 100%;
   height: 100%;
@@ -83,7 +79,6 @@
 }
 
 /* Actions */
-
 .feed-actions .btn {
   color: #6b7280;
 }
@@ -99,7 +94,6 @@
 }
 
 /* Shop badge on a post */
-
 .feed-badge-shop {
   background-color: #111827;
   color: #f9fafb;
@@ -107,7 +101,6 @@
 }
 
 /* Dark mode tweaks for the feed */
-
 @media (prefers-color-scheme: dark) {
   body:not(.auth-body) .feed-card {
     background-color: #111111;
@@ -195,7 +188,6 @@ body[data-theme="dark"]:not(.auth-body) .btn.btn-outline-light:focus-visible {
 }
 
 /* Dashboard + Shop page background + navbar matching */
-
 body.dashboard-body {
   background-color: rgb(13, 13, 13);
   color: #f5f5f5;
@@ -219,7 +211,6 @@ body.shop-body .navbar-app {
 }
 
 /* Search pill under navbar */
-
 .cosmos-search {
   border-radius: 999px;
   overflow: hidden;
@@ -249,7 +240,6 @@ body.shop-body .navbar-app {
 }
 
 /* Dashboard filters at the top of Discover */
-
 .dashboard-filters {
   gap: 1.1rem;
   max-width: 520px;
@@ -309,7 +299,6 @@ body[data-theme="light"] .dashboard-filter-select-wrapper:focus-within {
 }
 
 /* Dashboard filters at the top of Discover */
-
 .dashboard-filters {
   gap: 1.1rem;
   max-width: 520px;
@@ -369,7 +358,6 @@ body[data-theme="light"] .dashboard-filter-select-wrapper:focus-within {
 }
 
 /* For you / Following toggle – only the active one gets a pill */
-
 .cosmos-toggle {
   display: inline-flex;
   align-items: center;
@@ -460,6 +448,7 @@ body.profile-body {
 
 body.profile-body .navbar-app {
   background-color: #0c0c0c;
+  padding-inline: 2.2rem;
 }
 
 body.profile-body .navbar-app .navbar-brand,
@@ -494,7 +483,7 @@ body.profile-body .cosmos-nav-search-input::placeholder {
 .profile-shell {
   max-width: 1400px;
   margin-inline: auto;
-  padding-top: 2.5rem;
+  padding-top: 4.2rem;
 }
 
 .profile-hero {
@@ -504,7 +493,7 @@ body.profile-body .cosmos-nav-search-input::placeholder {
 .profile-avatar {
   width: 112px;
   height: 112px;
-  margin: 0 auto 0.9rem;
+  margin: 0 auto 1.25rem;
   border-radius: 50%;
   padding: 3px;
   background: radial-gradient(circle at 30% 30%, #6ee7ff, #4f46e5, #0c0c0c);
@@ -516,7 +505,7 @@ body.profile-body .cosmos-nav-search-input::placeholder {
   height: 100%;
   object-fit: cover;
   border-radius: 50% !important;
-  clip-path: circle(50%);          /* fallback to force a circle even if radius is overridden */
+  clip-path: circle(50%);          
   display: block;
   background-color: #0c0c0c;
 }
@@ -932,6 +921,7 @@ body.profile-body .follow-modal .follow-user-handle {
 .edit-profile-avatar-wrapper {
   display: flex;
   justify-content: flex-start;
+  gap: 0.75rem;
 }
 
 .edit-profile-avatar-circle {
@@ -945,11 +935,47 @@ body.profile-body .follow-modal .follow-user-handle {
   overflow: hidden;
 }
 
+.edit-profile-avatar-circle[data-avatar-preview] {
+  width: 96px;
+  height: 96px;
+  min-width: 96px;
+}
+
+.edit-profile-avatar-compact {
+  width: 96px;
+  height: 96px;
+  min-width: 96px;
+  border-radius: 50%;
+  border: 1px solid #2f2f35;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.28), 0 0 0 3px rgba(255, 255, 255, 0.02);
+  background: radial-gradient(circle at 30% 20%, #facc15, #4f46e5);
+  flex-shrink: 0;
+}
+
 .edit-profile-avatar-circle img {
-  width: 100%;
-  height: 100%;
+  width: 100% !important;
+  height: 100% !important;
   object-fit: cover;
   border-radius: 50%;
+  display: block;
+}
+
+.edit-profile-avatar-controls {
+  align-items: flex-start;
+}
+
+.edit-profile-avatar-input .clearable-file-input {
+  display: grid;
+  align-items: start;
+  gap: 0.35rem;
+}
+
+.edit-profile-avatar-input .clearable-file-input br {
+  display: none;
+}
+
+.edit-profile-avatar-input input[type="file"] {
+  max-width: 280px;
 }
 
 .edit-profile-avatar-initial {
@@ -1290,7 +1316,6 @@ body[data-theme="light"] .edit-profile-modal .btn.btn-light:focus-visible {
   font-size: 0.82rem;
 }
 
-/* Let profile collections grow on wider, landscape-heavy viewports */
 @media (min-aspect-ratio: 16/10) {
   .profile-shell {
     max-width: min(1720px, 96vw);
@@ -1302,7 +1327,6 @@ body[data-theme="light"] .edit-profile-modal .btn.btn-light:focus-visible {
   }
 }
 
-/* Step down from 5 columns as the viewport gets narrower / taller */
 @media (max-aspect-ratio: 16/10) {
   .profile-collections {
     --profile-collection-min: clamp(200px, 22vw, 300px);
@@ -1803,8 +1827,6 @@ body[data-theme="light"] .edit-profile-modal .btn.btn-light:focus-visible {
 .my-recipe-actions form {
   margin: 0;
 }
-
-/* Light-mode styling for dashboard recipe cards */
 
 body[data-theme="light"].dashboard-body .my-recipe-card {
   background-color: #f5f5f7;

@@ -22,6 +22,7 @@ class ProfileViewTest(TestCase):
             'last_name': 'Doe2',
             'username': '@johndoe2',
             'email': 'johndoe2@example.org',
+            'remove_avatar': False,
         }
 
     def test_profile_url(self):

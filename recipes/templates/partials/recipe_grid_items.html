@@ -19,21 +19,5 @@
       <span>Prep: {{ post.prep_time_min }} min</span>
       <span>Cook: {{ post.cook_time_min }} min</span>
     </p>
-
-    {% if request.user.is_authenticated and request.user == post.author %}
-      <div class="my-recipe-actions">
-        <form
-          method="post"
-          action="{% url 'delete_my_recipe' post.id %}"
-          onclick="event.stopPropagation()"
-        >
-          {% csrf_token %}
-          <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3">
-            Delete
-          </button>
-        </form>
-      </div>
-    {% endif %}
   </article>
 {% endfor %}
-

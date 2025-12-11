@@ -17,6 +17,7 @@ class UserFormTestCase(TestCase):
             'last_name': 'Doe',
             'username': '@janedoe',
             'email': 'janedoe@example.org',
+            'remove_avatar': False,
         }
 
     def test_form_has_necessary_fields(self):
@@ -25,8 +26,12 @@ class UserFormTestCase(TestCase):
         self.assertIn('last_name', form.fields)
         self.assertIn('username', form.fields)
         self.assertIn('email', form.fields)
+        self.assertIn('avatar', form.fields)
+        self.assertIn('remove_avatar', form.fields)
         email_field = form.fields['email']
         self.assertTrue(isinstance(email_field, forms.EmailField))
+        self.assertTrue(isinstance(form.fields['avatar'], forms.ImageField))
+        self.assertTrue(isinstance(form.fields['remove_avatar'], forms.BooleanField))
 
     def test_valid_user_form(self):
         form = UserForm(data=self.form_input)
