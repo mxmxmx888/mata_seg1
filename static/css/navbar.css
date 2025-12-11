@@ -214,6 +214,12 @@ body[data-theme="dark"] .navbar-squarespace .navbar-toggler-icon {
   opacity: 1;
 }
 
+.navbar-app .btn.btn-dark {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.8rem;
+  line-height: 1.1;
+}
+
 .navbar-app .btn.btn-light {
   background-color: #111827;
   color: #f9fafb;
