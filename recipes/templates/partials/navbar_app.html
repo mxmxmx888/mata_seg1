@@ -10,7 +10,7 @@
 
       <ul class="navbar-nav d-none d-md-flex gap-3">
         <li class="nav-item">
-          <a class="nav-link active" href="{% url 'dashboard' %}">Discover</a>
+          <a class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}" href="{% url 'dashboard' %}">Discover</a>
         </li>
         <li class="nav-item">
           <a class="nav-link {% if request.resolver_match.url_name == 'shop' %}active{% endif %}" href="{% url 'shop' %}">Shop</a>
@@ -23,6 +23,7 @@
         class="cosmos-nav-search w-100"
         method="get"
         action="{% url 'dashboard' %}"
+        autocomplete="off"
       >
         <button class="cosmos-nav-search-icon" type="submit">
           <i class="bi bi-stars"></i>
@@ -34,11 +35,12 @@
           name="q"
           placeholder="Try ‘15 minute pasta’ or ‘one-pan chicken’"
           value="{{ search_query|default:'' }}"
+          autocomplete="off"
+          autocorrect="off"
+          autocapitalize="off"
+          spellcheck="false"
         >
 
-        <button class="cosmos-nav-search-icon" type="button">
-          <i class="bi bi-bullseye"></i>
-        </button>
         <button class="cosmos-nav-search-icon" type="button">
           <i class="bi bi-clock-history"></i>
         </button>
@@ -46,12 +48,19 @@
     </div>
 
     <div class="navbar-actions ms-auto d-flex align-items-center gap-2">
-      <a href="{% url 'recipe_create' %}" class="btn btn-dark rounded-pill px-3">
+      <a href="{% url 'recipe_create' %}" class="btn btn-dark rounded-pill px-2">
         Create
       </a>
 
       <div class="dropdown">
-        <button class="icon-button position-relative" type="button" id="notificationDropdown" data-bs-toggle="dropdown" aria-expanded="false" data-bs-auto-close="outside">
+        <button
+          class="icon-button position-relative"
+          type="button"
+          id="notificationDropdown"
+          data-bs-toggle="dropdown"
+          aria-expanded="false"
+          data-bs-auto-close="outside"
+        >
           <i class="bi bi-heart"></i>
           {% if unread_notifications_count > 0 %}
           <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle notification-dot">
@@ -62,20 +71,16 @@
 
 
         <div class="dropdown-menu dropdown-menu-end notification-menu shadow-lg border-0" aria-labelledby="notificationDropdown">
-          <div class="d-flex justify-content-between align-items-center px-3 py-2 border-bottom">
-            <h6 class="fw-bold mb-0">Notifications</h6>
+          <div class="dropdown-header notification-header">
+            <span>Activity</span>
             {% if unread_notifications_count > 0 %}
-              <li>
-                <div class="dropdown-header notification-header"> <span>Notifications</span>
-                  <a href="#">Mark all read</a>
-                  </div>
-              </li>
+              <a href="#" class="mark-all-read-link">Mark all read</a>
             {% endif %}
           </div>
 
           <div class="notification-list">
             {% for notif in notifications %}
-            <div class="dropdown-item px-3 py-3 border-bottom d-flex align-items-start gap-3 {% if not notif.is_read %}bg-light{% endif %}">
+            <div class="dropdown-item px-3 py-3 d-flex align-items-start gap-3 {% if not notif.is_read %}notification-unread{% endif %}">
               <a href="{% url 'profile_api' %}?u={{ notif.sender.username }}" class="flex-shrink-0">
                 <img src="{{ notif.sender.mini_gravatar }}" alt="{{ notif.sender.username }}" class="rounded-circle" width="40" height="40" style="object-fit: cover;">
               </a>
@@ -106,8 +111,8 @@
               {% endif %}
             </div>
             {% empty %}
-            <div class="text-center py-4 text-muted">
-              <i class="bi bi-bell-slash mb-2 d-block" style="font-size: 1.5rem;"></i>
+            <div class="text-center py-5 empty-notifications">
+              <i class="bi bi-bell-slash mb-3 d-block" style="font-size: 1.6rem;"></i>
               <p class="small mb-0">No notifications yet.</p>
             </div>
             {% endfor %}
@@ -115,7 +120,7 @@
         </div>
       </div>
       <a href="{% url 'collections' %}" class="icon-button d-none d-md-inline-flex">
-        <i class="bi bi-bookmark"></i>
+        <i class="bi {% if request.resolver_match.url_name == 'collections' %}bi-bookmark-fill{% else %}bi-bookmark{% endif %}"></i>
       </a>
 
       <a
@@ -165,7 +170,7 @@
               Settings
             </a>
           </li>
-          <li><a class="dropdown-item" href="mailto:support@example.com">Contact us</a></li>
+          <li><a class="dropdown-item" href="mailto:recipify.reset@gmail.com">Contact us</a></li>
           <li><hr class="dropdown-divider"></li>
           <li><a class="dropdown-item" href="{% url 'log_out' %}">Log out</a></li>
         </ul>
@@ -184,12 +189,26 @@
       const dot = this.querySelector('.notification-dot');
       if (dot) dot.style.display = 'none';
 
+      const icon = this.querySelector('i');
+      if (icon) {
+        icon.classList.remove('bi-heart');
+        icon.classList.add('bi-heart-fill');
+      }
+
       fetch("{% url 'mark_notifications_read' %}", {
         method: "POST",
         headers: {
           "X-CSRFToken": "{{ csrf_token }}"
         }
       });
+    });
+
+    notifDropdown.addEventListener('hidden.bs.dropdown', function () {
+      const icon = this.querySelector('i');
+      if (icon) {
+        icon.classList.remove('bi-heart-fill');
+        icon.classList.add('bi-heart');
+      }
     });
   }
 </script>

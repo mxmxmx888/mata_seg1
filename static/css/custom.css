@@ -1,5 +1,5 @@
 .app-body {
-    background-color: #050509;
+    background-color: rgb(13, 13, 13);
 }
 
 .app-page {
@@ -210,4 +210,3 @@
     width: 92vw;
   }
 }
-

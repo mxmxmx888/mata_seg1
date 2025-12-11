@@ -1,6 +1,9 @@
+from django.core.paginator import Paginator
+from django.http import JsonResponse
 from django.shortcuts import render
 from django.db.models import Q
 from django.utils import timezone
+from django.template.loader import render_to_string
 
 try:
     from recipes.models import RecipePost, Favourite, Like, Follower
@@ -68,7 +71,7 @@ def _score_post_for_user(post, preferred_tags):
 
     return score
 
-def _get_for_you_posts(user, query=None, limit=12):
+def _get_for_you_posts(user, query=None, limit=12, offset=0):
     qs = _base_posts_queryset()
 
     if query:
@@ -90,9 +93,9 @@ def _get_for_you_posts(user, query=None, limit=12):
         scored.sort(key=lambda x: x[0], reverse=True)
         posts = [p for _, p in scored]
 
-    return posts[:limit]
+    return posts[offset:offset + limit]
 
-def _get_following_posts(user, query=None, limit=12):
+def _get_following_posts(user, query=None, limit=12, offset=0):
     followed_ids = list(
         Follower.objects.filter(follower=user).values_list("author_id", flat=True)
     )
@@ -108,7 +111,7 @@ def _get_following_posts(user, query=None, limit=12):
             | Q(tags__icontains=query)
         )
 
-    return list(qs[:limit])
+    return list(qs[offset:offset + limit])
 
 def dashboard(request):
     if not request.user.is_authenticated:
@@ -120,11 +123,14 @@ def dashboard(request):
     sort = (request.GET.get("sort") or "newest").strip()
     mode = (request.GET.get("mode") or "feed").strip()
 
-    combined_keyword = " ".join(
-        part for part in [q, ingredient_q] if part
-    ).strip()
+    combined_keyword = " ".join(part for part in [q, ingredient_q] if part).strip()
 
     has_search = mode == "search"
+    page_number = int(request.GET.get("page") or 1)
+    if page_number < 1:
+        page_number = 1
+
+    is_ajax = request.headers.get("x-requested-with") == "XMLHttpRequest" or request.GET.get("ajax") == "1"
 
     discover_qs = (
         RecipePost.objects.filter(published_at__isnull=False)
@@ -149,20 +155,38 @@ def dashboard(request):
         )
 
     if sort == "popular":
-        discover_qs = discover_qs.order_by(
-            "-saved_count", "-published_at", "-created_at"
-        )
+        discover_qs = discover_qs.order_by("-saved_count", "-published_at", "-created_at")
     elif sort == "oldest":
         discover_qs = discover_qs.order_by("published_at", "created_at")
     else:
         discover_qs = discover_qs.order_by("-published_at", "-created_at")
 
-    popular_recipes = list(discover_qs[:18])
+    popular_recipes = []
+    popular_has_next = False
 
     if has_search:
+        paginator = Paginator(discover_qs, 18)
+        page_obj = paginator.get_page(page_number)
+
+        if is_ajax:
+            html = render_to_string(
+                "partials/recipe_grid_items.html",
+                {"posts": page_obj.object_list, "request": request},
+                request=request,
+            )
+            return JsonResponse(
+                {
+                    "html": html,
+                    "has_next": page_obj.has_next(),
+                }
+            )
+
+        popular_recipes = list(page_obj.object_list)
+        popular_has_next = page_obj.has_next()
         for_you_posts = []
         following_posts = []
     else:
+        popular_recipes = list(discover_qs[:18])
         for_you_posts = _get_for_you_posts(request.user)
         following_posts = _get_following_posts(request.user)
 
@@ -176,5 +200,6 @@ def dashboard(request):
         "ingredient": ingredient_q,
         "sort": sort,
         "has_search": has_search,
+        "popular_has_next": popular_has_next,
     }
     return render(request, "dashboard.html", context)

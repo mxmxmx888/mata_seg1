@@ -307,11 +307,6 @@ body {
   background-color: #ffffff; /* normal pages */
 }
 
-/* Dashboard: navbar is not fixed, so no body top padding */
-body.dashboard-body {
-  padding-top: 0;
-}
-
 
 /* Auth pages get their own body class so I can treat them like a separate surface */
 body.auth-body {

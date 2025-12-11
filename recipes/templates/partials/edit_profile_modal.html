@@ -1,4 +1,5 @@
 {% load static %}
+{% load widget_tweaks %}
 
 {% if request.user.is_authenticated and edit_profile_form %}
 <div
@@ -8,27 +9,258 @@
   aria-labelledby="editProfileModalLabel"
   aria-hidden="true"
 >
-  <div class="modal-dialog modal-dialog-centered">
+  <div class="modal-dialog modal-dialog-centered modal-xl">
     <div class="modal-content">
-      <div class="modal-header border-0">
-        <div>
-          <p class="text-muted small mb-1 text-uppercase">Profile</p>
-          <h5 class="modal-title mb-0" id="editProfileModalLabel">Edit details</h5>
+      <div class="edit-profile-layout">
+        <aside class="edit-profile-sidebar">
+          <div class="edit-profile-sidebar-top">
+            <div class="edit-profile-avatar-wrapper">
+              <div class="edit-profile-avatar-circle">
+                {% if avatar_url %}
+                  <img src="{{ avatar_url }}" alt="{{ user.username }} avatar">
+                {% else %}
+                  <span class="edit-profile-avatar-initial">
+                    {{ request.user.username|first|upper }}
+                  </span>
+                {% endif %}
+              </div>
+            </div>
+            <nav class="edit-profile-nav" aria-label="Profile sections">
+              <button type="button" class="edit-profile-nav-item active" data-section="profile">
+                Profile
+              </button>
+              <button type="button" class="edit-profile-nav-item" data-section="account">
+                Account
+              </button>
+              <button type="button" class="edit-profile-nav-item" data-section="password">
+                Password
+              </button>
+            </nav>
+          </div>
+        </aside>
+
+        <div class="edit-profile-main">
+          <div class="modal-header border-0 px-0">
+            <div>
+              <h5 class="modal-title mb-0" id="editProfileModalLabel">
+                Profile
+              </h5>
+            </div>
+            <button
+              type="button"
+              class="btn-close btn-close-white"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+
+          <div class="modal-body px-0">
+            <form
+              method="post"
+              action="{% url 'profile' %}"
+              id="editProfileForm"
+            >
+              {% csrf_token %}
+
+              <div class="edit-profile-section" data-section="profile">
+                {% for field in edit_profile_form %}
+                  {% if field.name != "email" %}
+                    <div class="mb-3">
+                      {{ field.label_tag }}
+                      {% if edit_profile_form.is_bound %}
+                        {% if field.errors %}
+                          {% render_field field class="form-control is-invalid" %}
+                        {% else %}
+                          {% render_field field class="form-control is-valid" %}
+                        {% endif %}
+                      {% else %}
+                        {% render_field field class="form-control" %}
+                      {% endif %}
+                      <div class="invalid-feedback">
+                        {{ field.errors }}
+                      </div>
+                    </div>
+                  {% endif %}
+                {% endfor %}
+              </div>
+
+              <div class="edit-profile-section d-none" data-section="account">
+                {% for field in edit_profile_form %}
+                  {% if field.name == "email" %}
+                    <div class="mb-3">
+                      {{ field.label_tag }}
+                      {% if edit_profile_form.is_bound %}
+                        {% if field.errors %}
+                          {% render_field field class="form-control is-invalid" %}
+                        {% else %}
+                          {% render_field field class="form-control is-valid" %}
+                        {% endif %}
+                      {% else %}
+                        {% render_field field class="form-control" %}
+                      {% endif %}
+                      <div class="invalid-feedback">
+                        {{ field.errors }}
+                      </div>
+                    </div>
+                  {% endif %}
+                {% endfor %}
+              </div>
+            </form>
+
+            <form
+              method="post"
+              action="{% url 'password' %}"
+              id="passwordForm"
+              class="d-none edit-profile-password-form"
+            >
+              {% csrf_token %}
+              {% include 'partials/bootstrap_form.html' with form=password_form %}
+            </form>
+
+            <div class="edit-profile-section d-none" data-section="password"></div>
+          </div>
+
+          <div class="modal-footer border-0 px-0">
+            <button
+              type="submit"
+              form="editProfileForm"
+              class="btn btn-light rounded-pill px-3 edit-profile-submit-profile d-none"
+            >
+              Save
+            </button>
+            <button
+              type="submit"
+              form="passwordForm"
+              class="btn btn-light rounded-pill px-3 edit-profile-submit-password d-none"
+            >
+              Change password
+            </button>
+          </div>
         </div>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
-      <form method="post" action="{% url 'profile' %}">
-        {% csrf_token %}
-        <div class="modal-body">
-          {% include 'partials/bootstrap_form.html' with form=edit_profile_form %}
-        </div>
-        <div class="modal-footer border-0">
-          <button type="button" class="btn btn-outline-light rounded-pill px-3" data-bs-dismiss="modal">Cancel</button>
-          <button type="submit" class="btn btn-light rounded-pill px-3">Save</button>
-        </div>
-      </form>
     </div>
   </div>
 </div>
 {% endif %}
 
+<script>
+  (function () {
+    var modal = document.getElementById("editProfileModal");
+    if (!modal) return;
+
+    var navItems = modal.querySelectorAll(".edit-profile-nav-item");
+    var sections = modal.querySelectorAll(".edit-profile-section");
+    var profileForm = modal.querySelector("#editProfileForm");
+    var passwordForm = modal.querySelector("#passwordForm");
+    var profileSubmit = modal.querySelector(".edit-profile-submit-profile");
+    var passwordSubmit = modal.querySelector(".edit-profile-submit-password");
+    var modalTitle = modal.querySelector("#editProfileModalLabel");
+    var currentSection = "profile";
+    var profileDirty = false;
+    var passwordDirty = false;
+
+    function recomputeDirty() {
+      profileDirty = false;
+      passwordDirty = false;
+
+      if (profileForm) {
+        profileForm.querySelectorAll("input, textarea, select").forEach(function (el) {
+          var isCheckbox = el.type === "checkbox" || el.type === "radio";
+          var changed = isCheckbox
+            ? el.checked !== el.defaultChecked
+            : el.value !== el.defaultValue;
+          if (changed) profileDirty = true;
+        });
+      }
+
+      if (passwordForm) {
+        passwordForm.querySelectorAll("input, textarea, select").forEach(function (el) {
+          var isCheckbox = el.type === "checkbox" || el.type === "radio";
+          var changed = isCheckbox
+            ? el.checked !== el.defaultChecked
+            : el.value !== el.defaultValue;
+          if (changed) passwordDirty = true;
+        });
+      }
+    }
+
+    function updateButtons() {
+      if (currentSection === "password") {
+        if (profileSubmit) profileSubmit.classList.add("d-none");
+        if (passwordSubmit) {
+          passwordSubmit.classList.toggle("d-none", !passwordDirty);
+        }
+      } else {
+        if (passwordSubmit) passwordSubmit.classList.add("d-none");
+        if (profileSubmit) {
+          profileSubmit.classList.toggle("d-none", !profileDirty);
+        }
+      }
+    }
+
+    function activateSection(sectionName) {
+      currentSection = sectionName;
+
+      navItems.forEach(function (btn) {
+        var target = btn.getAttribute("data-section");
+        btn.classList.toggle("active", target === sectionName);
+      });
+
+      sections.forEach(function (section) {
+        var target = section.getAttribute("data-section");
+        if (target === sectionName) {
+          section.classList.remove("d-none");
+        } else {
+          section.classList.add("d-none");
+        }
+      });
+
+      if (modalTitle) {
+        var activeBtn = modal.querySelector(
+          '.edit-profile-nav-item[data-section="' + sectionName + '"]'
+        );
+        if (activeBtn) {
+          modalTitle.textContent = activeBtn.textContent.trim();
+        }
+      }
+
+      if (sectionName === "password") {
+        if (profileForm) profileForm.classList.add("d-none");
+        if (passwordForm) passwordForm.classList.remove("d-none");
+      } else {
+        if (profileForm) profileForm.classList.remove("d-none");
+        if (passwordForm) passwordForm.classList.add("d-none");
+      }
+
+      updateButtons();
+    }
+
+    navItems.forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        var sectionName = btn.getAttribute("data-section");
+        if (!sectionName) return;
+        activateSection(sectionName);
+      });
+    });
+
+    function wireDirtyTracking(form) {
+      if (!form) return;
+      form.querySelectorAll("input, textarea, select").forEach(function (el) {
+        el.addEventListener("input", function () {
+          recomputeDirty();
+          updateButtons();
+        });
+        el.addEventListener("change", function () {
+          recomputeDirty();
+          updateButtons();
+        });
+      });
+    }
+
+    wireDirtyTracking(profileForm);
+    wireDirtyTracking(passwordForm);
+
+    recomputeDirty();
+    updateButtons();
+  })();
+</script>

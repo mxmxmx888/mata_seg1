@@ -56,7 +56,7 @@
 
     {% if has_search %}
       {% if popular_recipes %}
-        {% include "partials/recipe_grid.html" with posts=popular_recipes %}
+        {% include "partials/recipe_grid.html" with posts=popular_recipes grid_id="discover-grid" %}
       {% else %}
         <div class="text-center py-5" style="color: #8b8c9a;">
           No recipes found for this search.
@@ -128,4 +128,60 @@
 
   </div>
 </main>
+
+{% if has_search and popular_has_next %}
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const container = document.getElementById('discover-grid');
+    if (!container) return;
+
+    let page = 1;
+    let loading = false;
+    let hasNext = {{ popular_has_next|yesno:"true,false" }};
+
+    function loadMoreDiscover() {
+      if (loading || !hasNext) return;
+      loading = true;
+
+      page += 1;
+      const url = new URL(window.location.href);
+      url.searchParams.set('page', String(page));
+      url.searchParams.set('ajax', '1');
+
+      fetch(url.toString(), {
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+        },
+      })
+        .then(function (response) {
+          if (!response.ok) {
+            throw new Error('Network response was not ok');
+          }
+          return response.json();
+        })
+        .then(function (data) {
+          if (data && data.html) {
+            container.insertAdjacentHTML('beforeend', data.html);
+          }
+          hasNext = Boolean(data && data.has_next);
+          loading = false;
+        })
+        .catch(function () {
+          loading = false;
+        });
+    }
+
+    window.addEventListener('scroll', function () {
+      if (loading || !hasNext) return;
+
+      const scrollPosition = window.innerHeight + window.scrollY;
+      const threshold = document.body.offsetHeight - 300;
+
+      if (scrollPosition >= threshold) {
+        loadMoreDiscover();
+      }
+    });
+  });
+</script>
+{% endif %}
 {% endblock %}
