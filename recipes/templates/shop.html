@@ -191,5 +191,45 @@
   .shop-card-image-wrap { height: 180px; }
   .shop-card { max-width: 100%; }
 }
+
+/* Notification Dropdown Styles */
+.notification-menu {
+    width: 360px;
+    max-height: 500px;
+    overflow-y: auto;
+    padding: 0;
+    margin-top: 10px !important; /* Offset from navbar */
+    border-radius: 12px;
+}
+
+.notification-list .dropdown-item {
+    white-space: normal; /* Allow text to wrap */
+    transition: background-color 0.2s;
+}
+
+.notification-list .dropdown-item:active {
+    color: inherit;
+    background-color: #f8f9fa; /* Prevent blue highlight on click */
+}
+
+.notification-dot {
+    width: 8px;
+    height: 8px;
+    padding: 0 !important;
+    top: 5px !important;
+    right: 5px !important;
+    left: auto !important;
+    transform: none !important;
+}
+
+/* Scrollbar for notifications */
+.notification-menu::-webkit-scrollbar {
+    width: 6px;
+}
+.notification-menu::-webkit-scrollbar-thumb {
+    background-color: #e9ecef;
+    border-radius: 4px;
+}
+
 </style>
 {% endblock %}

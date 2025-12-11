@@ -14,3 +14,4 @@ from .password_reset_views import *
 from .api_views import *
 from .report_view import *
 from .shop_view import *
+from .recipe_views import *

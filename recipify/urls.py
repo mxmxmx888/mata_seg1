@@ -61,6 +61,9 @@ urlpatterns = [
     path('u/<str:username>/follow/', toggle_follow, name='toggle_follow'),
     path('report/<str:content_type>/<uuid:object_id>/', views.report_content, name='report_content'),
     path('shop/', views.shop, name='shop'),
+    path('api/notifications/read/', views.mark_notifications_read, name='mark_notifications_read'),
+    path('recipes/<uuid:post_id>/comment/', views.add_comment, name='add_comment'),
+    path('comments/<uuid:comment_id>/delete/', views.delete_comment, name='delete_comment'),
 ]
 
 urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

@@ -1,13 +1,30 @@
 {% if messages %}
-  <div class="container">
-    <div class="row">
-      <div class="col-12">
-        {% for message in messages %}
-          <div class="alert alert-{{ message.level_tag }}" role="alert">
-            {{ message }}
-          </div>
-        {% endfor %}
+<div class="toast-container position-fixed p-3 app-toast-container" style="z-index: 9999;">
+  {% for message in messages %}
+    <div class="toast align-items-center border-0 shadow-lg show mb-3 app-toast" role="alert" aria-live="assertive" aria-atomic="true">
+      <div class="d-flex">
+        <div class="toast-body d-flex align-items-center gap-3 py-3">
+          {% if 'success' in message.tags %}
+            <i class="bi bi-check-circle-fill" style="color: #4ade80; font-size: 1.1rem;"></i>
+          {% elif 'error' in message.tags %}
+            <i class="bi bi-exclamation-circle-fill" style="color: #f87171; font-size: 1.1rem;"></i>
+          {% elif 'info' in message.tags %}
+            <i class="bi bi-info-circle-fill" style="color: #60a5fa; font-size: 1.1rem;"></i>
+          {% endif %}
+          <span style="font-weight: 500; font-size: 0.95rem; letter-spacing: 0.01em;">{{ message }}</span>
+        </div>
+        <button type="button" class="btn-close me-3 m-auto app-toast-close" data-bs-dismiss="toast" aria-label="Close"></button>
       </div>
     </div>
-  </div>
+  {% endfor %}
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    var toastElList = [].slice.call(document.querySelectorAll('.toast'));
+    toastElList.forEach(function (toastEl) {
+      new bootstrap.Toast(toastEl, { delay: 5000 }).show();
+    });
+  });
+</script>
 {% endif %}

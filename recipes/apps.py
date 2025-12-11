@@ -6,3 +6,4 @@ class RecipesConfig(AppConfig):
 
     def ready(self):
         import recipes.social_signals
+        import recipes.signals

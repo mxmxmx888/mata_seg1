@@ -7,15 +7,17 @@ from django.urls import reverse
 from django.utils import timezone
 from recipes.forms.recipe_forms import RecipePostForm
 from recipes.repos.post_repo import PostRepo
+from recipes.forms.comment_form import CommentForm
 
 try:
-    from recipes.models import RecipePost, Ingredient, RecipeStep, Favourite, Like
+    from recipes.models import RecipePost, Ingredient, RecipeStep, Favourite, Like, Comment
 except Exception:
     from recipes.models.recipe_post import RecipePost
     from recipes.models.ingredient import Ingredient
     from recipes.models.recipe_step import RecipeStep
     from recipes.models.favourite import Favourite
     from recipes.models.like import Like
+    from recipes.models.comment import Comment
 
 try:
     from recipes.models.followers import Follower
@@ -63,6 +65,9 @@ def recipe_detail(request, post_id):
     recipe = get_object_or_404(RecipePost, id=post_id)
     ingredients_qs = Ingredient.objects.filter(recipe_post=recipe).order_by("position")
     steps_qs = RecipeStep.objects.filter(recipe_post=recipe).order_by("position")
+    
+    # FETCH COMMENTS
+    comments = recipe.comments.select_related('user').order_by("-created_at")
 
     user_liked = False
     user_saved = False
@@ -117,7 +122,8 @@ def recipe_detail(request, post_id):
         "is_following_author": is_following_author,
         "likes_count": likes_count,
         "saves_count": saves_count,
-        "comments": [],
+        "comments": comments, # Pass actual comments
+        "comment_form": CommentForm(), # Pass empty form
         "gallery_images": [],
         "video_url": None,
         "view_similar": [],
@@ -216,3 +222,33 @@ def toggle_follow(request, username):
         return HttpResponse(status=204)
 
     return redirect(request.META.get("HTTP_REFERER") or reverse("dashboard"))
+
+@login_required
+def add_comment(request, post_id):
+    recipe = get_object_or_404(RecipePost, id=post_id)
+    if request.method == "POST":
+        form = CommentForm(request.POST)
+        if form.is_valid():
+            comment = form.save(commit=False)
+            comment.recipe_post = recipe
+            comment.user = request.user
+            comment.save()
+            messages.success(request, "Comment posted.")
+        else:
+            messages.error(request, "Error posting comment.")
+    
+    return redirect("recipe_detail", post_id=recipe.id)
+
+@login_required
+def delete_comment(request, comment_id):
+    comment = get_object_or_404(Comment, id=comment_id)
+    
+    # Security check: only allow the author to delete
+    if comment.user != request.user:
+        messages.error(request, "You are not allowed to delete this comment.")
+        return redirect('recipe_detail', post_id=comment.recipe_post.id)
+        
+    post_id = comment.recipe_post.id
+    comment.delete()
+    messages.success(request, "Comment deleted.")
+    return redirect('recipe_detail', post_id=post_id)

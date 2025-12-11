@@ -47,8 +47,8 @@
         <h1 class="post-title">{{ title }}</h1>
         <div class="d-flex flex-wrap gap-3 post-meta">
           <span>⏱ {{ cook_time }}</span>
-          <span>◈ Serves {{ serves }}</span>
-          <span>◆ {{ ingredients|length }} ingredients</span>
+          <span>� Serves {{ serves }}</span>
+          <span>� {{ ingredients|length }} ingredients</span>
         </div>
       </header>
 
@@ -56,12 +56,12 @@
 
       {% if shop_ingredients %}
       <section class="mb-4">
-        <h2 class="h6 fw-bold text-uppercase mb-2 text-muted small tracking-wide">
-          <i class="bi bi-bag-fill me-1"></i>Shop this recipe
+        <h2 class="h6 fw-bold text-uppercase mb-3 text-muted small tracking-wide">
+          <i class="bi bi-bag-fill me-2"></i>Shop this recipe
         </h2>
         <div class="d-flex flex-wrap gap-2">
           {% for ing in shop_ingredients %}
-            <a href="{{ ing.shop_url }}" target="_blank" class="btn btn-dark rounded-pill d-inline-flex align-items-center gap-2 py-1 px-3 shadow-sm border-white" style="font-size: 0.85rem; border: 1px solid rgba(255,255,255,0.2);">
+            <a href="{{ ing.shop_url }}" target="_blank" class="btn btn-dark rounded-pill d-inline-flex align-items-center gap-2 py-2 px-3" style="background-color: #000; border-color: #000; font-size: 0.85rem;">
               <span>{{ ing.name|title }}</span>
               <i class="bi bi-arrow-up-right small text-white-50"></i>
             </a>
@@ -78,7 +78,7 @@
             <span>{{ ingredient.name|title }}</span>
             
             {% if ingredient.shop_url %}
-            <a href="{{ ingredient.shop_url }}" target="_blank" class="text-decoration-none text-muted" title="Buy {{ ingredient.name }}">
+            <a href="{{ ingredient.shop_url }}" target="_blank" class="text-decoration-none text-muted opacity-75 hover-opacity-100" title="Buy {{ ingredient.name }}">
               <i class="bi bi-bag-fill"></i>
             </a>
             {% endif %}
@@ -133,32 +133,60 @@
           </div>
           <button class="post-save-button" type="button" aria-label="Save recipe">+</button>
         </div>
+        
         <h2 class="h6 text-uppercase text-muted mb-3 post-engagement-inline">
           <span>{{ likes_count|default:0 }} likes</span>
-          <span>{{ comments|length }} comments</span>
+          <span>{{ comments.count }} comments</span>
           <span>{{ saves_count|default:0 }} saves</span>
         </h2>
+
+        <div class="mb-4">
+          <form action="{% url 'add_comment' recipe.id %}" method="post" class="d-flex gap-2">
+            {% csrf_token %}
+            <div class="flex-grow-1">
+              {{ comment_form.text }}
+            </div>
+            <button type="submit" class="btn btn-dark rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+              <i class="bi bi-send-fill" style="font-size: 0.9rem;"></i>
+            </button>
+          </form>
+        </div>
+
         <div class="post-comments-list">
           {% for comment in comments %}
-          <div class="post-comment d-flex align-items-center justify-content-between">
-            <div class="d-flex align-items-center gap-3">
-              <div class="comment-avatar">
-                {{ comment.name|first|upper }}
+          <div class="post-comment d-flex align-items-start justify-content-between mb-3">
+            <div class="d-flex align-items-start gap-2">
+              <div class="comment-avatar" style="min-width: 32px; width: 32px; height: 32px; border-radius: 50%; background: #eee; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: bold; color: #555;">
+                {{ comment.user.username|first|upper }}
               </div>
               <div>
-                <p class="mb-0 fw-semibold">{{ comment.name }}</p>
-                <p class="mb-0 text-muted small">{{ comment.handle }}</p>
+                <div class="d-flex align-items-baseline gap-2">
+                  <p class="mb-0 fw-bold" style="font-size: 0.9rem;">{{ comment.user.username }}</p>
+                  <span class="text-muted small" style="font-size: 0.75rem;">{{ comment.created_at|timesince }} ago</span>
+                </div>
+                <p class="mb-0 text-dark small" style="line-height: 1.4;">{{ comment.text }}</p>
               </div>
             </div>
+            
             <div class="d-flex align-items-center gap-2">
-              <span class="small text-muted">{{ comment.time }}</span>
-              <a href="{% url 'report_content' 'comment' comment.id %}" class="text-secondary" title="Report this comment">
-                <i class="bi bi-flag"></i>
+              {% if request.user == comment.user %}
+              <form action="{% url 'delete_comment' comment.id %}" method="post" onsubmit="return confirm('Delete this comment?');">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-link text-danger p-0 border-0 opacity-50 hover-opacity-100" style="font-size: 0.8rem;" title="Delete">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </form>
+              {% endif %}
+              
+              <a href="{% url 'report_content' 'comment' comment.id %}" class="text-secondary opacity-50 hover-opacity-100" title="Report">
+                <i class="bi bi-flag" style="font-size: 0.8rem;"></i>
               </a>
             </div>
           </div>
           {% empty %}
-          <p class="text-muted small mb-0">No comments yet.</p>
+          <div class="text-center py-4">
+            <p class="text-muted small mb-0">No comments yet. Be the first!</p>
+          </div>
           {% endfor %}
         </div>
       </aside>
@@ -200,26 +228,6 @@
             </div>
             <button type="button" class="save-modal-action" aria-label="Select Weeknight dinners" data-save-toggle>
               <i class="bi bi-bookmark-fill"></i>
-            </button>
-          </li>
-          <li class="save-modal-row">
-            <div class="save-modal-avatar" aria-hidden="true">D</div>
-            <div>
-              <p class="mb-0 fw-semibold">Desserts</p>
-              <p class="mb-0 text-muted small">13 recipes</p>
-            </div>
-            <button type="button" class="save-modal-action" aria-label="Select Desserts" data-save-toggle>
-              <i class="bi bi-bookmark"></i>
-            </button>
-          </li>
-          <li class="save-modal-row">
-            <div class="save-modal-avatar" aria-hidden="true">M</div>
-            <div>
-              <p class="mb-0 fw-semibold">Meal prep</p>
-              <p class="mb-0 text-muted small">8 recipes</p>
-            </div>
-            <button type="button" class="save-modal-action" aria-label="Select Meal prep" data-save-toggle>
-              <i class="bi bi-bookmark"></i>
             </button>
           </li>
             </ul>
@@ -279,18 +287,14 @@ document.addEventListener('DOMContentLoaded', function () {
   };
 
   if (tagsToggle && tagsCollapse) {
-    // Keep chevron in sync if Bootstrap collapse is present
     if (hasBootstrapCollapse) {
       tagsCollapse.addEventListener('shown.bs.collapse', syncTagsChevron);
       tagsCollapse.addEventListener('hidden.bs.collapse', syncTagsChevron);
     }
-
-    // Always sync after user clicks (covers both Bootstrap and fallback)
     tagsToggle.addEventListener('click', function () {
       if (!hasBootstrapCollapse) {
         tagsCollapse.classList.toggle('show');
       }
-      // sync after potential state change
       window.setTimeout(syncTagsChevron, 0);
     });
   }
@@ -349,7 +353,6 @@ document.addEventListener('DOMContentLoaded', function () {
       saveModal.style.display = 'block';
       saveModal.removeAttribute('aria-hidden');
       ensureBackdrop(true);
-      // Attach outside-click listener after this tick so the launch click doesn't immediately close it
       window.setTimeout(() => {
         fallbackOutsideHandler = (e) => {
           const dialog = saveModal.querySelector('.modal-dialog');
@@ -431,7 +434,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   }
 
-  // Masonry balancing into two columns (balanced heights)
+  // Masonry logic
   const masonry = document.querySelector('.post-media-masonry');
   const masonryItems = masonry ? Array.from(masonry.querySelectorAll('.post-media-masonry-item')) : [];
   const ensureMasonryCols = () => {
@@ -454,17 +457,13 @@ document.addEventListener('DOMContentLoaded', function () {
     if (!masonry || masonryItems.length === 0) return;
     const cols = ensureMasonryCols();
     if (cols.length === 0) return;
-
-    // Keep two balanced columns even on narrow viewports
     const colCount = 2;
     const activeCols = cols.slice(0, colCount);
-    // Hide any extra columns and reset
     cols.forEach((col, index) => {
       col.innerHTML = '';
       col.style.display = index < colCount ? 'flex' : 'none';
     });
     const heights = activeCols.map(() => 0);
-
     masonryItems.forEach((item) => {
       const media = item.querySelector('img, video');
       const height = media && media.getBoundingClientRect().height ? media.getBoundingClientRect().height : item.getBoundingClientRect().height || 1;
@@ -475,7 +474,6 @@ document.addEventListener('DOMContentLoaded', function () {
   };
 
   const requestMasonry = () => window.requestAnimationFrame(buildMasonry);
-
   masonryItems.forEach((item) => {
     const media = item.querySelector('img, video');
     if (media) {
@@ -490,10 +488,9 @@ document.addEventListener('DOMContentLoaded', function () {
   window.addEventListener('resize', requestMasonry);
   requestMasonry();
 
-  // Dynamically adjust "View similar" columns to respond to zoom/resize
+  // Dynamic similar items grid
   const similarGrids = Array.from(document.querySelectorAll('.view-similar-grid, .view-similar-grid-wide'));
   const baselineWidths = new Map();
-
   const setBaselines = () => {
     similarGrids.forEach((grid) => {
       const baseCols = grid.classList.contains('view-similar-grid-wide') ? 4 : 3;
@@ -502,7 +499,6 @@ document.addEventListener('DOMContentLoaded', function () {
       baselineWidths.set(grid, width / baseCols);
     });
   };
-
   const updateSimilarColumns = () => {
     similarGrids.forEach((grid) => {
       const baseWidth = baselineWidths.get(grid);
@@ -513,12 +509,23 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   };
 
+  // Fade primary content on scroll
+  const handleScroll = () => {
+    if (!primary || !similar) return;
+    const rect = similar.getBoundingClientRect();
+    const windowHeight = window.innerHeight || document.documentElement.clientHeight;
+    const fadeStart = windowHeight * 1.0;
+    const fadeEnd = windowHeight * 0.4;
+    const progress = Math.min(1, Math.max(0, (fadeStart - rect.top) / (fadeStart - fadeEnd)));
+    primary.style.setProperty('--post-fade-amount', progress.toFixed(2));
+  };
+
+  window.addEventListener('scroll', handleScroll);
+  window.addEventListener('resize', updateSimilarColumns);
+  window.addEventListener('resize', handleScroll);
+
   setBaselines();
   updateSimilarColumns();
-  window.addEventListener('resize', () => {
-    setBaselines();
-    updateSimilarColumns();
-  });
 });
 </script>
 {% endblock %}

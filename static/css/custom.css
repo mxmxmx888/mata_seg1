@@ -2,13 +2,11 @@
     background-color: #050509;
 }
 
-/* Main area on app pages */
 .app-page {
     padding-top: 2rem;
     padding-bottom: 3rem;
 }
 
-/* Create page card */
 .app-page .create-recipe-card {
     background: #f9f9fb;
     border-radius: 22px;
@@ -17,7 +15,6 @@
     box-shadow: 0 18px 35px rgba(0, 0, 0, 0.35);
 }
 
-/* Heading + subheading spacing */
 .app-page .create-recipe-title {
     margin-bottom: 0.25rem;
 }
@@ -28,7 +25,6 @@
     font-size: 0.98rem;
 }
 
-/* Labels + inputs inside the card */
 .app-page .create-recipe-card form label {
     display: block;
     margin-bottom: 0.35rem;
@@ -56,13 +52,11 @@
     box-shadow: 0 0 0 1px #1111110f, 0 0 0 3px #11111122;
 }
 
-/* Textareas */
 .app-page .create-recipe-card textarea.form-control {
     min-height: 140px;
     resize: vertical;
 }
 
-/* Save button */
 .app-page .btn-save-recipe {
     border-radius: 999px;
     padding: 0.55rem 1.9rem;
@@ -91,5 +85,129 @@
         margin-left: auto;
         margin-right: auto;
     }
+}
+
+.navbar-app .dropdown-menu,
+.navbar-squarespace .dropdown-menu {
+    background-color: #0f0f14;
+    border: 1px solid #2a2a35;
+    color: #ffffff;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    border-radius: 12px;
+    padding: 0.5rem 0;
+    margin-top: 10px;
+}
+
+.navbar-app .dropdown-item,
+.navbar-squarespace .dropdown-item {
+    color: #e0e0e0;
+    padding: 0.6rem 1.2rem;
+    transition: all 0.2s;
+}
+
+.navbar-app .dropdown-item:hover,
+.navbar-squarespace .dropdown-item:hover {
+    background-color: #1c1c24;
+    color: #ffffff;
+}
+
+.navbar-app .dropdown-divider,
+.navbar-squarespace .dropdown-divider {
+    border-top-color: #2a2a35;
+    margin: 0.5rem 0;
+}
+
+.dropdown-header.notification-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.8rem 1.2rem;
+    border-bottom: 1px solid #2a2a35;
+    margin-bottom: 0.5rem;
+    background-color: #0f0f14;
+}
+
+/* Header Title */
+.dropdown-header.notification-header span,
+.dropdown-header.notification-header h6 {
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 0.95rem;
+    margin: 0;
+    text-transform: none;
+}
+
+.dropdown-header.notification-header a {
+    font-size: 0.75rem;
+    color: #a0a0a0;
+    text-decoration: none;
+    font-weight: 500;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: 0.2s;
+}
+
+.dropdown-header.notification-header a:hover {
+    background-color: rgba(255,255,255,0.1);
+    color: #fff;
+}
+
+.dropdown-menu .empty-notifications {
+    padding: 2rem 1rem;
+    text-align: center;
+    color: #666;
+}
+
+/* Message toast styling */
+.app-toast-container {
+  top: 80px;
+  right: clamp(12px, 2vw, 20px);
+  max-width: min(420px, 92vw);
+}
+
+.app-toast {
+  background-color: #ffffff;
+  color: #000000;
+  border: 1px solid #2a2a35;
+  border-radius: 12px;
+}
+
+.app-toast .toast-body span {
+  color: inherit;
+}
+
+.app-toast-close {
+  filter: none;
+  opacity: 0.6;
+}
+
+.app-toast-close:hover {
+  opacity: 1;
+}
+
+@media (max-width: 576px) {
+  .app-toast-container {
+    left: 12px;
+    right: 12px;
+  }
+}
+
+/* Notification dropdown bounds + icon consistency */
+.navbar-app .notification-menu {
+  width: 360px;
+  max-width: 92vw;
+  inset: auto 12px auto auto !important; /* pin to right, stay inside viewport */
+  transform: none !important;
+}
+
+.navbar-app .icon-button i.bi-heart {
+  color: #ffffff;
+  font-size: 1.15rem;
+}
+
+@media (max-width: 576px) {
+  .navbar-app .notification-menu {
+    width: 92vw;
+  }
 }
 
