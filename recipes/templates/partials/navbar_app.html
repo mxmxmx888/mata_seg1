@@ -212,4 +212,28 @@
       }
     });
   }
+
+  const searchInput = document.querySelector('.cosmos-nav-search-input');
+  if (searchInput) {
+    const searchPlaceholders = [
+      "Try ‘15 minute pasta’",
+      "Try ‘one-pan chicken’",
+      "Try ‘banana protein milkshake’",
+      "Try ‘sheet-pan salmon’",
+      "Try ‘chocolate protein oats’"
+    ];
+
+    let placeholderIndex = 0;
+
+    function rotateSearchPlaceholder() {
+      if (document.activeElement === searchInput) return;
+      if (searchInput.value && searchInput.value.trim() !== '') return;
+
+      searchInput.placeholder = searchPlaceholders[placeholderIndex];
+      placeholderIndex = (placeholderIndex + 1) % searchPlaceholders.length;
+    }
+
+    rotateSearchPlaceholder();
+    setInterval(rotateSearchPlaceholder, 2500);
+  }
 </script>

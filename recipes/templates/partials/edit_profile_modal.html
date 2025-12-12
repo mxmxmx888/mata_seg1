@@ -29,6 +29,14 @@
                 >
                   {{ request.user.username|first|upper }}
                 </span>
+                <button
+                  type="button"
+                  class="edit-profile-avatar-edit"
+                  aria-label="Change profile photo"
+                  data-avatar-edit
+                >
+                  <i class="bi bi-pencil-fill"></i>
+                </button>
               </div>
             </div>
             <nav class="edit-profile-nav" aria-label="Profile sections">
@@ -68,44 +76,14 @@
               enctype="multipart/form-data"
             >
               {% csrf_token %}
+              <div class="d-none">
+                <div class="edit-profile-avatar-input">
+                  {% render_field edit_profile_form.avatar class="form-control" accept="image/*" data-avatar-input="1" %}
+                </div>
+                {{ edit_profile_form.remove_avatar|add_class:"d-none"|attr:"data-remove-avatar-input=1" }}
+              </div>
 
               <div class="edit-profile-section" data-section="profile">
-                <div class="mb-4">
-                  <label class="form-label">Profile photo</label>
-                  <div class="d-flex align-items-start gap-3 flex-wrap edit-profile-avatar-controls">
-                    <div class="edit-profile-avatar-circle edit-profile-avatar-compact" data-avatar-preview style="width: 96px; height: 96px;">
-                      <img
-                        src="{% if avatar_url %}{{ avatar_url }}{% endif %}"
-                        alt="{{ user.username }} avatar"
-                        data-avatar-image
-                        class="{% if not avatar_url %}d-none{% endif %}"
-                        style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;"
-                      >
-                      <span
-                        class="edit-profile-avatar-initial{% if avatar_url %} d-none{% endif %}"
-                        data-avatar-initial
-                      >
-                        {{ request.user.username|first|upper }}
-                      </span>
-                    </div>
-                    <div class="d-flex align-items-start gap-2 flex-wrap">
-                      <div class="edit-profile-avatar-input">
-                        {% render_field edit_profile_form.avatar class="form-control" accept="image/*" data-avatar-input="1" %}
-                      </div>
-                      <div>
-                        <button
-                          type="button"
-                          class="btn btn-outline-danger btn-sm remove-avatar-btn{% if not request.user.avatar %} d-none{% endif %}"
-                          data-remove-avatar
-                        >
-                          Remove photo
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                  {{ edit_profile_form.remove_avatar|add_class:"d-none"|attr:"data-remove-avatar-input=1" }}
-                </div>
-
                 {% for field in edit_profile_form %}
                   {% if field.name != "email" and field.name != "avatar" and field.name != "remove_avatar" %}
                     <div class="mb-3">
@@ -199,6 +177,8 @@
     var passwordSubmit = modal.querySelector(".edit-profile-submit-password");
     var modalTitle = modal.querySelector("#editProfileModalLabel");
     var avatarInputs = modal.querySelectorAll("[data-avatar-input]");
+    var avatarEditButtons = modal.querySelectorAll("[data-avatar-edit]");
+    var primaryAvatarInput = avatarInputs.length ? avatarInputs[0] : null;
     var removeAvatarInput = modal.querySelector("[data-remove-avatar-input]");
     var removeAvatarBtn = modal.querySelector("[data-remove-avatar]");
     var avatarImages = modal.querySelectorAll("[data-avatar-image]");
@@ -342,6 +322,15 @@
           }
           recomputeDirty();
           updateButtons();
+        }
+      });
+    });
+
+    avatarEditButtons.forEach(function (btn) {
+      btn.addEventListener("click", function (event) {
+        event.preventDefault();
+        if (primaryAvatarInput) {
+          primaryAvatarInput.click();
         }
       });
     });

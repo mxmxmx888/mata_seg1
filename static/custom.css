@@ -479,7 +479,7 @@ body[data-theme="dark"]:not(.auth-body) .navbar-squarespace.navbar-solid .btn.bt
   align-items: center;
   justify-content: space-between;
   padding: 0.85rem 1.1rem;
-  border-bottom: 1px solid rgba(148, 163, 184, 0.35);
+  border-bottom: 1px solid rgba(148, 13, 184, 0.35);
   background-color: transparent;
 }
 
@@ -982,13 +982,13 @@ h3 {
 @media (prefers-color-scheme: dark) {
   /* Main site in dark mode (auth pages handled further down) */
   body:not(.auth-body) {
-    background-color: #050507;
+    background-color: rgb(13, 13, 13);
     color: #f6f6f6;
   }
 
   body:not(.auth-body) .bg-white,
   body:not(.auth-body) .bg-light {
-    background-color: #050507 !important;
+    background-color: rgb(13, 13, 13) !important;
   }
 
   body:not(.auth-body) .text-dark,
@@ -1053,8 +1053,8 @@ h3 {
 
 @media (prefers-color-scheme: dark) {
   body.auth-body {
-    background-color: #050507;
-    background-image: radial-gradient(circle at 0 0, #16171d 0, #050507 55%);
+    background-color: rgb(13, 13, 13);
+    background-image: radial-gradient(circle at 0 0, #16171d 0, rgb(13, 13, 13) 55%);
   }
 
   body.auth-body .navbar-squarespace .navbar-brand,

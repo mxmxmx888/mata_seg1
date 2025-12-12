@@ -9,6 +9,12 @@
       </a>
     </h2>
 
+    {% if post.category %}
+      <p class="my-recipe-category">
+        {{ post.category }}
+      </p>
+    {% endif %}
+
     {% if post.description %}
       <p class="my-recipe-description">
         {{ post.description|truncatewords:18 }}
