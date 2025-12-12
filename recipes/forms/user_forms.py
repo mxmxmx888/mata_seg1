@@ -21,7 +21,8 @@ class UserForm(forms.ModelForm):
     remove_avatar = forms.BooleanField(required=False, widget=forms.HiddenInput())
     bio = forms.CharField(
         required=False,
-        widget=forms.Textarea(attrs={"rows": 3}),
+        max_length=150,
+        widget=forms.Textarea(attrs={"rows": 3, "style": "resize: none;"}),
         label="Profile description",
     )
 

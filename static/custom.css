@@ -338,23 +338,35 @@ body[data-theme="dark"]:not(.auth-body) .navbar-squarespace.navbar-solid .btn.bt
   position: relative;
 }
 
-/* Hard-centre the search bar (no translations) */
-.navbar-search-wrapper {
-  position: absolute;
-  top: 50%;
-  left: 0;
-  right: 0;
-  transform: translateY(-50%);
+/* Search bar: flex-based so it can shrink horizontally
+   with the navbar instead of overlapping other items */
+.navbar-app .navbar-search-wrapper {
+  position: static;
+  top: auto;
+  left: auto;
+  right: auto;
+  transform: none;
   margin: 0 auto;
-  width: 100%;
-  max-width: 520px;
+  width: auto;
   display: flex;
   justify-content: center;
+  flex: 1 1 520px;
+  min-width: 0;
+  align-items: center; /* vertically center search with other navbar items */
 }
 
-/* Keep the pill full width inside the wrapper */
-.navbar-search-wrapper .cosmos-nav-search {
+/* Keep the pill full width inside the wrapper and allow shrinking */
+.navbar-app .navbar-search-wrapper .cosmos-nav-search {
   width: 100%;
+  min-width: 0;
+}
+
+/* Extra breathing room between search bar and actions
+   so the pill never visually touches the Create button
+   as it shrinks on narrower viewports */
+.navbar-app .navbar-actions {
+  margin-left: auto;
+  padding-left: 0.75rem;
 }
 
 /* Navbar search pill – base (light mode) */
@@ -2184,17 +2196,6 @@ body[data-theme="dark"]:not(.auth-body) .view-similar-meta {
 }
 
 /* Giant responsive wordmark at the very end of the page */
-.footer-giant-logo {
-  font-family: "Awesome Serif", "Rethink Sans", system-ui, -apple-system, sans-serif;
-  font-size: clamp(6rem, 18vw, 22rem);
-  line-height: 0.9;
-  color: #0b0c0f;
-  margin: 0;
-  padding: 0 1rem 0.3rem;
-  user-select: none;
-  text-align: center;
-}
-
 /* =================================== */
 /* Dashboard: flat dark surface        */
 /* =================================== */
