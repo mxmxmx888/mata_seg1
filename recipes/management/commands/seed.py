@@ -21,6 +21,9 @@ from recipes.models import User
 from recipes.models.followers import Follower
 from recipes.models.follows import Follows
 from recipes.models.recipe_post import RecipePost
+from recipes.models.recipe_step import RecipeStep
+from recipes.models.favourite import Favourite
+from recipes.models.favourite_item import FavouriteItem
 
 
 
@@ -29,9 +32,24 @@ user_fixtures = [
     {'username': '@janedoe', 'email': 'jane.doe@example.org', 'first_name': 'Jane', 'last_name': 'Doe'},
     {'username': '@charlie', 'email': 'charlie.johnson@example.org', 'first_name': 'Charlie', 'last_name': 'Johnson'},
 ]
+image_pool = [
+    "/static/images/chotko.jpg",
+    "/static/images/toothless.jpg",
+    "/static/images/meal.jpg.webp"
 
+]
 categories = ["Breakfast", "Lunch", "Dinner", "Dessert", "Vegan"]
 tags_pool = ["quick", "family", "spicy", "budget", "comfort", "healthy", "high_protein", "low_carb"]
+favourite_names = [
+    "favourites",
+    "dinner ideas",
+    "quick meals",
+    "healthy",
+    "desserts",
+    "meal prep",
+    "date night",
+    "budget",
+]
 
 
 class Command(BaseCommand):
@@ -68,6 +86,8 @@ class Command(BaseCommand):
         self.create_users()
         self.seed_followers_and_follows(follow_k=5)
         self.seed_recipe_posts(per_user=2)
+        self.seed_recipe_steps(min_steps=4, max_steps=7)
+        self.seed_favourites(per_user=2)
         self.users = User.objects.all()
         self.stdout.write(self.style.SUCCESS("Seeding complete"))
 
@@ -158,7 +178,7 @@ class Command(BaseCommand):
             for _ in range(count):
                 title = self.faker.sentence(nb_words=5).rstrip(".")[:255]
                 description = self.faker.paragraph(nb_sentences=3)[:4000]
-                image = f"https://picsum.photos/seed/{uuid4()}/800/600"  
+                image = choice(image_pool)
                 prep = randint(0, 60)
                 cook = randint(0, 90)
                 tags = list(set(sample(tags_pool, randint(0, min(4, len(tags_pool))))))
@@ -182,6 +202,112 @@ class Command(BaseCommand):
         RecipePost.objects.bulk_create(rows, ignore_conflicts=True, batch_size=500)
         self.stdout.write(f"Recipe posts created: {len(rows)}")
 
+    def seed_recipe_steps(self, *, min_steps: int = 4, max_steps: int = 7) -> None:
+        post_ids = list(RecipePost.objects.values_list("id", flat=True))
+        if not post_ids:
+            return
+
+        rows: List[RecipeStep] = []
+
+        for post_id in post_ids:
+            step_count = randint(min_steps, max_steps)
+
+            for pos in range(1, step_count + 1):
+                # keep it within your 1–1000 constraint
+                text = self.faker.sentence(nb_words=12)
+                if len(text) > 1000:
+                    text = text[:1000]
+
+                rows.append(
+                    RecipeStep(
+                        recipe_post_id=post_id,
+                        position=pos,
+                        description=text,
+                    )
+                )
+
+        with transaction.atomic():
+            RecipeStep.objects.bulk_create(rows, ignore_conflicts=True, batch_size=1000)
+
+        self.stdout.write(f"recipe steps created (attempted): {len(rows)}")
+    
+    
+    
+    def seed_favourites(self, *, per_user: int = 2) -> None:
+        """
+        for each user, create 2 favourites (collections) from a predefined set,
+        then add random existing recipe posts into each favourite.
+        """
+        user_ids = list(User.objects.values_list("id", flat=True))
+        if not user_ids:
+            return
+
+        posts = list(RecipePost.objects.values_list("id", flat=True))
+        if not posts:
+            self.stdout.write("no recipe posts found, skipping favourites seeding.")
+            return
+
+        # clamp to available names
+        collections_per_user = min(per_user, len(favourite_names))
+
+        favourites_to_create: List[Favourite] = []
+        fav_keys: Set[Tuple[str, str]] = set()  # (user_id, name)
+
+        # 1) create favourites (collections)
+        for user_id in user_ids:
+            chosen = sample(favourite_names, k=collections_per_user)
+            for name in chosen:
+                key = (str(user_id), name)
+                if key in fav_keys:
+                    continue
+                fav_keys.add(key)
+                favourites_to_create.append(Favourite(user_id=user_id, name=name))
+
+        with transaction.atomic():
+            Favourite.objects.bulk_create(
+                favourites_to_create,
+                ignore_conflicts=True,
+                batch_size=500
+            )
+
+        # fetch favourites back (we need their ids for items)
+        favourites = list(
+            Favourite.objects.filter(user_id__in=user_ids).values_list("id", "user_id")
+        )
+
+        # group favourite ids by user for easy random assignment
+        favs_by_user: Dict[str, List[str]] = {}
+        for fav_id, u_id in favourites:
+            favs_by_user.setdefault(str(u_id), []).append(str(fav_id))
+
+        # 2) add random posts into each favourite
+        items_to_create: List[FavouriteItem] = []
+
+        for user_id in user_ids:
+            user_fav_ids = favs_by_user.get(str(user_id), [])
+            if not user_fav_ids:
+                continue
+
+            for fav_id in user_fav_ids:
+                # choose how many posts to add to this collection
+                k = randint(3, 8)
+                chosen_posts = sample(posts, k=min(k, len(posts)))
+
+                for post_id in chosen_posts:
+                    items_to_create.append(
+                        FavouriteItem(favourite_id=fav_id, recipe_post_id=post_id)
+                    )
+
+        with transaction.atomic():
+            FavouriteItem.objects.bulk_create(
+                items_to_create,
+                ignore_conflicts=True,
+                batch_size=1000
+            )
+
+        self.stdout.write(
+            f"favourites seeded: {len(favourites_to_create)} collections, {len(items_to_create)} items attempted"
+        )
     def create_user(self, data):
         """
         Create a user with the default password.
