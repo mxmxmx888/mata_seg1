@@ -4,6 +4,7 @@ from django.shortcuts import render
 from django.db.models import Q
 from django.utils import timezone
 from django.template.loader import render_to_string
+from django.contrib.auth import get_user_model
 
 try:
     from recipes.models import RecipePost, Favourite, Like, Follower
@@ -113,11 +114,23 @@ def _get_following_posts(user, query=None, limit=12, offset=0):
 
     return list(qs[offset:offset + limit])
 
+def _search_users(query, limit=18):
+    User = get_user_model()
+    if not query:
+        return []
+    return list(
+        User.objects.filter(username__icontains=query)
+        .order_by("username")[:limit]
+    )
+
 def dashboard(request):
     if not request.user.is_authenticated:
         return render(request, "discover_logged_out.html")
 
     q = (request.GET.get("q") or "").strip()
+    scope = (request.GET.get("scope") or "recipes").strip().lower()
+    if scope not in ("recipes", "users"):
+        scope = "recipes"
     category = (request.GET.get("category") or "all").strip()
     ingredient_q = (request.GET.get("ingredient") or "").strip()
     sort = (request.GET.get("sort") or "newest").strip()
@@ -164,7 +177,14 @@ def dashboard(request):
     popular_recipes = []
     popular_has_next = False
 
-    if has_search:
+    users_results = []
+
+    if has_search and scope == "users":
+        users_results = _search_users(q, limit=18)
+        popular_recipes = []
+        for_you_posts = []
+        following_posts = []
+    elif has_search:
         paginator = Paginator(discover_qs, 18)
         page_obj = paginator.get_page(page_number)
 
@@ -201,5 +221,7 @@ def dashboard(request):
         "sort": sort,
         "has_search": has_search,
         "popular_has_next": popular_has_next,
+        "scope": scope,
+        "users_results": users_results,
     }
     return render(request, "dashboard.html", context)

@@ -396,7 +396,6 @@ body[data-theme="light"] .dashboard-filter-select-wrapper:focus-within {
 }
 
 /* Individual tiles */
-
 .cosmos-tile {
   position: relative;
   border-radius: 0;
@@ -435,7 +434,6 @@ body[data-theme="light"] .dashboard-filter-select-wrapper:focus-within {
 .cosmos-tile-placeholder {
   background: radial-gradient(circle at top left, #4b5563, #111827);
 }
-
 
 /* =========================== */
 /* Profile + Collections pages */
@@ -985,6 +983,11 @@ body.profile-body .follow-modal .follow-user-handle {
   color: #ffffff;
 }
 
+.user-card {
+  min-height: auto;
+  height: 100%;
+}
+
 .edit-profile-nav-label {
   text-transform: uppercase;
   letter-spacing: 0.12em;
@@ -1488,8 +1491,7 @@ body[data-theme="light"] .edit-profile-modal .btn.btn-light:focus-visible {
   }
 }
 
-/* Create recipe page layout */
-
+/* Create recipe page */
 .app-body {
   background-color: rgb(13, 13, 13);
 }
