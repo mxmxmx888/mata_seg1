@@ -11,6 +11,41 @@ except Exception:
     from recipes.models.recipe_step import RecipeStep
     from recipes.models.recipe_post import RecipeImage
 
+
+class MultiFileInput(forms.ClearableFileInput):
+    allow_multiple_selected = True
+
+    def value_from_datadict(self, data, files, name):
+        return files.getlist(name)
+
+    def __init__(self, attrs=None):
+        attrs = attrs or {}
+        attrs.setdefault("multiple", True)
+        super().__init__(attrs)
+
+
+class MultiFileField(forms.FileField):
+    widget = MultiFileInput
+
+    def clean(self, data, initial=None):
+        files = data or []
+        if not isinstance(files, (list, tuple)):
+            files = [files] if files else []
+
+        cleaned = []
+        for f in files:
+            file_obj = super().to_python(f)
+            if file_obj is None:
+                continue
+            super().validate(file_obj)
+            super().run_validators(file_obj)
+            cleaned.append(file_obj)
+
+        if self.required and not cleaned and not initial:
+            raise forms.ValidationError(self.error_messages["required"], code="required")
+
+        return cleaned
+
 CATEGORIES = [
     ("breakfast", "Breakfast"),
     ("lunch", "Lunch"),
@@ -20,9 +55,6 @@ CATEGORIES = [
 ]
 
 class RecipePostForm(forms.ModelForm):
-    class MultiFileInput(forms.ClearableFileInput):
-        allow_multiple_selected = True
-
 
     category = forms.ChoiceField(
         choices=CATEGORIES,
@@ -48,7 +80,7 @@ class RecipePostForm(forms.ModelForm):
         widget=forms.Textarea(attrs={"rows": 6}),
         help_text="One step per line.",
     )
-    images = forms.FileField(
+    images = MultiFileField(
         label="Images",
         required=False,
         widget=MultiFileInput(attrs={"multiple": True}),
