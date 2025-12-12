@@ -215,25 +215,85 @@
 
   const searchInput = document.querySelector('.cosmos-nav-search-input');
   if (searchInput) {
-    const searchPlaceholders = [
-      "Try ‘15 minute pasta’",
-      "Try ‘one-pan chicken’",
-      "Try ‘banana protein milkshake’",
-      "Try ‘sheet-pan salmon’",
-      "Try ‘chocolate protein oats’"
+    const recipeSuggestions = [
+      "15 minute pasta",
+      "one-pan chicken",
+      "banana protein milkshake",
+      "sheet-pan salmon",
+      "chocolate protein oats"
     ];
 
+    const prefix = "Try ‘";
+    const suffix = "’";
+
     let placeholderIndex = 0;
+    let charIndex = 0;
+    let isDeleting = false;
+    let typingTimeoutId = null;
+    let animationActive = true;
 
-    function rotateSearchPlaceholder() {
-      if (document.activeElement === searchInput) return;
-      if (searchInput.value && searchInput.value.trim() !== '') return;
-
-      searchInput.placeholder = searchPlaceholders[placeholderIndex];
-      placeholderIndex = (placeholderIndex + 1) % searchPlaceholders.length;
+    function updatePlaceholder(textFragment) {
+      const middle = textFragment || "";
+      const closing = middle ? suffix : "";
+      searchInput.placeholder = prefix + middle + closing;
     }
 
-    rotateSearchPlaceholder();
-    setInterval(rotateSearchPlaceholder, 2500);
+    function typePlaceholder() {
+      if (!animationActive) return;
+
+      // Don't animate while user is interacting or has typed text
+      if (document.activeElement === searchInput || (searchInput.value && searchInput.value.trim() !== '')) {
+        typingTimeoutId = setTimeout(typePlaceholder, 500);
+        return;
+      }
+
+      const currentRecipe = recipeSuggestions[placeholderIndex];
+
+      if (!isDeleting) {
+        charIndex += 1;
+        const visible = currentRecipe.slice(0, charIndex);
+        updatePlaceholder(visible);
+
+        if (charIndex === currentRecipe.length) {
+          isDeleting = true;
+          typingTimeoutId = setTimeout(typePlaceholder, 1500); // pause when fully typed
+          return;
+        }
+      } else {
+        charIndex -= 1;
+        const visible = currentRecipe.slice(0, Math.max(charIndex, 0));
+        updatePlaceholder(visible);
+
+        if (charIndex <= 0) {
+          isDeleting = false;
+          placeholderIndex = (placeholderIndex + 1) % recipeSuggestions.length;
+        }
+      }
+
+      const delay = isDeleting ? 40 : 80;
+      typingTimeoutId = setTimeout(typePlaceholder, delay);
+    }
+
+    // Pause animation while user focuses the input
+    searchInput.addEventListener('focus', function () {
+      animationActive = false;
+      if (typingTimeoutId) {
+        clearTimeout(typingTimeoutId);
+        typingTimeoutId = null;
+      }
+    });
+
+    // Resume animation when input loses focus and is empty
+    searchInput.addEventListener('blur', function () {
+      if (searchInput.value && searchInput.value.trim() !== '') return;
+      if (!animationActive) {
+        animationActive = true;
+        typePlaceholder();
+      }
+    });
+
+    // Ensure initial static "Try" placeholder
+    updatePlaceholder("");
+    typePlaceholder();
   }
 </script>

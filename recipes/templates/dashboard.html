@@ -163,7 +163,7 @@
 
       <div class="tab-pane fade show active" id="forYou" role="tabpanel" aria-labelledby="forYou-tab">
         {% if for_you_posts %}
-          {% include "partials/recipe_grid.html" with posts=for_you_posts %}
+          {% include "partials/recipe_grid.html" with posts=for_you_posts grid_id="forYou-grid" %}
         {% else %}
           <div class="text-center py-5" style="color: #8b8c9a;">
             Nothing here yet — your personalised feed will appear here soon.
@@ -243,4 +243,61 @@
   });
 </script>
 {% endif %}
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const forYouTab = document.getElementById('forYou');
+    const grid = document.getElementById('forYou-grid');
+    if (!forYouTab || !grid) return;
+
+    let offset = {{ for_you_posts|length|default:0 }};
+    let loadingForYou = false;
+    let hasMoreForYou = true;
+
+    function loadMoreForYou() {
+      if (loadingForYou || !hasMoreForYou) return;
+      loadingForYou = true;
+
+      const url = new URL(window.location.href);
+      url.searchParams.set('for_you_offset', String(offset));
+      url.searchParams.set('for_you_ajax', '1');
+
+      fetch(url.toString(), {
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+        },
+      })
+        .then(function (response) {
+          if (!response.ok) {
+            throw new Error('Network response was not ok');
+          }
+          return response.json();
+        })
+        .then(function (data) {
+          if (data && data.html) {
+            grid.insertAdjacentHTML('beforeend', data.html);
+            offset += data.count || 0;
+            hasMoreForYou = Boolean(data.has_more);
+          } else {
+            hasMoreForYou = false;
+          }
+          loadingForYou = false;
+        })
+        .catch(function () {
+          loadingForYou = false;
+        });
+    }
+
+    window.addEventListener('scroll', function () {
+      if (loadingForYou || !hasMoreForYou) return;
+
+      const scrollPosition = window.innerHeight + window.scrollY;
+      const threshold = document.body.offsetHeight - 300;
+
+      if (scrollPosition >= threshold && forYouTab.classList.contains('show')) {
+        loadMoreForYou();
+      }
+    });
+  });
+</script>
 {% endblock %}

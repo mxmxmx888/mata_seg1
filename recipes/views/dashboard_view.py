@@ -5,7 +5,7 @@ from django.db.models import Q
 from django.utils import timezone
 from django.template.loader import render_to_string
 from django.contrib.auth import get_user_model
-
+from django.views.decorators.http import require_GET
 try:
     from recipes.models import RecipePost, Favourite, FavouriteItem, Like, Follower
 except Exception:
@@ -128,6 +128,7 @@ def _search_users(query, limit=18):
         .order_by("username")[:limit]
     )
 
+@require_GET
 def dashboard(request):
     if not request.user.is_authenticated:
         return render(request, "discover_logged_out.html")
@@ -183,6 +184,30 @@ def dashboard(request):
     popular_has_next = False
 
     users_results = []
+
+    if request.GET.get("for_you_ajax") == "1":
+        limit = 12
+        try:
+            offset = int(request.GET.get("for_you_offset") or 0)
+        except (TypeError, ValueError):
+            offset = 0
+        if offset < 0:
+            offset = 0
+
+        posts = _get_for_you_posts(request.user, limit=limit, offset=offset)
+        html = render_to_string(
+            "partials/recipe_grid_items.html",
+            {"posts": posts, "request": request},
+            request=request,
+        )
+        has_more = len(posts) == limit
+        return JsonResponse(
+            {
+                "html": html,
+                "has_more": has_more,
+                "count": len(posts),
+            }
+        )
 
     if has_search and scope == "users":
         users_results = _search_users(q, limit=18)
