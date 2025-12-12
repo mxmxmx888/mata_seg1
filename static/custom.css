@@ -1294,8 +1294,8 @@ h3 {
 
 .cosmos-home {
   min-height: calc(100vh - 64px);
-  /* Add enough offset so the fixed navbar overlays empty space at the very top */
-  padding-top: 4.5rem;
+  /* Offset for fixed navbar, slightly tighter */
+  padding-top: 3rem;
 }
 
 .cosmos-home .row.mt-3 {
