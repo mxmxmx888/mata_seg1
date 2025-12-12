@@ -16,6 +16,7 @@ from faker import Faker
 from django.core.management.base import BaseCommand
 from django.db import transaction
 from django.utils import timezone
+from django.db.models import Q
 
 from recipes.models import User
 from recipes.models.followers import Follower
@@ -24,6 +25,8 @@ from recipes.models.recipe_post import RecipePost
 from recipes.models.recipe_step import RecipeStep
 from recipes.models.favourite import Favourite
 from recipes.models.favourite_item import FavouriteItem
+from recipes.models.comment import Comment
+from recipes.models.like import Like
 
 
 
@@ -33,9 +36,11 @@ user_fixtures = [
     {'username': '@charlie', 'email': 'charlie.johnson@example.org', 'first_name': 'Charlie', 'last_name': 'Johnson'},
 ]
 image_pool = [
-    "/static/images/chotko.jpg",
+    "/static/images/chotko.jpeg",
     "/static/images/toothless.jpg",
-    "/static/images/meal.jpg.webp"
+    "/static/images/meal.jpg.webp",
+    "/static/images/meal1.jpeg."
+
 
 ]
 categories = ["Breakfast", "Lunch", "Dinner", "Dessert", "Vegan"]
@@ -49,6 +54,26 @@ favourite_names = [
     "meal prep",
     "date night",
     "budget",
+]
+
+comment_phrases = [
+    "I love Amir...",
+    "Maksym is sooo handsome",
+    "Ayan I am your stan",
+    "Tunjay is such a cutie"
+]
+
+bio_phrases = [
+    "home cook who loves quick meals",
+    "always experimenting with new flavours",
+    "meal prep enthusiast and pasta fan",
+    "baking on weekends, cooking every day",
+    "trying to eat healthier without losing taste",
+    "big on comfort food and family dinners",
+    "spice lover, especially in curries and stews",
+    "student cook learning one recipe at a time",
+    "foodie who believes butter fixes everything",
+    "i cook, i taste, i improvise",
 ]
 
 
@@ -88,6 +113,8 @@ class Command(BaseCommand):
         self.seed_recipe_posts(per_user=2)
         self.seed_recipe_steps(min_steps=4, max_steps=7)
         self.seed_favourites(per_user=2)
+        self.seed_likes(max_likes_per_post=20)
+        self.seed_comments(max_comments_per_post=5)
         self.users = User.objects.all()
         self.stdout.write(self.style.SUCCESS("Seeding complete"))
 
@@ -232,6 +259,59 @@ class Command(BaseCommand):
         self.stdout.write(f"recipe steps created (attempted): {len(rows)}")
     
     
+    def seed_likes(self, max_likes_per_post: int = 20) -> None:
+        """
+        seed likes for recipe posts.
+        each post gets a random number of likes from random users.
+        """
+        users = list(User.objects.values_list("id", flat=True))
+        posts = list(RecipePost.objects.values_list("id", flat=True))
+
+        if not users or not posts:
+            return
+
+        rows = []
+
+        for post_id in posts:
+            like_count = randint(0, min(max_likes_per_post, len(users)))
+            liked_by = sample(users, like_count)
+
+            for user_id in liked_by:
+                rows.append(
+                    Like(
+                        user_id=user_id,
+                        recipe_post_id=post_id,
+                    )
+                )
+
+        with transaction.atomic():
+            Like.objects.bulk_create(rows, ignore_conflicts=True, batch_size=1000)
+
+        self.stdout.write(f"likes created: {len(rows)}")
+    def seed_comments(self, max_comments_per_post: int = 5) -> None:
+        users = list(User.objects.values_list("id", flat=True))
+        posts = list(RecipePost.objects.values_list("id", flat=True))
+
+        if not users or not posts:
+            return
+
+        rows = []
+
+        for post_id in posts:
+            comment_count = randint(0, max_comments_per_post)
+
+            commenters = sample(users, min(len(users), comment_count))
+            for user_id in commenters:
+                rows.append(
+                    Comment(
+                        recipe_post_id=post_id,
+                        user_id=user_id,
+                        text=choice(comment_phrases),
+                    )
+                )
+
+        Comment.objects.bulk_create(rows, ignore_conflicts=True, batch_size=500)
+        self.stdout.write(f"Comments created: {len(rows)}")
     
     def seed_favourites(self, *, per_user: int = 2) -> None:
         """
@@ -322,6 +402,7 @@ class Command(BaseCommand):
             password=Command.DEFAULT_PASSWORD,
             first_name=data['first_name'],
             last_name=data['last_name'],
+            bio = choice(bio_phrases)
         )
 
 def create_username(first_name, last_name):
