@@ -133,10 +133,11 @@ def _profile_data_for_user(user):
     fallback_handle = "@anmzn"
     handle = user.username or fallback_handle
     display_name = user.get_full_name() or user.username or "cook"
+    bio = getattr(user, "bio", "") or ""
     return {
         "display_name": display_name,
         "handle": handle,
-        "tagline": "opulence",
+        "tagline": bio,
         "following": 2,
         "followers": 0,
         "avatar_url": user.avatar_url,
@@ -200,8 +201,15 @@ def profile(request):
             return redirect("profile")
         form = UserForm(request.POST, request.FILES, instance=request.user)
         if form.is_valid():
-            form.save()
-            messages.add_message(request, messages.SUCCESS, "Profile updated!")
+            changed_fields = set(form.changed_data)
+
+            if changed_fields:
+                form.save()
+
+                non_avatar_changes = changed_fields - {"avatar", "remove_avatar"}
+                if non_avatar_changes:
+                    messages.add_message(request, messages.SUCCESS, "Profile updated!")
+
             return redirect("profile")
     else:
         if profile_user == request.user:

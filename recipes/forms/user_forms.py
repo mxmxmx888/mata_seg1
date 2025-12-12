@@ -19,12 +19,17 @@ class UserForm(forms.ModelForm):
 
     avatar = forms.ImageField(required=False, widget=AvatarFileInput())
     remove_avatar = forms.BooleanField(required=False, widget=forms.HiddenInput())
+    bio = forms.CharField(
+        required=False,
+        widget=forms.Textarea(attrs={"rows": 3}),
+        label="Profile description",
+    )
 
     class Meta:
         """Form options."""
 
         model = User
-        fields = ['first_name', 'last_name', 'username', 'email', 'avatar']
+        fields = ['first_name', 'last_name', 'username', 'bio', 'email', 'avatar']
 
     def save(self, commit=True):
         existing_avatar = self.instance.avatar if self.instance and self.instance.pk else None
