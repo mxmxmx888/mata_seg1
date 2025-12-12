@@ -54,6 +54,7 @@ def _base_posts_queryset():
     return (
         RecipePost.objects.filter(published_at__isnull=False)
         .select_related("author")
+        .prefetch_related("images")
         .order_by("-published_at", "-created_at")
     )
 

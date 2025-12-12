@@ -11,8 +11,17 @@
     {% else %}
       {% render_field field class="form-control" %}
     {% endif %}
+    {% if field.help_text %}
+      <small class="form-text text-muted">{{ field.help_text }}</small>
+    {% endif %}
     <div class="invalid-feedback">
       {{ field.errors }}
     </div>
+    {% if field.name == "images" %}
+      <div id="image-file-list" class="small text-muted mt-2"></div>
+    {% elif field.name == "shop_images" %}
+      <div id="shop-image-file-list" class="small text-muted mt-2"></div>
+    {% endif %}
+
   </div>
 {% endfor %}

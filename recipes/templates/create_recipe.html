@@ -195,6 +195,10 @@
     (function() {
       // Select form specifically inside the card to avoid navbar conflicts
       const formEl = document.querySelector('.create-recipe-card form');
+      const imageInput = document.getElementById('id_images');
+      const imageList = document.getElementById('image-file-list');
+      const shopImageInput = document.getElementById('id_shop_images');
+      const shopImageList = document.getElementById('shop-image-file-list');
       
       const ingredientsField = document.getElementById('id_ingredients_text');
       const itemInput = document.getElementById('shop-item');
@@ -204,6 +208,34 @@
       const shoppingList = [];
 
       if (!formEl || !ingredientsField || !itemInput || !linkInput || !addBtn || !listBox) return;
+
+      function renderImagesList() {
+        if (!imageInput || !imageList) return;
+        const files = imageInput.files;
+        if (!files || !files.length) {
+          imageList.textContent = "";
+          return;
+        }
+        const names = Array.from(files).map(f => f.name);
+        imageList.textContent = names.join(", ");
+      }
+      if (imageInput) {
+        imageInput.addEventListener('change', renderImagesList);
+      }
+
+      function renderShopImagesList() {
+        if (!shopImageInput || !shopImageList) return;
+        const files = shopImageInput.files;
+        if (!files || !files.length) {
+          shopImageList.textContent = "";
+          return;
+        }
+        const names = Array.from(files).map(f => f.name);
+        shopImageList.textContent = names.join(", ");
+      }
+      if (shopImageInput) {
+        shopImageInput.addEventListener('change', renderShopImagesList);
+      }
 
       function normalizeUrl(url) {
         if (!url) return '';
