@@ -31,7 +31,11 @@ user_fixtures = [
     {'username': '@janedoe', 'email': 'jane.doe@example.org', 'first_name': 'Jane', 'last_name': 'Doe'},
     {'username': '@charlie', 'email': 'charlie.johnson@example.org', 'first_name': 'Charlie', 'last_name': 'Johnson'},
 ]
+image_pool = [
+    "/static/images/chotko.jpg",
+    "/static/images/toothless.jpg",
 
+]
 categories = ["Breakfast", "Lunch", "Dinner", "Dessert", "Vegan"]
 tags_pool = ["quick", "family", "spicy", "budget", "comfort", "healthy", "high_protein", "low_carb"]
 favourite_names = [
@@ -171,7 +175,7 @@ class Command(BaseCommand):
             for _ in range(count):
                 title = self.faker.sentence(nb_words=5).rstrip(".")[:255]
                 description = self.faker.paragraph(nb_sentences=3)[:4000]
-                image = f"https://picsum.photos/seed/{uuid4()}/800/600"  
+                image = choice(image_pool)
                 prep = randint(0, 60)
                 cook = randint(0, 90)
                 tags = list(set(sample(tags_pool, randint(0, min(4, len(tags_pool))))))
