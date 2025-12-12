@@ -34,6 +34,7 @@ user_fixtures = [
 image_pool = [
     "/static/images/chotko.jpg",
     "/static/images/toothless.jpg",
+    "/static/images/meal.jpg.webp"
 
 ]
 categories = ["Breakfast", "Lunch", "Dinner", "Dessert", "Vegan"]

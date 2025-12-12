@@ -11,11 +11,12 @@ from recipes.forms.comment_form import CommentForm
 
 try:
     from recipes.models import RecipePost, Ingredient, RecipeStep, Favourite, Like, Comment
+    from recipes.models.favourite_item import FavouriteItem
 except Exception:
     from recipes.models.recipe_post import RecipePost
     from recipes.models.ingredient import Ingredient
     from recipes.models.recipe_step import RecipeStep
-    from recipes.models.favourite import Favourite
+    from mata_seg1.recipes.models.collection import Favourite
     from recipes.models.like import Like
     from recipes.models.comment import Comment
 
@@ -65,9 +66,9 @@ def recipe_detail(request, post_id):
     recipe = get_object_or_404(RecipePost, id=post_id)
     ingredients_qs = Ingredient.objects.filter(recipe_post=recipe).order_by("position")
     steps_qs = RecipeStep.objects.filter(recipe_post=recipe).order_by("position")
-    
-    # FETCH COMMENTS
-    comments = recipe.comments.select_related('user').order_by("-created_at")
+
+    # fetch comments
+    comments = recipe.comments.select_related("user").order_by("-created_at")
 
     user_liked = False
     user_saved = False
@@ -75,14 +76,23 @@ def recipe_detail(request, post_id):
 
     if request.user.is_authenticated:
         user_liked = Like.objects.filter(user=request.user, recipe_post=recipe).exists()
-        user_saved = Favourite.objects.filter(user=request.user, recipe_post=recipe).exists()
+
+        # saved = recipe exists in the user's default "favourites" collection
+        user_saved = FavouriteItem.objects.filter(
+            favourite__user=request.user,
+            favourite__name="favourites",
+            recipe_post=recipe,
+        ).exists()
+
         is_following_author = Follower.objects.filter(
             follower=request.user,
             author=recipe.author,
         ).exists()
 
     likes_count = Like.objects.filter(recipe_post=recipe).count()
-    saves_count = Favourite.objects.filter(recipe_post=recipe).count()
+
+    # saves = how many times this recipe appears in any collection
+    saves_count = FavouriteItem.objects.filter(recipe_post=recipe).count()
 
     image_url = recipe.image or "https://placehold.co/1200x800/0f0f14/ffffff?text=Recipe"
     author_handle = getattr(recipe.author, "username", "")
@@ -96,9 +106,7 @@ def recipe_detail(request, post_id):
     source_label = "Recipi"
 
     ingredients = list(ingredients_qs)
-    shop_ingredients = [
-        ing for ing in ingredients if ing.shop_url and ing.shop_url.strip()
-    ]
+    shop_ingredients = [ing for ing in ingredients if getattr(ing, "shop_url", None) and ing.shop_url.strip()]
     steps = [s.description for s in steps_qs]
 
     context = {
@@ -122,14 +130,13 @@ def recipe_detail(request, post_id):
         "is_following_author": is_following_author,
         "likes_count": likes_count,
         "saves_count": saves_count,
-        "comments": comments, # Pass actual comments
-        "comment_form": CommentForm(), # Pass empty form
+        "comments": comments,
+        "comment_form": CommentForm(),
         "gallery_images": [],
         "video_url": None,
         "view_similar": [],
     }
     return render(request, "post_detail.html", context)
-
 
 @login_required
 def my_recipes(request):

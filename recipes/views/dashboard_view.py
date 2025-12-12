@@ -3,11 +3,11 @@ from django.db.models import Q
 from django.utils import timezone
 
 try:
-    from recipes.models import RecipePost, Favourite, Like, Follower
-    from recipes.models import RecipePost, Favourite, Like, Follower
+    from recipes.models import RecipePost, Favourite, FavouriteItem, Like, Follower
 except Exception:
     from recipes.models.recipe_post import RecipePost
     from recipes.models.favourite import Favourite
+    from recipes.models.favourite_item import FavouriteItem
     from recipes.models.like import Like
     from recipes.models.followers import Follower
 
@@ -25,11 +25,16 @@ def _normalise_tags(tags):
 def _user_preference_tags(user):
     tags = []
 
-    fav_qs = Favourite.objects.filter(user=user).select_related("recipe_post")
+    fav_item_qs = (
+        FavouriteItem.objects
+        .filter(favourite__user=user)
+        .select_related("recipe_post")
+    )
     like_qs = Like.objects.filter(user=user).select_related("recipe_post")
 
-    for fav in fav_qs:
-        tags.extend(_normalise_tags(getattr(fav.recipe_post, "tags", [])))
+    for item in fav_item_qs:
+        tags.extend(_normalise_tags(getattr(item.recipe_post, "tags", [])))
+
     for like in like_qs:
         tags.extend(_normalise_tags(getattr(like.recipe_post, "tags", [])))
 
