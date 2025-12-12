@@ -21,6 +21,7 @@ from recipes.models import User
 from recipes.models.followers import Follower
 from recipes.models.follows import Follows
 from recipes.models.recipe_post import RecipePost
+from recipes.models.recipe_step import RecipeStep
 from recipes.models.favourite import Favourite
 from recipes.models.favourite_item import FavouriteItem
 
@@ -85,6 +86,7 @@ class Command(BaseCommand):
         self.create_users()
         self.seed_followers_and_follows(follow_k=5)
         self.seed_recipe_posts(per_user=2)
+        self.seed_recipe_steps(min_steps=4, max_steps=7)
         self.seed_favourites(per_user=2)
         self.users = User.objects.all()
         self.stdout.write(self.style.SUCCESS("Seeding complete"))
@@ -200,7 +202,37 @@ class Command(BaseCommand):
         RecipePost.objects.bulk_create(rows, ignore_conflicts=True, batch_size=500)
         self.stdout.write(f"Recipe posts created: {len(rows)}")
 
+    def seed_recipe_steps(self, *, min_steps: int = 4, max_steps: int = 7) -> None:
+        post_ids = list(RecipePost.objects.values_list("id", flat=True))
+        if not post_ids:
+            return
 
+        rows: List[RecipeStep] = []
+
+        for post_id in post_ids:
+            step_count = randint(min_steps, max_steps)
+
+            for pos in range(1, step_count + 1):
+                # keep it within your 1–1000 constraint
+                text = self.faker.sentence(nb_words=12)
+                if len(text) > 1000:
+                    text = text[:1000]
+
+                rows.append(
+                    RecipeStep(
+                        recipe_post_id=post_id,
+                        position=pos,
+                        description=text,
+                    )
+                )
+
+        with transaction.atomic():
+            RecipeStep.objects.bulk_create(rows, ignore_conflicts=True, batch_size=1000)
+
+        self.stdout.write(f"recipe steps created (attempted): {len(rows)}")
+    
+    
+    
     def seed_favourites(self, *, per_user: int = 2) -> None:
         """
         for each user, create 2 favourites (collections) from a predefined set,
