@@ -3,6 +3,14 @@
     class="my-recipe-card"
     onclick="window.location.href='{% url 'recipe_detail' post.id %}'"
   >
+    {% if post.primary_image_url %}
+      <div class="my-recipe-thumb" aria-hidden="true">
+        <div
+          class="my-recipe-thumb-img"
+          style="background-image: url('{{ post.primary_image_url }}');"
+        ></div>
+      </div>
+    {% endif %}
     <h2 class="my-recipe-title">
       <a href="{% url 'recipe_detail' post.id %}">
         {{ post.title }}

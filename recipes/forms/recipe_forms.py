@@ -4,11 +4,12 @@ from django import forms
 import re
 
 try:
-    from recipes.models import RecipePost, Ingredient, RecipeStep
+    from recipes.models import RecipePost, Ingredient, RecipeStep, RecipeImage
 except Exception:
     from recipes.models.recipe_post import RecipePost
     from recipes.models.ingredient import Ingredient
     from recipes.models.recipe_step import RecipeStep
+    from recipes.models.recipe_post import RecipeImage
 
 CATEGORIES = [
     ("breakfast", "Breakfast"),
@@ -19,6 +20,9 @@ CATEGORIES = [
 ]
 
 class RecipePostForm(forms.ModelForm):
+    class MultiFileInput(forms.ClearableFileInput):
+        allow_multiple_selected = True
+
 
     category = forms.ChoiceField(
         choices=CATEGORIES,
@@ -44,6 +48,12 @@ class RecipePostForm(forms.ModelForm):
         widget=forms.Textarea(attrs={"rows": 6}),
         help_text="One step per line.",
     )
+    images = forms.FileField(
+        label="Images",
+        required=False,
+        widget=MultiFileInput(attrs={"multiple": True}),
+        help_text="Upload up to 10 images",
+    )
 
     class Meta:
         model = RecipePost
@@ -51,11 +61,16 @@ class RecipePostForm(forms.ModelForm):
             "title",
             "description",
             "category",       
-            "image",
             "prep_time_min",
             "cook_time_min",
             "nutrition",
         ]
+
+    def clean_images(self):
+        files = self.files.getlist("images")
+        if len(files) > 10:
+            raise forms.ValidationError("You can upload up to 10 images.")
+        return files
 
     def parse_tags(self):
         raw = (self.cleaned_data.get("tags_text") or "").strip()
@@ -115,5 +130,15 @@ class RecipePostForm(forms.ModelForm):
             RecipeStep.objects.create(
                 recipe_post=recipe,
                 description=line,
+                position=idx,
+            )
+
+    def create_images(self, recipe):
+        files = self.cleaned_data.get("images") or []
+        RecipeImage.objects.filter(recipe_post=recipe).delete()
+        for idx, f in enumerate(files[:10]):
+            RecipeImage.objects.create(
+                recipe_post=recipe,
+                image=f,
                 position=idx,
             )

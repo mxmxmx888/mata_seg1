@@ -40,7 +40,6 @@ def recipe_create(request):
                 author=request.user,
                 title=cleaned["title"],
                 description=cleaned.get("description") or "",
-                image=cleaned.get("image") or None,
                 prep_time_min=cleaned.get("prep_time_min") or 0,
                 cook_time_min=cleaned.get("cook_time_min") or 0,
                 nutrition=cleaned.get("nutrition") or "",
@@ -51,6 +50,12 @@ def recipe_create(request):
 
             form.create_ingredients(recipe)
             form.create_steps(recipe)
+            form.create_images(recipe)
+
+            primary_image = recipe.images.first()
+            if primary_image and primary_image.image:
+                recipe.image = primary_image.image.url
+                recipe.save(update_fields=["image"])
 
             messages.success(request, "Recipe created.")
             return redirect("recipe_detail", post_id=recipe.id)
@@ -65,6 +70,7 @@ def recipe_detail(request, post_id):
     recipe = get_object_or_404(RecipePost, id=post_id)
     ingredients_qs = Ingredient.objects.filter(recipe_post=recipe).order_by("position")
     steps_qs = RecipeStep.objects.filter(recipe_post=recipe).order_by("position")
+    images_qs = recipe.images.all()
     
     # FETCH COMMENTS
     comments = recipe.comments.select_related('user').order_by("-created_at")
@@ -84,7 +90,23 @@ def recipe_detail(request, post_id):
     likes_count = Like.objects.filter(recipe_post=recipe).count()
     saves_count = Favourite.objects.filter(recipe_post=recipe).count()
 
-    image_url = recipe.image or "https://placehold.co/1200x800/0f0f14/ffffff?text=Recipe"
+    image_url = None
+    if images_qs:
+        first_image = images_qs[0]
+        try:
+            image_url = first_image.image.url
+        except ValueError:
+            image_url = None
+    if not image_url:
+        image_url = recipe.image or "https://placehold.co/1200x800/0f0f14/ffffff?text=Recipe"
+
+    gallery_images = []
+    if images_qs.count() > 1:
+        for extra in images_qs[1:]:
+            try:
+                gallery_images.append(extra.image.url)
+            except ValueError:
+                continue
     author_handle = getattr(recipe.author, "username", "")
     total_time = (recipe.prep_time_min or 0) + (recipe.cook_time_min or 0)
     cook_time = f"{total_time} min" if total_time else "N/A"
@@ -124,7 +146,7 @@ def recipe_detail(request, post_id):
         "saves_count": saves_count,
         "comments": comments, # Pass actual comments
         "comment_form": CommentForm(), # Pass empty form
-        "gallery_images": [],
+        "gallery_images": gallery_images,
         "video_url": None,
         "view_similar": [],
     }

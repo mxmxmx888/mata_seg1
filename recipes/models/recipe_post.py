@@ -3,6 +3,7 @@ from django.db import models
 from django.utils import timezone
 from .user import User
 from django.db import models
+from django.conf import settings
 
 
 class RecipePost(models.Model):
@@ -50,3 +51,33 @@ class RecipePost(models.Model):
 
     def __str__(self):
         return self.title
+
+    @property
+    def primary_image_url(self):
+        if hasattr(self, "images") and self.images.all():
+            first = self.images.all()[0]
+            if first.image:
+                try:
+                    return first.image.url
+                except ValueError:
+                    pass
+        if self.image:
+            return self.image
+        return None
+
+
+class RecipeImage(models.Model):
+    recipe_post = models.ForeignKey(
+        RecipePost,
+        related_name="images",
+        on_delete=models.CASCADE,
+    )
+    image = models.ImageField(upload_to="recipes/")
+    position = models.PositiveIntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["position", "created_at", "id"]
+
+    def __str__(self):
+        return f"Image for {self.recipe_post_id}"

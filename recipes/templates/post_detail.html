@@ -18,16 +18,14 @@
 
       {% if gallery_images or video_url %}
       <section class="post-media-extras">
-        <div class="post-media-masonry">
-          <div class="post-media-masonry-col"></div>
-          <div class="post-media-masonry-col"></div>
+        <div class="post-media-stack">
           {% for gallery_image in gallery_images %}
-          <div class="post-media-masonry-item">
+          <div class="post-media-stack-item">
             <img src="{{ gallery_image }}" alt="Gallery image {{ forloop.counter }}">
           </div>
           {% endfor %}
           {% if video_url %}
-          <div class="post-media-masonry-item">
+          <div class="post-media-stack-item">
             <div class="post-video">
               <video controls playsinline poster="{{ image_url }}">
                 <source src="{{ video_url }}" type="video/mp4">
