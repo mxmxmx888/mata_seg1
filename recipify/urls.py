@@ -19,7 +19,6 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import path, include
 from recipes.views import profile_view
-
 from recipes import views
 from recipes.views.post_mock_view import mock_post_detail
 from recipes.views.recipe_views import (
@@ -68,3 +67,4 @@ urlpatterns = [
 ]
 
 urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

@@ -4,7 +4,7 @@ from typing import Dict
 
 from django.http import HttpRequest
 
-from recipes.forms import UserForm
+from recipes.forms import UserForm, PasswordForm
 from recipes.models import Notification
 
 
@@ -18,7 +18,10 @@ def edit_profile_form(request: HttpRequest) -> Dict[str, object]:
   user = getattr(request, "user", None)
   if not user or not user.is_authenticated:
     return {}
-  return {"edit_profile_form": UserForm(instance=user)}
+  return {
+    "edit_profile_form": UserForm(instance=user),
+    "password_form": PasswordForm(user=user),
+  }
 
 def notifications(request):
     if request.user.is_authenticated:

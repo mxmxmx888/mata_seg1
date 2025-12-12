@@ -743,7 +743,7 @@
 /* Dark mode for the post detail mock */
 @media (prefers-color-scheme: dark) {
   body:not(.auth-body) .post-page {
-    background-color: #050505;
+    background-color: rgb(13, 13, 13);
     color: #f6f6f6;
   }
 
@@ -789,7 +789,7 @@
 
   body:not(.auth-body) .post-save-button {
     background-color: #f6f6f6;
-    color: #050505;
+    color: rgb(13, 13, 13);
   }
 
   body:not(.auth-body) .post-media-extras {
@@ -809,7 +809,7 @@
 
 /* Fallback: force dark theme when data-theme is set */
 body[data-theme="dark"]:not(.auth-body) .post-page {
-  background-color: #050505;
+  background-color: rgb(13, 13, 13);
   color: #f6f6f6;
 }
 
@@ -855,7 +855,7 @@ body[data-theme="dark"]:not(.auth-body) .comment-avatar {
 
   body[data-theme="dark"]:not(.auth-body) .post-save-button {
     background-color: #f6f6f6;
-    color: #050505;
+    color: rgb(13, 13, 13);
   }
 
   body[data-theme="dark"]:not(.auth-body) .post-media-extras {
@@ -878,14 +878,14 @@ body[data-theme="dark"]:not(.auth-body) .view-similar-meta {
   body:not(.auth-body) .btn.btn-outline-light:hover,
   body:not(.auth-body) .btn.btn-outline-light:focus-visible {
     background-color: #ffffff !important;
-    color: #000000 !important;
+    color: rgb(13, 13, 13) !important;
     border-color: #ffffff !important;
   }
 
   body:not(.auth-body) .cta-browse-btn.btn-outline-dark:hover,
   body:not(.auth-body) .cta-browse-btn.btn-outline-dark:focus-visible {
     background-color: #ffffff !important;
-    color: #000000 !important;
+    color: rgb(13, 13, 13) !important;
     border-color: #ffffff !important;
   }
 }
@@ -895,21 +895,21 @@ body[data-theme="dark"]:not(.auth-body) .btn.btn-outline-dark:focus-visible,
 body[data-theme="dark"]:not(.auth-body) .btn.btn-outline-light:hover,
 body[data-theme="dark"]:not(.auth-body) .btn.btn-outline-light:focus-visible {
   background-color: #ffffff !important;
-  color: #000000 !important;
+  color: rgb(13, 13, 13) !important;
   border-color: #ffffff !important;
 }
 
 body[data-theme="dark"]:not(.auth-body) .cta-browse-btn.btn-outline-dark:hover,
 body[data-theme="dark"]:not(.auth-body) .cta-browse-btn.btn-outline-dark:focus-visible {
   background-color: #ffffff !important;
-  color: #000000 !important;
+  color: rgb(13, 13, 13) !important;
   border-color: #ffffff !important;
 }
 
 /* Create recipe page layout */
 
 .recipe-create-page {
-  background: #050505;
+  background: rgb(13, 13, 13);
   min-height: calc(100vh - 64px);
   padding: 0 0 4rem; /* no extra space above the navbar */
 }
@@ -946,7 +946,7 @@ body[data-theme="dark"]:not(.auth-body) .cta-browse-btn.btn-outline-dark:focus-v
 .recipe-create-form .form-control,
 .recipe-create-form textarea,
 .recipe-create-form input {
-  background-color: #050505;
+  background-color: rgb(13, 13, 13);
   border-color: #2a2a2a;
   color: #f7f7f7;
 }
@@ -956,7 +956,7 @@ body[data-theme="dark"]:not(.auth-body) .cta-browse-btn.btn-outline-dark:focus-v
 }
 
 .recipe-create-form .form-control:focus {
-  background-color: #050505;
+  background-color: rgb(13, 13, 13);
   border-color: #ffffff;
   box-shadow: 0 0 0 1px #ffffff11;
 }

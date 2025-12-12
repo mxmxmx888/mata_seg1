@@ -1,0 +1,29 @@
+{% for post in posts %}
+  <article
+    class="my-recipe-card"
+    onclick="window.location.href='{% url 'recipe_detail' post.id %}'"
+  >
+    <h2 class="my-recipe-title">
+      <a href="{% url 'recipe_detail' post.id %}">
+        {{ post.title }}
+      </a>
+    </h2>
+
+    {% if post.category %}
+      <p class="my-recipe-category">
+        {{ post.category }}
+      </p>
+    {% endif %}
+
+    {% if post.description %}
+      <p class="my-recipe-description">
+        {{ post.description|truncatewords:18 }}
+      </p>
+    {% endif %}
+
+    <p class="my-recipe-meta mb-0">
+      <span>Prep: {{ post.prep_time_min }} min</span>
+      <span>Cook: {{ post.cook_time_min }} min</span>
+    </p>
+  </article>
+{% endfor %}

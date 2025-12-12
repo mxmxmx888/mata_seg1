@@ -172,7 +172,7 @@ body[data-theme="dark"] .navbar-squarespace .navbar-toggler-icon {
 
 @media (max-width: 991.98px) and (prefers-color-scheme: dark) {
   .navbar-squarespace:not(.navbar-solid) .navbar-collapse {
-    background-color: #050505;
+    background-color: rgb(13, 13, 13);
   }
 }
 
@@ -181,7 +181,11 @@ body[data-theme="dark"] .navbar-squarespace .navbar-toggler-icon {
 /* =============================== */
 
 .navbar-app {
-  background-color: #000000;
+  position: sticky;
+  top: 0;
+  left: 0;
+  right: 0;
+  background-color: rgb(13, 13, 13);
   border-bottom: none;
   padding-top: 0.3rem;
   padding-bottom: 0.3rem;
@@ -214,6 +218,12 @@ body[data-theme="dark"] .navbar-squarespace .navbar-toggler-icon {
   opacity: 1;
 }
 
+.navbar-app .btn.btn-dark {
+  padding: 0.25rem 0.65rem;
+  font-size: 0.8rem;
+  line-height: 1.1;
+}
+
 .navbar-app .btn.btn-light {
   background-color: #111827;
   color: #f9fafb;
@@ -229,7 +239,7 @@ body[data-theme="dark"] .navbar-squarespace .navbar-toggler-icon {
   display: inline-flex;
   align-items: center;
   gap: 0.9rem;
-  margin-top: 0.2rem;
+  margin-top: 0;
 }
 
 .navbar-actions .nav-account-caret-btn {
@@ -280,7 +290,7 @@ body[data-theme="dark"] .navbar-squarespace .navbar-toggler-icon {
 /* Center search bar in the navbar (no translations) */
 .navbar-app .navbar-search-wrapper {
   max-width: 460px;
-  margin: 0.7rem auto 0;
+  margin: 0.55rem auto 0;
 }
 
 @media (max-width: 1400px) {
@@ -343,7 +353,7 @@ body[data-theme="light"] .navbar-app .icon-button svg {
 
 @media (prefers-color-scheme: dark) {
   body:not(.auth-body) .navbar-app {
-    background-color: #050505;
+    background-color: rgb(13, 13, 13);
   }
 
   .navbar-app .navbar-brand,
@@ -362,7 +372,7 @@ body[data-theme="light"] .navbar-app .icon-button svg {
 
 /* My recipes pill – keep text dark in all modes */
 .navbar-app .btn-outline-dark {
-  background-color: #000000;
+  background-color: rgb(13, 13, 13);
   color: #ffffff;
   border-color: #ffffff;
 }
@@ -527,13 +537,13 @@ body[data-theme="light"] .nav-account-menu .dropdown-divider {
   opacity: 0.7;
 }
 
-/* Dark mode: make Squarespace navbar black with light text */
+/* Dark mode: make Squarespace navbar match dark page background */
 @media (prefers-color-scheme: dark) {
   body:not(.auth-body) .navbar-squarespace,
   body:not(.auth-body) .navbar-squarespace.navbar-solid,
   body:not(.auth-body) .navbar-squarespace.bg-white,
   body:not(.auth-body) .navbar-squarespace.bg-light {
-    background-color: #050507;
+    background-color: rgb(13, 13, 13);
   }
 
   body:not(.auth-body) .navbar-squarespace .navbar-brand,
@@ -546,7 +556,7 @@ body[data-theme="dark"]:not(.auth-body) .navbar-squarespace,
 body[data-theme="dark"]:not(.auth-body) .navbar-squarespace.navbar-solid,
 body[data-theme="dark"]:not(.auth-body) .navbar-squarespace.bg-white,
 body[data-theme="dark"]:not(.auth-body) .navbar-squarespace.bg-light {
-  background-color: #050507 !important;
+  background-color: rgb(13, 13, 13) !important;
 }
 
 body[data-theme="dark"]:not(.auth-body) .navbar-squarespace .navbar-brand,

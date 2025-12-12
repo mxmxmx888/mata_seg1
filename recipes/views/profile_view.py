@@ -139,7 +139,7 @@ def _profile_data_for_user(user):
         "tagline": "opulence",
         "following": 2,
         "followers": 0,
-        "avatar_url": user.gravatar(size=200),
+        "avatar_url": user.avatar_url,
     }
 
 @login_required
@@ -198,7 +198,7 @@ def profile(request):
     if request.method == "POST":
         if profile_user != request.user:
             return redirect("profile")
-        form = UserForm(request.POST, instance=request.user)
+        form = UserForm(request.POST, request.FILES, instance=request.user)
         if form.is_valid():
             form.save()
             messages.add_message(request, messages.SUCCESS, "Profile updated!")

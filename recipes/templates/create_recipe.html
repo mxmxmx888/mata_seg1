@@ -9,12 +9,12 @@
   <main class="app-page">
     <div class="container-lg">
 
-      <h1 class="hero-title create-recipe-title">Create a recipe</h1>
-      <p class="hero-lead create-recipe-lead">
-        Give it a title, a short description, then list ingredients and steps.
-      </p>
-
       <div class="create-recipe-card">
+        <h1 class="hero-title create-recipe-title">Create a recipe</h1>
+        <p class="hero-lead create-recipe-lead">
+          Give it a title, a short description, then list ingredients and steps.
+        </p>
+
         <form method="post" enctype="multipart/form-data">
           {% csrf_token %}
 
@@ -30,11 +30,11 @@
             </div>
 
             <div class="row g-3 align-items-end shopping-links-row">
-              <div class="col-12 col-md-5 col-lg-5">
+              <div class="col-12 col-md-5 col-lg-5 shopping-links-field">
                 <label for="shop-item" class="form-label mb-1 text-white-50 small">Item Name</label>
                 <input type="text" id="shop-item" class="form-control form-control-dark" placeholder="e.g. Matcha Powder">
               </div>
-              <div class="col-12 col-md-5 col-lg-5">
+              <div class="col-12 col-md-5 col-lg-5 shopping-links-field">
                 <label for="shop-link" class="form-label mb-1 text-white-50 small">Online Link</label>
                 <input type="url" id="shop-link" class="form-control form-control-dark" placeholder="https://...">
               </div>
@@ -78,21 +78,48 @@
     }
     
     .shopping-links-title {
-      font-weight: 700;
+      font-weight: 600;
       letter-spacing: 0.01em;
+    }
+
+    .shopping-links-row {
+      --bs-gutter-x: 0;
+      --bs-gutter-y: 0.75rem;
+      display: grid !important;
+      grid-template-columns: minmax(0, 1.25fr) minmax(0, 1.25fr) max-content;
+      column-gap: 1rem;
+      row-gap: 0.75rem;
+      align-items: stretch;
+      justify-content: flex-start;
+    }
+
+    .shopping-links-field {
+      padding: 0.75rem 0.95rem 0.7rem;
+      background-color: #111118;
+      border-radius: 16px;
+      border: 1px solid #30303a;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .shopping-links-field .form-label {
+      margin-bottom: 0.15rem;
+      font-size: 0.8rem;
     }
 
     /* Dark Input Fields */
     .form-control-dark {
-      background-color: #1c1c24;
-      border: 1px solid #333;
+      background-color: transparent;
+      border: none;
       color: #fff;
+      padding: 0;
+      box-shadow: none;
     }
     .form-control-dark:focus {
-      background-color: #25252e;
-      border-color: #555;
+      background-color: transparent;
+      border: none;
       color: #fff;
-      box-shadow: 0 0 0 3px rgba(255,255,255,0.1);
+      box-shadow: none;
     }
     .form-control-dark::placeholder {
       color: #666;
@@ -102,11 +129,16 @@
       width: 100%;
       font-size: 0.9rem;
       font-weight: 700;
-      border-radius: 10px;
+      border-radius: 16px;
       background: #fff;
       color: #000;
       border: none;
-      height: 42px; /* Fixed height alignment */
+      height: 100%;
+      min-height: 0;
+      padding-inline: 1.4rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
     .shop-add-btn:hover {
       background: #e2e2e2;
@@ -149,7 +181,13 @@
 
     .col-button {
       display: flex;
-      align-items: flex-end; /* Align button to bottom of inputs */
+      align-items: stretch;
+    }
+
+    @media (max-width: 768px) {
+      .shopping-links-row {
+        grid-template-columns: minmax(0, 1fr);
+      }
     }
   </style>
 
