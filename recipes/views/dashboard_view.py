@@ -1,3 +1,4 @@
+import random
 from django.core.paginator import Paginator
 from django.http import JsonResponse
 from django.shortcuts import render
@@ -77,7 +78,7 @@ def _score_post_for_user(post, preferred_tags):
 
     return score
 
-def _get_for_you_posts(user, query=None, limit=12, offset=0):
+def _get_for_you_posts(user, query=None, limit=12, offset=0, seed=None):
     qs = _base_posts_queryset()
 
     if query:
@@ -98,6 +99,9 @@ def _get_for_you_posts(user, query=None, limit=12, offset=0):
         ]
         scored.sort(key=lambda x: x[0], reverse=True)
         posts = [p for _, p in scored]
+
+    rng = random.Random(seed)
+    rng.shuffle(posts)
 
     return posts[offset:offset + limit]
 
@@ -132,6 +136,11 @@ def _search_users(query, limit=18):
 def dashboard(request):
     if not request.user.is_authenticated:
         return render(request, "discover_logged_out.html")
+
+    for_you_seed = request.session.get("for_you_seed")
+    if request.GET.get("for_you_ajax") != "1":
+        for_you_seed = random.random()
+        request.session["for_you_seed"] = for_you_seed
 
     q = (request.GET.get("q") or "").strip()
     scope = (request.GET.get("scope") or "recipes").strip().lower()
@@ -194,7 +203,11 @@ def dashboard(request):
         if offset < 0:
             offset = 0
 
-        posts = _get_for_you_posts(request.user, limit=limit, offset=offset)
+        if for_you_seed is None:
+            for_you_seed = random.random()
+            request.session["for_you_seed"] = for_you_seed
+
+        posts = _get_for_you_posts(request.user, limit=limit, offset=offset, seed=for_you_seed)
         html = render_to_string(
             "partials/recipe_grid_items.html",
             {"posts": posts, "request": request},
@@ -237,7 +250,7 @@ def dashboard(request):
         following_posts = []
     else:
         popular_recipes = list(discover_qs[:18])
-        for_you_posts = _get_for_you_posts(request.user)
+        for_you_posts = _get_for_you_posts(request.user, seed=for_you_seed)
         following_posts = _get_following_posts(request.user)
 
     context = {
