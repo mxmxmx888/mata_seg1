@@ -31,6 +31,13 @@ class Ingredient(models.Model):
     # NEW: Link to buy the product
     shop_url = models.URLField(max_length=500, blank=True, null=True, help_text="Link to buy this product online")
 
+    shop_image_upload = models.ImageField(
+        upload_to='shop_items/',
+        blank=True,
+        null=True,
+        help_text="Custom image for this product in the Shop section",
+    )
+
     class Meta:
         unique_together = (
             ('recipe_post', 'name'),

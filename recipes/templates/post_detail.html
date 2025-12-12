@@ -6,38 +6,48 @@
 <main class="container-fluid px-4 px-xl-5 py-4 post-page position-relative">
   <div class="post-primary" id="post-primary">
   <div class="row g-5 align-items-start">
-    <div class="col-xxl-5 col-xl-5 col-lg-5">
+        <div class="col-xxl-5 col-xl-5 col-lg-5">
       <div class="post-media-wrap position-relative">
         <a class="post-back-button" href="{% url 'dashboard' %}" aria-label="Go back">
           <i class="bi bi-chevron-left"></i>
         </a>
-        <div class="post-media">
-          <img src="{{ image_url }}" alt="{{ title }}">
-        </div>
-      </div>
-
-      {% if gallery_images or video_url %}
-      <section class="post-media-extras">
-        <div class="post-media-stack">
-          {% for gallery_image in gallery_images %}
-          <div class="post-media-stack-item">
-            <img src="{{ gallery_image }}" alt="Gallery image {{ forloop.counter }}">
-          </div>
-          {% endfor %}
-          {% if video_url %}
-          <div class="post-media-stack-item">
-            <div class="post-video">
-              <video controls playsinline poster="{{ image_url }}">
-                <source src="{{ video_url }}" type="video/mp4">
-                Your browser does not support the video tag.
-              </video>
-            </div>
+        <div class="recipe-gallery">
+          {% if image_url %}
+          <div class="gallery-item gallery-item--main">
+            <img
+              src="{{ image_url }}"
+              alt="{{ title }}"
+              class="gallery-img js-gallery-image"
+              data-fullsrc="{{ image_url }}"
+            >
           </div>
           {% endif %}
+
+          {% for gallery_image in gallery_images %}
+          <div class="gallery-item">
+            <img
+              src="{{ gallery_image }}"
+              alt="Gallery image {{ forloop.counter }}"
+              class="gallery-img js-gallery-image"
+              data-fullsrc="{{ gallery_image }}"
+            >
+          </div>
+          {% endfor %}
         </div>
-      </section>
-      {% endif %}
+
+        {% if video_url %}
+        <div class="post-video-standalone mt-3">
+          <div class="post-video">
+            <video controls playsinline poster="{{ image_url }}">
+              <source src="{{ video_url }}" type="video/mp4">
+              Your browser does not support the video tag.
+            </video>
+          </div>
+        </div>
+        {% endif %}
+      </div>
     </div>
+
 
     <div class="col-xxl-4 col-xl-4 col-lg-4">
       <header class="mb-4">
@@ -271,12 +281,77 @@
   </section>
   {% endif %}
 </main>
+
+<div id="lightbox" class="lightbox d-none">
+  <div class="lightbox-backdrop"></div>
+
+  <div class="lightbox-inner">
+    <button class="lightbox-close" type="button">&times;</button>
+
+    <button class="lightbox-arrow lightbox-arrow--left" type="button">&#10094;</button>
+
+    <img id="lightbox-image" class="lightbox-image" alt="Recipe image">
+
+    <button class="lightbox-arrow lightbox-arrow--right" type="button">&#10095;</button>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const thumbs = Array.from(document.querySelectorAll('.js-gallery-image'));
+  if (!thumbs.length) return;
+
+  const lightbox = document.getElementById('lightbox');
+  const lightboxImg = document.getElementById('lightbox-image');
+  const btnClose = lightbox.querySelector('.lightbox-close');
+  const btnPrev = lightbox.querySelector('.lightbox-arrow--left');
+  const btnNext = lightbox.querySelector('.lightbox-arrow--right');
+  const backdrop = lightbox.querySelector('.lightbox-backdrop');
+
+  let currentIndex = 0;
+
+  function showImage(index) {
+    const count = thumbs.length;
+    currentIndex = (index + count) % count;
+    const img = thumbs[currentIndex];
+    const src = img.dataset.fullsrc || img.src;
+    lightboxImg.src = src;
+  }
+
+  function openLightbox(index) {
+    showImage(index);
+    lightbox.classList.remove('d-none');
+  }
+
+  function closeLightbox() {
+    lightbox.classList.add('d-none');
+  }
+
+  thumbs.forEach((img, idx) => {
+    img.addEventListener('click', () => openLightbox(idx));
+  });
+
+  btnClose.addEventListener('click', closeLightbox);
+  backdrop.addEventListener('click', closeLightbox);
+
+  btnPrev.addEventListener('click', () => showImage(currentIndex - 1));
+  btnNext.addEventListener('click', () => showImage(currentIndex + 1));
+
+  document.addEventListener('keydown', (e) => {
+    if (lightbox.classList.contains('d-none')) return;
+    if (e.key === 'Escape') closeLightbox();
+    if (e.key === 'ArrowLeft') showImage(currentIndex - 1);
+    if (e.key === 'ArrowRight') showImage(currentIndex + 1);
+  });
+});
+</script>
+
+
 <script>
 document.addEventListener('DOMContentLoaded', function () {
   const primary = document.getElementById('post-primary');
   const similar = document.querySelector('.post-view-similar');
 
-  // Fallback collapse for tags if Bootstrap JS fails to load (e.g., CDN blocked)
   const tagsToggle = document.querySelector('.post-tags-toggle');
   const tagsCollapse = document.getElementById('post-tags-collapse');
   const hasBootstrapCollapse = !!(window.bootstrap && bootstrap.Collapse);

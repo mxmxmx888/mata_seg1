@@ -54,9 +54,10 @@ class RecipePost(models.Model):
 
     @property
     def primary_image_url(self):
-        if hasattr(self, "images") and self.images.all():
-            first = self.images.all()[0]
-            if first.image:
+        images_qs = getattr(self, "images", None)
+        if images_qs is not None:
+            first = images_qs.first()
+            if first and first.image:
                 try:
                     return first.image.url
                 except ValueError:
@@ -64,6 +65,7 @@ class RecipePost(models.Model):
         if self.image:
             return self.image
         return None
+
 
 
 class RecipeImage(models.Model):
