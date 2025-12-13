@@ -115,6 +115,7 @@ def _get_following_posts(user, query=None, limit=12, offset=0):
         return []
 
     qs = _base_posts_queryset().filter(author_id__in=followed_ids)
+    qs = privacy_service.filter_visible_posts(qs, user)
 
     if query:
         qs = qs.filter(

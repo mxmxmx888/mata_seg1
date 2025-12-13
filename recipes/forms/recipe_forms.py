@@ -55,6 +55,7 @@ class RecipePostForm(forms.ModelForm):
             "prep_time_min",
             "cook_time_min",
             "nutrition",
+            "visibility",
         ]
 
     def parse_tags(self):

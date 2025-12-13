@@ -49,6 +49,9 @@
           <span>⏱ {{ cook_time }}</span>
           <span>� Serves {{ serves }}</span>
           <span>� {{ ingredients|length }} ingredients</span>
+          <span class="badge bg-secondary text-uppercase" style="letter-spacing:0.05em;">
+            {% if recipe.visibility == 'public' %}Public{% elif recipe.visibility == 'followers' %}Followers only{% else %}Close friends only{% endif %}
+          </span>
         </div>
       </header>
 

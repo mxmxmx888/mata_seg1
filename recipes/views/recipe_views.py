@@ -50,6 +50,7 @@ def recipe_create(request):
                 nutrition=cleaned.get("nutrition") or "",
                 tags=tags_list,
                 category=cleaned.get("category") or "",
+                visibility=cleaned.get("visibility") or RecipePost.VISIBILITY_PUBLIC,
                 published_at=timezone.now(),
             )
 
@@ -69,7 +70,7 @@ def recipe_detail(request, post_id):
     ingredients_qs = Ingredient.objects.filter(recipe_post=recipe).order_by("position")
     steps_qs = RecipeStep.objects.filter(recipe_post=recipe).order_by("position")
 
-    if not privacy_service.can_view_profile(request.user, recipe.author):
+    if not privacy_service.can_view_post(request.user, recipe):
         raise Http404("Post not available.")
 
     comments = recipe.comments.select_related("user").order_by("-created_at")
@@ -138,6 +139,7 @@ def recipe_detail(request, post_id):
         "gallery_images": [],
         "video_url": None,
         "view_similar": [],
+        "visibility": recipe.visibility,
     }
     return render(request, "post_detail.html", context)
 
