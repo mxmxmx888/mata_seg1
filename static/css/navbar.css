@@ -305,16 +305,8 @@ body[data-theme="dark"] .navbar-squarespace .navbar-toggler-icon {
   }
 }
 
-@media (max-width: 992px) {
-  .navbar-app .navbar-search-wrapper {
-    display: none;
-  }
-}
-
-/* Ensure buttons never overlap search */
-.navbar-actions {
-  margin-left: auto;
-}
+/* Mobile behaviour for the generic navbar layout is
+   overridden in static/custom.css for the app navbar. */
 
 /* =============================== */
 /* ICON BUTTONS                    */

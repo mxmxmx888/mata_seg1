@@ -14,6 +14,9 @@ from recipes.services import PrivacyService
 from recipes.services import FollowService
 from django.views.decorators.http import require_POST
 from django.shortcuts import get_object_or_404
+from recipes.models import Follower, Favourite
+from recipes.models.favourite_item import FavouriteItem
+from recipes.models.recipe_post import RecipePost
 
 User = get_user_model()
 post_repo = PostRepo()
@@ -147,7 +150,47 @@ def _profile_data_for_user(user):
         "followers": 0,
         "avatar_url": user.avatar_url,
         "is_private": getattr(user, "is_private", False),
+
     }
+
+
+def _collections_for_user(user):
+    """
+    Build collection cards for the given user from Favourite/FavouriteItem.
+    Each Favourite becomes a collection backed by the user's saved posts.
+    """
+    favourites = (
+        Favourite.objects.filter(user=user)
+        .prefetch_related("items__recipe_post")
+        .order_by("created_at")
+    )
+
+    collections = []
+    for fav in favourites:
+        items = [item.recipe_post for item in fav.items.all() if item.recipe_post]
+
+        if not items:
+            count = 0
+            cover_url = "https://placehold.co/1200x800/0f0f14/ffffff?text=Collection"
+        else:
+            count = len(items)
+            cover_post = items[0]
+            cover_url = getattr(cover_post, "primary_image_url", None) or getattr(
+                cover_post, "image", None
+            ) or "https://placehold.co/1200x800/0f0f14/ffffff?text=Collection"
+
+        collections.append(
+            {
+                "id": str(fav.id),
+                "slug": str(fav.id),
+                "title": fav.name.title(),
+                "count": count,
+                "privacy": None,
+                "cover": cover_url,
+            }
+        )
+
+    return collections
 
 @login_required
 def profile(request):
@@ -259,12 +302,14 @@ def profile(request):
     else:
         posts = []
 
+    collections = _collections_for_user(profile_user)
+
     return render(
         request,
         "profile.html",
         {
-            "profile": profile_data,
-            "collections": PROFILE_COLLECTIONS,
+        "profile": profile_data,
+            "collections": collections,
             "form": form,
             "profile_user": profile_user,
             "is_own_profile": profile_user == request.user,
@@ -285,15 +330,38 @@ def profile(request):
 def collections_overview(request):
     context = {
         "profile": _profile_data_for_user(request.user),
-        "collections": PROFILE_COLLECTIONS,
+        "collections": _collections_for_user(request.user),
     }
     return render(request, "collections.html", context)
 
 @login_required
 def collection_detail(request, slug):
-    collection = next((c for c in PROFILE_COLLECTIONS if c["slug"] == slug), None)
-    if not collection:
+    try:
+        favourite = Favourite.objects.get(id=slug, user=request.user)
+    except Favourite.DoesNotExist:
         raise Http404()
+
+    items_qs = FavouriteItem.objects.filter(favourite=favourite).select_related(
+        "recipe_post"
+    )
+    image_urls = []
+    for item in items_qs:
+        post = item.recipe_post
+        if not post:
+            continue
+        url = getattr(post, "primary_image_url", None) or getattr(post, "image", None)
+        if not url:
+            url = "https://placehold.co/1200x800/0f0f14/ffffff?text=Recipe"
+        image_urls.append(url)
+
+    collection = {
+        "id": str(favourite.id),
+        "slug": str(favourite.id),
+        "title": favourite.name.title(),
+        "description": "",
+        "followers": 0,
+        "items": image_urls,
+    }
 
     context = {
         "profile": _profile_data_for_user(request.user),

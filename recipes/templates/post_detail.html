@@ -245,16 +245,33 @@
               <input type="text" class="form-control" placeholder="Search collections" />
             </div>
             <ul class="save-modal-list list-unstyled mb-0">
-              <li class="save-modal-row">
-                <div class="save-modal-avatar" aria-hidden="true">W</div>
-            <div>
-              <p class="mb-0 fw-semibold">Weeknight dinners</p>
-              <p class="mb-0 text-muted small">Quick · Private</p>
-            </div>
-            <button type="button" class="save-modal-action" aria-label="Select Weeknight dinners" data-save-toggle>
-              <i class="bi bi-bookmark-fill"></i>
-            </button>
-          </li>
+              {% for col in save_collections %}
+              <li class="save-modal-row" data-collection-id="{{ col.id }}">
+                <div class="save-modal-avatar" aria-hidden="true">
+                  {{ col.name|first|upper }}
+                </div>
+                <div>
+                  <p class="mb-0 fw-semibold">{{ col.name }}</p>
+                  <p class="mb-0 text-muted small">
+                    {{ col.count }} recipes · Private
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  class="save-modal-action"
+                  aria-label="Toggle {{ col.name }}"
+                  data-save-toggle
+                  data-collection-id="{{ col.id }}"
+                  data-saved="{{ col.saved|yesno:'1,0' }}"
+                >
+                  <i class="bi {% if col.saved %}bi-bookmark-fill{% else %}bi-bookmark{% endif %}"></i>
+                </button>
+              </li>
+              {% empty %}
+              <li class="text-muted small px-1 py-2">
+                You don’t have any collections yet. Use the + to create one.
+              </li>
+              {% endfor %}
             </ul>
           </div>
           <div class="save-modal-view d-none" data-save-view="create">
@@ -394,6 +411,7 @@ document.addEventListener('DOMContentLoaded', function () {
   // Save modal open/close (works with or without Bootstrap JS)
   const saveButton = document.querySelector('.post-save-button');
   const saveModal = document.getElementById('saveModal');
+  const saveModalList = saveModal ? saveModal.querySelector('.save-modal-list') : null;
   const saveModalListView = saveModal ? saveModal.querySelector('[data-save-view="list"]') : null;
   const saveModalCreateView = saveModal ? saveModal.querySelector('[data-save-view="create"]') : null;
   const saveModalTitles = saveModal ? saveModal.querySelectorAll('[data-save-title]') : [];
@@ -404,6 +422,8 @@ document.addEventListener('DOMContentLoaded', function () {
   const saveBackBtn = saveModal ? saveModal.querySelector('[data-save-back]') : null;
   const saveCreateForm = document.getElementById('save-modal-create-form');
   const saveNameInput = document.getElementById('new-collection-name');
+  const saveEndpoint = "{% url 'toggle_favourite' recipe.id %}";
+  const csrfToken = "{{ csrf_token }}";
   let saveModalInstance = null;
   let fallbackOutsideHandler = null;
 
@@ -497,27 +517,116 @@ document.addEventListener('DOMContentLoaded', function () {
       });
     }
 
+    const attachToggleHandler = (btn) => {
+      if (!btn || btn.dataset.saveHandlerAttached === '1') return;
+      btn.dataset.saveHandlerAttached = '1';
+      btn.addEventListener('click', function (e) {
+        e.preventDefault();
+        const collectionId = btn.getAttribute('data-collection-id');
+        const icon = btn.querySelector('i');
+        if (!collectionId || !icon) return;
+
+        const body = new URLSearchParams({
+          collection_id: collectionId,
+        }).toString();
+
+        fetch(saveEndpoint, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
+            'X-CSRFToken': csrfToken,
+            'X-Requested-With': 'XMLHttpRequest',
+          },
+          body,
+        })
+          .then((resp) => resp.ok ? resp.json().catch(() => null) : null)
+          .then((data) => {
+            const saved = data && Object.prototype.hasOwnProperty.call(data, 'saved')
+              ? !!data.saved
+              : !icon.classList.contains('bi-bookmark-fill');
+            icon.classList.toggle('bi-bookmark-fill', saved);
+            icon.classList.toggle('bi-bookmark', !saved);
+          })
+          .catch(() => {
+            const saved = !icon.classList.contains('bi-bookmark-fill');
+            icon.classList.toggle('bi-bookmark-fill', saved);
+            icon.classList.toggle('bi-bookmark', !saved);
+          });
+      });
+    };
+
     if (saveCreateForm) {
       saveCreateForm.addEventListener('submit', function (e) {
         e.preventDefault();
-        hideSaveModal();
+        const name = (saveNameInput && saveNameInput.value ? saveNameInput.value : '').trim();
+        if (!name) {
+          if (saveNameInput) saveNameInput.focus();
+          return;
+        }
+
+        const body = new URLSearchParams({
+          collection_name: name,
+        }).toString();
+
+        fetch(saveEndpoint, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
+            'X-CSRFToken': csrfToken,
+            'X-Requested-With': 'XMLHttpRequest',
+          },
+          body,
+        })
+          .then((resp) => resp.ok ? resp.json().catch(() => null) : null)
+          .then((data) => {
+            if (!data || !data.collection || !saveModalList) return;
+            const col = data.collection;
+            let row = saveModalList.querySelector(`[data-collection-id="${col.id}"]`);
+            const saved = !!data.saved;
+            if (!row) {
+              row = document.createElement('li');
+              row.className = 'save-modal-row';
+              row.setAttribute('data-collection-id', col.id);
+              row.innerHTML = `
+                <div class="save-modal-avatar" aria-hidden="true">${(col.name || '').charAt(0).toUpperCase()}</div>
+                <div>
+                  <p class="mb-0 fw-semibold"></p>
+                  <p class="mb-0 text-muted small">Private</p>
+                </div>
+                <button
+                  type="button"
+                  class="save-modal-action"
+                  data-save-toggle
+                  data-collection-id="${col.id}"
+                  aria-label="Toggle ${col.name || ''}"
+                >
+                  <i class="bi"></i>
+                </button>
+              `;
+              saveModalList.appendChild(row);
+            }
+
+            const nameEl = row.querySelector('p.mb-0.fw-semibold') || row.querySelector('p.fw-semibold');
+            if (nameEl) {
+              nameEl.textContent = col.name || '';
+            }
+            const toggleBtn = row.querySelector('[data-save-toggle]');
+            const icon = toggleBtn ? toggleBtn.querySelector('i') : null;
+            if (icon) {
+              icon.classList.toggle('bi-bookmark-fill', saved);
+              icon.classList.toggle('bi-bookmark', !saved);
+            }
+            attachToggleHandler(toggleBtn);
+            setSaveView('list');
+            hideSaveModal();
+          })
+          .catch(() => {
+            hideSaveModal();
+          });
       });
     }
 
-    saveToggleButtons.forEach((btn) => {
-      btn.addEventListener('click', function (e) {
-        e.preventDefault();
-        const icon = btn.querySelector('i');
-        if (!icon) return;
-        if (icon.classList.contains('bi-bookmark-fill')) {
-          icon.classList.remove('bi-bookmark-fill');
-          icon.classList.add('bi-bookmark');
-        } else {
-          icon.classList.remove('bi-bookmark');
-          icon.classList.add('bi-bookmark-fill');
-        }
-      });
-    });
+    saveToggleButtons.forEach(attachToggleHandler);
 
     if (hasBootstrapModal) {
       saveModal.addEventListener('shown.bs.modal', () => setSaveView('list'));

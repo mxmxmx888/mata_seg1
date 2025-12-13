@@ -331,28 +331,28 @@ body[data-theme="dark"]:not(.auth-body) .navbar-squarespace.navbar-solid .btn.bt
   box-shadow: none;
 }
 
-/* Layout inside the logged-in navbar */
+/* Layout inside the logged-in navbar (desktop/tablet):
+   use a 3-column grid so the search bar can stay centered
+   between the left logo/nav and the right action buttons */
 .navbar-app .container-fluid {
-  display: flex;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
+  column-gap: 1.5rem;
   position: relative;
 }
 
-/* Search bar: flex-based so it can shrink horizontally
-   with the navbar instead of overlapping other items */
+/* Search bar: sits in the middle column and shrinks
+   horizontally with the viewport while staying centered */
 .navbar-app .navbar-search-wrapper {
-  position: static;
-  top: auto;
-  left: auto;
-  right: auto;
-  transform: none;
-  margin: 0 auto;
-  width: auto;
+  margin: 0.18rem auto 0;
+  width: 100%;
   display: flex;
   justify-content: center;
-  flex: 1 1 520px;
   min-width: 0;
-  align-items: center; /* vertically center search with other navbar items */
+  align-items: center; /* vertical centering via flexbox only */
+  max-width: 520px;
+  justify-self: center; /* keep the whole pill visually centered */
 }
 
 /* Keep the pill full width inside the wrapper and allow shrinking */
@@ -367,6 +367,142 @@ body[data-theme="dark"]:not(.auth-body) .navbar-squarespace.navbar-solid .btn.bt
 .navbar-app .navbar-actions {
   margin-left: auto;
   padding-left: 0.75rem;
+}
+
+/* Phone / narrow view:
+   - logo, search and hamburger share one row
+   - search bar fills the space between logo and menu icon */
+@media (max-width: 991.98px) {
+  .navbar-app .container-fluid {
+    display: flex;
+    align-items: center;
+    flex-wrap: nowrap;
+  }
+
+  .navbar-app .navbar-search-wrapper {
+    display: flex !important;
+    order: 1; /* sit between logo block (0) and hamburger (2) */
+    flex: 1 1 auto;
+    max-width: none;
+    margin: 0.18rem 0.75rem 0;
+  }
+
+  .navbar-app .navbar-search-wrapper .cosmos-nav-search {
+    max-width: 100%;
+  }
+
+  /* Place hamburger on the far right in the row */
+  .navbar-app .navbar-toggler {
+    order: 2;
+    margin-left: 0.25rem;
+  }
+
+  .navbar-app .navbar-actions {
+    display: none;
+  }
+}
+
+/* Full-screen mobile nav menu */
+.app-fullscreen-menu {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  background-color: rgba(0, 0, 0, 0.96);
+  color: #f9fafb;
+  display: none;
+}
+
+.app-fullscreen-menu.is-open {
+  display: flex;
+}
+
+.app-fullscreen-menu-inner {
+  margin: 0 auto;
+  padding: 0 2rem;
+  max-width: 480px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2.5rem;
+}
+
+.app-fullscreen-menu-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  width: 100%;
+  text-align: center;
+}
+
+.app-fullscreen-menu-link {
+  font-size: 1.3rem;
+  letter-spacing: 0.02em;
+  color: #e5e7eb;
+  text-decoration: none;
+}
+
+.app-fullscreen-menu-link.active {
+  color: #ffffff;
+}
+
+.app-fullscreen-menu-link:hover {
+  color: #ffffff;
+}
+
+.app-fullscreen-menu-cta {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.app-fullscreen-menu-cta .btn {
+  border-radius: 999px;
+}
+
+.app-fullscreen-menu-close {
+  position: absolute;
+  top: 0.85rem;
+  right: 1.15rem;
+  width: 36px;
+  height: 36px;
+  border-radius: 0;
+  border: none;
+  background: transparent;
+  color: #f9fafb;
+  font-size: 1.9rem;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.app-fullscreen-menu-close:focus-visible {
+  outline: 2px solid #f9fafb;
+  outline-offset: 2px;
+}
+
+/* Prevent background scroll while menu is open */
+body.app-menu-open {
+  overflow: hidden;
+}
+
+/* Hamburger ↔ X icon toggle */
+.app-menu-toggle .app-menu-close-icon {
+  display: none;
+  font-size: 1.75rem;
+  line-height: 1;
+  color: #f9fafb;
+}
+
+.app-menu-toggle.is-open .navbar-toggler-icon {
+  display: none;
+}
+
+.app-menu-toggle.is-open .app-menu-close-icon {
+  display: inline-block;
 }
 
 /* Navbar search pill – base (light mode) */
@@ -1960,6 +2096,62 @@ h3 {
   }
 }
 
+/* Collection detail action menu */
+.collection-menu-wrapper {
+  position: relative;
+}
+
+.collection-menu-trigger {
+  color: #d1d5db;
+  padding: 0.25rem 0.5rem;
+}
+
+.collection-menu-trigger:hover {
+  color: #ffffff;
+}
+
+.collection-menu {
+  position: absolute;
+  right: 0;
+  top: 140%;
+  min-width: 220px;
+  padding: 0.5rem 0.25rem;
+  border-radius: 1.25rem;
+  background-color: #050509;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  box-shadow: 0 28px 60px rgba(15, 23, 42, 0.65);
+  display: none;
+  z-index: 20;
+}
+
+.collection-menu.collection-menu-open {
+  display: block;
+}
+
+.collection-menu-item {
+  width: 100%;
+  padding: 0.45rem 1.1rem;
+  text-align: left;
+  background: transparent;
+  border: none;
+  color: #e5e7eb;
+  font-size: 0.9rem;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.collection-menu-item:hover {
+  background-color: rgba(148, 163, 184, 0.15);
+}
+
+.collection-menu-item-danger {
+  color: #f97373;
+}
+
+.collection-menu-item-danger:hover {
+  background-color: rgba(248, 113, 113, 0.12);
+}
+
 .post-media-extras {
   background-color: transparent;
   border-radius: 0;
@@ -2211,8 +2403,8 @@ body.dashboard-body .navbar-app,
 body.app-body .navbar-squarespace,
 body.app-body .navbar-app {
   background-color: rgb(13, 13, 13) !important;
-  border-bottom: none;
-  box-shadow: none;
+  border-bottom: 0 !important;
+  box-shadow: none !important;
 }
 
 /* Make dashboard recipe cards flush with the background */

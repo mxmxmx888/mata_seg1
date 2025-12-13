@@ -227,30 +227,32 @@ h3.profile-title {
 /* Giant responsive wordmark at the very end of the page */
 .footer-giant-logo {
   font-family: "Awesome Serif", "Rethink Sans", system-ui, -apple-system, sans-serif;
-  font-size: clamp(4rem, 10vw, 8rem);
+  font-size: clamp(10rem, 30vw, 32rem); /* large, like the original design */
   line-height: 0.9;
   color: #0c0c0c;
   font-weight: 400;
   letter-spacing: -0.04em;
   user-select: none;
   white-space: nowrap;
-  text-align: center;
+  text-align: center;                  /* center the word instead of right-aligning */
   display: flex;
-  align-items: center;
-  justify-content: center;
+  align-items: flex-start;             /* anchor to the top of the cropped area */
+  justify-content: center;             /* center horizontally */
   width: 100%;
-  max-width: 88vw;      /* keep a little breathing room at the edges */
+  max-width: 100vw;
   box-sizing: border-box;
-  padding: 2rem 0 3rem;
-  margin: 0 auto;
-  min-height: 35vh;
+  padding: 0 2vw 0;
+  margin: 4vh auto 0;
+  height: 0.6em;                       /* show only the upper portion of the letters */
+  overflow-y: hidden;                  /* crop vertically */
+  overflow-x: visible;                 /* but never crop the left or right edge */
 }
 
 @media (max-width: 768px) {
   .footer-giant-logo {
-    font-size: clamp(3rem, 14vw, 5rem);
-    padding: 1.5rem 4vw 2.5rem;
-    min-height: 30vh;
+    font-size: clamp(8rem, 32vw, 24rem);
+    height: 0.62em;
+    margin-top: 2vh;
   }
 }
 

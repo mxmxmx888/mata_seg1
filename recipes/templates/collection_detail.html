@@ -12,22 +12,21 @@
     </p>
     <h1 class="collection-title mb-1">{{ collection.title }}</h1>
     {% if collection.description %}
-      <p class="collection-description mb-3">{{ collection.description }}</p>
+      <p class="collection-description mb-1">{{ collection.description }}</p>
     {% endif %}
-    <div class="collection-actions d-flex align-items-center justify-content-center gap-2">
-      <span class="collection-chip">My journeys</span>
-      <button type="button" class="collection-round-btn" aria-label="Toggle dark">
-        <i class="bi bi-moon-stars"></i>
-      </button>
-      <button type="button" class="collection-round-btn" aria-label="Share">
-        <i class="bi bi-upload"></i>
-      </button>
-      <button type="button" class="collection-round-btn" aria-label="Add">
-        <i class="bi bi-plus-lg"></i>
-      </button>
-      <button type="button" class="collection-round-btn" aria-label="More">
+    <div class="collection-menu-wrapper d-inline-block position-relative">
+      <button
+        type="button"
+        class="btn p-0 border-0 bg-transparent collection-menu-trigger"
+        aria-label="Collection options"
+        data-collection-menu-toggle
+      >
         <i class="bi bi-three-dots"></i>
       </button>
+      <div class="collection-menu shadow-lg" data-collection-menu>
+        <button type="button" class="collection-menu-item">Edit details</button>
+        <button type="button" class="collection-menu-item collection-menu-item-danger">Delete</button>
+      </div>
     </div>
   </header>
 
@@ -44,11 +43,62 @@
       </article>
     {% endfor %}
   </section>
-
-  <div class="find-similar text-center">
-    <button type="button" class="find-similar-btn">
-      Find similar <i class="bi bi-chevron-down"></i>
-    </button>
-  </div>
 </main>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const trigger = document.querySelector('[data-collection-menu-toggle]');
+    const menu = document.querySelector('[data-collection-menu]');
+    if (!trigger || !menu) return;
+
+    const openClass = 'collection-menu-open';
+
+    const closeMenu = () => {
+      menu.classList.remove(openClass);
+      document.removeEventListener('click', outsideHandler, true);
+      document.removeEventListener('keydown', escHandler, true);
+    };
+
+    const outsideHandler = (event) => {
+      if (menu.contains(event.target) || trigger.contains(event.target)) return;
+      closeMenu();
+    };
+
+    const escHandler = (event) => {
+      if (event.key === 'Escape') {
+        closeMenu();
+      }
+    };
+
+    trigger.addEventListener('click', function (event) {
+      event.preventDefault();
+      const isOpen = menu.classList.contains(openClass);
+      if (isOpen) {
+        closeMenu();
+      } else {
+        menu.classList.add(openClass);
+        document.addEventListener('click', outsideHandler, true);
+        document.addEventListener('keydown', escHandler, true);
+      }
+    });
+
+    const editBtn = menu.querySelector('.collection-menu-item:not(.collection-menu-item-danger)');
+    const deleteBtn = menu.querySelector('.collection-menu-item-danger');
+
+    if (editBtn) {
+      editBtn.addEventListener('click', function (event) {
+        event.preventDefault();
+        // Placeholder hook for future edit behaviour
+        closeMenu();
+      });
+    }
+
+    if (deleteBtn) {
+      deleteBtn.addEventListener('click', function (event) {
+        event.preventDefault();
+        // Placeholder hook for future delete behaviour
+        closeMenu();
+      });
+    }
+  });
+</script>
 {% endblock %}

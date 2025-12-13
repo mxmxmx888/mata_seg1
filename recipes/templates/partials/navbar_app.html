@@ -8,7 +8,8 @@
         Recipi
       </a>
 
-      <ul class="navbar-nav d-none d-md-flex gap-3">
+      {# Desktop / large-screen primary nav #}
+      <ul class="navbar-nav d-none d-lg-flex gap-3">
         <li class="nav-item">
           <a class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}" href="{% url 'dashboard' %}">Discover</a>
         </li>
@@ -18,7 +19,7 @@
       </ul>
     </div>
 
-    <div class="navbar-search-wrapper d-none d-lg-flex">
+    <div class="navbar-search-wrapper">
       <form
         class="cosmos-nav-search w-100"
         method="get"
@@ -83,10 +84,22 @@
       </form>
     </div>
 
-    <div class="navbar-actions ms-auto d-flex align-items-center gap-2">
-      <a href="{% url 'recipe_create' %}" class="btn btn-dark rounded-pill px-2">
-        Create
-      </a>
+    <!-- Mobile hamburger toggler: opens full-screen menu -->
+    <button
+      class="navbar-toggler d-lg-none ms-2 app-menu-toggle"
+      type="button"
+      aria-expanded="false"
+      aria-label="Toggle navigation"
+    >
+      <span class="navbar-toggler-icon"></span>
+      <span class="app-menu-close-icon">&times;</span>
+    </button>
+
+    <div class="collapse navbar-collapse justify-content-end" id="appNavbarMenu">
+      <div class="navbar-actions ms-auto d-flex align-items-center gap-2">
+        <a href="{% url 'recipe_create' %}" class="btn btn-dark rounded-pill px-2">
+          Create
+        </a>
 
       <div class="dropdown">
         <button
@@ -105,13 +118,13 @@
           {% endif %}
         </button>
 
-        <div class="dropdown-menu dropdown-menu-end notification-menu shadow-lg border-0" aria-labelledby="notificationDropdown">
-          <div class="dropdown-header notification-header">
-            <span>Activity</span>
-            {% if unread_notifications_count > 0 %}
-              <a href="#" class="mark-all-read-link">Mark all read</a>
-            {% endif %}
-          </div>
+          <div class="dropdown-menu dropdown-menu-end notification-menu shadow-lg border-0" aria-labelledby="notificationDropdown">
+            <div class="dropdown-header notification-header">
+              <span>Activity</span>
+              {% if unread_notifications_count > 0 %}
+                <a href="#" class="mark-all-read-link">Mark all read</a>
+              {% endif %}
+            </div>
 
           <div class="notification-list">
             {% for notif in notifications %}
@@ -182,57 +195,58 @@
         <i class="bi {% if request.resolver_match.url_name == 'collections' %}bi-bookmark-fill{% else %}bi-bookmark{% endif %}"></i>
       </a>
 
-      <a
-        href="{% url 'profile' %}"
-        class="avatar-pill"
-        aria-label="Profile"
-        {% if avatar_url %}style="background-image: url('{{ avatar_url }}');"{% endif %}
-      >
-        {% if avatar_url %}
-          <img src="{{ avatar_url }}" alt="{{ user.username }} avatar">
-        {% endif %}
-      </a>
-      <div class="dropdown">
-        <button
-          class="nav-account-trigger nav-account-caret-btn"
-          type="button"
-          id="app-account-dropdown"
-          data-bs-toggle="dropdown"
-          aria-expanded="false"
-          aria-label="Open account menu"
+        <a
+          href="{% url 'profile' %}"
+          class="avatar-pill"
+          aria-label="Profile"
+          {% if avatar_url %}style="background-image: url('{{ avatar_url }}');"{% endif %}
         >
-          <svg class="nav-account-caret" width="28" height="28" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-            <path d="m6 9 6 6 6-6" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </button>
-        <ul class="dropdown-menu dropdown-menu-end nav-account-menu" aria-labelledby="app-account-dropdown">
-          <li class="nav-account-menu-header text-center">
-            <a
-              href="{% url 'profile' %}"
-              class="nav-account-menu-avatar"
-              {% if avatar_url %}style="background-image: url('{{ avatar_url }}');"{% endif %}
-            >
-              {% if avatar_url %}
-                <img src="{{ avatar_url }}" alt="{{ user.username }} avatar">
-              {% endif %}
-            </a>
-            <p class="nav-account-menu-name mb-0">{{ user.username }}</p>
-          </li>
-          <li><hr class="dropdown-divider"></li>
-          <li>
-            <a
-              class="dropdown-item"
-              href="#"
-              data-bs-toggle="modal"
-              data-bs-target="#editProfileModal"
-            >
-              Settings
-            </a>
-          </li>
-          <li><a class="dropdown-item" href="mailto:recipify.reset@gmail.com">Contact us</a></li>
-          <li><hr class="dropdown-divider"></li>
-          <li><a class="dropdown-item" href="{% url 'log_out' %}">Log out</a></li>
-        </ul>
+          {% if avatar_url %}
+            <img src="{{ avatar_url }}" alt="{{ user.username }} avatar">
+          {% endif %}
+        </a>
+        <div class="dropdown">
+          <button
+            class="nav-account-trigger nav-account-caret-btn"
+            type="button"
+            id="app-account-dropdown"
+            data-bs-toggle="dropdown"
+            aria-expanded="false"
+            aria-label="Open account menu"
+          >
+            <svg class="nav-account-caret" width="28" height="28" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+              <path d="m6 9 6 6 6-6" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end nav-account-menu" aria-labelledby="app-account-dropdown">
+            <li class="nav-account-menu-header text-center">
+              <a
+                href="{% url 'profile' %}"
+                class="nav-account-menu-avatar"
+                {% if avatar_url %}style="background-image: url('{{ avatar_url }}');"{% endif %}
+              >
+                {% if avatar_url %}
+                  <img src="{{ avatar_url }}" alt="{{ user.username }} avatar">
+                {% endif %}
+              </a>
+              <p class="nav-account-menu-name mb-0">{{ user.username }}</p>
+            </li>
+            <li><hr class="dropdown-divider"></li>
+            <li>
+              <a
+                class="dropdown-item"
+                href="#"
+                data-bs-toggle="modal"
+                data-bs-target="#editProfileModal"
+              >
+                Settings
+              </a>
+            </li>
+            <li><a class="dropdown-item" href="mailto:recipify.reset@gmail.com">Contact us</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item" href="{% url 'log_out' %}">Log out</a></li>
+          </ul>
+        </div>
       </div>
     </div>
 
@@ -259,6 +273,32 @@
 </script>
 
 </nav>
+
+{# Full-screen mobile nav overlay #}
+<div class="app-fullscreen-menu d-lg-none" id="appFullScreenMenu" aria-hidden="true">
+  <button
+    type="button"
+    class="app-fullscreen-menu-close"
+    aria-label="Close navigation menu"
+  >
+    &times;
+  </button>
+
+  <div class="app-fullscreen-menu-inner">
+    <nav class="app-fullscreen-menu-nav">
+      <a class="app-fullscreen-menu-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}" href="{% url 'dashboard' %}">Discover</a>
+      <a class="app-fullscreen-menu-link {% if request.resolver_match.url_name == 'shop' %}active{% endif %}" href="{% url 'shop' %}">Shop</a>
+      <a class="app-fullscreen-menu-link" href="{% url 'collections' %}">Collections</a>
+      <a class="app-fullscreen-menu-link" href="{% url 'profile' %}">Profile</a>
+    </nav>
+    <div class="app-fullscreen-menu-cta">
+      <a href="{% url 'recipe_create' %}" class="btn btn-light rounded-pill px-4">
+        Create a recipe
+      </a>
+    </div>
+  </div>
+</div>
+
 {% include "partials/edit_profile_modal.html" %}
 {% endwith %}
 
@@ -370,5 +410,50 @@
 
     updatePlaceholder("");
     typePlaceholder();
+  }
+
+  // Full-screen mobile menu toggle
+  const appMenuToggle = document.querySelector('.app-menu-toggle');
+  const appFullScreenMenu = document.getElementById('appFullScreenMenu');
+  if (appMenuToggle && appFullScreenMenu) {
+    const appMenuCloseBtn = document.querySelector('.app-fullscreen-menu-close');
+
+    const setMenuState = (shouldOpen) => {
+      if (shouldOpen) {
+        appFullScreenMenu.classList.add('is-open');
+        appFullScreenMenu.setAttribute('aria-hidden', 'false');
+        appMenuToggle.classList.add('is-open');
+        appMenuToggle.setAttribute('aria-expanded', 'true');
+        document.body.classList.add('app-menu-open');
+      } else {
+        appFullScreenMenu.classList.remove('is-open');
+        appFullScreenMenu.setAttribute('aria-hidden', 'true');
+        appMenuToggle.classList.remove('is-open');
+        appMenuToggle.setAttribute('aria-expanded', 'false');
+        document.body.classList.remove('app-menu-open');
+      }
+    };
+
+    const toggleMenu = (shouldOpen) => {
+      const isCurrentlyOpen = appFullScreenMenu.classList.contains('is-open');
+      const nextState = typeof shouldOpen === 'boolean' ? shouldOpen : !isCurrentlyOpen;
+      setMenuState(nextState);
+    };
+
+    appMenuToggle.addEventListener('click', () => toggleMenu());
+
+    appFullScreenMenu.addEventListener('click', (event) => {
+      if (event.target === appFullScreenMenu) {
+        toggleMenu(false);
+      }
+    });
+
+    appFullScreenMenu.querySelectorAll('a').forEach((link) => {
+      link.addEventListener('click', () => toggleMenu(true));
+    });
+
+    if (appMenuCloseBtn) {
+      appMenuCloseBtn.addEventListener('click', () => toggleMenu(false));
+    }
   }
 </script>

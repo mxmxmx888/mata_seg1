@@ -379,8 +379,8 @@ body.profile-body .cosmos-nav-search-input::placeholder {
   height: 112px;
   margin: 0 auto 1.25rem;
   border-radius: 50%;
-  padding: 3px;
-  background: radial-gradient(circle at 30% 30%, #6ee7ff, #4f46e5, #0c0c0c);
+  padding: 0;
+  background: none;
   overflow: hidden;
 }
 
