@@ -27,6 +27,7 @@ from recipes.models.favourite import Favourite
 from recipes.models.favourite_item import FavouriteItem
 from recipes.models.comment import Comment
 from recipes.models.like import Like
+from recipes.models.ingredient import Ingredient
 
 
 
@@ -39,7 +40,7 @@ image_pool = [
     "/static/images/chotko.jpeg",
     "/static/images/toothless.jpg",
     "/static/images/meal.jpg.webp",
-    "/static/images/meal1.jpeg."
+
 
 
 ]
@@ -74,6 +75,19 @@ bio_phrases = [
     "student cook learning one recipe at a time",
     "foodie who believes butter fixes everything",
     "i cook, i taste, i improvise",
+]
+
+main_ingredients_pool = [
+    "chicken breast", "salmon", "eggs", "milk", "butter", "cheddar",
+    "onion", "garlic", "tomato", "bell pepper", "spinach", "mushrooms",
+    "potatoes", "rice", "pasta", "flour", "yogurt", "lemon", "carrot",
+    "broccoli", "canned beans", "chickpeas",
+]
+
+spices_pool = [
+    "salt", "black pepper", "paprika", "cumin", "turmeric", "curry powder",
+    "chilli flakes", "oregano", "basil", "thyme", "rosemary", "garam masala",
+    "cinnamon", "nutmeg",
 ]
 
 
@@ -113,6 +127,7 @@ class Command(BaseCommand):
         self.seed_recipe_posts(per_user=2)
         self.seed_recipe_steps(min_steps=4, max_steps=7)
         self.seed_favourites(per_user=2)
+        self.seed_ingredients()
         self.seed_likes(max_likes_per_post=20)
         self.seed_comments(max_comments_per_post=5)
         self.users = User.objects.all()
@@ -312,6 +327,66 @@ class Command(BaseCommand):
 
         Comment.objects.bulk_create(rows, ignore_conflicts=True, batch_size=500)
         self.stdout.write(f"Comments created: {len(rows)}")
+    
+
+    def seed_ingredients(
+    self,
+    *,
+    min_main: int = 4,
+    max_main: int = 8,
+    min_spices: int = 1,
+    max_spices: int = 4,
+) -> None:
+        post_ids = list(RecipePost.objects.values_list("id", flat=True))
+        if not post_ids:
+            return
+
+        rows: List[Ingredient] = []
+
+        for post_id in post_ids:
+            main_count = randint(min_main, max_main)
+            spice_count = randint(min_spices, max_spices)
+
+            mains = sample(main_ingredients_pool, k=min(main_count, len(main_ingredients_pool)))
+            spices = sample(spices_pool, k=min(spice_count, len(spices_pool)))
+
+            chosen = mains + spices
+            position = 1
+
+            for name in chosen:
+                # randomly decide whether to add quantity/unit (optional fields)
+                qty = None
+                unit = None
+
+                if randint(0, 1) == 1:
+                    # simple, human-ish quantities
+                    unit = choice(["g", "kg", "ml", "l", "tsp", "tbsp", "cup", "pinch", ""])
+                    if unit == "pinch":
+                        qty = None
+                    elif unit in ("",):
+                        qty = None
+                        unit = None
+                    else:
+                        # keep >= 0
+                        qty = choice([0.5, 1, 2, 3, 4, 100, 200, 250])
+
+                rows.append(
+                    Ingredient(
+                        recipe_post_id=post_id,
+                        name=name,
+                        position=position,
+                        quantity=qty,
+                        unit=unit,
+                    )
+                )
+                position += 1
+
+        with transaction.atomic():
+            Ingredient.objects.bulk_create(rows, ignore_conflicts=True, batch_size=1000)
+
+        self.stdout.write(f"ingredients created (attempted): {len(rows)}")
+    
+    
     
     def seed_favourites(self, *, per_user: int = 2) -> None:
         """

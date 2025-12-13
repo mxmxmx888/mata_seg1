@@ -24,7 +24,8 @@ class PostRepo(DB_Accessor):
         filters: Dict[str, Any] = {}
 
         if category and category.lower() != "all":
-            filters["tags__icontains"] = f"category:{category.lower()}"
+            # Category is stored on the RecipePost itself, so compare case-insensitively
+            filters["category__iexact"] = category
 
         if author_id is not None:
             filters["author_id"] = author_id
