@@ -9,8 +9,11 @@ from recipes.repos.post_repo import PostRepo
 from recipes.repos.user_repo import UserRepo
 from recipes.models import Follower
 from recipes.models.follow_request import FollowRequest
+from recipes.models.close_friend import CloseFriend
 from recipes.services import PrivacyService
 from recipes.services import FollowService
+from django.views.decorators.http import require_POST
+from django.shortcuts import get_object_or_404
 
 User = get_user_model()
 post_repo = PostRepo()
@@ -160,10 +163,18 @@ def profile(request):
 
     followers_qs = Follower.objects.filter(author=profile_user).select_related("follower")
     following_qs = Follower.objects.filter(follower=profile_user).select_related("author")
+    close_friend_ids = set(
+        CloseFriend.objects.filter(owner=profile_user).values_list("friend_id", flat=True)
+    )
     followers_count = followers_qs.count()
     following_count = following_qs.count()
     followers_users = [relation.follower for relation in followers_qs]
     following_users = [relation.author for relation in following_qs]
+    close_friends = list(
+        relation.follower
+        for relation in followers_qs
+        if relation.follower_id in close_friend_ids
+    )
 
     is_following = False
     pending_request = None
@@ -207,6 +218,7 @@ def profile(request):
     profile_data["following"] = following_count
     profile_data["followers"] = followers_count
     profile_data["following"] = following_count
+    profile_data["close_friends_count"] = len(close_friend_ids)
 
     if request.method == "POST":
         if request.POST.get("cancel_request") == "1":
@@ -250,9 +262,11 @@ def profile(request):
             "following_count": following_count,
             "followers_users": followers_users,
             "following_users": following_users,
+            "close_friends": close_friends,
             "posts": posts,
             "can_view_profile": can_view_profile,
             "pending_follow_request": pending_request,
+            "close_friend_ids": close_friend_ids,
         },
     )
 
@@ -275,3 +289,46 @@ def collection_detail(request, slug):
         "collection": collection,
     }
     return render(request, "collection_detail.html", context)
+
+
+@login_required
+@require_POST
+def remove_follower(request, username):
+    target = get_object_or_404(User, username=username)
+    if target == request.user:
+        return redirect(request.META.get("HTTP_REFERER") or reverse("profile"))
+    Follower.objects.filter(author=request.user, follower=target).delete()
+    CloseFriend.objects.filter(owner=request.user, friend=target).delete()
+    return redirect(request.META.get("HTTP_REFERER") or reverse("profile"))
+
+
+@login_required
+@require_POST
+def remove_following(request, username):
+    target = get_object_or_404(User, username=username)
+    if target == request.user:
+        return redirect(request.META.get("HTTP_REFERER") or reverse("profile"))
+    Follower.objects.filter(follower=request.user, author=target).delete()
+    return redirect(request.META.get("HTTP_REFERER") or reverse("profile"))
+
+
+@login_required
+@require_POST
+def add_close_friend(request, username):
+    friend = get_object_or_404(User, username=username)
+    if friend == request.user:
+        return redirect(request.META.get("HTTP_REFERER") or reverse("profile"))
+    if not Follower.objects.filter(author=request.user, follower=friend).exists():
+        return redirect(request.META.get("HTTP_REFERER") or reverse("profile"))
+    CloseFriend.objects.get_or_create(owner=request.user, friend=friend)
+    return redirect(request.META.get("HTTP_REFERER") or reverse("profile"))
+
+
+@login_required
+@require_POST
+def remove_close_friend(request, username):
+    friend = get_object_or_404(User, username=username)
+    if friend == request.user:
+        return redirect(request.META.get("HTTP_REFERER") or reverse("profile"))
+    CloseFriend.objects.filter(owner=request.user, friend=friend).delete()
+    return redirect(request.META.get("HTTP_REFERER") or reverse("profile"))

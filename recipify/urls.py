@@ -33,6 +33,9 @@ from recipes.views.recipe_views import (
 )
 from recipes.views.follow_request_views import accept_follow_request, reject_follow_request
 from recipes.views.profile_view import collections_overview
+from recipes.views.profile_view import remove_follower
+from recipes.views.profile_view import remove_following
+from recipes.views.profile_view import add_close_friend, remove_close_friend
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -60,6 +63,10 @@ urlpatterns = [
     path('saved/', saved_recipes, name='saved_recipes'),
     path('api/profile', views.profile_api, name='profile_api'),
     path('u/<str:username>/follow/', toggle_follow, name='toggle_follow'),
+    path('followers/<str:username>/remove/', remove_follower, name='remove_follower'),
+    path('following/<str:username>/remove/', remove_following, name='remove_following'),
+    path('close-friends/<str:username>/add/', add_close_friend, name='add_close_friend'),
+    path('close-friends/<str:username>/remove/', remove_close_friend, name='remove_close_friend'),
     path('follow-requests/<uuid:request_id>/accept/', accept_follow_request, name='accept_follow_request'),
     path('follow-requests/<uuid:request_id>/reject/', reject_follow_request, name='reject_follow_request'),
     path('report/<str:content_type>/<uuid:object_id>/', views.report_content, name='report_content'),
