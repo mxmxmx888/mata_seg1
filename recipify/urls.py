@@ -23,6 +23,7 @@ from recipes import views
 from recipes.views.post_mock_view import mock_post_detail
 from recipes.views.recipe_views import (
     recipe_create,
+    recipe_edit,
     recipe_detail,
     my_recipes,
     saved_recipes,
@@ -56,6 +57,7 @@ urlpatterns = [
     path("post/mock/", mock_post_detail, name="post_mock"),
     path('recipes/create/', recipe_create, name='recipe_create'),
     path('recipes/<uuid:post_id>/', recipe_detail, name='recipe_detail'),
+    path("recipes/<uuid:post_id>/edit/", recipe_edit, name="recipe_edit"),
     path('recipes/<uuid:post_id>/favourite/', toggle_favourite, name='toggle_favourite'),
     path('recipes/<uuid:post_id>/like/', toggle_like, name='toggle_like'),
     path('my-recipes/', my_recipes, name='my_recipes'),

@@ -126,6 +126,13 @@
       <section class="d-flex gap-2">
         <button class="btn btn-dark rounded-pill px-3">Cook this</button>
       </section>
+
+      {% if request.user == recipe.author %}
+        <a href="{% url 'recipe_edit' recipe.id %}" class="btn btn-outline-light rounded-pill ms-3">
+          Edit
+        </a>
+      {% endif %}
+
     </div>
 
     <div class="col-xxl-3 col-xl-3 col-lg-3">

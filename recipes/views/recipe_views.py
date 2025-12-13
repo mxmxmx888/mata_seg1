@@ -70,6 +70,55 @@ def recipe_create(request):
     return render(request, "create_recipe.html", {"form": form})
 
 @login_required
+def recipe_edit(request, post_id):
+    recipe = get_object_or_404(RecipePost, id=post_id, author=request.user)
+
+    if request.method == "POST":
+        form = RecipePostForm(request.POST, request.FILES or None)
+        if form.is_valid():
+            cleaned = form.cleaned_data
+            tags_list = form.parse_tags()
+
+            recipe.title = cleaned["title"]
+            recipe.description = cleaned.get("description") or ""
+            recipe.prep_time_min = cleaned.get("prep_time_min") or 0
+            recipe.cook_time_min = cleaned.get("cook_time_min") or 0
+            recipe.nutrition = cleaned.get("nutrition") or ""
+            recipe.tags = tags_list
+            recipe.category = cleaned.get("category") or ""
+            recipe.visibility = cleaned.get("visibility") or RecipePost.VISIBILITY_PUBLIC
+            recipe.save()
+
+            Ingredient.objects.filter(recipe_post=recipe).delete()
+            RecipeStep.objects.filter(recipe_post=recipe).delete()
+            recipe.images.all().delete()
+
+            form.create_ingredients(recipe)
+            form.create_steps(recipe)
+            form.create_images(recipe)
+
+            primary_image = recipe.images.first()
+            if primary_image and primary_image.image:
+                recipe.image = primary_image.image.url
+                recipe.save(update_fields=["image"])
+
+            messages.success(request, "Recipe updated.")
+            return redirect("recipe_detail", post_id=recipe.id)
+    else:
+        initial = {
+            "title": recipe.title,
+            "description": recipe.description,
+            "prep_time_min": recipe.prep_time_min,
+            "cook_time_min": recipe.cook_time_min,
+            "nutrition": recipe.nutrition,
+            "category": recipe.category,
+            "visibility": recipe.visibility,
+        }
+        form = RecipePostForm(initial=initial)
+
+    return render(request, "create_recipe.html", {"form": form, "recipe": recipe, "is_edit": True})
+
+@login_required
 def recipe_detail(request, post_id):
     recipe = get_object_or_404(RecipePost, id=post_id)
     ingredients_qs = Ingredient.objects.filter(recipe_post=recipe).order_by("position")
