@@ -4,16 +4,22 @@ from django.contrib.auth.decorators import login_required
 from django.http import Http404
 from django.shortcuts import redirect, render
 from django.urls import reverse
-
 from recipes.forms import UserForm
 from recipes.repos.post_repo import PostRepo
 from recipes.repos.user_repo import UserRepo
 from recipes.models import Follower
-from recipes.models import Follower
+from recipes.models.follow_request import FollowRequest
+from recipes.models.close_friend import CloseFriend
+from recipes.services import PrivacyService
+from recipes.services import FollowService
+from django.views.decorators.http import require_POST
+from django.shortcuts import get_object_or_404
 
 User = get_user_model()
 post_repo = PostRepo()
 user_repo = UserRepo()
+privacy_service = PrivacyService()
+follow_service_factory = FollowService
 
 COMMON_COLLECTION_ITEMS = [
     "https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=1200&q=80",
@@ -128,7 +134,6 @@ PROFILE_COLLECTIONS = [
     },
 ]
 
-
 def _profile_data_for_user(user):
     fallback_handle = "@anmzn"
     handle = user.username or fallback_handle
@@ -141,6 +146,7 @@ def _profile_data_for_user(user):
         "following": 2,
         "followers": 0,
         "avatar_url": user.avatar_url,
+        "is_private": getattr(user, "is_private", False),
     }
 
 @login_required
@@ -158,45 +164,68 @@ def profile(request):
 
     followers_qs = Follower.objects.filter(author=profile_user).select_related("follower")
     following_qs = Follower.objects.filter(follower=profile_user).select_related("author")
-
+    close_friend_ids = set(
+        CloseFriend.objects.filter(owner=profile_user).values_list("friend_id", flat=True)
+    )
     followers_count = followers_qs.count()
     following_count = following_qs.count()
-
     followers_users = [relation.follower for relation in followers_qs]
     following_users = [relation.author for relation in following_qs]
+    close_friends = list(
+        relation.follower
+        for relation in followers_qs
+        if relation.follower_id in close_friend_ids
+    )
 
     is_following = False
+    pending_request = None
     if not is_own_profile:
         is_following = Follower.objects.filter(
             follower=request.user,
             author=profile_user,
         ).exists()
+        if not is_following and getattr(profile_user, "is_private", False):
+            pending_request = FollowRequest.objects.filter(
+                requester=request.user,
+                target=profile_user,
+                status=FollowRequest.STATUS_PENDING,
+            ).first()
 
     is_own_profile = profile_user == request.user
 
     followers_qs = Follower.objects.filter(author=profile_user).select_related("follower")
     following_qs = Follower.objects.filter(follower=profile_user).select_related("author")
-
     followers_count = followers_qs.count()
     following_count = following_qs.count()
-
     followers_users = [relation.follower for relation in followers_qs]
     following_users = [relation.author for relation in following_qs]
 
     is_following = False
+    pending_request = None
     if not is_own_profile:
         is_following = Follower.objects.filter(
             follower=request.user,
             author=profile_user,
         ).exists()
+        if not is_following and getattr(profile_user, "is_private", False):
+            pending_request = FollowRequest.objects.filter(
+                requester=request.user,
+                target=profile_user,
+                status=FollowRequest.STATUS_PENDING,
+            ).first()
 
     profile_data = _profile_data_for_user(profile_user)
     profile_data["followers"] = followers_count
     profile_data["following"] = following_count
     profile_data["followers"] = followers_count
     profile_data["following"] = following_count
+    profile_data["close_friends_count"] = len(close_friend_ids)
 
     if request.method == "POST":
+        if request.POST.get("cancel_request") == "1":
+            service = follow_service_factory(request.user)
+            service.cancel_request(profile_user)
+            return redirect(request.get_full_path())
         if profile_user != request.user:
             return redirect("profile")
         form = UserForm(request.POST, request.FILES, instance=request.user)
@@ -217,10 +246,18 @@ def profile(request):
         else:
             form = None
 
-    posts = post_repo.list_for_user(
-        profile_user.id,
-        order_by=("-created_at",),
-    )
+    can_view_profile = privacy_service.can_view_profile(request.user, profile_user)
+
+    if can_view_profile:
+        posts_qs = post_repo.list_for_user(
+            profile_user.id,
+            order_by=("-created_at",),
+        )
+        if not is_own_profile:
+            posts_qs = privacy_service.filter_visible_posts(posts_qs, request.user)
+        posts = list(posts_qs)
+    else:
+        posts = []
 
     return render(
         request,
@@ -236,7 +273,11 @@ def profile(request):
             "following_count": following_count,
             "followers_users": followers_users,
             "following_users": following_users,
+            "close_friends": close_friends,
             "posts": posts,
+            "can_view_profile": can_view_profile,
+            "pending_follow_request": pending_request,
+            "close_friend_ids": close_friend_ids,
         },
     )
 
@@ -259,3 +300,46 @@ def collection_detail(request, slug):
         "collection": collection,
     }
     return render(request, "collection_detail.html", context)
+
+
+@login_required
+@require_POST
+def remove_follower(request, username):
+    target = get_object_or_404(User, username=username)
+    if target == request.user:
+        return redirect(request.META.get("HTTP_REFERER") or reverse("profile"))
+    Follower.objects.filter(author=request.user, follower=target).delete()
+    CloseFriend.objects.filter(owner=request.user, friend=target).delete()
+    return redirect(request.META.get("HTTP_REFERER") or reverse("profile"))
+
+
+@login_required
+@require_POST
+def remove_following(request, username):
+    target = get_object_or_404(User, username=username)
+    if target == request.user:
+        return redirect(request.META.get("HTTP_REFERER") or reverse("profile"))
+    Follower.objects.filter(follower=request.user, author=target).delete()
+    return redirect(request.META.get("HTTP_REFERER") or reverse("profile"))
+
+
+@login_required
+@require_POST
+def add_close_friend(request, username):
+    friend = get_object_or_404(User, username=username)
+    if friend == request.user:
+        return redirect(request.META.get("HTTP_REFERER") or reverse("profile"))
+    if not Follower.objects.filter(author=request.user, follower=friend).exists():
+        return redirect(request.META.get("HTTP_REFERER") or reverse("profile"))
+    CloseFriend.objects.get_or_create(owner=request.user, friend=friend)
+    return redirect(request.META.get("HTTP_REFERER") or reverse("profile"))
+
+
+@login_required
+@require_POST
+def remove_close_friend(request, username):
+    friend = get_object_or_404(User, username=username)
+    if friend == request.user:
+        return redirect(request.META.get("HTTP_REFERER") or reverse("profile"))
+    CloseFriend.objects.filter(owner=request.user, friend=friend).delete()
+    return redirect(request.META.get("HTTP_REFERER") or reverse("profile"))

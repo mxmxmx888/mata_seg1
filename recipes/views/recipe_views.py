@@ -1,13 +1,15 @@
 from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
-from django.http import HttpResponse
+from django.http import HttpResponse, Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
 from recipes.forms.recipe_forms import RecipePostForm
 from recipes.repos.post_repo import PostRepo
 from recipes.forms.comment_form import CommentForm
+from recipes.services import PrivacyService
+from recipes.services import FollowService
 
 try:
     from recipes.models import RecipePost, Ingredient, RecipeStep, Favourite, Like, Comment
@@ -27,7 +29,8 @@ except Exception:
 
 User = get_user_model()
 post_repo = PostRepo()
-
+privacy_service = PrivacyService()
+follow_service_factory = FollowService
 
 @login_required
 def recipe_create(request):
@@ -46,6 +49,7 @@ def recipe_create(request):
                 nutrition=cleaned.get("nutrition") or "",
                 tags=tags_list,
                 category=cleaned.get("category") or "",
+                visibility=cleaned.get("visibility") or RecipePost.VISIBILITY_PUBLIC,
                 published_at=timezone.now(),
             )
 
@@ -65,17 +69,16 @@ def recipe_create(request):
 
     return render(request, "create_recipe.html", {"form": form})
 
-
 @login_required
 def recipe_detail(request, post_id):
     recipe = get_object_or_404(RecipePost, id=post_id)
     ingredients_qs = Ingredient.objects.filter(recipe_post=recipe).order_by("position")
     steps_qs = RecipeStep.objects.filter(recipe_post=recipe).order_by("position")
-    images_qs = recipe.images.all()
-    
-    # FETCH COMMENTS
-    comments = recipe.comments.select_related('user').order_by("-created_at")
 
+    if not privacy_service.can_view_post(request.user, recipe):
+        raise Http404("Post not available.")
+
+    comments = recipe.comments.select_related("user").order_by("-created_at")
     user_liked = False
     user_saved = False
     is_following_author = False
@@ -157,6 +160,7 @@ def recipe_detail(request, post_id):
         "gallery_images": gallery_images,
         "video_url": None,
         "view_similar": [],
+        "visibility": recipe.visibility,
     }
     return render(request, "post_detail.html", context)
 
@@ -168,7 +172,6 @@ def my_recipes(request):
     )
     return render(request, "my_recipes.html", {"posts": posts})
 
-
 @login_required
 def saved_recipes(request):
     fav_ids = Favourite.objects.filter(user=request.user).values_list(
@@ -176,7 +179,6 @@ def saved_recipes(request):
     )
     posts = RecipePost.objects.filter(id__in=fav_ids).order_by("-created_at")
     return render(request, "saved_recipes.html", {"posts": posts})
-
 
 @login_required
 def delete_my_recipe(request, post_id):
@@ -188,7 +190,6 @@ def delete_my_recipe(request, post_id):
         return redirect("my_recipes")
 
     return redirect("recipe_detail", post_id=recipe.id)
-
 
 @login_required
 def toggle_favourite(request, post_id):
@@ -211,7 +212,6 @@ def toggle_favourite(request, post_id):
 
     return redirect(request.META.get("HTTP_REFERER") or reverse("recipe_detail", args=[recipe.id]))
 
-
 @login_required
 def toggle_like(request, post_id):
     recipe = get_object_or_404(RecipePost, id=post_id)
@@ -227,7 +227,6 @@ def toggle_like(request, post_id):
 
     return redirect(request.META.get("HTTP_REFERER") or reverse("recipe_detail", args=[recipe.id]))
 
-
 @login_required
 def toggle_follow(request, username):
     target_user = get_object_or_404(User, username=username)
@@ -237,15 +236,8 @@ def toggle_follow(request, username):
             return HttpResponse(status=204)
         return redirect(request.META.get("HTTP_REFERER") or reverse("dashboard"))
 
-    existing = Follower.objects.filter(
-        follower=request.user,
-        author=target_user,
-    )
-
-    if existing.exists():
-        existing.delete()
-    else:
-        Follower.objects.create(follower=request.user, author=target_user)
+    service = follow_service_factory(request.user)
+    result = service.toggle_follow(target_user)
 
     if request.headers.get("HX-Request") or request.headers.get("x-requested-with") == "XMLHttpRequest":
         return HttpResponse(status=204)

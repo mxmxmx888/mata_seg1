@@ -15,3 +15,4 @@ from .api_views import *
 from .report_view import *
 from .shop_view import *
 from .recipe_views import *
+from .follow_request_views import *

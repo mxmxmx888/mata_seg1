@@ -7,6 +7,15 @@ from django.conf import settings
 
 
 class RecipePost(models.Model):
+    VISIBILITY_PUBLIC = "public"
+    VISIBILITY_FOLLOWERS = "followers"
+    VISIBILITY_CLOSE_FRIENDS = "close_friends"
+
+    VISIBILITY_CHOICES = [
+        (VISIBILITY_PUBLIC, "Public"),
+        (VISIBILITY_FOLLOWERS, "Followers only"),
+        (VISIBILITY_CLOSE_FRIENDS, "Close friends only"),
+    ]
     # Primary key: UUIDv7 simulated using uuid.uuid4 (closest available)
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
@@ -35,6 +44,12 @@ class RecipePost(models.Model):
     
     # category (breakfast, lunch, etc.)
     category = models.TextField(blank=True, null= True)
+
+    visibility = models.CharField(
+        max_length=20,
+        choices=VISIBILITY_CHOICES,
+        default=VISIBILITY_PUBLIC,
+    )
 
     # saved count
     saved_count = models.PositiveIntegerField(default=0)
@@ -83,3 +98,4 @@ class RecipeImage(models.Model):
 
     def __str__(self):
         return f"Image for {self.recipe_post_id}"
+

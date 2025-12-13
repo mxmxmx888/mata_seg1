@@ -1,5 +1,3 @@
-# recipes/forms/recipe_forms.py
-
 from django import forms
 import re
 
@@ -104,7 +102,21 @@ class RecipePostForm(forms.ModelForm):
             "prep_time_min",
             "cook_time_min",
             "nutrition",
+            "visibility",
         ]
+
+    def clean_images(self):
+        files = self.files.getlist("images")
+        if len(files) > 10:
+            raise forms.ValidationError("You can upload up to 10 images.")
+        return files
+    
+    def clean_shop_images(self):
+        files = self.files.getlist("shop_images")
+        if len(files) > 10:
+            raise forms.ValidationError("You can upload up to 10 shopping images.")
+        return files
+
 
     def clean_images(self):
         files = self.files.getlist("images")
@@ -211,4 +223,5 @@ class RecipePostForm(forms.ModelForm):
                 image=f,
                 position=idx,
             )
+
 

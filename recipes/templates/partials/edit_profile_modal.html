@@ -17,14 +17,14 @@
             <div class="edit-profile-avatar-wrapper">
               <div class="edit-profile-avatar-circle edit-profile-avatar-compact" data-avatar-preview style="width: 96px; height: 96px;">
                 <img
-                  src="{% if avatar_url %}{{ avatar_url }}{% endif %}"
+                  src="{% if edit_profile_avatar_url %}{{ edit_profile_avatar_url }}{% endif %}"
                   alt="{{ user.username }} avatar"
                   data-avatar-image
-                  class="{% if not avatar_url %}d-none{% endif %}"
+                  class="{% if not edit_profile_avatar_url %}d-none{% endif %}"
                   style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;"
                 >
                 <span
-                  class="edit-profile-avatar-initial{% if avatar_url %} d-none{% endif %}"
+                  class="edit-profile-avatar-initial{% if edit_profile_avatar_url %} d-none{% endif %}"
                   data-avatar-initial
                 >
                   {{ request.user.username|first|upper }}
@@ -85,7 +85,7 @@
 
               <div class="edit-profile-section" data-section="profile">
                 {% for field in edit_profile_form %}
-                  {% if field.name != "email" and field.name != "avatar" and field.name != "remove_avatar" %}
+                  {% if field.name != "email" and field.name != "avatar" and field.name != "remove_avatar" and field.name != "is_private" %}
                     <div class="mb-3">
                       {{ field.label_tag }}
                       {% if edit_profile_form.is_bound %}
@@ -100,6 +100,21 @@
                       <div class="invalid-feedback">
                         {{ field.errors }}
                       </div>
+                    </div>
+                  {% elif field.name == "is_private" %}
+                    <div class="mb-3">
+                      <div class="d-flex align-items-center justify-content-between gap-3 p-3 rounded-3" style="background:#161616; border:1px solid #2a2a2a;" data-privacy-toggle>
+                        <div>
+                          <div class="text-muted small text-uppercase">Privacy</div>
+                          <div class="fw-semibold" data-privacy-status>
+                            {% if field.value %}Private{% else %}Public{% endif %}
+                          </div>
+                        </div>
+                        <button type="button" class="btn btn-light rounded-pill px-3" data-privacy-button>
+                          {% if field.value %}Make public{% else %}Make private{% endif %}
+                        </button>
+                      </div>
+                      {% render_field field class="form-check-input d-none" %}
                     </div>
                   {% endif %}
                 {% endfor %}
@@ -183,6 +198,10 @@
     var removeAvatarBtn = modal.querySelector("[data-remove-avatar]");
     var avatarImages = modal.querySelectorAll("[data-avatar-image]");
     var avatarInitials = modal.querySelectorAll("[data-avatar-initial]");
+    var privacyToggle = modal.querySelector("[data-privacy-toggle]");
+    var privacyButton = modal.querySelector("[data-privacy-button]");
+    var privacyStatus = modal.querySelector("[data-privacy-status]");
+    var privacyInput = modal.querySelector("input[name='is_private']");
     var initialAvatarUrl = "";
     if (removeAvatarInput && !removeAvatarInput.defaultValue) {
       removeAvatarInput.defaultValue = removeAvatarInput.value || "false";
@@ -240,6 +259,23 @@
           if (changed) passwordDirty = true;
         });
       }
+    }
+
+    function syncPrivacyUI() {
+      if (!privacyInput || !privacyButton || !privacyStatus) return;
+      var isPrivate = privacyInput.checked;
+      privacyStatus.textContent = isPrivate ? "Private" : "Public";
+      privacyButton.textContent = isPrivate ? "Make public" : "Make private";
+    }
+
+    if (privacyButton && privacyInput) {
+      privacyButton.addEventListener("click", function () {
+        privacyInput.checked = !privacyInput.checked;
+        syncPrivacyUI();
+        recomputeDirty();
+        updateButtons();
+      });
+      syncPrivacyUI();
     }
 
     function updateButtons() {
