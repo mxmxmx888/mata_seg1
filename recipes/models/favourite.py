@@ -15,6 +15,15 @@ class Favourite(models.Model):
     # collection name, e.g. "favourites", "dinner ideas"
     name = models.CharField(max_length=255)
 
+    # optional explicit cover recipe for this collection
+    cover_post = models.ForeignKey(
+        "recipes.RecipePost",
+        on_delete=models.SET_NULL,
+        related_name="cover_for_favourites",
+        null=True,
+        blank=True,
+    )
+
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

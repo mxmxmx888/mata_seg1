@@ -234,10 +234,8 @@ body.auth-body {
   right: 0;
   z-index: 1030;
   background-color: transparent;
-  border-bottom: none !important;    
   padding-top: 0.3rem;               /* thinner bar */
   padding-bottom: 0.3rem;
-  box-shadow: none !important;      
   transition: background-color 0.3s ease, box-shadow 0.3s ease, color 0.3s ease;
 }
 
@@ -265,8 +263,6 @@ body.auth-body .navbar-squarespace .nav-link {
 /* When the landing page is scrolled, navbar goes solid */
 .navbar-squarespace.navbar-solid {
   background-color: #ffffff;
-  box-shadow: none !important; /* remove the 1px line */
-  border-bottom: none !important;
 }
 
 /* In dark mode, keep the logged-out Login button visible even when navbar goes solid */
@@ -284,7 +280,6 @@ body[data-theme="dark"]:not(.auth-body) .navbar-squarespace.navbar-solid .btn.bt
 /* Logged-in navbar base (light mode) */
 .navbar-app {
   background-color: #ffffff;
-  border-bottom: none;
   position: fixed;
   top: 0;
   left: 0;
@@ -740,7 +735,6 @@ body[data-theme="light"] .navbar-app .notification-header .mark-all-read-link:ho
 
   body:not(.auth-body) .navbar-app {
     background-color: #ffffff;
-    border-bottom: none;
   }
 
   body:not(.auth-body) .navbar-app .navbar-brand,
@@ -2403,8 +2397,6 @@ body.dashboard-body .navbar-app,
 body.app-body .navbar-squarespace,
 body.app-body .navbar-app {
   background-color: rgb(13, 13, 13) !important;
-  border-bottom: 0 !important;
-  box-shadow: none !important;
 }
 
 /* Make dashboard recipe cards flush with the background */
