@@ -210,3 +210,54 @@
     width: 92vw;
   }
 }
+
+.prep-time-popover {
+    background-color: #050505;
+    border-radius: 24px;
+    border: 1px solid #262626;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.85);
+    padding: 18px 20px;
+    z-index: 1050;
+}
+
+.prep-time-popover-title {
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: #a7a7b3;
+    font-weight: 600;
+    margin-bottom: 16px;
+}
+
+.prep-time-popover-row-label {
+    font-size: 12px;
+    color: #a7a7b3;
+}
+
+.prep-time-popover input[type="number"] {
+    background-color: #111111;
+    border: 1px solid #333333;
+    border-radius: 999px;
+    color: #ffffff;
+}
+
+.prep-time-popover input[type="number"]::placeholder {
+    color: #6e6e76;
+}
+
+.prep-time-popover button.prep-time-apply-btn {
+    background-color: #ffffff;
+    color: #000000;
+    border-radius: 999px;
+    font-weight: 600;
+}
+
+.navbar-app .navbar-search-wrapper {
+    display: flex;
+    justify-content: center;
+}
+
+.navbar-app .search-form {
+    max-width: 640px;
+    width: 100%;
+}

@@ -25,11 +25,6 @@
         action="{% url 'dashboard' %}"
         autocomplete="off"
       >
-        <input type="hidden" name="mode" value="search">
-        <button class="cosmos-nav-search-icon" type="submit">
-          <i class="bi bi-stars"></i>
-        </button>
-
         <input
           class="form-control cosmos-nav-search-input"
           type="search"
@@ -40,11 +35,51 @@
           autocorrect="off"
           autocapitalize="off"
           spellcheck="false"
-        >
+        />
 
-        <button class="cosmos-nav-search-icon" type="button">
-          <i class="bi bi-clock-history"></i>
-        </button>
+        <div class="prep-filter-wrapper">
+          <button class="cosmos-nav-search-icon" type="button" id="prepTimeToggle">
+            <i class="bi bi-clock-history"></i>
+          </button>
+
+          <div class="prep-filter-popover" id="prepFilterPopover">
+            <div class="prep-time-popover-title">Time taken</div>
+
+            <div class="prep-filter-row">
+              <label for="minPrepInput">Min</label>
+              <input
+                id="minPrepInput"
+                type="number"
+                name="min_prep"
+                min="0"
+                max="600"
+                step="1"
+                value="{{ request.GET.min_prep|default:'' }}"
+              />
+              <span class="prep-filter-unit">min</span>
+            </div>
+
+            <div class="prep-filter-row">
+              <label for="maxPrepInput">Max</label>
+              <input
+                id="maxPrepInput"
+                type="number"
+                name="max_prep"
+                min="0"
+                max="600"
+                step="1"
+                value="{{ request.GET.max_prep|default:'' }}"
+              />
+              <span class="prep-filter-unit">min</span>
+            </div>
+
+            <div class="prep-filter-actions">
+              <button type="submit" class="btn btn-light btn-sm rounded-pill">
+                Apply
+              </button>
+            </div>
+          </div>
+        </div>
       </form>
     </div>
 
@@ -69,7 +104,6 @@
           </span>
           {% endif %}
         </button>
-
 
         <div class="dropdown-menu dropdown-menu-end notification-menu shadow-lg border-0" aria-labelledby="notificationDropdown">
           <div class="dropdown-header notification-header">
@@ -120,6 +154,7 @@
           </div>
         </div>
       </div>
+
       <a href="{% url 'collections' %}" class="icon-button d-none d-md-inline-flex">
         <i class="bi {% if request.resolver_match.url_name == 'collections' %}bi-bookmark-fill{% else %}bi-bookmark{% endif %}"></i>
       </a>
@@ -179,6 +214,27 @@
     </div>
 
   </div>
+
+<script>
+  (function () {
+    const toggleBtn = document.getElementById("prepTimeToggle");
+    const popover = document.getElementById("prepFilterPopover");
+
+    if (!toggleBtn || !popover) return;
+
+    toggleBtn.addEventListener("click", function (e) {
+      e.stopPropagation();
+      popover.classList.toggle("prep-filter-open");
+    });
+
+    document.addEventListener("click", function (e) {
+      if (!popover.contains(e.target) && !toggleBtn.contains(e.target)) {
+        popover.classList.remove("prep-filter-open");
+      }
+    });
+  })();
+</script>
+
 </nav>
 {% include "partials/edit_profile_modal.html" %}
 {% endwith %}
@@ -241,7 +297,6 @@
     function typePlaceholder() {
       if (!animationActive) return;
 
-      // Don't animate while user is interacting or has typed text
       if (document.activeElement === searchInput || (searchInput.value && searchInput.value.trim() !== '')) {
         typingTimeoutId = setTimeout(typePlaceholder, 500);
         return;
@@ -256,7 +311,7 @@
 
         if (charIndex === currentRecipe.length) {
           isDeleting = true;
-          typingTimeoutId = setTimeout(typePlaceholder, 1500); // pause when fully typed
+          typingTimeoutId = setTimeout(typePlaceholder, 1500);
           return;
         }
       } else {
@@ -274,7 +329,6 @@
       typingTimeoutId = setTimeout(typePlaceholder, delay);
     }
 
-    // Pause animation while user focuses the input
     searchInput.addEventListener('focus', function () {
       animationActive = false;
       if (typingTimeoutId) {
@@ -283,7 +337,6 @@
       }
     });
 
-    // Resume animation when input loses focus and is empty
     searchInput.addEventListener('blur', function () {
       if (searchInput.value && searchInput.value.trim() !== '') return;
       if (!animationActive) {
@@ -292,7 +345,6 @@
       }
     });
 
-    // Ensure initial static "Try" placeholder
     updatePlaceholder("");
     typePlaceholder();
   }

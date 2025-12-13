@@ -13,7 +13,6 @@
       <input type="hidden" name="mode" value="search">
       <input type="hidden" name="scope" value="{{ scope|default:'recipes' }}">
 
-      <!-- Category -->
       <select
         name="category"
         class="form-select dashboard-filter-select"
@@ -53,6 +52,19 @@
         </option>
       </select>
 
+      <div class="d-flex align-items-center ms-3 gap-2 dashboard-have-ingredients">
+        <input
+          type="text"
+          name="have_ingredients"
+          class="form-control dashboard-filter-input"
+          placeholder="Only recipes using (e.g. cheese, bread)"
+          value="{{ have_ingredients|default:'' }}"
+        >
+        <button type="submit" class="btn btn-outline-light btn-sm rounded-pill">
+          Apply
+        </button>
+      </div>
+
     </form>
 
     {% if has_search %}
@@ -64,7 +76,7 @@
             <li class="nav-item" role="presentation">
               <a
                 class="nav-link {% if scope == 'recipes' %}active{% endif %}"
-                href="?mode=search&scope=recipes&q={{ search_query|urlencode }}&category={{ category|urlencode }}&ingredient={{ ingredient|urlencode }}&sort={{ sort|urlencode }}"
+                href="?mode=search&scope=recipes&q={{ search_query|urlencode }}&category={{ category|urlencode }}&ingredient={{ ingredient|urlencode }}&sort={{ sort|urlencode }}&have_ingredients={{ have_ingredients|urlencode }}"
                 role="tab"
                 aria-selected="{% if scope == 'recipes' %}true{% else %}false{% endif %}"
               >
@@ -116,7 +128,11 @@
           {% include "partials/recipe_grid.html" with posts=popular_recipes grid_id="discover-grid" %}
         {% else %}
           <div class="text-center py-5" style="color: #8b8c9a;">
-            No recipes found for this search.
+            {% if have_ingredients %}
+              No recipes found using only these ingredients.
+            {% else %}
+              No recipes found for this search.
+            {% endif %}
           </div>
         {% endif %}
       {% endif %}

@@ -1,14 +1,15 @@
 import random
+import re
 from django.core.paginator import Paginator
 from django.http import JsonResponse
 from django.shortcuts import render
-from django.db.models import Q
+from django.db.models import Q, F, ExpressionWrapper, IntegerField
 from django.utils import timezone
 from django.template.loader import render_to_string
 from django.contrib.auth import get_user_model
 from django.views.decorators.http import require_GET
 try:
-    from recipes.models import RecipePost, Favourite, FavouriteItem, Like, Follower
+    from recipes.models import RecipePost, Favourite, FavouriteItem, Like, Follower, Ingredient
 except Exception:
     from recipes.models.recipe_post import RecipePost
     from recipes.models.favourite import Favourite
@@ -106,6 +107,22 @@ def _get_for_you_posts(user, query=None, limit=12, offset=0, seed=None):
 
     return posts[offset:offset + limit]
 
+def _filter_posts_by_prep_time(posts, min_prep, max_prep):
+    if min_prep is not None:
+        posts = [
+            p for p in posts
+            if p.prep_time_min is not None and p.prep_time_min >= min_prep
+        ]
+
+    if max_prep is not None:
+        posts = [
+            p for p in posts
+            if p.prep_time_min is not None and p.prep_time_min <= max_prep
+        ]
+
+    return posts
+
+
 def _get_following_posts(user, query=None, limit=12, offset=0):
     followed_ids = list(
         Follower.objects.filter(follower=user).values_list("author_id", flat=True)
@@ -152,14 +169,31 @@ def dashboard(request):
     sort = (request.GET.get("sort") or "newest").strip()
     mode = (request.GET.get("mode") or "feed").strip()
 
+    min_prep = (request.GET.get("min_prep") or "").strip()
+    max_prep = (request.GET.get("max_prep") or "").strip()
+
+    have_ingredients_raw = (request.GET.get("have_ingredients") or "").strip()
+    have_ingredients_list = []
+    if have_ingredients_raw:
+        tokens = re.split(r"[,\n]+", have_ingredients_raw)
+        have_ingredients_list = [
+            t.strip().lower() for t in tokens if t.strip()
+        ]
+
     combined_keyword = " ".join(part for part in [q, ingredient_q] if part).strip()
 
-    has_search = mode == "search"
+    has_search = (
+        mode == "search"
+        or bool(q or ingredient_q or have_ingredients_list or min_prep or max_prep or (category and category != "all"))
+    )
     page_number = int(request.GET.get("page") or 1)
     if page_number < 1:
         page_number = 1
 
-    is_ajax = request.headers.get("x-requested-with") == "XMLHttpRequest" or request.GET.get("ajax") == "1"
+    is_ajax = (
+        request.headers.get("x-requested-with") == "XMLHttpRequest"
+        or request.GET.get("ajax") == "1"
+    )
 
     discover_qs = (
         RecipePost.objects.filter(published_at__isnull=False)
@@ -183,6 +217,44 @@ def dashboard(request):
             tags__icontains=f"category:{category.lower()}"
         )
 
+    if min_prep or max_prep:
+        total_time_expr = ExpressionWrapper(
+            F("prep_time_min") + F("cook_time_min"),
+            output_field=IntegerField(),
+        )
+        discover_qs = discover_qs.annotate(total_time_min=total_time_expr)
+
+        if min_prep:
+            try:
+                discover_qs = discover_qs.filter(total_time_min__gte=int(min_prep))
+            except (TypeError, ValueError):
+                pass
+
+        if max_prep:
+            try:
+                discover_qs = discover_qs.filter(total_time_min__lte=int(max_prep))
+            except (TypeError, ValueError):
+                pass
+
+    if have_ingredients_list:
+        allowed_set = set(have_ingredients_list)
+        recipe_ids = []
+
+        for recipe in discover_qs:
+            ingredient_qs = Ingredient.objects.filter(recipe_post=recipe).values_list("name", flat=True)
+            ingredient_names = [
+                (name or "").strip().lower()
+                for name in ingredient_qs
+                if name and name.strip()
+            ]
+            if not ingredient_names:
+                continue
+            names_set = set(ingredient_names)
+            if names_set.issubset(allowed_set):
+                recipe_ids.append(recipe.id)
+
+        discover_qs = discover_qs.filter(id__in=recipe_ids)
+
     if sort == "popular":
         discover_qs = discover_qs.order_by("-saved_count", "-published_at", "-created_at")
     elif sort == "oldest":
@@ -192,7 +264,6 @@ def dashboard(request):
 
     popular_recipes = []
     popular_has_next = False
-
     users_results = []
 
     if request.GET.get("for_you_ajax") == "1":
@@ -267,5 +338,6 @@ def dashboard(request):
         "popular_has_next": popular_has_next,
         "scope": scope,
         "users_results": users_results,
+        "have_ingredients": have_ingredients_raw,
     }
     return render(request, "dashboard.html", context)
