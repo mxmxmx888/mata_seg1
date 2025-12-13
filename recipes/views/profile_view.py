@@ -241,10 +241,13 @@ def profile(request):
     can_view_profile = privacy_service.can_view_profile(request.user, profile_user)
 
     if can_view_profile:
-        posts = post_repo.list_for_user(
+        posts_qs = post_repo.list_for_user(
             profile_user.id,
             order_by=("-created_at",),
         )
+        if not is_own_profile:
+            posts_qs = privacy_service.filter_visible_posts(posts_qs, request.user)
+        posts = list(posts_qs)
     else:
         posts = []
 
