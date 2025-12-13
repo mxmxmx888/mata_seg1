@@ -128,7 +128,10 @@
       </section>
 
       {% if request.user == recipe.author %}
-        <a href="{% url 'recipe_edit' recipe.id %}" class="btn btn-outline-light rounded-pill ms-3">
+        <a
+          href="{% url 'recipe_edit' recipe.id %}"
+          class="btn btn-outline-light rounded-pill ms-3"
+        >
           Edit
         </a>
       {% endif %}

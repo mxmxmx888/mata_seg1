@@ -74,7 +74,7 @@ def recipe_edit(request, post_id):
     recipe = get_object_or_404(RecipePost, id=post_id, author=request.user)
 
     if request.method == "POST":
-        form = RecipePostForm(request.POST, request.FILES or None)
+        form = RecipePostForm(request.POST, request.FILES or None, instance=recipe)
         if form.is_valid():
             cleaned = form.cleaned_data
             tags_list = form.parse_tags()
@@ -105,18 +105,9 @@ def recipe_edit(request, post_id):
             messages.success(request, "Recipe updated.")
             return redirect("recipe_detail", post_id=recipe.id)
     else:
-        initial = {
-            "title": recipe.title,
-            "description": recipe.description,
-            "prep_time_min": recipe.prep_time_min,
-            "cook_time_min": recipe.cook_time_min,
-            "nutrition": recipe.nutrition,
-            "category": recipe.category,
-            "visibility": recipe.visibility,
-        }
-        form = RecipePostForm(initial=initial)
+        form = RecipePostForm(instance=recipe)
 
-    return render(request, "create_recipe.html", {"form": form, "recipe": recipe, "is_edit": True})
+    return render(request, "edit_recipe.html", {"form": form, "recipe": recipe})
 
 @login_required
 def recipe_detail(request, post_id):
