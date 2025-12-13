@@ -697,7 +697,7 @@ body.profile-body .follow-modal .follow-user-handle {
 
 .profile-collections {
   --profile-collection-min: clamp(200px, 18vw, 280px);
-  --profile-gap: 1.1rem;
+  --profile-gap: 1.7rem;
   --profile-columns: 5;
   --profile-grid-max: calc(var(--profile-columns) * var(--profile-collection-min) + (var(--profile-columns) - 1) * var(--profile-gap));
   display: grid;
@@ -1099,6 +1099,14 @@ body[data-theme="light"].profile-body .collection-sub {
   color: #6b7280;
 }
 
+body[data-theme="light"].profile-body .collection-header-subtitle {
+  color: #6b7280;
+}
+
+body[data-theme="light"].profile-body .collection-header-handle {
+  color: #111827;
+}
+
 body[data-theme="light"].profile-body .profile-footer {
   color: #6b7280 !important;
 }
@@ -1236,7 +1244,7 @@ body[data-theme="light"] .edit-profile-modal .btn.btn-light:focus-visible {
 
   .profile-collections {
     --profile-collection-min: clamp(260px, 18vw, 360px);
-    --profile-gap: 1.25rem;
+    --profile-gap: 2rem;
   }
 }
 
@@ -1244,7 +1252,7 @@ body[data-theme="light"] .edit-profile-modal .btn.btn-light:focus-visible {
   .profile-collections {
     --profile-collection-min: clamp(200px, 22vw, 300px);
     --profile-columns: 4;
-    --profile-gap: 1.15rem;
+    --profile-gap: 1.8rem;
     grid-template-columns: repeat(var(--profile-columns), minmax(var(--profile-collection-min), 1fr));
     gap: var(--profile-gap);
   }
@@ -1254,7 +1262,7 @@ body[data-theme="light"] .edit-profile-modal .btn.btn-light:focus-visible {
   .profile-collections {
     --profile-collection-min: clamp(220px, 28vw, 320px);
     --profile-columns: 3;
-    --profile-gap: 1.1rem;
+    --profile-gap: 1.7rem;
     grid-template-columns: repeat(var(--profile-columns), minmax(var(--profile-collection-min), 1fr));
   }
 }
@@ -1270,14 +1278,18 @@ body[data-theme="light"] .edit-profile-modal .btn.btn-light:focus-visible {
 }
 
 .collection-shell {
-  max-width: 1400px;
-  margin-inline: auto;
+  max-width: 100%;
+  margin-inline: 0;
   padding-top: 2rem;
 }
 
 .collection-header {
-  margin: 0 auto 1.5rem;
+  margin: 3rem auto 3rem;
   max-width: 720px;
+}
+
+.collection-shell .collection-header {
+  margin-top: 4rem;
 }
 
 .collection-back {
@@ -1291,12 +1303,105 @@ body[data-theme="light"] .edit-profile-modal .btn.btn-light:focus-visible {
 }
 
 .collection-title {
-  font-size: clamp(2rem, 3vw, 2.6rem);
+  font-size: clamp(1.4rem, 2vw, 1.8rem);
   letter-spacing: -0.02em;
 }
 
 .collection-description {
   color: #c7c7cf;
+}
+
+.collection-header-subtitle {
+  margin-top: 0.4rem;
+  color: #a8a9b3;
+  font-size: 0.9rem;
+}
+
+.collection-header-handle {
+  color: #f4f4f7;
+}
+
+.collection-header-avatar-shell {
+  margin-top: 0.8rem;
+  display: flex;
+  justify-content: center;
+}
+
+.collection-header-avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background-size: cover;
+  background-position: center;
+  border: 2px solid #1f2028;
+  box-shadow: none;
+}
+
+.collection-header-menu {
+  display: flex;
+  justify-content: center;
+  position: relative;
+  margin-top: 1.1rem;
+}
+
+.collection-header-menu-btn {
+  border-radius: 0;
+  border: none !important;
+  background-color: transparent !important;
+  color: #f4f4f7;
+  padding: 0.15rem 0.6rem;
+  line-height: 1;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+.collection-header-menu-btn:focus,
+.collection-header-menu-btn:active {
+  border: none !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+.collection-header-menu-btn:hover,
+.collection-header-menu-btn:focus-visible {
+  background-color: transparent;
+  border-color: transparent;
+  color: #ffffff;
+  box-shadow: none;
+  outline: none;
+}
+
+.collection-header-dropdown {
+  min-width: 200px;
+  border-radius: 16px;
+  padding: 0.4rem 0.1rem;
+  background-color: #252525;
+  color: #f5f5f5;
+  border: 1px solid #1c1c1c;
+  box-shadow: none !important;
+  left: 50% !important;
+  right: auto !important;
+  transform: translate(-50%, 24px) !important;
+  margin-top: 0;
+}
+
+body[data-theme="light"] .collection-header-dropdown {
+  background-color: #dfdfdf;
+  color: #111827;
+  border-color: #d1d5db;
+}
+
+.collection-header-dropdown .dropdown-item {
+  color: #f5f5f5;
+  padding: 0.5rem 1rem;
+  font-size: 0.85rem;
+}
+
+.collection-header-dropdown .dropdown-item:hover,
+.collection-header-dropdown .dropdown-item:focus {
+  background-color: transparent;
+  opacity: 0.85;
 }
 
 .collection-actions .collection-chip {
@@ -1327,9 +1432,7 @@ body[data-theme="light"] .edit-profile-modal .btn.btn-light:focus-visible {
 }
 
 .collection-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1.1rem;
+  margin-top: 1rem;
 }
 
 .collection-item {
@@ -1395,9 +1498,29 @@ body[data-theme="light"] .edit-profile-modal .btn.btn-light:focus-visible {
     grid-template-columns: repeat(var(--profile-columns), minmax(var(--profile-collection-min), 1fr));
     gap: var(--profile-gap);
   }
+}
 
-  .collection-grid {
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+/* Five-column layout for collection detail masonry */
+.collection-masonry {
+  display: flex;
+  align-items: flex-start;
+  gap: 1.8rem;
+}
+
+.collection-masonry-column {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+@media (max-width: 992px) {
+  .collection-masonry {
+    display: block;
+  }
+
+  .collection-masonry-column {
+    width: 100%;
   }
 }
 
@@ -1717,7 +1840,7 @@ body[data-theme="light"] .edit-profile-modal .btn.btn-light:focus-visible {
   margin-bottom: 1.25rem;
 }
 
-/*  3-COLUMN MY RECIPES GRID */
+/*  3-COLUMN MY RECIPES GRID (used across profile, My recipes, Discover, For you / Following) */
 .my-recipes-grid {
   column-count: 3;
   column-gap: 1.8rem;
@@ -1769,6 +1892,28 @@ body[data-theme="light"] .edit-profile-modal .btn.btn-light:focus-visible {
   color: #9899aa;
   margin-bottom: 0.1rem;
 }
+
+/* Ensure masonry-style columns stay top-aligned inside dashboard tab panes (For you / Following) */
+#forYou .my-recipes-grid,
+#following .my-recipes-grid {
+  column-count: 3;
+  column-gap: 1.8rem;
+}
+
+@media (max-width: 1200px) {
+  #forYou .my-recipes-grid,
+  #following .my-recipes-grid {
+    column-count: 2;
+  }
+}
+
+@media (max-width: 700px) {
+  #forYou .my-recipes-grid,
+  #following .my-recipes-grid {
+    column-count: 1;
+  }
+}
+
 
 .my-recipe-meta {
   font-size: 0.82rem;

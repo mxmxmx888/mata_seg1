@@ -247,8 +247,14 @@
             <ul class="save-modal-list list-unstyled mb-0">
               {% for col in save_collections %}
               <li class="save-modal-row" data-collection-id="{{ col.id }}">
-                <div class="save-modal-avatar" aria-hidden="true">
-                  {{ col.name|first|upper }}
+                <div
+                  class="save-modal-avatar{% if col.thumb_url %} save-modal-avatar-has-thumb{% endif %}"
+                  aria-hidden="true"
+                  {% if col.thumb_url %}style="background-image: url('{{ col.thumb_url }}');"{% endif %}
+                >
+                  {% if not col.thumb_url %}
+                    {{ col.name|first|upper }}
+                  {% endif %}
                 </div>
                 <div>
                   <p class="mb-0 fw-semibold">{{ col.name }}</p>
@@ -520,7 +526,10 @@ document.addEventListener('DOMContentLoaded', function () {
     const attachToggleHandler = (btn) => {
       if (!btn || btn.dataset.saveHandlerAttached === '1') return;
       btn.dataset.saveHandlerAttached = '1';
-      btn.addEventListener('click', function (e) {
+
+      const row = btn.closest('.save-modal-row');
+
+      const handleToggle = (e) => {
         e.preventDefault();
         const collectionId = btn.getAttribute('data-collection-id');
         const icon = btn.querySelector('i');
@@ -539,7 +548,7 @@ document.addEventListener('DOMContentLoaded', function () {
           },
           body,
         })
-          .then((resp) => resp.ok ? resp.json().catch(() => null) : null)
+          .then((resp) => (resp.ok ? resp.json().catch(() => null) : null))
           .then((data) => {
             const saved = data && Object.prototype.hasOwnProperty.call(data, 'saved')
               ? !!data.saved
@@ -552,7 +561,16 @@ document.addEventListener('DOMContentLoaded', function () {
             icon.classList.toggle('bi-bookmark-fill', saved);
             icon.classList.toggle('bi-bookmark', !saved);
           });
-      });
+      };
+
+      btn.addEventListener('click', handleToggle);
+
+      if (row) {
+        row.addEventListener('click', (e) => {
+          if (e.target.closest('[data-save-toggle]')) return;
+          handleToggle(e);
+        });
+      }
     };
 
     if (saveCreateForm) {
@@ -588,7 +606,9 @@ document.addEventListener('DOMContentLoaded', function () {
               row.className = 'save-modal-row';
               row.setAttribute('data-collection-id', col.id);
               row.innerHTML = `
-                <div class="save-modal-avatar" aria-hidden="true">${(col.name || '').charAt(0).toUpperCase()}</div>
+                <div class="save-modal-avatar${col.thumb_url ? ' save-modal-avatar-has-thumb' : ''}" aria-hidden="true"${col.thumb_url ? ` style="background-image: url('${col.thumb_url}')"` : ''}>
+                  ${col.thumb_url ? '' : (col.name || '').charAt(0).toUpperCase()}
+                </div>
                 <div>
                   <p class="mb-0 fw-semibold"></p>
                   <p class="mb-0 text-muted small">Private</p>

@@ -7,98 +7,213 @@
 
 <main class="collection-shell container-fluid px-4 px-xl-5 pb-5">
   <header class="collection-header text-center">
-    <p class="collection-owner text-muted small mb-1">
-      {{ collection.followers|default:0 }} Follower{% if collection.followers|default:0 != 1 %}s{% endif %} · {{ profile.handle }}
+    <h1 class="collection-title mb-2">{{ collection.title }}</h1>
+
+    <p class="collection-header-subtitle mb-0">
+      <span class="collection-header-handle">{{ profile.handle }}</span>
     </p>
-    <h1 class="collection-title mb-1">{{ collection.title }}</h1>
-    {% if collection.description %}
-      <p class="collection-description mb-1">{{ collection.description }}</p>
-    {% endif %}
-    <div class="collection-menu-wrapper d-inline-block position-relative">
-      <button
-        type="button"
-        class="btn p-0 border-0 bg-transparent collection-menu-trigger"
-        aria-label="Collection options"
-        data-collection-menu-toggle
-      >
-        <i class="bi bi-three-dots"></i>
-      </button>
-      <div class="collection-menu shadow-lg" data-collection-menu>
-        <button type="button" class="collection-menu-item">Edit details</button>
-        <button type="button" class="collection-menu-item collection-menu-item-danger">Delete</button>
+
+    {% if profile.avatar_url %}
+      <div class="collection-header-avatar-shell">
+        <div class="collection-header-avatar" style="background-image: url('{{ profile.avatar_url }}');"></div>
       </div>
-    </div>
+      <div class="collection-header-menu dropdown mt-2">
+        <button
+          class="btn collection-header-menu-btn"
+          type="button"
+          id="collection-menu-dropdown"
+          data-bs-toggle="dropdown"
+          aria-expanded="false"
+          aria-label="Collection options"
+        >
+          <i class="bi bi-three-dots"></i>
+        </button>
+        <ul class="dropdown-menu collection-header-dropdown" aria-labelledby="collection-menu-dropdown">
+          <li>
+            <button
+              class="dropdown-item"
+              type="button"
+              id="edit-collection-button"
+              data-collection-action="edit"
+              data-collection-title="{{ collection.title }}"
+            >
+              Edit collection
+            </button>
+          </li>
+          <li>
+            <button
+              class="dropdown-item text-danger"
+              type="button"
+              id="delete-collection-button"
+              data-collection-action="delete"
+            >
+              Delete
+            </button>
+          </li>
+        </ul>
+      </div>
+    {% endif %}
   </header>
 
   <section class="collection-grid">
-    {% for item in collection.items %}
-      <article class="collection-item">
-        <div class="collection-item-thumb" style="background-image: url('{{ item }}');"></div>
-        {% if forloop.first %}
-          <div class="collection-check">
-            <span>Traverse</span>
-            <i class="bi bi-check2"></i>
+    {% if posts %}
+      <div class="collection-masonry">
+        {% for column in collection_columns %}
+          <div class="collection-masonry-column">
+            {% include "partials/recipe_grid_items.html" with posts=column %}
           </div>
-        {% endif %}
-      </article>
-    {% endfor %}
+        {% endfor %}
+      </div>
+    {% else %}
+      <p class="text-muted mt-3">No recipes in this collection yet.</p>
+    {% endif %}
   </section>
 </main>
+
+<div class="modal fade" id="editCollectionModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content save-modal edit-collection-modal">
+      <div class="modal-header border-0">
+        <div class="d-flex flex-column w-100">
+          <h5 class="modal-title">Edit Details</h5>
+        </div>
+        <button type="button" class="btn-close save-modal-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form id="edit-collection-form">
+          <div class="mb-3 edit-collection-field">
+            <label for="edit-collection-title" class="form-label text-muted small">Title</label>
+            <input
+              type="text"
+              class="form-control save-modal-input"
+              id="edit-collection-title"
+              name="title"
+              value="{{ collection.title }}"
+              required
+            >
+          </div>
+          <div class="d-flex justify-content-end mt-3">
+            <button type="submit" class="btn btn-light edit-collection-done-btn">Done</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
-  document.addEventListener('DOMContentLoaded', function () {
-    const trigger = document.querySelector('[data-collection-menu-toggle]');
-    const menu = document.querySelector('[data-collection-menu]');
-    if (!trigger || !menu) return;
+document.addEventListener('DOMContentLoaded', function () {
+  const editBtn = document.getElementById('edit-collection-button');
+  const deleteBtn = document.getElementById('delete-collection-button');
+  const editModalEl = document.getElementById('editCollectionModal');
+  const editForm = document.getElementById('edit-collection-form');
+  const titleInput = document.getElementById('edit-collection-title');
+  const hasBootstrapModal = !!(window.bootstrap && bootstrap.Modal);
+  const csrfToken = "{{ csrf_token }}";
+  const collectionId = "{{ collection.slug }}";
+  const editEndpoint = "{% url 'update_collection' slug=collection.slug %}";
+  const deleteEndpoint = "{% url 'delete_collection' slug=collection.slug %}";
 
-    const openClass = 'collection-menu-open';
+  let editModalInstance = null;
 
-    const closeMenu = () => {
-      menu.classList.remove(openClass);
-      document.removeEventListener('click', outsideHandler, true);
-      document.removeEventListener('keydown', escHandler, true);
-    };
+  function showEditModal() {
+    if (!editModalEl) return;
+    if (editBtn && titleInput) {
+      const currentTitle = editBtn.getAttribute('data-collection-title') || '';
+      titleInput.value = currentTitle;
+    }
+    if (hasBootstrapModal) {
+      editModalInstance = bootstrap.Modal.getOrCreateInstance(editModalEl);
+      editModalInstance.show();
+    } else {
+      editModalEl.classList.add('show');
+      editModalEl.style.display = 'block';
+      editModalEl.removeAttribute('aria-hidden');
+      document.body.classList.add('modal-open');
+    }
+  }
 
-    const outsideHandler = (event) => {
-      if (menu.contains(event.target) || trigger.contains(event.target)) return;
-      closeMenu();
-    };
+  function hideEditModal() {
+    if (!editModalEl) return;
+    if (hasBootstrapModal && editModalInstance) {
+      editModalInstance.hide();
+    } else {
+      editModalEl.classList.remove('show');
+      editModalEl.style.display = 'none';
+      editModalEl.setAttribute('aria-hidden', 'true');
+      document.body.classList.remove('modal-open');
+    }
+  }
 
-    const escHandler = (event) => {
-      if (event.key === 'Escape') {
-        closeMenu();
-      }
-    };
-
-    trigger.addEventListener('click', function (event) {
-      event.preventDefault();
-      const isOpen = menu.classList.contains(openClass);
-      if (isOpen) {
-        closeMenu();
-      } else {
-        menu.classList.add(openClass);
-        document.addEventListener('click', outsideHandler, true);
-        document.addEventListener('keydown', escHandler, true);
-      }
+  if (editBtn && editForm && titleInput) {
+    editBtn.addEventListener('click', function (e) {
+      e.preventDefault();
+      showEditModal();
     });
 
-    const editBtn = menu.querySelector('.collection-menu-item:not(.collection-menu-item-danger)');
-    const deleteBtn = menu.querySelector('.collection-menu-item-danger');
+    editForm.addEventListener('submit', function (e) {
+      e.preventDefault();
+      const newTitle = (titleInput.value || '').trim();
+      if (!newTitle) {
+        titleInput.focus();
+        return;
+      }
 
-    if (editBtn) {
-      editBtn.addEventListener('click', function (event) {
-        event.preventDefault();
-        // Placeholder hook for future edit behaviour
-        closeMenu();
-      });
-    }
+      const body = new URLSearchParams({ title: newTitle }).toString();
 
-    if (deleteBtn) {
-      deleteBtn.addEventListener('click', function (event) {
-        event.preventDefault();
-        // Placeholder hook for future delete behaviour
-        closeMenu();
-      });
-    }
-  });
+      fetch(editEndpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
+          'X-CSRFToken': csrfToken,
+          'X-Requested-With': 'XMLHttpRequest',
+        },
+        body,
+      })
+        .then((resp) => resp.ok ? resp.json().catch(() => null) : null)
+        .then((data) => {
+          const updatedTitle = data && data.title ? data.title : newTitle;
+          const titleEls = document.querySelectorAll('.collection-title');
+          titleEls.forEach((el) => {
+            el.textContent = updatedTitle;
+          });
+          if (editBtn) {
+            editBtn.setAttribute('data-collection-title', updatedTitle);
+          }
+          hideEditModal();
+        })
+        .catch(() => {
+          hideEditModal();
+        });
+    });
+  }
+
+  if (deleteBtn) {
+    deleteBtn.addEventListener('click', function (e) {
+      e.preventDefault();
+      const confirmed = window.confirm('Delete this collection? This cannot be undone.');
+      if (!confirmed) return;
+
+      const body = new URLSearchParams({ id: collectionId }).toString();
+
+      fetch(deleteEndpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
+          'X-CSRFToken': csrfToken,
+          'X-Requested-With': 'XMLHttpRequest',
+        },
+        body,
+      })
+        .then((resp) => resp.ok ? resp.json().catch(() => null) : null)
+        .then(() => {
+          window.location.href = "{% url 'collections' %}";
+        })
+        .catch(() => {
+          window.location.href = "{% url 'collections' %}";
+        });
+    });
+  }
+});
 </script>
 {% endblock %}

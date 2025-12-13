@@ -158,14 +158,14 @@
               </a>
               {% elif notif.notification_type == 'follow' %}
                  {% if following_ids and notif.sender.id in following_ids %}
-                   <form method="post" action="{% url 'toggle_follow' notif.sender.username %}" class="ms-auto">
+                   <form method="post" action="{% url 'toggle_follow' notif.sender.username %}" class="ms-auto notification-follow-form" data-follow-state="following">
                     {% csrf_token %}
-                    <button class="btn btn-outline-light btn-sm py-0 px-2 rounded-3" style="font-size: 0.75rem;">Remove</button>
+                    <button class="btn btn-outline-light btn-sm py-0 px-2 rounded-3" style="font-size: 0.75rem;" data-follow-state="following">Remove</button>
                    </form>
                  {% else %}
-                   <form method="post" action="{% url 'toggle_follow' notif.sender.username %}" class="ms-auto">
+                   <form method="post" action="{% url 'toggle_follow' notif.sender.username %}" class="ms-auto notification-follow-form" data-follow-state="not-following">
                     {% csrf_token %}
-                    <button class="btn btn-primary btn-sm py-0 px-2 rounded-3" style="font-size: 0.75rem;">Follow back</button>
+                    <button class="btn btn-primary btn-sm py-0 px-2 rounded-3" style="font-size: 0.75rem;" data-follow-state="not-following">Follow</button>
                    </form>
                  {% endif %}
               {% elif notif.notification_type == 'follow_request' and notif.follow_request %}
@@ -190,6 +190,55 @@
           </div>
         </div>
       </div>
+
+      <script>
+        document.addEventListener('DOMContentLoaded', function () {
+          const followForms = document.querySelectorAll('.notification-follow-form');
+          if (!followForms.length) return;
+
+          followForms.forEach(function (form) {
+            form.addEventListener('submit', function (event) {
+              event.preventDefault();
+
+              const button = form.querySelector('button[data-follow-state]');
+              if (!button) {
+                form.submit();
+                return;
+              }
+
+              const currentState = button.getAttribute('data-follow-state') || 'not-following';
+              const formData = new FormData(form);
+              const csrfInput = form.querySelector('input[name="csrfmiddlewaretoken"]');
+              const csrfToken = csrfInput ? csrfInput.value : null;
+
+              fetch(form.action, {
+                method: 'POST',
+                body: formData,
+                headers: Object.assign(
+                  { 'X-Requested-With': 'XMLHttpRequest' },
+                  csrfToken ? { 'X-CSRFToken': csrfToken } : {}
+                ),
+                redirect: 'manual'
+              }).then(function () {
+                if (currentState === 'not-following') {
+                  button.textContent = 'Following';
+                  button.classList.remove('btn-primary');
+                  button.classList.add('btn-outline-light');
+                  button.setAttribute('data-follow-state', 'following');
+                } else {
+                  button.textContent = 'Follow';
+                  button.classList.remove('btn-outline-light');
+                  button.classList.add('btn-primary');
+                  button.setAttribute('data-follow-state', 'not-following');
+                }
+              }).catch(function () {
+                // If the request fails, fall back to normal form submit
+                form.submit();
+              });
+            });
+          });
+        });
+      </script>
 
       <a href="{% url 'collections' %}" class="icon-button d-none d-md-inline-flex">
         <i class="bi {% if request.resolver_match.url_name == 'collections' %}bi-bookmark-fill{% else %}bi-bookmark{% endif %}"></i>

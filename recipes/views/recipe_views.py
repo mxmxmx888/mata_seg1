@@ -137,19 +137,51 @@ def recipe_detail(request, post_id):
 
         # build per-collection state for the save modal
         favourites_qs = Favourite.objects.filter(user=request.user).prefetch_related(
-            "items__recipe_post"
+            "items__recipe_post",
+            "cover_post",
         )
         for fav in favourites_qs:
             items = list(fav.items.all())
-            is_in_collection = any(item.recipe_post_id == recipe.id for item in items)
+            is_in_collection = False
+            last_saved_at = fav.created_at
+            cover_post = fav.cover_post
+
+            for item in items:
+                if item.recipe_post_id == recipe.id:
+                    is_in_collection = True
+                if item.added_at and (last_saved_at is None or item.added_at > last_saved_at):
+                    last_saved_at = item.added_at
+                if not cover_post and item.recipe_post:
+                    cover_post = item.recipe_post
+
+            thumb_url = None
+            if cover_post:
+                thumb_url = getattr(cover_post, "primary_image_url", None) or getattr(
+                    cover_post,
+                    "image",
+                    None,
+                )
+            if not thumb_url:
+                thumb_url = "https://placehold.co/1200x800/0f0f14/ffffff?text=Collection"
+
             collections_for_modal.append(
                 {
                     "id": str(fav.id),
                     "name": fav.name,
                     "saved": is_in_collection,
                     "count": len(items),
+                    "thumb_url": thumb_url,
+                    "last_saved_at": last_saved_at,
                 }
             )
+
+        # sort so that collections containing this recipe appear first,
+        # and within each group, most recently used collections come first
+        collections_for_modal.sort(
+            key=lambda c: c.get("last_saved_at") or c.get("created_at"),
+            reverse=True,
+        )
+        collections_for_modal.sort(key=lambda c: 0 if c.get("saved") else 1)
 
         is_following_author = Follower.objects.filter(
             follower=request.user,
@@ -298,6 +330,15 @@ def toggle_favourite(request, post_id):
 
     is_ajax = request.headers.get("HX-Request") or request.headers.get("x-requested-with") == "XMLHttpRequest"
     if is_ajax:
+        # choose a thumbnail for this collection: explicit cover_post first,
+        # otherwise fall back to the current recipe that was just toggled
+        cover_post = favourite.cover_post or recipe
+        thumb_url = getattr(cover_post, "primary_image_url", None) or getattr(
+            cover_post,
+            "image",
+            None,
+        ) or "https://placehold.co/1200x800/0f0f14/ffffff?text=Collection"
+
         payload = {
             "saved": is_saved_now,
             "saved_count": new_count,
@@ -305,6 +346,7 @@ def toggle_favourite(request, post_id):
                 "id": str(favourite.id),
                 "name": favourite.name,
                 "created": created_collection,
+                "thumb_url": thumb_url,
             },
         }
         return JsonResponse(payload)

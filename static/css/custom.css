@@ -89,9 +89,9 @@
 
 .navbar-app .dropdown-menu,
 .navbar-squarespace .dropdown-menu {
-    background-color: #0f0f14;
-    border: 1px solid #2a2a35;
-    color: #ffffff;
+    background-color: #252525;
+    border: 1px solid #1c1c1c;
+    color: #f5f5f5;
     box-shadow: 0 10px 30px rgba(0,0,0,0.5);
     border-radius: 12px;
     padding: 0.5rem 0;
@@ -113,7 +113,7 @@
 
 .navbar-app .dropdown-divider,
 .navbar-squarespace .dropdown-divider {
-    border-top-color: #2a2a35;
+    border-top-color: #303030;
     margin: 0.5rem 0;
 }
 
@@ -122,15 +122,15 @@
     align-items: center;
     justify-content: space-between;
     padding: 0.8rem 1.2rem;
-    border-bottom: 1px solid #2a2a35;
+    border-bottom: 1px solid #303030;
     margin-bottom: 0.5rem;
-    background-color: #0f0f14;
+    background-color: #252525;
 }
 
 /* Header Title */
 .dropdown-header.notification-header span,
 .dropdown-header.notification-header h6 {
-    color: #ffffff;
+    color: #f5f5f5;
     font-weight: 700;
     font-size: 0.95rem;
     margin: 0;
@@ -155,7 +155,7 @@
 .dropdown-menu .empty-notifications {
     padding: 2rem 1rem;
     text-align: center;
-    color: #666;
+    color: #f5f5f5;
 }
 
 /* Message toast styling */

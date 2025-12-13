@@ -1,7 +1,7 @@
 from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
-from django.http import Http404
+from django.http import Http404, JsonResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from recipes.forms import UserForm
@@ -162,19 +162,28 @@ def _collections_for_user(user):
     favourites = (
         Favourite.objects.filter(user=user)
         .prefetch_related("items__recipe_post")
-        .order_by("created_at")
     )
 
     collections = []
     for fav in favourites:
-        items = [item.recipe_post for item in fav.items.all() if item.recipe_post]
+        items = list(fav.items.all())
+        last_saved_at = fav.created_at
 
-        if not items:
+        cover_post = getattr(fav, "cover_post", None)
+        visible_posts = []
+        for item in items:
+            if item.recipe_post:
+                visible_posts.append(item.recipe_post)
+            if item.added_at and (last_saved_at is None or item.added_at > last_saved_at):
+                last_saved_at = item.added_at
+            if not cover_post and item.recipe_post:
+                cover_post = item.recipe_post
+
+        if not visible_posts:
             count = 0
             cover_url = "https://placehold.co/1200x800/0f0f14/ffffff?text=Collection"
         else:
-            count = len(items)
-            cover_post = items[0]
+            count = len(visible_posts)
             cover_url = getattr(cover_post, "primary_image_url", None) or getattr(
                 cover_post, "image", None
             ) or "https://placehold.co/1200x800/0f0f14/ffffff?text=Collection"
@@ -183,12 +192,15 @@ def _collections_for_user(user):
             {
                 "id": str(fav.id),
                 "slug": str(fav.id),
-                "title": fav.name.title(),
+                "title": fav.name,
                 "count": count,
                 "privacy": None,
                 "cover": cover_url,
+                "last_saved_at": last_saved_at,
             }
         )
+
+    collections.sort(key=lambda c: c.get("last_saved_at"), reverse=True)
 
     return collections
 
@@ -344,30 +356,69 @@ def collection_detail(request, slug):
     items_qs = FavouriteItem.objects.filter(favourite=favourite).select_related(
         "recipe_post"
     )
-    image_urls = []
+    posts = []
     for item in items_qs:
         post = item.recipe_post
         if not post:
             continue
-        url = getattr(post, "primary_image_url", None) or getattr(post, "image", None)
-        if not url:
-            url = "https://placehold.co/1200x800/0f0f14/ffffff?text=Recipe"
-        image_urls.append(url)
+        posts.append(post)
 
     collection = {
         "id": str(favourite.id),
         "slug": str(favourite.id),
-        "title": favourite.name.title(),
+        "title": favourite.name,
         "description": "",
         "followers": 0,
-        "items": image_urls,
+        "items": posts,
     }
+
+    # Distribute posts into 5 masonry columns (row-wise across the page)
+    num_columns = 5
+    collection_columns = [[] for _ in range(num_columns)]
+    for idx, post in enumerate(posts):
+        collection_columns[idx % num_columns].append(post)
 
     context = {
         "profile": _profile_data_for_user(request.user),
         "collection": collection,
+        "posts": posts,
+        "collection_columns": collection_columns,
     }
     return render(request, "collection_detail.html", context)
+
+
+@login_required
+@require_POST
+def delete_collection(request, slug):
+    favourite = get_object_or_404(Favourite, id=slug, user=request.user)
+    favourite.delete()
+
+    is_ajax = request.headers.get("HX-Request") or request.headers.get("x-requested-with") == "XMLHttpRequest"
+    if is_ajax:
+        return JsonResponse({"deleted": True})
+
+    return redirect(reverse("collections"))
+
+
+@login_required
+@require_POST
+def update_collection(request, slug):
+    favourite = get_object_or_404(Favourite, id=slug, user=request.user)
+    new_title = (request.POST.get("title") or request.POST.get("name") or "").strip()
+
+    if new_title:
+        favourite.name = new_title
+        favourite.save(update_fields=["name"])
+
+    is_ajax = request.headers.get("HX-Request") or request.headers.get("x-requested-with") == "XMLHttpRequest"
+    payload = {
+        "id": str(favourite.id),
+        "title": favourite.name,
+    }
+    if is_ajax:
+        return JsonResponse(payload)
+
+    return redirect(reverse("collection_detail", kwargs={"slug": favourite.id}))
 
 
 @login_required
