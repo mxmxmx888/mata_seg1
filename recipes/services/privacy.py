@@ -3,7 +3,6 @@ from recipes.models.followers import Follower
 from recipes.models.close_friend import CloseFriend
 from recipes.models.recipe_post import RecipePost
 
-
 class PrivacyService:
     def __init__(self, follower_model=Follower, close_friend_model=CloseFriend):
         self.follower_model = follower_model

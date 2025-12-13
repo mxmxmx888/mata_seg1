@@ -8,8 +8,7 @@ class AvatarFileInput(forms.FileInput):
     template_name = "widgets/avatar_file_input.html"
 
 class UserForm(forms.ModelForm):
-
-    # Form to update user profile information.
+    # Form to update user profile info
     avatar = forms.ImageField(required=False, widget=AvatarFileInput())
     remove_avatar = forms.BooleanField(required=False, widget=forms.HiddenInput())
 
@@ -74,9 +73,7 @@ class NewPasswordMixin(forms.Form):
                 'Confirmation does not match password.'
             )
 
-
 class PasswordForm(NewPasswordMixin):
-    #Form enabling authenticated users to change their password.
     password = forms.CharField(label='Current password', widget=forms.PasswordInput())
 
     def __init__(self, user=None, **kwargs):  
@@ -85,7 +82,7 @@ class PasswordForm(NewPasswordMixin):
 
     def clean(self):
 
-        #validating the current and new password fields.
+        #validating the current and new password fields
         super().clean()
         password = self.cleaned_data.get('password')
         if self.user is not None:
@@ -96,25 +93,20 @@ class PasswordForm(NewPasswordMixin):
             self.add_error('password', "Password is invalid")
 
     def save(self):
-        #Update the user's password with the new validated password.
+        #Update the user's password with the new validated password
         new_password = self.cleaned_data['new_password']
         if self.user is not None:
             self.user.set_password(new_password)
             self.user.save()
         return self.user
 
-
 class SignUpForm(NewPasswordMixin, forms.ModelForm):
-
-    # Form enabling new users to register for an account.
     class Meta:
-        """Form options."""
-
         model = User
         fields = ['first_name', 'last_name', 'username', 'email']
 
     def save(self):
-        #Create and return a new User instance.
+        #Create and return a new User 
         super().save(commit=False)
 
         username = self.cleaned_data.get('username')

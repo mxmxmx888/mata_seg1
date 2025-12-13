@@ -1,5 +1,3 @@
-# recipes/forms/recipe_forms.py
-
 from django import forms
 import re
 
