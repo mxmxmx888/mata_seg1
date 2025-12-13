@@ -218,9 +218,7 @@ def dashboard(request):
         )
 
     if category and category != "all":
-        discover_qs = discover_qs.filter(
-            tags__icontains=f"category:{category.lower()}"
-        )
+        discover_qs = discover_qs.filter(category__iexact=category)
 
     if min_prep or max_prep:
         total_time_expr = ExpressionWrapper(
