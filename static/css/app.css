@@ -245,16 +245,19 @@ body.shop-body .navbar-app {
 /* Dashboard filters at the top of Discover */
 .dashboard-filters {
   gap: 1.1rem;
-  max-width: 520px;
+  max-width: 100%;
   margin-inline: auto;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
 }
 
 .dashboard-filter-select,
 .dashboard-filter-input {
   border: none;
   border-radius: 999px;
-  padding: 0.25rem 0.8rem;
-  font-size: 0.8rem;
+  padding: 0.35rem 0.95rem;
+  font-size: 0.85rem;
   color: #9ca3af;
   box-shadow: none;
   width: auto;
@@ -263,13 +266,32 @@ body.shop-body .navbar-app {
 }
 
 .dashboard-filter-select {
-  padding-right: 1.5rem;
+  padding-right: 1.6rem;
   display: inline-block;
-  min-width: 0;
+  min-width: 190px;
 }
 
 .dashboard-filter-input {
-  min-width: 170px;
+  min-width: 260px;
+  flex: 0 1 300px;
+}
+
+.dashboard-have-ingredients {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 0 1 480px;
+  flex-wrap: nowrap;
+}
+
+.dashboard-have-ingredients .dashboard-filter-input {
+  flex: 1 1 340px;
+  min-width: 280px;
+}
+
+.dashboard-have-ingredients .btn {
+  flex: 0 0 auto;
+  white-space: nowrap;
 }
 
 .dashboard-filter-select:focus,
@@ -286,7 +308,6 @@ body.shop-body .navbar-app {
   color: #f9fafb;
 }
 
-/* Light mode: soft grey pill + black text on hover */
 body[data-theme="light"] .dashboard-filter-select:hover,
 body[data-theme="light"] .dashboard-filter-select:focus,
 body[data-theme="light"] .dashboard-filter-input:hover,
