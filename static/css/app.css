@@ -1840,7 +1840,7 @@ body[data-theme="light"] .collection-header-dropdown {
   margin-bottom: 1.25rem;
 }
 
-/*  3-COLUMN MY RECIPES GRID (used across profile, My recipes, Discover, For you / Following) */
+/*  3-COLUMN MY RECIPES GRID (used across profile, My recipes, Discover) */
 .my-recipes-grid {
   column-count: 3;
   column-gap: 1.8rem;
@@ -1892,25 +1892,21 @@ body[data-theme="light"] .collection-header-dropdown {
   color: #9899aa;
   margin-bottom: 0.1rem;
 }
-
-/* Ensure masonry-style columns stay top-aligned inside dashboard tab panes (For you / Following) */
-#forYou .my-recipes-grid,
-#following .my-recipes-grid {
-  column-count: 3;
-  column-gap: 1.8rem;
+/* 3-column masonry layout specifically for dashboard feed (For you / Following) */
+.feed-masonry-grid {
+  display: flex;
+  gap: 1.8rem;
+  align-items: flex-start;
 }
 
-@media (max-width: 1200px) {
-  #forYou .my-recipes-grid,
-  #following .my-recipes-grid {
-    column-count: 2;
-  }
+.feed-masonry-column {
+  flex: 1 1 0;
 }
 
-@media (max-width: 700px) {
-  #forYou .my-recipes-grid,
-  #following .my-recipes-grid {
-    column-count: 1;
+@media (max-width: 900px) {
+  .feed-masonry-grid {
+    flex-direction: column;
+    gap: 1.5rem;
   }
 }
 
