@@ -10,3 +10,4 @@ from .follows import Follows
 from .followers import Follower
 from .report import Report
 from .notification import Notification
+from .follow_request import FollowRequest

@@ -1,5 +1,5 @@
 {% load static %}
-{% with avatar_url=profile.avatar_url|default:request.user.avatar_url %}
+{% with avatar_url=navbar_avatar_url|default:request.user.avatar_url %}
 <nav class="navbar navbar-expand-lg navbar-squarespace navbar-app">
   <div class="container-fluid px-4 px-xl-5">
 
@@ -95,6 +95,8 @@
                     commented: "{{ notif.comment.text|truncatechars:30 }}"
                   {% elif notif.notification_type == 'follow' %}
                     started following you.
+                  {% elif notif.notification_type == 'follow_request' %}
+                    requested to follow you.
                   {% elif notif.notification_type == 'tag' %}
                     tagged you in a comment.
                   {% endif %}
@@ -108,7 +110,28 @@
                 <img src="{{ notif.post.image }}" class="rounded-1" width="40" height="40" style="object-fit: cover;">
               </a>
               {% elif notif.notification_type == 'follow' %}
-                 <button class="btn btn-primary btn-sm py-0 px-2 rounded-3" style="font-size: 0.75rem;">Follow</button>
+                 {% if following_ids and notif.sender.id in following_ids %}
+                   <form method="post" action="{% url 'toggle_follow' notif.sender.username %}" class="ms-auto">
+                    {% csrf_token %}
+                    <button class="btn btn-outline-light btn-sm py-0 px-2 rounded-3" style="font-size: 0.75rem;">Remove</button>
+                   </form>
+                 {% else %}
+                   <form method="post" action="{% url 'toggle_follow' notif.sender.username %}" class="ms-auto">
+                    {% csrf_token %}
+                    <button class="btn btn-primary btn-sm py-0 px-2 rounded-3" style="font-size: 0.75rem;">Follow back</button>
+                   </form>
+                 {% endif %}
+              {% elif notif.notification_type == 'follow_request' and notif.follow_request %}
+                 <div class="d-flex gap-2 ms-auto">
+                   <form method="post" action="{% url 'accept_follow_request' notif.follow_request.id %}">
+                     {% csrf_token %}
+                     <button class="btn btn-primary btn-sm py-0 px-2 rounded-3" style="font-size: 0.75rem;">Accept</button>
+                   </form>
+                   <form method="post" action="{% url 'reject_follow_request' notif.follow_request.id %}">
+                     {% csrf_token %}
+                     <button class="btn btn-outline-light btn-sm py-0 px-2 rounded-3" style="font-size: 0.75rem;">Reject</button>
+                   </form>
+                 </div>
               {% endif %}
             </div>
             {% empty %}

@@ -31,6 +31,7 @@ from recipes.views.recipe_views import (
     delete_my_recipe,
     toggle_follow,
 )
+from recipes.views.follow_request_views import accept_follow_request, reject_follow_request
 from recipes.views.profile_view import collections_overview
 
 urlpatterns = [
@@ -59,6 +60,8 @@ urlpatterns = [
     path('saved/', saved_recipes, name='saved_recipes'),
     path('api/profile', views.profile_api, name='profile_api'),
     path('u/<str:username>/follow/', toggle_follow, name='toggle_follow'),
+    path('follow-requests/<uuid:request_id>/accept/', accept_follow_request, name='accept_follow_request'),
+    path('follow-requests/<uuid:request_id>/reject/', reject_follow_request, name='reject_follow_request'),
     path('report/<str:content_type>/<uuid:object_id>/', views.report_content, name='report_content'),
     path('shop/', views.shop, name='shop'),
     path('api/notifications/read/', views.mark_notifications_read, name='mark_notifications_read'),

@@ -23,6 +23,7 @@ class User(AbstractUser):
         help_text="short user bio shown on profile"
     )
     avatar = models.ImageField(upload_to="avatars/", blank=True, null=True)
+    is_private = models.BooleanField(default=False)
 
     class Meta:
         ordering = ['last_name', 'first_name']

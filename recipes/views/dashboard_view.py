@@ -7,6 +7,7 @@ from django.utils import timezone
 from django.template.loader import render_to_string
 from django.contrib.auth import get_user_model
 from django.views.decorators.http import require_GET
+from recipes.services import PrivacyService
 try:
     from recipes.models import RecipePost, Favourite, FavouriteItem, Like, Follower
 except Exception:
@@ -15,7 +16,6 @@ except Exception:
     from recipes.models.favourite_item import FavouriteItem
     from recipes.models.like import Like
     from recipes.models.followers import Follower
-
 
 def _normalise_tags(tags):
     if not tags:
@@ -78,8 +78,10 @@ def _score_post_for_user(post, preferred_tags):
 
     return score
 
-def _get_for_you_posts(user, query=None, limit=12, offset=0, seed=None):
-    qs = _base_posts_queryset()
+privacy_service = PrivacyService()
+
+def _get_for_you_posts(user, query=None, limit=12, offset=0, seed=None, privacy=privacy_service):
+    qs = privacy.filter_visible_posts(_base_posts_queryset(), user)
 
     if query:
         qs = qs.filter(
@@ -87,7 +89,7 @@ def _get_for_you_posts(user, query=None, limit=12, offset=0, seed=None):
             | Q(description__icontains=query)
             | Q(tags__icontains=query)
         )
-        
+
     preferred_tags = _user_preference_tags(user)
 
     posts = list(qs[:100])
@@ -137,6 +139,8 @@ def dashboard(request):
     if not request.user.is_authenticated:
         return render(request, "discover_logged_out.html")
 
+    privacy = privacy_service
+
     for_you_seed = request.session.get("for_you_seed")
     if request.GET.get("for_you_ajax") != "1":
         for_you_seed = random.random()
@@ -182,6 +186,8 @@ def dashboard(request):
             tags__icontains=f"category:{category.lower()}"
         )
 
+    discover_qs = privacy.filter_visible_posts(discover_qs, request.user)
+
     if sort == "popular":
         discover_qs = discover_qs.order_by("-saved_count", "-published_at", "-created_at")
     elif sort == "oldest":
@@ -207,7 +213,7 @@ def dashboard(request):
             for_you_seed = random.random()
             request.session["for_you_seed"] = for_you_seed
 
-        posts = _get_for_you_posts(request.user, limit=limit, offset=offset, seed=for_you_seed)
+        posts = _get_for_you_posts(request.user, limit=limit, offset=offset, seed=for_you_seed, privacy=privacy)
         html = render_to_string(
             "partials/recipe_grid_items.html",
             {"posts": posts, "request": request},
@@ -250,7 +256,7 @@ def dashboard(request):
         following_posts = []
     else:
         popular_recipes = list(discover_qs[:18])
-        for_you_posts = _get_for_you_posts(request.user, seed=for_you_seed)
+        for_you_posts = _get_for_you_posts(request.user, seed=for_you_seed, privacy=privacy)
         following_posts = _get_following_posts(request.user)
 
     context = {

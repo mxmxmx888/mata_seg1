@@ -1,13 +1,9 @@
-# recipes/views/log_in_view.py
-
 from django.shortcuts import render, redirect
 from django.urls import reverse
 from django.contrib.auth import login
 from django.views import View
-
 from recipes.forms.log_in_form import LogInForm
 from recipes.views.decorators import LoginProhibitedMixin
-
 
 class LogInView(LoginProhibitedMixin, View):
     def dispatch(self, request, *args, **kwargs):

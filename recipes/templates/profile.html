@@ -40,70 +40,84 @@
           Edit Profile
         </button>
       {% else %}
-        <form method="post" action="{% url 'toggle_follow' profile_user.username %}">
-          {% csrf_token %}
-          {% if is_following %}
+        {% if pending_follow_request %}
+          <form method="post" action="">
+            {% csrf_token %}
+            <input type="hidden" name="cancel_request" value="1">
             <button type="submit" class="profile-pill">
-              Unfollow
+              Requested
             </button>
-          {% else %}
-            <button type="submit" class="profile-pill">
-              Follow
-            </button>
-          {% endif %}
-        </form>
+          </form>
+        {% else %}
+          <form method="post" action="{% url 'toggle_follow' profile_user.username %}">
+            {% csrf_token %}
+            {% if is_following %}
+              <button type="submit" class="profile-pill">
+                Unfollow
+              </button>
+            {% else %}
+              <button type="submit" class="profile-pill">
+                Follow
+              </button>
+            {% endif %}
+          </form>
+        {% endif %}
       {% endif %}
     </div>    
   </section>
 
   <section class="mt-4">
-    {% if posts %}
-      <div class="my-recipes-grid mt-3">
-        {% for post in posts %}
-          <article class="my-recipe-card">
-            <h2 class="my-recipe-title">
-              <a href="{% url 'recipe_detail' post.id %}">
-                {{ post.title }}
-              </a>
-            </h2>
+    {% if can_view_profile %}
+      {% if posts %}
+        <div class="my-recipes-grid mt-3">
+          {% for post in posts %}
+            <article class="my-recipe-card">
+              <h2 class="my-recipe-title">
+                <a href="{% url 'recipe_detail' post.id %}">
+                  {{ post.title }}
+                </a>
+              </h2>
 
-            <div class="my-recipe-meta">
-              {% if post.prep_time_min %}
-                <span>Prep {{ post.prep_time_min }} min</span>
-              {% endif %}
-              {% if post.cook_time_min %}
-                <span>Cook {{ post.cook_time_min }} min</span>
-              {% endif %}
-            </div>
+              <div class="my-recipe-meta">
+                {% if post.prep_time_min %}
+                  <span>Prep {{ post.prep_time_min }} min</span>
+                {% endif %}
+                {% if post.cook_time_min %}
+                  <span>Cook {{ post.cook_time_min }} min</span>
+                {% endif %}
+              </div>
 
-            {% if post.description %}
-              <p class="my-recipe-description">
-                {{ post.description|truncatechars:140 }}
-              </p>
-            {% endif %}
-
-            <div class="my-recipe-actions">
-              <a href="{% url 'recipe_detail' post.id %}" class="btn btn-sm btn-outline-light">
-                View
-              </a>
-              {% if is_own_profile %}
-                <form method="post" action="{% url 'delete_my_recipe' post.id %}">
-                  {% csrf_token %}
-                  <button type="submit" class="btn btn-sm btn-outline-danger">
-                    Delete
-                  </button>
-                </form>
+              {% if post.description %}
+                <p class="my-recipe-description">
+                  {{ post.description|truncatechars:140 }}
+                </p>
               {% endif %}
-            </div>
-          </article>
-        {% endfor %}
-      </div>
-    {% else %}
-      {% if is_own_profile %}
-        <p class="text-muted mt-4">You haven't created any recipes yet.</p>
+
+              <div class="my-recipe-actions">
+                <a href="{% url 'recipe_detail' post.id %}" class="btn btn-sm btn-outline-light">
+                  View
+                </a>
+                {% if is_own_profile %}
+                  <form method="post" action="{% url 'delete_my_recipe' post.id %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-sm btn-outline-danger">
+                      Delete
+                    </button>
+                  </form>
+                {% endif %}
+              </div>
+            </article>
+          {% endfor %}
+        </div>
       {% else %}
-        <p class="text-muted mt-4">This user hasn't created any recipes yet.</p>
+        {% if is_own_profile %}
+          <p class="text-muted mt-4">You haven't created any recipes yet.</p>
+        {% else %}
+          <p class="text-muted mt-4">This user hasn't created any recipes yet.</p>
+        {% endif %}
       {% endif %}
+    {% else %}
+      <p class="text-muted mt-4">This account is private. Follow to see their recipes.</p>
     {% endif %}
   </section>
 </main>

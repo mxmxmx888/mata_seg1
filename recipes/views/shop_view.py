@@ -5,6 +5,10 @@ from django.http import JsonResponse
 from django.shortcuts import render
 from django.template.loader import render_to_string
 from recipes.models import Ingredient
+from recipes.models import RecipePost
+from recipes.services import PrivacyService
+
+privacy_service = PrivacyService()
 
 @login_required
 def shop(request):
@@ -15,6 +19,12 @@ def shop(request):
         .select_related("recipe_post")
         .order_by("-id")
     )
+
+    visible_posts = privacy_service.filter_visible_posts(
+        RecipePost.objects.filter(id__in=items_qs.values_list("recipe_post_id", flat=True).distinct()),
+        request.user,
+    ).values_list("id", flat=True)
+    items_qs = items_qs.filter(recipe_post_id__in=visible_posts)
 
     paginator = Paginator(items_qs, 24)
     page_number = request.GET.get("page") or 1

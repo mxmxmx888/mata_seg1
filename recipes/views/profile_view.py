@@ -4,16 +4,19 @@ from django.contrib.auth.decorators import login_required
 from django.http import Http404
 from django.shortcuts import redirect, render
 from django.urls import reverse
-
 from recipes.forms import UserForm
 from recipes.repos.post_repo import PostRepo
 from recipes.repos.user_repo import UserRepo
 from recipes.models import Follower
-from recipes.models import Follower
+from recipes.models.follow_request import FollowRequest
+from recipes.services import PrivacyService
+from recipes.services import FollowService
 
 User = get_user_model()
 post_repo = PostRepo()
 user_repo = UserRepo()
+privacy_service = PrivacyService()
+follow_service_factory = FollowService
 
 COMMON_COLLECTION_ITEMS = [
     "https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=1200&q=80",
@@ -128,7 +131,6 @@ PROFILE_COLLECTIONS = [
     },
 ]
 
-
 def _profile_data_for_user(user):
     fallback_handle = "@anmzn"
     handle = user.username or fallback_handle
@@ -140,6 +142,7 @@ def _profile_data_for_user(user):
         "following": 2,
         "followers": 0,
         "avatar_url": user.avatar_url,
+        "is_private": getattr(user, "is_private", False),
     }
 
 @login_required
@@ -157,37 +160,47 @@ def profile(request):
 
     followers_qs = Follower.objects.filter(author=profile_user).select_related("follower")
     following_qs = Follower.objects.filter(follower=profile_user).select_related("author")
-
     followers_count = followers_qs.count()
     following_count = following_qs.count()
-
     followers_users = [relation.follower for relation in followers_qs]
     following_users = [relation.author for relation in following_qs]
 
     is_following = False
+    pending_request = None
     if not is_own_profile:
         is_following = Follower.objects.filter(
             follower=request.user,
             author=profile_user,
         ).exists()
+        if not is_following and getattr(profile_user, "is_private", False):
+            pending_request = FollowRequest.objects.filter(
+                requester=request.user,
+                target=profile_user,
+                status=FollowRequest.STATUS_PENDING,
+            ).first()
 
     is_own_profile = profile_user == request.user
 
     followers_qs = Follower.objects.filter(author=profile_user).select_related("follower")
     following_qs = Follower.objects.filter(follower=profile_user).select_related("author")
-
     followers_count = followers_qs.count()
     following_count = following_qs.count()
-
     followers_users = [relation.follower for relation in followers_qs]
     following_users = [relation.author for relation in following_qs]
 
     is_following = False
+    pending_request = None
     if not is_own_profile:
         is_following = Follower.objects.filter(
             follower=request.user,
             author=profile_user,
         ).exists()
+        if not is_following and getattr(profile_user, "is_private", False):
+            pending_request = FollowRequest.objects.filter(
+                requester=request.user,
+                target=profile_user,
+                status=FollowRequest.STATUS_PENDING,
+            ).first()
 
     profile_data = _profile_data_for_user(profile_user)
     profile_data["followers"] = followers_count
@@ -196,6 +209,10 @@ def profile(request):
     profile_data["following"] = following_count
 
     if request.method == "POST":
+        if request.POST.get("cancel_request") == "1":
+            service = follow_service_factory(request.user)
+            service.cancel_request(profile_user)
+            return redirect(request.get_full_path())
         if profile_user != request.user:
             return redirect("profile")
         form = UserForm(request.POST, request.FILES, instance=request.user)
@@ -209,10 +226,15 @@ def profile(request):
         else:
             form = None
 
-    posts = post_repo.list_for_user(
-        profile_user.id,
-        order_by=("-created_at",),
-    )
+    can_view_profile = privacy_service.can_view_profile(request.user, profile_user)
+
+    if can_view_profile:
+        posts = post_repo.list_for_user(
+            profile_user.id,
+            order_by=("-created_at",),
+        )
+    else:
+        posts = []
 
     return render(
         request,
@@ -229,6 +251,8 @@ def profile(request):
             "followers_users": followers_users,
             "following_users": following_users,
             "posts": posts,
+            "can_view_profile": can_view_profile,
+            "pending_follow_request": pending_request,
         },
     )
 
