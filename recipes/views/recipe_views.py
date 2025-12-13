@@ -74,6 +74,7 @@ def recipe_detail(request, post_id):
     recipe = get_object_or_404(RecipePost, id=post_id)
     ingredients_qs = Ingredient.objects.filter(recipe_post=recipe).order_by("position")
     steps_qs = RecipeStep.objects.filter(recipe_post=recipe).order_by("position")
+    images_qs = recipe.images.all()
 
     if not privacy_service.can_view_post(request.user, recipe):
         raise Http404("Post not available.")
@@ -86,7 +87,6 @@ def recipe_detail(request, post_id):
     if request.user.is_authenticated:
         user_liked = Like.objects.filter(user=request.user, recipe_post=recipe).exists()
 
-        # saved = recipe exists in the user's default "favourites" collection
         user_saved = FavouriteItem.objects.filter(
             favourite__user=request.user,
             favourite__name="favourites",
@@ -100,7 +100,6 @@ def recipe_detail(request, post_id):
 
     likes_count = Like.objects.filter(recipe_post=recipe).count()
 
-    # saves = how many times this recipe appears in any collection
     saves_count = FavouriteItem.objects.filter(recipe_post=recipe).count()
 
     image_url = None
@@ -155,8 +154,8 @@ def recipe_detail(request, post_id):
         "is_following_author": is_following_author,
         "likes_count": likes_count,
         "saves_count": saves_count,
-        "comments": comments, # Pass actual comments
-        "comment_form": CommentForm(), # Pass empty form
+        "comments": comments,
+        "comment_form": CommentForm(),
         "gallery_images": gallery_images,
         "video_url": None,
         "view_similar": [],
@@ -263,12 +262,9 @@ def add_comment(request, post_id):
 @login_required
 def delete_comment(request, comment_id):
     comment = get_object_or_404(Comment, id=comment_id)
-    
-    # Security check: only allow the author to delete
     if comment.user != request.user:
         messages.error(request, "You are not allowed to delete this comment.")
         return redirect('recipe_detail', post_id=comment.recipe_post.id)
-        
     post_id = comment.recipe_post.id
     comment.delete()
     messages.success(request, "Comment deleted.")
