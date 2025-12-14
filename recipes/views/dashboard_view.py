@@ -185,8 +185,6 @@ def dashboard(request):
             t.strip().lower() for t in tokens if t.strip()
         ]
 
-    combined_keyword = " ".join(part for part in [q, ingredient_q] if part).strip()
-
     has_search = (
         mode == "search"
         or bool(q or ingredient_q or have_ingredients_list or min_prep or max_prep or (category and category != "all"))
@@ -210,15 +208,18 @@ def dashboard(request):
             Q(tags__icontains="#private") & ~Q(author=request.user)
         )
 
-    if combined_keyword:
+    if q:
         discover_qs = discover_qs.filter(
-            Q(title__icontains=combined_keyword)
-            | Q(description__icontains=combined_keyword)
-            | Q(tags__icontains=combined_keyword)
-        )
+            ingredients__name__icontains=q.lower()
+        ).distinct()
 
     if category and category != "all":
         discover_qs = discover_qs.filter(category__iexact=category)
+
+    if ingredient_q:
+        discover_qs = discover_qs.filter(
+            ingredients__name__icontains=ingredient_q.lower()
+        ).distinct()
 
     if min_prep or max_prep:
         total_time_expr = ExpressionWrapper(
