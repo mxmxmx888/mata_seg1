@@ -3,7 +3,7 @@ import re
 from django.core.paginator import Paginator
 from django.http import JsonResponse
 from django.shortcuts import render
-from django.db.models import Q, F, ExpressionWrapper, IntegerField
+from django.db.models import Q, F, ExpressionWrapper, IntegerField, Exists, OuterRef
 from django.utils import timezone
 from django.template.loader import render_to_string
 from django.contrib.auth import get_user_model
@@ -241,23 +241,21 @@ def dashboard(request):
                 pass
 
     if have_ingredients_list:
-        allowed_set = set(have_ingredients_list)
-        recipe_ids = []
+        allowed_names = [name.lower() for name in have_ingredients_list]
 
-        for recipe in discover_qs:
-            ingredient_qs = Ingredient.objects.filter(recipe_post=recipe).values_list("name", flat=True)
-            ingredient_names = [
-                (name or "").strip().lower()
-                for name in ingredient_qs
-                if name and name.strip()
-            ]
-            if not ingredient_names:
-                continue
-            names_set = set(ingredient_names)
-            if names_set.issubset(allowed_set):
-                recipe_ids.append(recipe.id)
+        disallowed_subquery = Ingredient.objects.filter(
+            recipe_post_id=OuterRef("pk")
+        ).exclude(name__in=allowed_names)
 
-        discover_qs = discover_qs.filter(id__in=recipe_ids)
+        allowed_subquery = Ingredient.objects.filter(
+            recipe_post_id=OuterRef("pk"),
+            name__in=allowed_names,
+        )
+
+        discover_qs = discover_qs.annotate(
+            has_disallowed=Exists(disallowed_subquery),
+            has_allowed=Exists(allowed_subquery),
+        ).filter(has_disallowed=False, has_allowed=True)
 
     discover_qs = privacy.filter_visible_posts(discover_qs, request.user)
 
