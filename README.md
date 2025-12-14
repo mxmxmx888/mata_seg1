@@ -1,4 +1,4 @@
-# Team MATA Small Group project
+# Team Rose-4 Small Group project
 
 ## Team members
 The members of the team are:
