@@ -4,6 +4,28 @@ from django.conf import settings
 from .recipe_post import RecipePost
 from .comment import Comment
 
+"""
+Report model
+
+This table stores user reports for moderation.
+
+- A Report is created by a `reporter` (the user who is reporting something).
+- A report can target *either* a RecipePost OR a Comment:
+  - `recipe_post` is optional
+  - `comment` is optional
+  - In your app logic, you should ensure exactly one of them is set (not both, not neither).
+- `reason` is a short category (spam / inappropriate / harassment / other).
+- `description` is optional extra detail from the reporter.
+
+Moderation workflow:
+- `is_resolved` tracks whether an admin has dealt with the report.
+- `resolution_note` stores admin notes/explanation.
+
+Meta:
+- Stored in DB table name `report`
+- Default ordering shows newest reports first.
+"""
+
 class Report(models.Model):
     REPORT_REASONS = [
         ('spam', 'Spam'),

@@ -2,6 +2,27 @@ from django.db import models
 from .user import User
 from .recipe_post import RecipePost
 
+"""
+Like model
+
+This table represents a “like” that a user gives to a recipe post.
+
+Each row means:
+- one specific User liked one specific RecipePost.
+
+Key rules:
+- A user can only like the same post once.
+  This is enforced by `unique_together = (user, recipe_post)`.
+
+Relationships:
+- `user` is the person who liked the post.
+- `recipe_post` is the post being liked.
+
+Notes:
+- There is no separate UUID primary key here; instead, the pair (user, recipe_post)
+  acts like a “composite primary key” by being unique.
+- The `__str__` is mainly for admin/debugging: it prints "user_id → recipe_post_id".
+"""
 
 class Like(models.Model):
     user = models.ForeignKey(
