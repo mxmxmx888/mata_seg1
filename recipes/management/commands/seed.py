@@ -241,7 +241,7 @@ class Command(BaseCommand):
             "static/images/meal5.jpg",
             "static/images/meal6.jpg",
             "static/images/meal7.jpg",
-            "static/images/meal8.jpg",  
+            "static/images/meal8.jpg"  
         ]
 
         for author_id in user_ids:
