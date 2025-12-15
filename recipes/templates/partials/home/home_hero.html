@@ -1,0 +1,53 @@
+{% load static %}
+
+<!-- HERO: big heading + large media panel -->
+<section>
+  <div class="container-fluid py-5 px-4 px-xl-5">
+    <div class="row justify-content-center">
+      <div class="col-xxl-10">
+
+        <!-- Main heading + intro -->
+        <h1 class="display-3 fw-semibold mb-3 hero-title">
+          Proud to serve home cooks.
+        </h1>
+        <p class="lead text-muted col-lg-7 ps-0 hero-lead">
+          Recipi is a simple platform where people save their own recipes,
+          discover ideas from others, and follow clear step-by-step instructions
+          while they cook.
+        </p>
+
+        <!-- Image + supporting copy row -->
+        <div class="row align-items-start g-4 mt-4">
+          <div class="col-lg-8">
+            <!-- Hero image / video placeholder -->
+            <div class="ratio ratio-16x9 overflow-hidden bg-light">
+              <div class="ratio ratio-1x1 overflow-hidden">
+                <img
+                  src="{% static 'img/hero-salad.jpg' %}"
+                  class="square-img"
+                  alt="One-pan lemon chicken"
+                >
+              </div>
+            </div>
+          </div>
+
+          <div class="col-lg-4 d-flex flex-column justify-content-between">
+            <blockquote class="small text-muted mb-4">
+              “Recipi becomes the single place where everyone in a household
+              or friend group can see what actually works in the kitchen.”
+            </blockquote>
+            <p class="small text-muted mb-3">
+              The system keeps recipes structured but readable, so that time,
+              difficulty and ingredients are always visible at a glance.
+            </p>
+            <a href="#spaces" class="small text-decoration-none fw-semibold">
+              Start with the core spaces →
+            </a>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</section>
+

@@ -63,12 +63,11 @@ def recipe_create(request):
                 recipe.image = primary_image.image.url
                 recipe.save(update_fields=["image"])
 
-            messages.success(request, "Recipe created.")
             return redirect("recipe_detail", post_id=recipe.id)
     else:
         form = RecipePostForm()
 
-    return render(request, "create_recipe.html", {"form": form})
+    return render(request, "app/create_recipe.html", {"form": form})
 
 @login_required
 def recipe_edit(request, post_id):
@@ -108,7 +107,7 @@ def recipe_edit(request, post_id):
     else:
         form = RecipePostForm(instance=recipe)
 
-    return render(request, "edit_recipe.html", {"form": form, "recipe": recipe})
+    return render(request, "app/edit_recipe.html", {"form": form, "recipe": recipe})
 
 @login_required
 def recipe_detail(request, post_id):
@@ -252,7 +251,7 @@ def recipe_detail(request, post_id):
         "save_collections": collections_for_modal,
         "visibility": recipe.visibility,
     }
-    return render(request, "post_detail.html", context)
+    return render(request, "post/post_detail.html", context)
 
 @login_required
 def my_recipes(request):
@@ -260,7 +259,7 @@ def my_recipes(request):
         request.user.id,
         order_by=("-created_at",),
     )
-    return render(request, "my_recipes.html", {"posts": posts})
+    return render(request, "app/my_recipes.html", {"posts": posts})
 
 @login_required
 def saved_recipes(request):
@@ -279,7 +278,7 @@ def saved_recipes(request):
         seen_ids.add(post.id)
         posts.append(post)
 
-    return render(request, "saved_recipes.html", {"posts": posts})
+    return render(request, "app/saved_recipes.html", {"posts": posts})
 
 @login_required
 def delete_my_recipe(request, post_id):

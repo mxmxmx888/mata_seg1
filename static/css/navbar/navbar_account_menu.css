@@ -1,0 +1,129 @@
+/* ===== Original account menu styles (restores old behaviour) ===== */
+
+.nav-account-caret-btn {
+  width: auto;
+  height: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+.nav-account-caret-btn:focus,
+.nav-account-caret-btn:focus-visible,
+.nav-account-caret-btn:active {
+  outline: none;
+  box-shadow: none;
+  border: none;
+}
+
+.nav-account-caret {
+  width: 20px;
+  height: 20px;
+  transform: translateY(1px);
+}
+
+.nav-account-menu {
+  /* Position the account dropdown directly under the caret button */
+  transform: translate(0, var(--navbar-dropdown-offset));
+  right: 0;
+  left: auto;
+  max-width: min(320px, calc(100vw - 24px));
+  border-radius: 16px;
+  min-width: 230px;
+  padding: 0.8rem;
+  background-color: #252525;
+  color: #f5f5f5;
+  border: 3px solid #1c1c1c;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02);
+}
+
+/* Dark-mode dropdown styling to match the navbar */
+body[data-theme="dark"] .nav-account-menu {
+  background-color: #252525;
+  color: #f5f5f5;
+  border: 8px solid #1c1c1c;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02);
+}
+
+body[data-theme="dark"] .nav-account-menu .dropdown-item {
+  color: inherit;
+}
+
+body[data-theme="dark"] .nav-account-menu .dropdown-divider {
+  border-color: #303030;
+}
+
+/* Light-mode dropdown styling */
+body[data-theme="light"] .nav-account-menu {
+  background-color: rgb(236, 236, 236);
+  color: #111827;
+  border: 10px solid rgb(236, 236, 236);
+}
+
+body[data-theme="light"] .nav-account-menu .dropdown-item {
+  color: inherit;
+}
+
+body[data-theme="light"] .nav-account-menu .dropdown-divider {
+  border-color: #d1d5db;
+}
+
+.nav-account-menu-header {
+  padding: 0.4rem 0 0.6rem;
+}
+
+.nav-account-menu-avatar {
+  display: inline-flex;
+  width: 56px;
+  height: 56px;
+  border-radius: 999px;
+  background: radial-gradient(circle at 30% 20%, #facc15, #4f46e5);
+  border: 2px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.35);
+  overflow: hidden;
+  clip-path: circle(50%);
+}
+
+.nav-account-menu-avatar,
+.avatar-pill {
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.nav-account-menu-avatar img,
+.avatar-pill img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  display: block;
+}
+
+.nav-account-menu-name {
+  margin-top: 0.5rem;
+  font-weight: 500;
+  font-size: 0.95rem;
+  color: inherit;
+  font-family: var(--heading-font);
+}
+
+.nav-account-menu .dropdown-item {
+  padding: 0.55rem 0.2rem;
+  font-weight: 400;
+  font-size: 0.8rem;
+  color: inherit;
+  transition: opacity 0.15s ease;
+}
+
+.nav-account-menu .dropdown-item:hover,
+.nav-account-menu .dropdown-item:focus {
+  background-color: transparent;
+  color: inherit;
+  opacity: 0.7;
+}

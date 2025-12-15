@@ -1,0 +1,283 @@
+{% load static %}
+{% with avatar_url=navbar_avatar_url|default:request.user.avatar_url %}
+<nav class="navbar navbar-expand-lg navbar-squarespace navbar-app">
+  <div class="container-fluid px-4 px-xl-5">
+
+    <div class="d-flex align-items-center gap-4">
+      <a class="navbar-brand fw-semibold mb-0" href="{% url 'dashboard' %}">
+        Recipi
+      </a>
+
+      {# Desktop / large-screen primary nav #}
+      <ul class="navbar-nav d-none d-lg-flex gap-3">
+        <li class="nav-item">
+          <a class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}" href="{% url 'dashboard' %}">Discover</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link {% if request.resolver_match.url_name == 'shop' %}active{% endif %}" href="{% url 'shop' %}">Shop</a>
+        </li>
+      </ul>
+    </div>
+
+    <div class="navbar-search-wrapper">
+      <form
+        class="cosmos-nav-search w-100"
+        method="get"
+        action="{% url 'dashboard' %}"
+        autocomplete="off"
+      >
+        <input
+          class="form-control cosmos-nav-search-input"
+          type="search"
+          name="q"
+          placeholder="Try ‘15 minute pasta’ or ‘one-pan chicken’"
+          value="{{ search_query|default:'' }}"
+          autocomplete="off"
+          autocorrect="off"
+          autocapitalize="off"
+          spellcheck="false"
+        />
+
+        <div class="prep-filter-wrapper">
+          <button class="cosmos-nav-search-icon" type="button" id="prepTimeToggle">
+            <i class="bi bi-clock-history"></i>
+          </button>
+
+          <div class="prep-filter-popover" id="prepFilterPopover">
+            <div class="prep-time-popover-title">Time taken</div>
+
+            <div class="prep-filter-row">
+              <label for="minPrepInput">Min</label>
+              <input
+                id="minPrepInput"
+                type="number"
+                name="min_prep"
+                min="0"
+                max="600"
+                step="1"
+                value="{{ request.GET.min_prep|default:'' }}"
+              />
+              <span class="prep-filter-unit">min</span>
+            </div>
+
+            <div class="prep-filter-row">
+              <label for="maxPrepInput">Max</label>
+              <input
+                id="maxPrepInput"
+                type="number"
+                name="max_prep"
+                min="0"
+                max="600"
+                step="1"
+                value="{{ request.GET.max_prep|default:'' }}"
+              />
+              <span class="prep-filter-unit">min</span>
+            </div>
+
+            <div class="prep-filter-actions">
+              <button type="submit" class="btn prep-filter-submit btn-sm rounded-pill">
+                Search
+              </button>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <!-- Mobile hamburger toggler: opens full-screen menu -->
+    <button
+      class="navbar-toggler d-lg-none ms-2 app-menu-toggle"
+      type="button"
+      aria-expanded="false"
+      aria-label="Toggle navigation"
+    >
+      <span class="navbar-toggler-icon"></span>
+      <span class="app-menu-close-icon">&times;</span>
+    </button>
+
+    <div class="collapse navbar-collapse justify-content-end" id="appNavbarMenu">
+      <div class="navbar-actions ms-auto d-flex align-items-center gap-2">
+        <a href="{% url 'recipe_create' %}" class="btn btn-dark rounded-pill px-2">
+          Create
+        </a>
+
+      <div class="dropdown">
+        <button
+          class="icon-button position-relative"
+          type="button"
+          id="notificationDropdown"
+          data-bs-toggle="dropdown"
+          aria-expanded="false"
+          data-bs-auto-close="outside"
+        >
+          <i class="bi bi-heart"></i>
+          {% if unread_notifications_count > 0 %}
+          <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle notification-dot">
+            <span class="visually-hidden">New alerts</span>
+          </span>
+          {% endif %}
+        </button>
+
+          <div class="dropdown-menu dropdown-menu-end notification-menu border-0" aria-labelledby="notificationDropdown">
+            <div class="dropdown-header notification-header">
+              <span>Activity</span>
+            </div>
+
+          <div class="notification-list">
+            {% for notif in notifications %}
+            <div class="dropdown-item px-3 py-3 d-flex align-items-start gap-3 {% if not notif.is_read %}notification-unread{% endif %}">
+              <a href="{% url 'profile_api' %}?u={{ notif.sender.username }}" class="flex-shrink-0">
+                <img src="{{ notif.sender.mini_avatar_url }}" alt="{{ notif.sender.username }}" class="rounded-circle" width="40" height="40" style="object-fit: cover;">
+              </a>
+              
+              <div class="flex-grow-1">
+                <p class="mb-0 small text-wrap">
+                  <span class="fw-bold">{{ notif.sender.username }}</span>
+                  {% if notif.notification_type == 'like' %}
+                    liked your recipe.
+                  {% elif notif.notification_type == 'comment' %}
+                    commented: "{{ notif.comment.text|truncatechars:30 }}"
+                  {% elif notif.notification_type == 'follow' %}
+                    started following you.
+                  {% elif notif.notification_type == 'follow_request' %}
+                    requested to follow you.
+                  {% elif notif.notification_type == 'tag' %}
+                    tagged you in a comment.
+                  {% endif %}
+                  
+                  <span class="text-muted ms-1">{{ notif.created_at|timesince }} ago</span>
+                </p>
+              </div>
+
+              {% if notif.post and notif.post.image %}
+              <a href="{% url 'recipe_detail' notif.post.id %}" class="flex-shrink-0">
+                <img src="{{ notif.post.image }}" class="rounded-1" width="40" height="40" style="object-fit: cover;">
+              </a>
+              {% elif notif.notification_type == 'follow' %}
+                 {% if following_ids and notif.sender.id in following_ids %}
+                   <form method="post" action="{% url 'toggle_follow' notif.sender.username %}" class="ms-auto notification-follow-form" data-follow-state="following">
+                    {% csrf_token %}
+                    <button class="btn btn-outline-light btn-sm py-0 px-2 rounded-3" style="font-size: 0.75rem;" data-follow-state="following">Remove</button>
+                   </form>
+                 {% else %}
+                   <form method="post" action="{% url 'toggle_follow' notif.sender.username %}" class="ms-auto notification-follow-form" data-follow-state="not-following">
+                    {% csrf_token %}
+                    <button class="btn btn-primary btn-sm py-0 px-2 rounded-3" style="font-size: 0.75rem;" data-follow-state="not-following">Follow</button>
+                   </form>
+                 {% endif %}
+              {% elif notif.notification_type == 'follow_request' and notif.follow_request %}
+                 <div class="d-flex gap-2 ms-auto">
+                   <form method="post" action="{% url 'accept_follow_request' notif.follow_request.id %}">
+                     {% csrf_token %}
+                     <button class="btn btn-primary btn-sm py-0 px-2 rounded-3" style="font-size: 0.75rem;">Accept</button>
+                   </form>
+                   <form method="post" action="{% url 'reject_follow_request' notif.follow_request.id %}">
+                     {% csrf_token %}
+                     <button class="btn btn-outline-light btn-sm py-0 px-2 rounded-3" style="font-size: 0.75rem;">Reject</button>
+                   </form>
+                 </div>
+              {% endif %}
+            </div>
+            {% empty %}
+            <div class="text-center py-5 empty-notifications">
+              <i class="bi bi-bell-slash mb-3 d-block" style="font-size: 1.6rem;"></i>
+              <p class="small mb-0">No notifications yet.</p>
+            </div>
+            {% endfor %}
+      </div>
+        </div>
+      </div>
+
+      <a href="{% url 'collections' %}" class="icon-button d-none d-md-inline-flex">
+        <i class="bi {% if request.resolver_match.url_name == 'collections' %}bi-bookmark-fill{% else %}bi-bookmark{% endif %}"></i>
+      </a>
+
+        <a
+          href="{% url 'profile' %}"
+          class="avatar-pill"
+          aria-label="Profile"
+          {% if avatar_url %}style="background-image: url('{{ avatar_url }}');"{% endif %}
+        >
+          {% if avatar_url %}
+            <img src="{{ avatar_url }}" alt="{{ user.username }} avatar">
+          {% endif %}
+        </a>
+        <div class="dropdown">
+          <button
+            class="nav-account-trigger nav-account-caret-btn"
+            type="button"
+            id="app-account-dropdown"
+            data-bs-toggle="dropdown"
+            aria-expanded="false"
+            aria-label="Open account menu"
+          >
+            <svg class="nav-account-caret" width="28" height="28" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+              <path d="m6 9 6 6 6-6" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end nav-account-menu" aria-labelledby="app-account-dropdown">
+            <li class="nav-account-menu-header text-center">
+              <a
+                href="{% url 'profile' %}"
+                class="nav-account-menu-avatar"
+                {% if avatar_url %}style="background-image: url('{{ avatar_url }}');"{% endif %}
+              >
+                {% if avatar_url %}
+                  <img src="{{ avatar_url }}" alt="{{ user.username }} avatar">
+                {% endif %}
+              </a>
+              <p class="nav-account-menu-name mb-0">{{ user.username }}</p>
+            </li>
+            <li><hr class="dropdown-divider"></li>
+            <li>
+              <a
+                class="dropdown-item"
+                href="#"
+                data-bs-toggle="modal"
+                data-bs-target="#editProfileModal"
+              >
+                Settings
+              </a>
+            </li>
+            <li><a class="dropdown-item" href="mailto:recipify.reset@gmail.com">Contact us</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item" href="{% url 'log_out' %}">Log out</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</nav>
+
+{# Full-screen mobile nav overlay #}
+<div class="app-fullscreen-menu d-lg-none" id="appFullScreenMenu" aria-hidden="true">
+  <button
+    type="button"
+    class="app-fullscreen-menu-close"
+    aria-label="Close navigation menu"
+  >
+    &times;
+  </button>
+
+  <div class="app-fullscreen-menu-inner">
+    <nav class="app-fullscreen-menu-nav">
+      <a class="app-fullscreen-menu-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}" href="{% url 'dashboard' %}">Discover</a>
+      <a class="app-fullscreen-menu-link {% if request.resolver_match.url_name == 'shop' %}active{% endif %}" href="{% url 'shop' %}">Shop</a>
+      <a class="app-fullscreen-menu-link" href="{% url 'collections' %}">Collections</a>
+      <a class="app-fullscreen-menu-link" href="{% url 'profile' %}">Profile</a>
+    </nav>
+    <div class="app-fullscreen-menu-cta">
+      <a href="{% url 'recipe_create' %}" class="btn btn-light rounded-pill px-4">
+        Create a recipe
+      </a>
+    </div>
+  </div>
+</div>
+
+{% include "partials/profile/edit_profile_modal.html" %}
+{% include "partials/profile/edit_profile_modal_script.html" %}
+{% include "partials/profile/profile_scripts.html" %}
+{% endwith %}
+
+{% include "partials/navbar/navbar_app_scripts.html" %}

@@ -34,7 +34,7 @@ def shop(request):
 
     if is_ajax:
         html = render_to_string(
-            "partials/shop_items.html",
+            "partials/shop/shop_items.html",
             {"items": page_obj.object_list},
             request=request,
         )
@@ -49,4 +49,4 @@ def shop(request):
         "items": page_obj.object_list,
         "page_obj": page_obj,
     }
-    return render(request, "shop.html", context)
+    return render(request, "app/shop.html", context)

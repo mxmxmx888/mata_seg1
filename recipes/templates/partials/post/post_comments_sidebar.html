@@ -1,0 +1,75 @@
+<aside class="col-xxl-3 col-xl-3 col-lg-3">
+  <div class="post-comments-panel">
+    <header class="d-flex align-items-center justify-content-between mb-3">
+      <h2 class="h6 mb-0">Comments</h2>
+      <span class="badge bg-secondary rounded-pill">{{ comments|length }}</span>
+    </header>
+
+    {% if request.user.is_authenticated %}
+    <form action="{% url 'add_comment' recipe.id %}" method="post" class="mb-3">
+      {% csrf_token %}
+      <div class="mb-2">
+        <textarea
+          class="form-control"
+          name="text"
+          rows="2"
+          placeholder="Share your thoughts..."
+          required
+        ></textarea>
+      </div>
+      <div class="d-flex justify-content-end">
+        <button type="submit" class="btn btn-sm btn-dark rounded-pill px-3">
+          Comment
+        </button>
+      </div>
+    </form>
+    {% else %}
+    <p class="text-muted small mb-3">
+      <a href="{% url 'log_in' %}">Log in</a> to add a comment.
+    </p>
+    {% endif %}
+
+    <div class="post-comments-list">
+      {% for comment in comments %}
+      <div class="post-comment d-flex align-items-start justify-content-between mb-3">
+        <div class="d-flex align-items-start gap-2">
+          <div class="comment-avatar" style="min-width: 32px; width: 32px; height: 32px; border-radius: 50%; background: #eee; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: bold; color: #555;">
+            <img
+              src="{{ comment.user.mini_avatar_url }}"
+              alt="{{ comment.user.username }} avatar"
+              style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;"
+            >
+          </div>
+          <div>
+            <div class="d-flex align-items-baseline gap-2">
+              <p class="mb-0 fw-bold" style="font-size: 0.9rem;">{{ comment.user.username }}</p>
+              <span class="text-muted small" style="font-size: 0.75rem;">{{ comment.created_at|timesince }} ago</span>
+            </div>
+            <p class="mb-0 text-dark small" style="line-height: 1.4;">{{ comment.text }}</p>
+          </div>
+        </div>
+        
+        <div class="d-flex align-items-center gap-2">
+          {% if request.user == comment.user %}
+          <form action="{% url 'delete_comment' comment.id %}" method="post" onsubmit="return confirm('Delete this comment?');">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-link text-danger p-0 border-0 opacity-50 hover-opacity-100" style="font-size: 0.8rem;" title="Delete">
+              <i class="bi bi-trash"></i>
+            </button>
+          </form>
+          {% endif %}
+          
+          <a href="{% url 'report_content' 'comment' comment.id %}" class="text-secondary opacity-50 hover-opacity-100" title="Report">
+            <i class="bi bi-flag" style="font-size: 0.8rem;"></i>
+          </a>
+        </div>
+      </div>
+      {% empty %}
+      <div class="text-center py-4">
+        <p class="text-muted small mb-0">No comments yet. Be the first!</p>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</aside>
+

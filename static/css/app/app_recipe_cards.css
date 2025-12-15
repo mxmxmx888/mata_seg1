@@ -1,0 +1,201 @@
+/* My recipes grid + cards */
+
+.my-recipes-title {
+  font-size: 1.9rem;
+}
+
+.my-recipes-grid {
+  margin-top: 1.5rem;
+}
+
+.my-recipe-card {
+  border-radius: 18px;
+  border: 1px solid #26262f;
+  background-color: #050509;
+  padding: 1.25rem 1.35rem;
+}
+
+.my-recipe-thumb {
+  border-radius: 14px;
+  overflow: hidden;
+  margin: -0.15rem -0.15rem 0.75rem;
+  background: #111;
+  position: relative;
+  padding-top: 75%;
+}
+
+.my-recipe-thumb-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+@supports (aspect-ratio: 4 / 3) {
+  .my-recipe-thumb {
+    padding-top: 0;
+    aspect-ratio: 4 / 3;
+  }
+}
+
+.my-recipe-title {
+  margin: 0 0 0.3rem;
+  font-size: 1rem;
+}
+
+.my-recipe-title-link {
+  color: #f5f5f7;
+  text-decoration: none;
+}
+
+.my-recipe-title-link:hover {
+  text-decoration: underline;
+}
+
+.my-recipe-meta {
+  font-size: 0.8rem;
+  color: #a3a4b1;
+  margin-bottom: 0.6rem;
+}
+
+.my-recipe-desc {
+  font-size: 0.9rem;
+  color: #d4d5e0;
+}
+
+.navbar-app .navbar-search-wrapper {
+  max-width: 640px;
+}
+
+@media (max-width: 1200px) {
+  .navbar-app .navbar-search-wrapper {
+    max-width: 520px;
+  }
+}
+
+@media (max-width: 992px) {
+  .navbar-app .navbar-search-wrapper {
+    display: none;
+  }
+}
+
+.my-recipes-shell {
+  min-height: calc(100vh - 72px);
+  padding: 2.5rem 3vw 3rem;
+}
+
+.my-recipes-shell .my-recipes-title {
+  font-size: clamp(1.6rem, 2.3vw, 2rem);
+  margin-bottom: 1.25rem;
+}
+
+/*  3-COLUMN MY RECIPES GRID (used across profile, My recipes, Discover) */
+.my-recipes-grid {
+  column-count: 3;
+  column-gap: 1.8rem;
+}
+
+@media (max-width: 1200px) {
+  .my-recipes-grid {
+    column-count: 2;  /* tablet view */
+  }
+}
+
+@media (max-width: 700px) {
+  .my-recipes-grid {
+    column-count: 1;
+  }
+}
+
+.my-recipe-card {
+  break-inside: avoid;
+  -webkit-column-break-inside: avoid;
+  margin-bottom: 1.8rem;
+  border-radius: 18px;
+  border: 1px solid #262633;
+  background-color: #050509;
+  padding: 1.1rem 1.2rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  cursor: pointer;
+}
+
+.my-recipe-title {
+  font-size: 1.3rem;
+  margin-bottom: 0.15rem;
+}
+
+.my-recipe-title a {
+  color: #f6f6f8;
+  text-decoration: none;
+}
+
+.my-recipe-title a:hover {
+  text-decoration: none;
+}
+
+.my-recipe-category {
+  font-size: 0.75rem;
+  color: #9899aa;
+  margin-bottom: 0.1rem;
+}
+
+/* 3-column masonry layout specifically for dashboard feed (For you / Following) */
+.feed-masonry-grid {
+  display: flex;
+  gap: 1.8rem;
+  align-items: flex-start;
+}
+
+.feed-masonry-column {
+  flex: 1 1 0;
+}
+
+@media (max-width: 900px) {
+  .feed-masonry-grid {
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+}
+
+.my-recipe-meta {
+  font-size: 0.82rem;
+  color: #a2a3b4;
+}
+
+.my-recipe-meta span + span {
+  margin-left: 0.75rem;
+}
+
+.my-recipe-description {
+  font-size: 0.86rem;
+  color: #c7c8d4;
+}
+
+body[data-theme="light"] .my-recipe-description {
+  color: #111827;
+}
+
+/* Light theme cards for feed grids */
+body[data-theme="light"] .my-recipe-card {
+  background-color: rgb(236, 236, 236);
+  border-color: #e4e4ef;
+  color: #111827;
+}
+
+body[data-theme="light"] .my-recipe-title a {
+  color: #111827;
+}
+
+.my-recipe-actions {
+  margin-top: 0.75rem;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.my-recipe-actions form {
+  margin: 0;
+}

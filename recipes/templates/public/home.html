@@ -1,0 +1,14 @@
+{% extends "base/base_public.html" %}
+{% load static %}
+
+{% block content %}
+<div class="bg-white text-dark pt-5">
+  {% include "partials/home/home_hero.html" %}
+  {% include "partials/home/home_spaces.html" %}
+  {% include "partials/home/home_why.html" %}
+  {% include "partials/home/home_impact.html" %}
+  {% include "partials/home/home_browse_preview.html" %}
+  {% include "partials/home/home_footer.html" %}
+</div>
+{% endblock content %}
+

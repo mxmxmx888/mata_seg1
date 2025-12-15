@@ -1,0 +1,77 @@
+<div class="modal fade" id="saveModal" tabindex="-1" aria-labelledby="saveModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content save-modal">
+      <div class="modal-header border-0 align-items-center">
+        <div class="d-flex flex-column">
+          <h5 class="modal-title" id="saveModalLabel">
+            <span data-save-title="list">Save to collection</span>
+            <span data-save-title="create" class="d-none">New collection</span>
+          </h5>
+          <p class="small text-muted mb-0" data-save-subtitle="list">Choose a collection for this recipe.</p>
+          <p class="small text-muted mb-0 d-none" data-save-subtitle="create">Name your new collection to save this recipe.</p>
+        </div>
+        <div class="save-modal-header-actions d-flex align-items-center gap-2">
+          <button type="button" class="save-modal-icon-btn" data-save-open-create data-hide-when-view="create" aria-label="Create new collection">
+            <i class="bi bi-plus-lg"></i>
+          </button>
+        </div>
+      </div>
+      <div class="modal-body">
+        <div class="save-modal-view" data-save-view="list">
+          <div class="save-modal-search mb-3">
+            <i class="bi bi-search"></i>
+            <input type="text" class="form-control" placeholder="Search collections" />
+          </div>
+          <ul class="save-modal-list list-unstyled mb-0">
+            {% for col in save_collections %}
+            <li class="save-modal-row" data-collection-id="{{ col.id }}">
+              <div
+                class="save-modal-avatar{% if col.thumb_url %} save-modal-avatar-has-thumb{% endif %}"
+                aria-hidden="true"
+                {% if col.thumb_url %}style="background-image: url('{{ col.thumb_url }}');"{% endif %}
+              >
+                {% if not col.thumb_url %}
+                  {{ col.name|first|upper }}
+                {% endif %}
+              </div>
+              <div>
+                <p class="mb-0 fw-semibold">{{ col.name }}</p>
+                <p class="mb-0 text-muted small">
+                  {{ col.count }} recipes · Private
+                </p>
+              </div>
+              <button
+                type="button"
+                class="save-modal-action"
+                aria-label="Toggle {{ col.name }}"
+                data-save-toggle
+                data-collection-id="{{ col.id }}"
+                data-saved="{{ col.saved|yesno:'1,0' }}"
+              >
+                <i class="bi {% if col.saved %}bi-bookmark-fill{% else %}bi-bookmark{% endif %}"></i>
+              </button>
+            </li>
+            {% empty %}
+            <li class="text-muted small px-1 py-2">
+              You don’t have any collections yet. Use the + to create one.
+            </li>
+            {% endfor %}
+          </ul>
+        </div>
+        <div class="save-modal-view d-none" data-save-view="create">
+          <form id="save-modal-create-form">
+            <div class="mb-3">
+              <label for="new-collection-name" class="form-label text-muted small">Collection name</label>
+              <input type="text" class="save-modal-input" id="new-collection-name" name="name" placeholder="e.g. Cozy winter dishes" required>
+            </div>
+            <div class="d-flex justify-content-between align-items-center">
+              <button type="button" class="btn btn-outline-secondary rounded-pill px-3" data-save-back>Cancel</button>
+              <button type="submit" class="btn btn-dark rounded-pill px-3">Create</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+

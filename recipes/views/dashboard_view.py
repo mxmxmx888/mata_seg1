@@ -156,7 +156,7 @@ def _search_users(query, limit=18):
 @require_GET
 def dashboard(request):
     if not request.user.is_authenticated:
-        return render(request, "discover_logged_out.html")
+        return render(request, "auth/discover_logged_out.html")
 
     privacy = privacy_service
 
@@ -285,7 +285,7 @@ def dashboard(request):
 
         posts = _get_for_you_posts(request.user, limit=limit, offset=offset, seed=for_you_seed, privacy=privacy)
         html = render_to_string(
-            "partials/recipe_grid_items.html",
+            "partials/recipes/recipe_grid_items.html",
             {"posts": posts, "request": request},
             request=request,
         )
@@ -309,7 +309,7 @@ def dashboard(request):
 
         if is_ajax:
             html = render_to_string(
-                "partials/recipe_grid_items.html",
+                "partials/recipes/recipe_grid_items.html",
                 {"posts": page_obj.object_list, "request": request},
                 request=request,
             )
@@ -344,4 +344,4 @@ def dashboard(request):
         "users_results": users_results,
         "have_ingredients": have_ingredients_raw,
     }
-    return render(request, "dashboard.html", context)
+    return render(request, "app/dashboard.html", context)

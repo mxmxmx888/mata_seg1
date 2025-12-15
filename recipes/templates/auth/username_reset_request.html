@@ -1,0 +1,26 @@
+{% extends "base/base_auth.html" %}
+{% load static %}
+
+{% block content %}
+<div class="auth-page">
+  <div class="auth-panel">
+    <div class="auth-card">
+      <h1 class="auth-title">Recover username</h1>
+      <p class="auth-subtitle">
+        Tell us the email linked to your account and we'll help you retrieve your username.
+      </p>
+      <form action="{% url 'username_reset' %}" method="post">
+        {% csrf_token %}
+        {% include "partials/forms/bootstrap_form.html" with form=form %}
+        <button type="submit" class="auth-primary-btn mt-2">
+          Continue
+        </button>
+      </form>
+      <p class="auth-meta">
+        Remember your username?
+        <a href="{% url 'log_in' %}">Back to log in</a>
+      </p>
+	  </div>
+	</div>
+</div>
+{% endblock %}

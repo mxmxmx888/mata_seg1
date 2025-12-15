@@ -1,0 +1,259 @@
+/* =================================== */
+/* Navbar styles                       */
+/* =================================== */
+
+/* Older Palantir-style navbar (kept for reference) */
+.navbar-palantir {
+  font-size: 0.85rem;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+
+.navbar-palantir .navbar-brand {
+  font-size: 0.9rem;
+}
+
+/* Rounded tiles to match image corners elsewhere */
+.tile-box {
+  border-radius: 0;
+}
+
+/* Larger serif headings inside tile-style cards */
+.tile-box h5,
+.tile-box .h5 {
+  font-size: 1.5rem;
+  line-height: 1.2;
+}
+
+.tile-box h6,
+.tile-box .h6 {
+  font-size: 1.35rem;
+  line-height: 1.2;
+}
+
+/* Buttons default to square for that Squarespace look */
+.btn {
+  border-radius: 0;
+}
+
+/* Shared navbar layout (landing + logged-in) */
+.navbar-squarespace {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1030;
+  background-color: transparent;
+  border-bottom: none !important;
+  padding-top: 0.3rem;
+  padding-bottom: 0.3rem;
+  box-shadow: none !important;
+  border: 0 !important;
+  --bs-navbar-border-width: 0;
+  --bs-navbar-border-color: transparent;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease, color 0.3s ease;
+}
+
+/* Strip any bootstrap hairlines */
+.navbar,
+.navbar::before,
+.navbar::after,
+.navbar *::before,
+.navbar *::after {
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+/* Brand sizing */
+.navbar-squarespace .navbar-brand {
+  position: relative;
+  top: -1px;
+  font-size: 1.8rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  text-transform: none;
+  font-family: var(--heading-font);
+}
+
+.navbar-squarespace .navbar-brand,
+.navbar-squarespace .nav-link {
+  color: #ffffff;
+}
+
+/* Public landing: keep the bar white so it blends into the page */
+body.public-body .navbar-squarespace {
+  background-color: #ffffff;
+}
+
+body.public-body .navbar-squarespace .navbar-brand,
+body.public-body .navbar-squarespace .nav-link {
+  color: #111827 !important;
+}
+
+body.public-body .navbar-squarespace .navbar-toggler-icon {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba(17,24,39,0.92)' stroke-linecap='round' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+}
+
+
+body.auth-body .navbar-squarespace .navbar-brand,
+body.auth-body .navbar-squarespace .nav-link {
+  color: #111827;
+}
+
+/* When scrolled */
+.navbar-squarespace.navbar-solid {
+  background-color: #ffffff;
+  border-bottom: none !important;
+  box-shadow: none !important;
+  border: 0 !important;
+}
+
+.navbar-squarespace.navbar-solid .navbar-brand,
+.navbar-squarespace.navbar-solid .nav-link {
+  color: #000;
+}
+
+/* Outline button */
+.navbar-squarespace.navbar-solid .btn.btn-outline-dark {
+  color: #000;
+  border-color: #000;
+  background-color: transparent;
+}
+
+.navbar-squarespace .btn.btn-outline-dark:hover,
+.navbar-squarespace .btn.btn-outline-dark:focus-visible {
+  background-color: #000000;
+  color: #ffffff;
+  border-color: #000000;
+}
+
+/* Create button */
+.navbar-squarespace.navbar-solid .btn.btn-dark {
+  background-color: #000;
+  color: #fff;
+  border-color: #000;
+}
+
+/* Mobile toggler */
+.navbar-squarespace .navbar-toggler {
+  border: none;
+  padding: 0.25rem 0.35rem;
+  box-shadow: none;
+  background: transparent;
+}
+
+.navbar-squarespace .navbar-toggler:focus {
+  box-shadow: none;
+}
+
+.navbar-squarespace .navbar-toggler-icon {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba(255,255,255,0.92)' stroke-linecap='round' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+}
+
+.navbar-squarespace.navbar-solid .navbar-toggler-icon {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba(0,0,0,0.85)' stroke-linecap='round' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+}
+
+/* Dark-mode toggler */
+body[data-theme="dark"] .navbar-squarespace .navbar-toggler-icon {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba(255,255,255,0.92)' stroke-linecap='round' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+}
+
+/* Mobile collapsed menu */
+@media (max-width: 991.98px) {
+  .navbar-squarespace .navbar-collapse {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background-color: #ffffff;
+    padding: 0.75rem 1rem;
+    border-radius: 0;
+    box-shadow: none;
+    z-index: 1050;
+  }
+
+  .navbar-squarespace .navbar-collapse .d-flex {
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 0 0.25rem;
+  }
+
+  .navbar-squarespace .navbar-collapse .btn {
+    width: 100%;
+  }
+}
+
+@media (max-width: 991.98px) and (prefers-color-scheme: dark) {
+  .navbar-squarespace:not(.navbar-solid) .navbar-collapse {
+    background-color: rgb(13, 13, 13);
+  }
+}
+
+/* Explicit light theme */
+body[data-theme="light"] .navbar-squarespace .navbar-brand,
+body[data-theme="light"] .navbar-squarespace .nav-link {
+  color: #000000 !important;
+}
+
+/* In dark theme, keep the logged-out outline button visible when the navbar goes solid */
+body[data-theme="dark"]:not(.auth-body) .navbar-squarespace.navbar-solid .btn.btn-outline-dark {
+  color: #f6f6f6;
+  border-color: #f6f6f6;
+  background-color: transparent;
+}
+
+/* System dark mode handling */
+@media (prefers-color-scheme: dark) {
+  body.auth-body .navbar-squarespace {
+    background-color: transparent;
+    box-shadow: none !important;
+  }
+
+  body.auth-body .navbar-squarespace .navbar-brand,
+  body.auth-body .navbar-squarespace .nav-link {
+    color: #f6f6f6;
+  }
+
+  /* Logged-in app: keep dark surfaces with light nav items */
+  body:not(.auth-body) .navbar-squarespace {
+    background-color: transparent;
+    box-shadow: none !important;
+  }
+
+  body:not(.auth-body) .navbar-squarespace .navbar-brand,
+  body:not(.auth-body) .navbar-squarespace .nav-link {
+    color: #f6f6f6;
+  }
+
+  body:not(.auth-body) .navbar-squarespace.navbar-solid {
+    background-color: rgb(13, 13, 13);
+    box-shadow: none !important;
+  }
+
+  body:not(.auth-body) .navbar-squarespace.navbar-solid .navbar-brand,
+  body:not(.auth-body) .navbar-squarespace.navbar-solid .nav-link {
+    color: #f6f6f6;
+  }
+}
+
+/* Hard override: keep nav items light on dark app surfaces */
+body:not(.auth-body):is([data-theme="dark"], .dashboard-body:not([data-theme="light"]), .shop-body:not([data-theme="light"]), .app-body:not([data-theme="light"])) .navbar-squarespace .navbar-brand,
+body:not(.auth-body):is([data-theme="dark"], .dashboard-body:not([data-theme="light"]), .shop-body:not([data-theme="light"]), .app-body:not([data-theme="light"])) .navbar-squarespace .nav-link {
+  color: #f8fafc !important;
+}
+
+body:not(.auth-body):is([data-theme="dark"], .dashboard-body:not([data-theme="light"]), .shop-body:not([data-theme="light"]), .app-body:not([data-theme="light"])) .navbar-squarespace.navbar-solid .navbar-brand,
+body:not(.auth-body):is([data-theme="dark"], .dashboard-body:not([data-theme="light"]), .shop-body:not([data-theme="light"]), .app-body:not([data-theme="light"])) .navbar-squarespace.navbar-solid .nav-link {
+  color: #f8fafc !important;
+}
+
+/* In dark system mode, keep the public landing nav dark-on-light */
+body.public-body[data-theme="dark"] .navbar-squarespace .navbar-brand,
+body.public-body[data-theme="dark"] .navbar-squarespace .nav-link {
+  color: #111827 !important;
+}
+
+body.public-body[data-theme="dark"] .navbar-squarespace .navbar-toggler-icon {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba(17,24,39,0.92)' stroke-linecap='round' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+}

@@ -1,0 +1,23 @@
+{# recipes/templates/auth/discover_logged_out.html #}
+{% extends "base/base_auth.html" %}
+{% load static %}
+
+{% block content %}
+<div class="auth-page">
+  <div class="auth-panel">
+    <div class="auth-card text-center">
+      <h1 class="auth-title">Discover recipes on Recipi</h1>
+      <p class="auth-subtitle">
+        Log in to see personalised recommendations and recipes from people you follow.
+      </p>
+      <a href="{% url 'log_in' %}" class="auth-primary-btn d-inline-block mt-3">
+        Log in to continue
+      </a>
+      <p class="auth-footer-link mt-3 mb-0">
+        New here?
+        <a href="{% url 'sign_up' %}">Create an account</a>
+      </p>
+	  </div>
+	</div>
+</div>
+{% endblock %}

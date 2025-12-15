@@ -1,0 +1,268 @@
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const followForms = document.querySelectorAll('.notification-follow-form');
+    if (!followForms.length) return;
+
+    followForms.forEach(function (form) {
+      form.addEventListener('submit', function (event) {
+        event.preventDefault();
+
+        const button = form.querySelector('button[data-follow-state]');
+        if (!button) {
+          form.submit();
+          return;
+        }
+
+        const currentState = button.getAttribute('data-follow-state') || 'not-following';
+        const formData = new FormData(form);
+        const csrfInput = form.querySelector('input[name="csrfmiddlewaretoken"]');
+        const csrfToken = csrfInput ? csrfInput.value : null;
+
+        fetch(form.action, {
+          method: 'POST',
+          body: formData,
+          headers: Object.assign(
+            { 'X-Requested-With': 'XMLHttpRequest' },
+            csrfToken ? { 'X-CSRFToken': csrfToken } : {}
+          ),
+          redirect: 'manual'
+        }).then(function () {
+          if (currentState === 'not-following') {
+            button.textContent = 'Following';
+            button.classList.remove('btn-primary');
+            button.classList.add('btn-outline-light');
+            button.setAttribute('data-follow-state', 'following');
+          } else {
+            button.textContent = 'Follow';
+            button.classList.remove('btn-outline-light');
+            button.classList.add('btn-primary');
+            button.setAttribute('data-follow-state', 'not-following');
+          }
+        }).catch(function () {
+          // If the request fails, fall back to normal form submit
+          form.submit();
+        });
+      });
+    });
+  });
+</script>
+
+<script>
+  (function () {
+    const toggleBtn = document.getElementById("prepTimeToggle");
+    const popover = document.getElementById("prepFilterPopover");
+
+    if (!toggleBtn || !popover) return;
+
+    toggleBtn.addEventListener("click", function (e) {
+      e.stopPropagation();
+      popover.classList.toggle("prep-filter-open");
+    });
+
+    document.addEventListener("click", function (e) {
+      if (!popover.contains(e.target) && !toggleBtn.contains(e.target)) {
+        popover.classList.remove("prep-filter-open");
+      }
+    });
+  })();
+</script>
+
+<script>
+  const notifDropdown = document.getElementById('notificationDropdown');
+  if (notifDropdown) {
+    const icon = notifDropdown.querySelector('i');
+    const dot = notifDropdown.querySelector('.notification-dot');
+    const dropdownMenu = notifDropdown.closest('.dropdown')?.querySelector('.dropdown-menu');
+    let markedRead = false;
+
+    const fillHeart = () => {
+      if (!icon) return;
+      icon.classList.remove('bi-heart');
+      icon.classList.add('bi-heart-fill');
+    };
+
+    const unfillHeart = () => {
+      if (!icon) return;
+      icon.classList.remove('bi-heart-fill');
+      icon.classList.add('bi-heart');
+    };
+
+    const clearDot = () => {
+      if (dot && dot.parentNode) {
+        dot.remove();
+      }
+    };
+
+    const markRead = () => {
+      if (markedRead) return;
+      markedRead = true;
+      fetch("{% url 'mark_notifications_read' %}", {
+        method: "POST",
+        headers: {
+          "X-CSRFToken": "{{ csrf_token }}"
+        }
+      }).catch(() => {});
+    };
+
+    const handleOpen = () => {
+      clearDot();
+      fillHeart();
+      markRead();
+    };
+
+    const handleClose = () => {
+      unfillHeart();
+    };
+
+    const syncFromState = () => {
+      const isOpen =
+        notifDropdown.getAttribute('aria-expanded') === 'true' ||
+        (dropdownMenu && dropdownMenu.classList.contains('show'));
+
+      if (isOpen) {
+        handleOpen();
+      } else {
+        handleClose();
+      }
+    };
+
+    notifDropdown.addEventListener('show.bs.dropdown', handleOpen);
+    notifDropdown.addEventListener('shown.bs.dropdown', handleOpen);
+    notifDropdown.addEventListener('hidden.bs.dropdown', handleClose);
+
+    // Fallback: keep icon state in sync if Bootstrap events are unavailable
+    notifDropdown.addEventListener('click', function () {
+      setTimeout(syncFromState, 0);
+    });
+
+    if (dropdownMenu && window.MutationObserver) {
+      const observer = new MutationObserver(syncFromState);
+      observer.observe(dropdownMenu, { attributes: true, attributeFilter: ['class'] });
+    }
+  }
+
+  const searchInput = document.querySelector('.cosmos-nav-search-input');
+  if (searchInput) {
+    const recipeSuggestions = [
+      "15 minute pasta",
+      "one-pan chicken",
+      "banana protein milkshake",
+      "sheet-pan salmon",
+      "chocolate protein oats"
+    ];
+
+    const prefix = "Try ‘";
+    const suffix = "’";
+
+    let placeholderIndex = 0;
+    let charIndex = 0;
+    let isDeleting = false;
+    let typingTimeoutId = null;
+    let animationActive = true;
+
+    function updatePlaceholder(textFragment) {
+      const middle = textFragment || "";
+      const closing = middle ? suffix : "";
+      searchInput.placeholder = prefix + middle + closing;
+    }
+
+    function typePlaceholder() {
+      if (!animationActive) return;
+
+      if (document.activeElement === searchInput || (searchInput.value && searchInput.value.trim() !== '')) {
+        typingTimeoutId = setTimeout(typePlaceholder, 500);
+        return;
+      }
+
+      const currentRecipe = recipeSuggestions[placeholderIndex];
+
+      if (!isDeleting) {
+        charIndex += 1;
+        const visible = currentRecipe.slice(0, charIndex);
+        updatePlaceholder(visible);
+
+        if (charIndex === currentRecipe.length) {
+          isDeleting = true;
+          typingTimeoutId = setTimeout(typePlaceholder, 1500);
+          return;
+        }
+      } else {
+        charIndex -= 1;
+        const visible = currentRecipe.slice(0, Math.max(charIndex, 0));
+        updatePlaceholder(visible);
+
+        if (charIndex <= 0) {
+          isDeleting = false;
+          placeholderIndex = (placeholderIndex + 1) % recipeSuggestions.length;
+        }
+      }
+
+      const delay = isDeleting ? 40 : 80;
+      typingTimeoutId = setTimeout(typePlaceholder, delay);
+    }
+
+    searchInput.addEventListener('focus', function () {
+      animationActive = false;
+      if (typingTimeoutId) {
+        clearTimeout(typingTimeoutId);
+        typingTimeoutId = null;
+      }
+    });
+
+    searchInput.addEventListener('blur', function () {
+      if (searchInput.value && searchInput.value.trim() !== '') return;
+      if (!animationActive) {
+        animationActive = true;
+        typePlaceholder();
+      }
+    });
+
+    updatePlaceholder("");
+    typePlaceholder();
+  }
+
+  // Full-screen mobile menu toggle
+  const appMenuToggle = document.querySelector('.app-menu-toggle');
+  const appFullScreenMenu = document.getElementById('appFullScreenMenu');
+  if (appMenuToggle && appFullScreenMenu) {
+    const appMenuCloseBtn = document.querySelector('.app-fullscreen-menu-close');
+
+    const setMenuState = (shouldOpen) => {
+      if (shouldOpen) {
+        appFullScreenMenu.classList.add('is-open');
+        appFullScreenMenu.setAttribute('aria-hidden', 'false');
+        appMenuToggle.classList.add('is-open');
+        appMenuToggle.setAttribute('aria-expanded', 'true');
+        document.body.classList.add('app-menu-open');
+      } else {
+        appFullScreenMenu.classList.remove('is-open');
+        appFullScreenMenu.setAttribute('aria-hidden', 'true');
+        appMenuToggle.classList.remove('is-open');
+        appMenuToggle.setAttribute('aria-expanded', 'false');
+        document.body.classList.remove('app-menu-open');
+      }
+    };
+
+    const toggleMenu = (shouldOpen) => {
+      const isCurrentlyOpen = appFullScreenMenu.classList.contains('is-open');
+      const nextState = typeof shouldOpen === 'boolean' ? shouldOpen : !isCurrentlyOpen;
+      setMenuState(nextState);
+    };
+
+    appMenuToggle.addEventListener('click', () => toggleMenu());
+
+    appFullScreenMenu.addEventListener('click', (event) => {
+      if (event.target === appFullScreenMenu) {
+        toggleMenu(false);
+      }
+    });
+
+    appFullScreenMenu.querySelectorAll('a').forEach((link) => {
+      link.addEventListener('click', () => toggleMenu(true));
+    });
+
+    if (appMenuCloseBtn) {
+      appMenuCloseBtn.addEventListener('click', () => toggleMenu(false));
+    }
+  }
+</script>

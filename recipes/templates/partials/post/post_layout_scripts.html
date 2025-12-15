@@ -1,0 +1,98 @@
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const primary = document.getElementById('post-primary');
+  const similar = document.querySelector('.post-view-similar');
+
+  const masonry = document.querySelector('.post-media-masonry');
+  const masonryItems = masonry ? Array.from(masonry.querySelectorAll('.post-media-masonry-item')) : [];
+
+  const ensureMasonryCols = () => {
+    if (!masonry) return [];
+    let cols = Array.from(masonry.querySelectorAll('.post-media-masonry-col'));
+    if (cols.length === 0) {
+      const fragment = document.createDocumentFragment();
+      for (let i = 0; i < 2; i += 1) {
+        const col = document.createElement('div');
+        col.className = 'post-media-masonry-col';
+        fragment.appendChild(col);
+      }
+      masonry.prepend(fragment);
+      cols = Array.from(masonry.querySelectorAll('.post-media-masonry-col'));
+    }
+    return cols;
+  };
+
+  const buildMasonry = () => {
+    if (!masonry || masonryItems.length === 0) return;
+    const cols = ensureMasonryCols();
+    if (cols.length === 0) return;
+    const colCount = 2;
+    const activeCols = cols.slice(0, colCount);
+    cols.forEach((col, index) => {
+      col.innerHTML = '';
+      col.style.display = index < colCount ? 'flex' : 'none';
+    });
+    const heights = activeCols.map(() => 0);
+    masonryItems.forEach((item) => {
+      const media = item.querySelector('img, video');
+      const height = media && media.getBoundingClientRect().height ? media.getBoundingClientRect().height : item.getBoundingClientRect().height || 1;
+      const target = colCount === 1 ? 0 : (heights[0] <= heights[1] ? 0 : 1);
+      activeCols[target].appendChild(item);
+      heights[target] += height;
+    });
+  };
+
+  const requestMasonry = () => window.requestAnimationFrame(buildMasonry);
+  masonryItems.forEach((item) => {
+    const media = item.querySelector('img, video');
+    if (media) {
+      if (media.complete) {
+        requestMasonry();
+      } else {
+        media.addEventListener('load', requestMasonry, { once: true });
+      }
+    }
+  });
+
+  window.addEventListener('resize', requestMasonry);
+  requestMasonry();
+
+  const similarGrids = Array.from(document.querySelectorAll('.view-similar-grid, .view-similar-grid-wide'));
+  const baselineWidths = new Map();
+  const setBaselines = () => {
+    similarGrids.forEach((grid) => {
+      const baseCols = grid.classList.contains('view-similar-grid-wide') ? 4 : 3;
+      const width = grid.clientWidth || grid.offsetWidth;
+      if (!width) return;
+      baselineWidths.set(grid, width / baseCols);
+    });
+  };
+  const updateSimilarColumns = () => {
+    similarGrids.forEach((grid) => {
+      const baseWidth = baselineWidths.get(grid);
+      const width = grid.clientWidth || grid.offsetWidth;
+      if (!baseWidth || !width) return;
+      const cols = Math.max(1, Math.round(width / baseWidth));
+      grid.style.setProperty('--similar-cols', cols);
+    });
+  };
+
+  const handleScroll = () => {
+    if (!primary || !similar) return;
+    const rect = similar.getBoundingClientRect();
+    const windowHeight = window.innerHeight || document.documentElement.clientHeight;
+    const fadeStart = windowHeight * 1.0;
+    const fadeEnd = windowHeight * 0.4;
+    const progress = Math.min(1, Math.max(0, (fadeStart - rect.top) / (fadeStart - fadeEnd)));
+    primary.style.setProperty('--post-fade-amount', progress.toFixed(2));
+  };
+
+  window.addEventListener('scroll', handleScroll);
+  window.addEventListener('resize', updateSimilarColumns);
+  window.addEventListener('resize', handleScroll);
+
+  setBaselines();
+  updateSimilarColumns();
+});
+</script>
+
