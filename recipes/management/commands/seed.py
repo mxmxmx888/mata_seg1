@@ -88,17 +88,95 @@ bio_phrases = [
     "i cook, i taste, i improvise",
 ]
 
-main_ingredients_pool = [
-    "chicken breast", "salmon", "eggs", "milk", "butter", "cheddar",
-    "onion", "garlic", "tomato", "bell pepper", "spinach", "mushrooms",
-    "potatoes", "rice", "pasta", "flour", "yogurt", "lemon", "carrot",
-    "broccoli", "canned beans", "chickpeas",
-]
-
-spices_pool = [
-    "salt", "black pepper", "paprika", "cumin", "turmeric", "curry powder",
-    "chilli flakes", "oregano", "basil", "thyme", "rosemary", "garam masala",
-    "cinnamon", "nutmeg",
+SHOP_INGREDIENT_SETS = [
+    [
+        {
+            "name": "Spaghetti",
+            "shop_url": "https://www.amazon.com/De-Cecco-Spaghetti-Pasta/dp/B000LKX6QY/",
+        },
+        {
+            "name": "San Marzano tomatoes",
+            "shop_url": "https://www.amazon.com/Mutti-Peeled-Tomatoes-28-Ounce/dp/B074MHKZVN/",
+        },
+        {
+            "name": "Extra-virgin olive oil",
+            "shop_url": "https://www.amazon.com/Partanna-Extra-Virgin-Olive-34-Ounce/dp/B000BWY8QW/",
+        },
+        {
+            "name": "Parmigiano Reggiano",
+            "shop_url": "https://www.amazon.com/Parmigiano-Reggiano-DOP-2-2-lb/dp/B00JHHWJ08/",
+        },
+        {
+            "name": "Calabrian chilli flakes",
+            "shop_url": "https://www.amazon.com/Flatiron-Pepper-Original-Red-Chili/dp/B01LXNJUN4/",
+        },
+    ],
+    [
+        {
+            "name": "Corn tortillas",
+            "shop_url": "https://www.amazon.com/Mi-Tierra-Organic-Corn-Tortillas/dp/B07C5Q5FQN/",
+        },
+        {
+            "name": "Black beans",
+            "shop_url": "https://www.amazon.com/Whole-Foods-365-Organic-Black/dp/B074H56LNT/",
+        },
+        {
+            "name": "Chipotle peppers in adobo",
+            "shop_url": "https://www.amazon.com/La-Costena-Chipotle-Peppers-Adobo/dp/B0000G6KAM/",
+        },
+        {
+            "name": "Queso fresco",
+            "shop_url": "https://www.amazon.com/Cacique-Queso-Fresco-Round-10oz/dp/B00HZX8QIK/",
+        },
+        {
+            "name": "Avocado oil",
+            "shop_url": "https://www.amazon.com/Chosen-Foods-Avocado-High-Heat-Cooking/dp/B00P2DK8QW/",
+        },
+    ],
+    [
+        {
+            "name": "Bread flour",
+            "shop_url": "https://www.amazon.com/King-Arthur-Organic-Bread-Flour/dp/B0000BYDR1/",
+        },
+        {
+            "name": "Pure vanilla extract",
+            "shop_url": "https://www.amazon.com/Nielsen-Massey-Madagascar-Bourbon-Vanilla-Extract/dp/B0000E2PEM/",
+        },
+        {
+            "name": "Dark chocolate chips",
+            "shop_url": "https://www.amazon.com/Ghirardelli-Chocolate-Premium-Baking-Chips/dp/B006Y6DSBM/",
+        },
+        {
+            "name": "Almond flour",
+            "shop_url": "https://www.amazon.com/Bobs-Red-Mill-Super-Fine-Almond/dp/B00A2A2X02/",
+        },
+        {
+            "name": "Maldon sea salt",
+            "shop_url": "https://www.amazon.com/Maldon-Sea-Salt-Flakes-ounce/dp/B00017028M/",
+        },
+    ],
+    [
+        {
+            "name": "Rolled oats",
+            "shop_url": "https://www.amazon.com/Bobs-Red-Mill-Gluten-Whole/dp/B000EDM1SY/",
+        },
+        {
+            "name": "Maple syrup",
+            "shop_url": "https://www.amazon.com/Butternut-Mountain-Farm-Organic-Maple/dp/B004N5MBS8/",
+        },
+        {
+            "name": "Almond butter",
+            "shop_url": "https://www.amazon.com/Barney-Butter-Almond-Bare-Butter/dp/B006S5SC8E/",
+        },
+        {
+            "name": "Chia seeds",
+            "shop_url": "https://www.amazon.com/Viva-Naturals-Organic-Chia-Seeds/dp/B00HYIKCNE/",
+        },
+        {
+            "name": "Colombian coffee beans",
+            "shop_url": "https://www.amazon.com/Devocion-Colombia-Whole-Coffee-12oz/dp/B0B5G5OMTQ/",
+        },
+    ],
 ]
 
 
@@ -403,62 +481,31 @@ class Command(BaseCommand):
         self.stdout.write(f"Comments created: {len(rows)}")
     
 
-    def seed_ingredients(
-    self,
-    *,
-    min_main: int = 4,
-    max_main: int = 8,
-    min_spices: int = 1,
-    max_spices: int = 4,
-) -> None:
-        
-        """
-        Creates Ingredient rows per RecipePost using two pools:
-        - main_ingredients_pool
-        - spices_pool
-        Also assigns a stable 'position' ordering and optional quantity/unit.
-        """
+    def seed_ingredients(self) -> None:
+        """Create deterministic shop-ready ingredients with stable product links."""
 
         post_ids = list(RecipePost.objects.values_list("id", flat=True))
         if not post_ids:
             return
 
+        if not SHOP_INGREDIENT_SETS:
+            self.stdout.write("no shop ingredient sets configured, skipping ingredients seeding.")
+            return
+
         rows: List[Ingredient] = []
+        set_count = len(SHOP_INGREDIENT_SETS)
 
-        for post_id in post_ids:
-            main_count = randint(min_main, max_main)
-            spice_count = randint(min_spices, max_spices)
-
-            mains = sample(main_ingredients_pool, k=min(main_count, len(main_ingredients_pool)))
-            spices = sample(spices_pool, k=min(spice_count, len(spices_pool)))
-
-            chosen = mains + spices
+        for idx, post_id in enumerate(post_ids):
+            ingredient_set = SHOP_INGREDIENT_SETS[idx % set_count]
             position = 1
 
-            for name in chosen:
-                
-                qty = None
-                unit = None
-
-                if randint(0, 1) == 1:
-                    
-                    unit = choice(["g", "kg", "ml", "l", "tsp", "tbsp", "cup", "pinch", ""])
-                    if unit == "pinch":
-                        qty = None
-                    elif unit in ("",):
-                        qty = None
-                        unit = None
-                    else:
-                        # keep >= 0
-                        qty = choice([0.5, 1, 2, 3, 4, 100, 200, 250])
-
+            for item in ingredient_set:
                 rows.append(
                     Ingredient(
                         recipe_post_id=post_id,
-                        name=name,
+                        name=item["name"],
                         position=position,
-                        quantity=qty,
-                        unit=unit,
+                        shop_url=item.get("shop_url"),
                     )
                 )
                 position += 1
