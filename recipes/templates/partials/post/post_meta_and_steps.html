@@ -1,0 +1,74 @@
+<div class="col-xxl-4 col-xl-4 col-lg-4">
+  <header class="mb-4">
+    <p class="post-author text-muted mb-1">by {{ author_handle }}</p>
+    <h1 class="post-title">{{ title }}</h1>
+    <div class="d-flex flex-wrap gap-3 post-meta">
+      <span>⏱ {{ cook_time }}</span>
+      <span>� Serves {{ serves }}</span>
+      <span>� {{ ingredients|length }} ingredients</span>
+      <span class="badge bg-secondary text-uppercase" style="letter-spacing:0.05em;">
+        {% if recipe.visibility == 'public' %}Public{% elif recipe.visibility == 'followers' %}Followers only{% else %}Close friends only{% endif %}
+      </span>
+    </div>
+  </header>
+
+  <p class="post-summary text-muted mb-4">{{ summary }}</p>
+
+  {% if shop_ingredients %}
+  <section class="mb-4">
+    <h2 class="h6 fw-bold text-uppercase mb-3 text-muted small tracking-wide">
+      <i class="bi bi-bag-fill me-2"></i>Shop this recipe
+    </h2>
+    <div class="d-flex flex-wrap gap-2">
+      {% for ing in shop_ingredients %}
+      <a href="{{ ing.shop_url }}" target="_blank" class="btn btn-dark rounded-pill d-inline-flex align-items-center gap-2 py-2 px-3" style="background-color: #000; border-color: #000; font-size: 0.85rem;">
+        <span>{{ ing.name|title }}</span>
+        <i class="bi bi-arrow-up-right small text-white-50"></i>
+      </a>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+  <section class="mb-4">
+    <h2 class="h4 fw-semibold mb-2">Ingredients</h2>
+    <ul class="post-ingredients mt-1">
+      {% for ingredient in ingredients %}
+      <li class="d-flex align-items-center justify-content-between">
+        <span>{{ ingredient.name|title }}</span>
+        {% if ingredient.shop_url %}
+        <a href="{{ ingredient.shop_url }}" target="_blank" class="text-decoration-none text-muted opacity-75 hover-opacity-100" title="Buy {{ ingredient.name }}">
+          <i class="bi bi-bag-fill"></i>
+        </a>
+        {% endif %}
+      </li>
+      {% endfor %}
+    </ul>
+  </section>
+
+  <section class="mb-4">
+    <h2 class="h4 fw-semibold mb-2">Steps</h2>
+    <ol class="post-steps mt-1">
+      {% for step in steps %}
+      <li>{{ step }}</li>
+      {% endfor %}
+    </ol>
+  </section>
+
+  {% if tags %}
+  <section class="post-tags mb-4">
+    <button class="post-tags-toggle d-flex align-items-center gap-2" type="button" data-bs-toggle="collapse" data-bs-target="#post-tags-collapse" aria-expanded="false">
+      <span class="fw-semibold small text-muted text-uppercase tracking-wide">Tags</span>
+      <span class="post-tags-chevron">⌃</span>
+    </button>
+    <div class="collapse mt-2" id="post-tags-collapse">
+      <div class="d-flex flex-wrap gap-2">
+        {% for tag in tags %}
+        <span class="post-tag-pill">#{{ tag }}</span>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+  {% endif %}
+</div>
+

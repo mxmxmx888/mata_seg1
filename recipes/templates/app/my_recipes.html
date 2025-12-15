@@ -1,0 +1,54 @@
+{# recipes/templates/app/my_recipes.html #}
+{% extends "base/base_app.html" %}
+{% load static %}
+
+{% block content %}
+  <main class="my-recipes-shell">
+    <div class="d-flex justify-content-between align-items-center">
+      <h1 class="my-recipes-title mb-0">My recipes</h1>
+    </div>
+
+    {% if posts %}
+      <div class="my-recipes-grid mt-3">
+        {% for post in posts %}
+          <article class="my-recipe-card">
+            <h2 class="my-recipe-title">
+              <a href="{% url 'recipe_detail' post.id %}">
+                {{ post.title }}
+              </a>
+            </h2>
+
+            <div class="my-recipe-meta">
+              {% if post.prep_time_min %}
+                <span>Prep {{ post.prep_time_min }} min</span>
+              {% endif %}
+              {% if post.cook_time_min %}
+                <span>Cook {{ post.cook_time_min }} min</span>
+              {% endif %}
+            </div>
+
+            {% if post.description %}
+              <p class="my-recipe-description">
+                {{ post.description|truncatechars:140 }}
+              </p>
+            {% endif %}
+
+            <div class="my-recipe-actions">
+              <a href="{% url 'recipe_detail' post.id %}" class="btn btn-sm btn-outline-light">
+                View
+              </a>
+              <form method="post" action="{% url 'delete_my_recipe' post.id %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-sm btn-outline-danger">
+                  Delete
+                </button>
+              </form>
+            </div>
+          </article>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p class="text-muted mt-4">You haven't created any recipes yet.</p>
+    {% endif %}
+	  </main>
+{% endblock %}

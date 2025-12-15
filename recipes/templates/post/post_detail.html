@@ -1,0 +1,19 @@
+{% extends "base/base_post.html" %}
+
+{% block post_content %}
+<main class="container-fluid px-4 px-xl-5 py-4 post-page position-relative">
+  <div class="post-primary" id="post-primary">
+    <div class="row g-5 align-items-start">
+      {% include "partials/post/post_gallery.html" %}
+      {% include "partials/post/post_meta_and_steps.html" %}
+      {% include "partials/post/post_comments_sidebar.html" %}
+    </div>
+  </div>
+
+  {% include "partials/post/post_save_modal.html" %}
+  {% include "partials/post/post_view_similar.html" %}
+</main>
+
+{% include "partials/post/post_detail_scripts.html" %}
+{% endblock %}
+

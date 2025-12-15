@@ -1,0 +1,20 @@
+{% if view_similar %}
+  <section class="post-view-similar mt-5">
+    <div class="d-flex align-items-center justify-content-center gap-2 mb-4">
+      <i class="bi bi-binoculars"></i>
+      <span class="fw-semibold text-uppercase small tracking-wide">View similar</span>
+    </div>
+    <div class="view-similar-grid view-similar-grid-wide">
+      {% for item in view_similar %}
+      <a href="{{ item.url }}" class="view-similar-card">
+        <div class="view-similar-media">
+          <img src="{{ item.image }}" alt="{{ item.title }}">
+        </div>
+        <p class="view-similar-title mb-1">{{ item.title }}</p>
+        <p class="view-similar-meta text-muted small mb-0">{{ item.description }}</p>
+      </a>
+      {% endfor %}
+    </div>
+  </section>
+{% endif %}
+

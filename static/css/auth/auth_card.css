@@ -1,0 +1,154 @@
+/* Base card – light mode version */
+.auth-card {
+  width: min(100%, var(--auth-card-width));
+  background: #ffffff;
+  border-radius: var(--auth-card-radius);
+  padding: var(--auth-card-pad-y) var(--auth-card-pad-x);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.12);
+  color: #111827;
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.auth-card h1.auth-title {
+  font-size: clamp(1.8rem, 2.4vw, 2.2rem);
+  line-height: 1.1;
+  margin-bottom: 0.5rem;
+}
+
+.auth-card p.auth-subtitle {
+  font-size: 0.95rem;
+  color: #6b7280;
+  margin-bottom: 1.7rem;
+}
+
+.auth-apple-icon {
+  font-size: 1.4rem;
+  line-height: 1;
+}
+
+/* OAuth buttons on auth pages */
+
+.auth-oauth-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-bottom: 1.3rem;
+}
+
+.btn-auth {
+  width: 100%;
+  border-radius: 999px;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  background-color: #111827;
+  color: #f9fafb;
+  font-size: 0.95rem;
+  font-weight: 500;
+  padding: 0.85rem 1.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+}
+
+.btn-auth-apple {
+  background-color: #111827;
+  color: #f9fafb;
+}
+
+.btn-auth-google {
+  background-color: rgb(236, 236, 236);
+  color: #111827;
+}
+
+/* Divider between OAuth and email form */
+
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0.3rem 0 1.4rem;
+  font-size: 0.8rem;
+  color: #80818c;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.16));
+}
+
+.auth-divider::after {
+  background: linear-gradient(to left, transparent, rgba(255, 255, 255, 0.16));
+}
+
+/* Email/password inputs */
+
+.auth-card .nolabel label {
+  display: none;
+}
+
+.auth-card .form-control {
+  border-radius: 999px;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  background-color: rgb(236, 236, 236);
+  color: #111827;
+  padding: 0.85rem 1rem;
+  font-size: 0.95rem;
+}
+
+.auth-card .form-control::placeholder {
+  color: #9ca3af;
+}
+
+.auth-card .form-control:focus {
+  background-color: #ffffff;
+  border-color: #111827;
+  box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.35);
+}
+
+/* Remove success/invalid ticks and keep borders neutral on auth inputs */
+.auth-card .form-control.is-valid,
+.auth-card .form-control.is-valid:focus {
+  background-image: none;
+  border-color: rgba(15, 23, 42, 0.12);
+  box-shadow: none;
+  padding-right: 1rem;
+}
+
+/* Error state: thin red outline when validation fails */
+.auth-card .form-control.is-invalid {
+  background-image: none;
+  border-color: #ef4444;
+  box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.25);
+  padding-right: 1rem;
+}
+
+.auth-card .form-control.is-invalid:focus {
+  background-color: #ffffff;
+  border-color: #ef4444;
+  box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.35);
+}
+
+/* Primary auth button (Continue / Enter) */
+
+.auth-primary-btn {
+  width: 100%;
+  border-radius: 999px;
+  padding: 0.9rem 1rem;
+  font-size: 0.98rem;
+  font-weight: 600;
+  border: none;
+  background-color: #111827;
+  color: #f9fafb;
+}
+
+/* Copy under the button */
+
+.auth-meta {
+  margin-top: 0.9rem;
+  font-size: 0.75rem;
+  color: #80818c;
+}

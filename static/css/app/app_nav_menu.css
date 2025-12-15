@@ -1,0 +1,104 @@
+/* App full-screen mobile nav + tray */
+
+/* Full-screen mobile nav menu used by the app navbar */
+.app-fullscreen-menu {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  background-color: rgba(0, 0, 0, 0.96);
+  color: #f9fafb;
+  display: none;
+}
+
+.app-fullscreen-menu.is-open {
+  display: flex;
+}
+
+.app-fullscreen-menu-inner {
+  margin: 0 auto;
+  padding: 0 2rem;
+  max-width: 480px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2.5rem;
+}
+
+.app-fullscreen-menu-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  width: 100%;
+  text-align: center;
+}
+
+.app-fullscreen-menu-link {
+  font-size: 1.3rem;
+  letter-spacing: 0.02em;
+  color: #e5e7eb;
+  text-decoration: none;
+}
+
+.app-fullscreen-menu-link.active {
+  color: #ffffff;
+}
+
+.app-fullscreen-menu-link:hover {
+  color: #ffffff;
+}
+
+.app-fullscreen-menu-cta {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.app-fullscreen-menu-cta .btn {
+  border-radius: 999px;
+}
+
+.app-fullscreen-menu-close {
+  position: absolute;
+  top: 0.85rem;
+  right: 1.15rem;
+  width: 36px;
+  height: 36px;
+  border-radius: 0;
+  border: none;
+  background: transparent;
+  color: #f9fafb;
+  font-size: 1.9rem;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.app-fullscreen-menu-close:focus-visible {
+  outline: 2px solid #f9fafb;
+  outline-offset: 2px;
+}
+
+/* Prevent background scroll while menu is open */
+body.app-menu-open {
+  overflow: hidden;
+}
+
+/* Hamburger ↔ X icon toggle */
+.app-menu-toggle .app-menu-close-icon {
+  display: none;
+  font-size: 1.75rem;
+  line-height: 1;
+  color: #f9fafb;
+}
+
+.app-menu-toggle.is-open .navbar-toggler-icon {
+  display: none;
+}
+
+.app-menu-toggle.is-open .app-menu-close-icon {
+  display: inline-block;
+}

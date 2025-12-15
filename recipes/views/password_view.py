@@ -15,7 +15,7 @@ class PasswordView(LoginRequiredMixin, FormView):
     password update, the user is re-authenticated to maintain their session.
     """
 
-    template_name = 'password.html'
+    template_name = 'content/password.html'
     form_class = PasswordForm
 
     def get_form_kwargs(self, **kwargs):

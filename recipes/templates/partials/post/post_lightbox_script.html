@@ -1,0 +1,43 @@
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const thumbs = Array.from(document.querySelectorAll('.js-gallery-image'));
+  if (!thumbs.length) return;
+
+  const lightbox = document.getElementById('lightbox');
+  const lightboxImg = document.getElementById('lightbox-image');
+  const btnClose = lightbox.querySelector('.lightbox-close');
+  const btnPrev = lightbox.querySelector('.lightbox-arrow--left');
+  const btnNext = lightbox.querySelector('.lightbox-arrow--right');
+  const backdrop = lightbox.querySelector('.lightbox-backdrop');
+
+  let currentIndex = 0;
+
+  function showImage(index) {
+    const count = thumbs.length;
+    currentIndex = (index + count) % count;
+    const img = thumbs[currentIndex];
+    const src = img.dataset.fullsrc || img.src;
+    lightboxImg.src = src;
+  }
+
+  function openLightbox(index) {
+    showImage(index);
+    lightbox.classList.remove('d-none');
+  }
+
+  function closeLightbox() {
+    lightbox.classList.add('d-none');
+  }
+
+  thumbs.forEach((img, idx) => {
+    img.addEventListener('click', () => openLightbox(idx));
+  });
+
+  btnClose.addEventListener('click', closeLightbox);
+  backdrop.addEventListener('click', closeLightbox);
+
+  btnPrev.addEventListener('click', () => showImage(currentIndex - 1));
+  btnNext.addEventListener('click', () => showImage(currentIndex + 1));
+});
+</script>
+

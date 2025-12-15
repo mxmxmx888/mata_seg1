@@ -1,0 +1,11 @@
+{% extends "base/base.html" %}
+
+{# Base for authentication pages (log in, sign up, reset) #}
+
+{% block body_class %}auth-body{% endblock %}
+
+{% block body %}
+  {% include "partials/navbar/navbar_logo_only.html" %}
+  {% block content %}{% endblock %}
+{% endblock %}
+

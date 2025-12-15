@@ -1,0 +1,10 @@
+{# recipes/templates/app/saved_recipes.html #}
+{% extends "base/base_app.html" %}
+{% load static %}
+
+{% block content %}
+  <main class="container py-4 py-md-5">
+    <h1 class="h4 mb-3">Saved recipes</h1>
+    {% include "partials/recipes/recipe_grid.html" with posts=posts %}
+  </main>
+{% endblock %}
