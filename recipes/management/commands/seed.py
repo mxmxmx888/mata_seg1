@@ -38,16 +38,24 @@ user_fixtures = [
     {'username': '@janedoe', 'email': 'jane.doe@example.org', 'first_name': 'Jane', 'last_name': 'Doe'},
     {'username': '@charlie', 'email': 'charlie.johnson@example.org', 'first_name': 'Charlie', 'last_name': 'Johnson'},
 ]
-image_pool = [
-    "/static/images/chotko.jpeg",
-    "/static/images/toothless.jpg",
-    "/static/images/meal.jpg.webp",
 
-
-
+# Used for the RecipePost.image string “cover” field
+recipe_image_file_pool = [
+    "static/images/meal1.jpg",
+    "static/images/meal2.jpg",
+    "static/images/meal3.jpg",
+    "static/images/meal4.jpg",
+    "static/images/meal5.jpg",
+    "static/images/meal6.jpg",
+    "static/images/meal7.jpg",
+    "static/images/meal8.jpg"  
 ]
+
+
 categories = ["Breakfast", "Lunch", "Dinner", "Dessert", "Vegan"]
 tags_pool = ["quick", "family", "spicy", "budget", "comfort", "healthy", "high_protein", "low_carb"]
+
+#names for collections
 favourite_names = [
     "favourites",
     "dinner ideas",
@@ -59,11 +67,12 @@ favourite_names = [
     "budget",
 ]
 
+# comments for seeding
 comment_phrases = [
-    "I love Amir...",
-    "Maksym is sooo handsome",
-    "Ayan I am your stan",
-    "Tunjay is such a cutie"
+    "Amazing!!",
+    "Looks yummy",
+    "Okay that has to be my favourite",
+    "Definitely will be trying this out"
 ]
 
 bio_phrases = [
@@ -119,7 +128,8 @@ class Command(BaseCommand):
 
     def _make_uploaded_image(self, rel_path: str) -> SimpleUploadedFile:
         """
-        rel_path should be like: "static/images/meal.jpg"
+        Loads a real image file from disk (relative to BASE_DIR) and wraps it
+        into a Django SimpleUploadedFile so it can be assigned to ImageField.
         """
         abs_path = os.path.join(settings.BASE_DIR, rel_path.lstrip("/"))
         with open(abs_path, "rb") as f:
@@ -201,6 +211,13 @@ class Command(BaseCommand):
             pass
 
     def seed_followers_and_follows(self, follow_k: int = 5) -> None:
+
+        """
+        Creates follower relationships between users.
+        For each user, randomly picks up to follow_k other users to follow.
+        Inserts into both Follower and Follows tables.
+        """
+
         ids = list(User.objects.values_list("id", flat=True))
         n = len(ids)
         if n < 2:
@@ -224,6 +241,12 @@ class Command(BaseCommand):
             Follows.objects.bulk_create(follows_rows, ignore_conflicts=True, batch_size=1000)
 
     def seed_recipe_posts(self, *, per_user: int = 3) -> None:
+
+        """
+        Creates RecipePost rows for each user (1..per_user posts),
+        and also seeds 2–4 RecipeImage rows per post using real files from disk.
+        """
+
         user_ids = list(User.objects.values_list("id", flat=True))
         if not user_ids:
             return
@@ -231,25 +254,15 @@ class Command(BaseCommand):
         posts_to_create: List[RecipePost] = []
         images_to_create: List[RecipeImage] = []
 
-        # IMPORTANT: these must be REAL files on disk for ImageField seeding
-        # Example paths relative to BASE_DIR
-        recipe_image_file_pool = [
-            "static/images/meal1.jpg",
-            "static/images/meal2.jpg",
-            "static/images/meal3.jpg",
-            "static/images/meal4.jpg",
-            "static/images/meal5.jpg",
-            "static/images/meal6.jpg",
-            "static/images/meal7.jpg",
-            "static/images/meal8.jpg"  
-        ]
+
+
 
         for author_id in user_ids:
             count = randint(1, max(1, per_user))
             for _ in range(count):
                 title = self.faker.sentence(nb_words=5).rstrip(".")[:255]
                 description = self.faker.paragraph(nb_sentences=3)[:4000]
-                image = choice(image_pool)  # your old string “cover” field
+                image = choice(recipe_image_file_pool)  # your old string “cover” field
                 prep = randint(0, 60)
                 cook = randint(0, 90)
                 tags = list(set(sample(tags_pool, randint(0, min(4, len(tags_pool))))))
@@ -271,7 +284,7 @@ class Command(BaseCommand):
                 )
                 posts_to_create.append(post)
 
-                # Seed 2–4 images for each post (you can change this)
+                # Seed 2–4 images for each post
                 img_count = randint(2, 4)
                 chosen = sample(recipe_image_file_pool, k=min(img_count, len(recipe_image_file_pool)))
 
@@ -279,7 +292,7 @@ class Command(BaseCommand):
                     try:
                         uploaded = self._make_uploaded_image(rel_path)
                     except FileNotFoundError:
-                        # If the file doesn't exist locally, skip it (prevents seed crashing)
+                        # If the file doesn't exist locally, skip it 
                         continue
 
                     images_to_create.append(
@@ -298,6 +311,12 @@ class Command(BaseCommand):
         self.stdout.write(f"Recipe images created (attempted): {len(images_to_create)}")
     
     def seed_recipe_steps(self, *, min_steps: int = 4, max_steps: int = 7) -> None:
+
+        """
+        Creates a sequence of RecipeStep rows for each RecipePost.
+        Each post gets between min_steps and max_steps steps.
+        """
+
         post_ids = list(RecipePost.objects.values_list("id", flat=True))
         if not post_ids:
             return
@@ -324,8 +343,8 @@ class Command(BaseCommand):
 
     def seed_likes(self, max_likes_per_post: int = 20) -> None:
         """
-        seed likes for recipe posts.
-        each post gets a random number of likes from random users.
+        Creates Like rows. For each post, selects a random number of users
+        (up to max_likes_per_post) and creates one Like per user.
         """
         users = list(User.objects.values_list("id", flat=True))
         posts = list(RecipePost.objects.values_list("id", flat=True))
@@ -353,6 +372,12 @@ class Command(BaseCommand):
         self.stdout.write(f"likes created: {len(rows)}")
 
     def seed_comments(self, max_comments_per_post: int = 5) -> None:
+    
+        """
+        Creates Comment rows. For each post, picks up to max_comments_per_post
+        distinct users and assigns each one random text.
+        """
+
         users = list(User.objects.values_list("id", flat=True))
         posts = list(RecipePost.objects.values_list("id", flat=True))
 
@@ -386,6 +411,14 @@ class Command(BaseCommand):
     min_spices: int = 1,
     max_spices: int = 4,
 ) -> None:
+        
+        """
+        Creates Ingredient rows per RecipePost using two pools:
+        - main_ingredients_pool
+        - spices_pool
+        Also assigns a stable 'position' ordering and optional quantity/unit.
+        """
+
         post_ids = list(RecipePost.objects.values_list("id", flat=True))
         if not post_ids:
             return
@@ -403,12 +436,12 @@ class Command(BaseCommand):
             position = 1
 
             for name in chosen:
-                # randomly decide whether to add quantity/unit (optional fields)
+                
                 qty = None
                 unit = None
 
                 if randint(0, 1) == 1:
-                    # simple, human-ish quantities
+                    
                     unit = choice(["g", "kg", "ml", "l", "tsp", "tbsp", "cup", "pinch", ""])
                     if unit == "pinch":
                         qty = None
@@ -451,13 +484,13 @@ class Command(BaseCommand):
             self.stdout.write("no recipe posts found, skipping favourites seeding.")
             return
 
-        # clamp to available names
+        
         collections_per_user = min(per_user, len(favourite_names))
 
         favourites_to_create: List[Favourite] = []
         fav_keys: Set[Tuple[str, str]] = set()  # (user_id, name)
 
-        # 1) create favourites (collections)
+       
         for user_id in user_ids:
             chosen = sample(favourite_names, k=collections_per_user)
             for name in chosen:
