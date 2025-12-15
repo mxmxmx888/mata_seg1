@@ -17,7 +17,7 @@ class Ingredient(models.Model):
     name = models.CharField(max_length=255)
 
     # position in the recipe
-    position = models.PositiveIntegerField()
+    position = models.PositiveIntegerField(default=1)
     
     quantity = models.DecimalField(
         max_digits=10,

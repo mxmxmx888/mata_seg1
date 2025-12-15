@@ -1,4 +1,4 @@
-from django.core.validators import RegexValidator
+from django.core.validators import RegexValidator, MaxLengthValidator
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from libgravatar import Gravatar
@@ -11,7 +11,7 @@ class User(AbstractUser):
         unique=True,
         validators=[RegexValidator(
             regex=r'^\w{3,}$',
-            message='Username must consist of @ followed by at least three alphanumericals'
+            message='Username must consist of at least three alphanumericals'
         )]
     )
     first_name = models.CharField(max_length=50, blank=False)
@@ -20,7 +20,8 @@ class User(AbstractUser):
     bio = models.TextField(
         max_length=500,
         blank=True,
-        help_text="short user bio shown on profile"
+        help_text="short user bio shown on profile",
+        validators=[MaxLengthValidator(500)]
     )
     avatar = models.ImageField(upload_to="avatars/", blank=True, null=True)
     is_private = models.BooleanField(default=False)
@@ -32,7 +33,6 @@ class User(AbstractUser):
         return f'{self.first_name} {self.last_name}'
 
     def gravatar(self, size=120):
-        """Return a URL to the user's gravatar."""
         gravatar_object = Gravatar(self.email)
         gravatar_url = gravatar_object.get_image(size=size, default='mp')
         return gravatar_url
@@ -55,3 +55,11 @@ class User(AbstractUser):
     @property
     def mini_avatar_url(self):
         return self.avatar_or_gravatar(size=60)
+
+    def save(self, *args, **kwargs):
+        """
+        Override the save method to handle the 'remove_avatar' flag.
+        """
+        if kwargs.pop('remove_avatar', False):
+            self.avatar = None
+        super().save(*args, **kwargs)

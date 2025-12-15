@@ -1,0 +1,17 @@
+{% for ingredient in ingredients %}
+  <div class="shop-item d-flex align-items-center justify-content-between py-2 border-bottom">
+    <div class="shop-item-name">
+      {{ ingredient.name }}
+    </div>
+
+    {% if ingredient.shop_url %}
+      <a class="shop-item-link" href="{{ ingredient.shop_url }}" target="_blank" rel="noopener">
+        Open link
+      </a>
+    {% endif %}
+  </div>
+{% empty %}
+  <div class="py-3 text-muted">
+    No ingredients found.
+  </div>
+{% endfor %}

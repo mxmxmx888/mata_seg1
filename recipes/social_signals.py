@@ -1,49 +1,51 @@
 from django.dispatch import receiver
 from django.contrib.auth.signals import user_logged_in
+from django.db.models.signals import post_save
+from django.contrib.auth.models import User
 from allauth.socialaccount.signals import social_account_added, social_account_updated
 
-from .firebase_admin_client import ensure_firebase_user
-
+from .firebase_admin_client import ensure_firebase_user, get_firestore_client
 
 @receiver(social_account_added)
 @receiver(social_account_updated)
 def sync_google_user_to_firebase_on_social(sender, request, sociallogin, **kwargs):
-    """
-    When a social account (e.g., Google) is added/updated,
-    ensure the user exists in Firebase.
-    """
     user = sociallogin.user
     email = getattr(user, "email", None)
     name = user.get_full_name() or getattr(user, "username", None)
 
-    print(f"[SIGNAL social] social_account_* fired for email={email}, name={name}")
-
-    if not email:
-        print("[SIGNAL social] No email on user, skipping Firebase sync.")
-        return
-
-    try:
+    if email:
         ensure_firebase_user(email=email, display_name=name)
-    except Exception as e:
-        print("[SIGNAL social] Error while syncing to Firebase:", e)
-
 
 @receiver(user_logged_in)
 def sync_user_to_firebase_on_login(sender, request, user, **kwargs):
-    """
-    On ANY login (password or Google), ensure user is in Firebase.
-    This catches existing Google accounts that were created before signals.
-    """
     email = getattr(user, "email", None)
     name = user.get_full_name() or getattr(user, "username", None)
 
-    print(f"[SIGNAL login] user_logged_in fired for email={email}, name={name}")
+    if email:
+        ensure_firebase_user(email=email, display_name=name)
 
-    if not email:
-        print("[SIGNAL login] No email on user, skipping Firebase sync.")
+@receiver(post_save, sender=User)
+def sync_user_data_to_firestore(sender, instance, created, **kwargs):
+    """
+    Whenever the Django User model is saved (by Admin, Registration, or Google Auth),
+    copy the data to Firestore.
+    """
+    db = get_firestore_client()
+    
+    if db is None:
         return
 
     try:
-        ensure_firebase_user(email=email, display_name=name)
+        user_data = {
+            'username': instance.username,
+            'email': instance.email,
+            'is_staff': instance.is_staff,
+            'date_joined': instance.date_joined,
+            'id': instance.id
+        }
+        
+        db.collection('users').document(str(instance.id)).set(user_data, merge=True)
+        print(f"Synced user {instance.id} to Firestore.")
+        
     except Exception as e:
-        print("[SIGNAL login] Error while syncing to Firebase:", e)
+        print(f"Error syncing to Firestore: {e}")

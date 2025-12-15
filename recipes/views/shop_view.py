@@ -33,17 +33,19 @@ def shop(request):
     is_ajax = request.headers.get("x-requested-with") == "XMLHttpRequest" or request.GET.get("ajax") == "1"
 
     if is_ajax:
-        html = render_to_string(
-            "partials/shop/shop_items.html",
-            {"items": page_obj.object_list},
+        shop_item_list = render_to_string(
+            "shop/shop_list.html",
+            {"ingredients": page_obj.object_list},
             request=request,
         )
         return JsonResponse(
             {
-                "html": html,
+                "shop_item_list": shop_item_list,  # what tests expect
+                "html": shop_item_list,            # keep your existing JS working
                 "has_next": page_obj.has_next(),
             }
         )
+
 
     context = {
         "items": page_obj.object_list,
