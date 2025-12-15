@@ -7,7 +7,7 @@ are left untouched—if a create fails (e.g., due to duplicates), the error
 is swallowed and generation continues.
 """
 
-
+import os
 from typing import Any, Dict, List, Set, Tuple
 from random import sample, randint, choice
 from uuid import uuid4
@@ -17,11 +17,13 @@ from django.core.management.base import BaseCommand
 from django.db import transaction
 from django.utils import timezone
 from django.db.models import Q
+from django.conf import settings
+from django.core.files.uploadedfile import SimpleUploadedFile
 
 from recipes.models import User
 from recipes.models.followers import Follower
 from recipes.models.follows import Follows
-from recipes.models.recipe_post import RecipePost
+from recipes.models.recipe_post import RecipePost, RecipeImage
 from recipes.models.recipe_step import RecipeStep
 from recipes.models.favourite import Favourite
 from recipes.models.favourite_item import FavouriteItem
@@ -114,6 +116,18 @@ class Command(BaseCommand):
         """Initialize the command with a locale-specific Faker instance."""
         super().__init__(*args, **kwargs)
         self.faker = Faker('en_GB')
+
+    def _make_uploaded_image(self, rel_path: str) -> SimpleUploadedFile:
+        """
+        rel_path should be like: "static/images/meal.jpg"
+        """
+        abs_path = os.path.join(settings.BASE_DIR, rel_path.lstrip("/"))
+        with open(abs_path, "rb") as f:
+            return SimpleUploadedFile(
+                name=os.path.basename(abs_path),
+                content=f.read(),
+                content_type="image/jpeg",
+            )
 
     def handle(self, *args, **options):
         """
@@ -214,20 +228,35 @@ class Command(BaseCommand):
         if not user_ids:
             return
 
-        rows: List[RecipePost] = []
+        posts_to_create: List[RecipePost] = []
+        images_to_create: List[RecipeImage] = []
+
+        # IMPORTANT: these must be REAL files on disk for ImageField seeding
+        # Example paths relative to BASE_DIR
+        recipe_image_file_pool = [
+            "static/images/meal1.jpg",
+            "static/images/meal2.jpg",
+            "static/images/meal3.jpg",
+            "static/images/meal4.jpg",
+            "static/images/meal5.jpg",
+            "static/images/meal6.jpg",
+            "static/images/meal7.jpg",
+            "static/images/meal8.jpg",  
+        ]
+
         for author_id in user_ids:
             count = randint(1, max(1, per_user))
             for _ in range(count):
                 title = self.faker.sentence(nb_words=5).rstrip(".")[:255]
                 description = self.faker.paragraph(nb_sentences=3)[:4000]
-                image = choice(image_pool)
+                image = choice(image_pool)  # your old string “cover” field
                 prep = randint(0, 60)
                 cook = randint(0, 90)
                 tags = list(set(sample(tags_pool, randint(0, min(4, len(tags_pool))))))
                 nutrition = f"kcal={randint(250, 800)}; protein={randint(5, 40)}g"
                 category = choice(categories)
 
-                rows.append(RecipePost(
+                post = RecipePost(
                     author_id=author_id,
                     title=title,
                     description=description,
@@ -239,11 +268,35 @@ class Command(BaseCommand):
                     category=category,
                     saved_count=0,
                     published_at=timezone.now(),
-                ))
+                )
+                posts_to_create.append(post)
 
-        RecipePost.objects.bulk_create(rows, ignore_conflicts=True, batch_size=500)
-        self.stdout.write(f"Recipe posts created: {len(rows)}")
+                # Seed 2–4 images for each post (you can change this)
+                img_count = randint(2, 4)
+                chosen = sample(recipe_image_file_pool, k=min(img_count, len(recipe_image_file_pool)))
 
+                for position, rel_path in enumerate(chosen):
+                    try:
+                        uploaded = self._make_uploaded_image(rel_path)
+                    except FileNotFoundError:
+                        # If the file doesn't exist locally, skip it (prevents seed crashing)
+                        continue
+
+                    images_to_create.append(
+                        RecipeImage(
+                            recipe_post_id=post.id,  # post.id exists already (UUID)
+                            image=uploaded,
+                            position=position,
+                        )
+                    )
+
+        with transaction.atomic():
+            RecipePost.objects.bulk_create(posts_to_create, ignore_conflicts=True, batch_size=500)
+            RecipeImage.objects.bulk_create(images_to_create, ignore_conflicts=True, batch_size=500)
+
+        self.stdout.write(f"Recipe posts created: {len(posts_to_create)}")
+        self.stdout.write(f"Recipe images created (attempted): {len(images_to_create)}")
+    
     def seed_recipe_steps(self, *, min_steps: int = 4, max_steps: int = 7) -> None:
         post_ids = list(RecipePost.objects.values_list("id", flat=True))
         if not post_ids:
@@ -253,18 +306,13 @@ class Command(BaseCommand):
 
         for post_id in post_ids:
             step_count = randint(min_steps, max_steps)
-
             for pos in range(1, step_count + 1):
-                # keep it within your 1–1000 constraint
                 text = self.faker.sentence(nb_words=12)
-                if len(text) > 1000:
-                    text = text[:1000]
-
                 rows.append(
                     RecipeStep(
                         recipe_post_id=post_id,
                         position=pos,
-                        description=text,
+                        description=text[:1000],
                     )
                 )
 
@@ -272,8 +320,8 @@ class Command(BaseCommand):
             RecipeStep.objects.bulk_create(rows, ignore_conflicts=True, batch_size=1000)
 
         self.stdout.write(f"recipe steps created (attempted): {len(rows)}")
-    
-    
+
+
     def seed_likes(self, max_likes_per_post: int = 20) -> None:
         """
         seed likes for recipe posts.
@@ -303,6 +351,7 @@ class Command(BaseCommand):
             Like.objects.bulk_create(rows, ignore_conflicts=True, batch_size=1000)
 
         self.stdout.write(f"likes created: {len(rows)}")
+
     def seed_comments(self, max_comments_per_post: int = 5) -> None:
         users = list(User.objects.values_list("id", flat=True))
         posts = list(RecipePost.objects.values_list("id", flat=True))
