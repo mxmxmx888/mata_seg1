@@ -1,0 +1,101 @@
+/* Follow modal + backdrop */
+
+.follow-modal .btn-close {
+  filter: invert(1);
+  opacity: 0.6;
+}
+
+.follow-modal .btn-close:hover {
+  opacity: 1;
+}
+
+.follow-user-link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.follow-user-link:hover {
+  color: inherit;
+  text-decoration: none;
+}
+
+.follow-toggle-form {
+  margin-left: 1rem;
+}
+
+.follow-toggle-btn {
+  border: none;
+  background-color: transparent;
+  color: #c5c6ce;
+  font-size: 0.75rem;
+  font-weight: 400;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.18s ease;
+}
+
+.follow-toggle-btn:hover,
+.follow-toggle-btn:focus-visible {
+  color: #f4f4f7;
+  outline: none;
+}
+
+body.modal-open {
+  overflow: hidden;
+}
+
+.modal-backdrop,
+.modal-backdrop.custom-modal-backdrop {
+  background-color: rgb(13, 13, 13);
+}
+
+.modal-backdrop.show,
+.modal-backdrop.custom-modal-backdrop.show {
+  opacity: 0.65;
+}
+
+body[data-theme="light"] .modal-backdrop.show,
+body[data-theme="light"] .modal-backdrop.custom-modal-backdrop.show {
+  opacity: 0.45;
+}
+
+body.profile-body .follow-modal .modal-content {
+  background-color: #101010;
+  color: #f4f4f7;
+  border-radius: 18px;
+  border: 1px solid #23242c;
+}
+
+.follow-modal .modal-header {
+  justify-content: center;
+  position: relative;
+}
+
+.follow-modal .follow-modal-title {
+  text-align: center;
+  font-size: 1.1rem;
+  letter-spacing: 0.04em;
+}
+
+.follow-modal .btn-close {
+  position: absolute;
+  right: 1.25rem;
+  top: 1.1rem;
+}
+
+.follow-empty-text {
+  font-size: 0.78rem;
+}
+
+.follow-modal .modal-body {
+  overflow-y: auto;
+}
+
+body.profile-body .follow-modal .follow-user-name {
+  color: #f4f4f7;
+}
+
+body.profile-body .follow-modal .follow-user-handle {
+  color: #a8a9b3;
+}

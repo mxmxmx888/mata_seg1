@@ -4,7 +4,7 @@ from django.contrib.auth.decorators import login_required
 from django.http import Http404, JsonResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
-from recipes.forms import UserForm
+from recipes.forms import PasswordForm, UserForm
 from recipes.repos.post_repo import PostRepo
 from recipes.repos.user_repo import UserRepo
 from recipes.models import Follower
@@ -276,6 +276,9 @@ def profile(request):
     profile_data["following"] = following_count
     profile_data["close_friends_count"] = len(close_friend_ids)
 
+    edit_profile_form = UserForm(instance=request.user)
+    password_form = PasswordForm(user=request.user)
+
     if request.method == "POST":
         if request.POST.get("cancel_request") == "1":
             service = follow_service_factory(request.user)
@@ -295,6 +298,9 @@ def profile(request):
                     messages.add_message(request, messages.SUCCESS, "Profile updated!")
 
             return redirect("profile")
+        else:
+            # keep the bound form in the modal so validation errors surface
+            edit_profile_form = form
     else:
         if profile_user == request.user:
             form = UserForm(instance=request.user)
@@ -318,11 +324,13 @@ def profile(request):
 
     return render(
         request,
-        "profile.html",
+        "profile/profile.html",
         {
         "profile": profile_data,
             "collections": collections,
             "form": form,
+            "edit_profile_form": edit_profile_form,
+            "password_form": password_form,
             "profile_user": profile_user,
             "is_own_profile": profile_user == request.user,
             "is_following": is_following,
@@ -344,7 +352,7 @@ def collections_overview(request):
         "profile": _profile_data_for_user(request.user),
         "collections": _collections_for_user(request.user),
     }
-    return render(request, "collections.html", context)
+    return render(request, "app/collections.html", context)
 
 @login_required
 def collection_detail(request, slug):
@@ -384,7 +392,7 @@ def collection_detail(request, slug):
         "posts": posts,
         "collection_columns": collection_columns,
     }
-    return render(request, "collection_detail.html", context)
+    return render(request, "app/collection_detail.html", context)
 
 
 @login_required

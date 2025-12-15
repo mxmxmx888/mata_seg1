@@ -51,3 +51,18 @@ def notify_on_comment(sender, instance, created, **kwargs):
                     )
             except User.DoesNotExist:
                 continue
+
+
+@receiver(post_save, sender=Notification)
+def trim_notification_history(sender, instance, created, **kwargs):
+    """Keep only the 15 most recent notifications per recipient."""
+    if not created:
+        return
+
+    keep_ids = list(
+        Notification.objects.filter(recipient=instance.recipient)
+        .order_by("-created_at", "-id")
+        .values_list("id", flat=True)[:15]
+    )
+    if keep_ids:
+        Notification.objects.filter(recipient=instance.recipient).exclude(id__in=keep_ids).delete()

@@ -1,0 +1,17 @@
+<div id="lightbox" class="lightbox d-none">
+  <div class="lightbox-backdrop"></div>
+
+  <div class="lightbox-inner">
+    <button class="lightbox-close" type="button">&times;</button>
+
+    <button class="lightbox-arrow lightbox-arrow--left" type="button">&#10094;</button>
+
+    <img id="lightbox-image" class="lightbox-image" alt="Recipe image">
+
+    <button class="lightbox-arrow lightbox-arrow--right" type="button">&#10095;</button>
+  </div>
+</div>
+
+{% include "partials/post/post_lightbox_script.html" %}
+{% include "partials/post/post_save_modal_script.html" %}
+{% include "partials/post/post_layout_scripts.html" %}

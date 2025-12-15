@@ -1,0 +1,10 @@
+{% extends "base/base.html" %}
+
+{# Base for public/marketing pages that use the public navbar #}
+
+{% block body_class %}public-body{% endblock %}
+
+{% block body %}
+  {% include "partials/navbar/navbar.html" %}
+  {% block content %}{% endblock %}
+{% endblock %}

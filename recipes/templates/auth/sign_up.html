@@ -1,0 +1,43 @@
+{% extends "base/base_auth.html" %}
+{% load static %}
+{% load socialaccount %}
+
+{% block content %}
+<div class="auth-page">
+  <div class="auth-card">
+    <h1 class="auth-title">Welcome to Recipi</h1>
+    <p class="auth-subtitle">Create an account to save and share your recipes.</p>
+
+    <!-- Google sign-in -->
+    <div class="auth-oauth-buttons">
+      <a href="{% provider_login_url 'google' %}" class="btn btn-auth btn-auth-google">
+        <i class="bi bi-google"></i>
+        <span>Continue with Google</span>
+      </a>
+
+    </div>
+
+    <div class="auth-divider">
+      <span>or sign up with email</span>
+    </div>
+
+    <form action="{% url 'sign_up' %}" method="post">
+      {% csrf_token %}
+      {% include "partials/forms/bootstrap_form.html" with form=form %}
+      <button type="submit" class="auth-primary-btn mt-2">
+        Continue
+      </button>
+    </form>
+
+    <p class="auth-meta">
+      By continuing, you agree to our
+      <a href="#">Terms</a> and <a href="#">Privacy Policy</a>.
+    </p>
+
+    <p class="auth-footer-link">
+      Already have an account?
+      <a href="{% url 'log_in' %}">Log in</a>
+    </p>
+	  </div>
+</div>
+{% endblock %}

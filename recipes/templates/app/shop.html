@@ -1,0 +1,85 @@
+{% extends "base/base_app.html" %}
+
+{% block body_class %}shop-body{% endblock %}
+
+{% block content %}
+
+<main class="container shop-wrapper py-5">
+  <div class="row mb-5 text-center">
+    <div class="col-12 col-md-8 offset-md-2">
+      <span class="text-uppercase tracking-wide text-muted small fw-bold mb-2 d-block">Curated Kitchen</span>
+      <h1 class="display-5 fw-bold mb-3">Shop Ingredients</h1>
+      <p class="lead text-muted">Discover and buy the products used in our favorite recipes.</p>
+    </div>
+  </div>
+
+  <div class="row g-4" id="shop-items-container">
+    {% if items %}
+      {% include 'partials/shop/shop_items.html' with items=items %}
+    {% else %}
+    <div class="col-12 text-center py-5">
+      <div class="empty-state">
+        <div class="mb-4 text-muted display-4"><i class="bi bi-shop"></i></div>
+        <h3>Your shop is empty</h3>
+        <p class="text-muted mb-4">Add ingredients with shop links to your recipes to see them here.</p>
+        <a href="{% url 'recipe_create' %}" class="btn btn-primary rounded-pill px-4">Create a Recipe</a>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</main>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const container = document.getElementById('shop-items-container');
+    if (!container) return;
+
+    let page = 1;
+    let loading = false;
+    let hasNext = {{ page_obj.has_next|yesno:"true,false" }};
+
+    function loadMoreShopItems() {
+      if (loading || !hasNext) return;
+      loading = true;
+
+      page += 1;
+      const url = new URL(window.location.href);
+      url.searchParams.set('page', String(page));
+      url.searchParams.set('ajax', '1');
+
+      fetch(url.toString(), {
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+        },
+      })
+        .then(function (response) {
+          if (!response.ok) {
+            throw new Error('Network response was not ok');
+          }
+          return response.json();
+        })
+        .then(function (data) {
+          if (data && data.html) {
+            container.insertAdjacentHTML('beforeend', data.html);
+          }
+          hasNext = Boolean(data && data.has_next);
+          loading = false;
+        })
+        .catch(function () {
+          loading = false;
+        });
+    }
+
+    window.addEventListener('scroll', function () {
+      if (loading || !hasNext) return;
+
+      const scrollPosition = window.innerHeight + window.scrollY;
+      const threshold = document.body.offsetHeight - 300;
+
+      if (scrollPosition >= threshold) {
+        loadMoreShopItems();
+      }
+    });
+  });
+</script>
+{% endblock %}

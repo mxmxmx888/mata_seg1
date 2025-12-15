@@ -1,8 +1,0 @@
-{# recipes/templates/partials/recipe_grid.html #}
-{% if posts %}
-  <div class="my-recipes-grid"{% if grid_id %} id="{{ grid_id }}"{% endif %}>
-    {% include "partials/recipe_grid_items.html" with posts=posts %}
-  </div>
-{% else %}
-  <p class="text-muted mt-3">You haven’t created any recipes yet.</p>
-{% endif %}

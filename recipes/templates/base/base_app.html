@@ -1,0 +1,11 @@
+{% extends "base/base.html" %}
+
+{# Base for logged-in app pages that use the app navbar #}
+
+{% block body_class %}app-body{% endblock %}
+
+{% block body %}
+  {% include "partials/navbar/navbar_app.html" %}
+  {% block content %}{% endblock %}
+{% endblock %}
+

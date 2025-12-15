@@ -1,0 +1,39 @@
+@import url("post_layout.css");
+@import url("post_similar.css");
+@import url("post_gallery.css");
+@import url("post_comments.css");
+@import url("post_save_modal.css");
+
+@media (prefers-color-scheme: dark) {
+  body:not(.auth-body) .btn.btn-outline-dark:hover,
+  body:not(.auth-body) .btn.btn-outline-dark:focus-visible,
+  body:not(.auth-body) .btn.btn-outline-light:hover,
+  body:not(.auth-body) .btn.btn-outline-light:focus-visible {
+    background-color: #ffffff !important;
+    color: rgb(13, 13, 13) !important;
+    border-color: #ffffff !important;
+  }
+
+  body:not(.auth-body) .cta-browse-btn.btn-outline-dark:hover,
+  body:not(.auth-body) .cta-browse-btn.btn-outline-dark:focus-visible {
+    background-color: #ffffff !important;
+    color: rgb(13, 13, 13) !important;
+    border-color: #ffffff !important;
+  }
+}
+
+body[data-theme="dark"]:not(.auth-body) .btn.btn-outline-dark:hover,
+body[data-theme="dark"]:not(.auth-body) .btn.btn-outline-dark:focus-visible,
+body[data-theme="dark"]:not(.auth-body) .btn.btn-outline-light:hover,
+body[data-theme="dark"]:not(.auth-body) .btn.btn-outline-light:focus-visible {
+  background-color: #ffffff !important;
+  color: rgb(13, 13, 13) !important;
+  border-color: #ffffff !important;
+}
+
+body[data-theme="dark"]:not(.auth-body) .cta-browse-btn.btn-outline-dark:hover,
+body[data-theme="dark"]:not(.auth-body) .cta-browse-btn.btn-outline-dark:focus-visible {
+  background-color: #ffffff !important;
+  color: rgb(13, 13, 13) !important;
+  border-color: #ffffff !important;
+}

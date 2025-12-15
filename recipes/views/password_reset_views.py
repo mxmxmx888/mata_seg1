@@ -16,7 +16,7 @@ class PasswordResetRequestView(LoginProhibitedMixin, FormView):
     exists to avoid leaking user existence.
     """
 
-    template_name = 'password_reset_request.html'
+    template_name = 'auth/password_reset_request.html'
     form_class = PasswordResetRequestForm
     success_url = reverse_lazy('password_reset_done')
     redirect_when_logged_in_url = settings.REDIRECT_URL_WHEN_LOGGED_IN
@@ -49,7 +49,7 @@ class PasswordResetRequestView(LoginProhibitedMixin, FormView):
 class PasswordResetDoneView(LoginProhibitedMixin, TemplateView):
     """Show a neutral confirmation after a reset request is submitted."""
 
-    template_name = 'password_reset_done.html'
+    template_name = 'auth/password_reset_done.html'
     redirect_when_logged_in_url = settings.REDIRECT_URL_WHEN_LOGGED_IN
 
 
@@ -61,7 +61,7 @@ class UsernameResetRequestView(LoginProhibitedMixin, FormView):
     to avoid leaking account existence.
     """
 
-    template_name = 'username_reset_request.html'
+    template_name = 'auth/username_reset_request.html'
     form_class = UsernameResetRequestForm
     success_url = reverse_lazy('username_reset_done')
     redirect_when_logged_in_url = settings.REDIRECT_URL_WHEN_LOGGED_IN
@@ -89,5 +89,5 @@ class UsernameResetRequestView(LoginProhibitedMixin, FormView):
 class UsernameResetDoneView(LoginProhibitedMixin, TemplateView):
     """Show a neutral confirmation after a username reset request."""
 
-    template_name = 'username_reset_done.html'
+    template_name = 'auth/username_reset_done.html'
     redirect_when_logged_in_url = settings.REDIRECT_URL_WHEN_LOGGED_IN

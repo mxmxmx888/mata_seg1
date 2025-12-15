@@ -119,4 +119,4 @@ def mock_post_detail(request):
             {"name": "architorturedsoul", "handle": "@veteene", "elements": 71, "avatar_color": "radial-gradient(circle at 30% 30%, #ebbba7, #cfc7f8)"},
         ],
     }
-    return render(request, "post_detail.html", context)
+    return render(request, "post/post_detail.html", context)

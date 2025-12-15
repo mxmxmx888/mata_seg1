@@ -1,0 +1,189 @@
+{% extends "base/base_app.html" %}
+{% load static %}
+
+{% block content %}
+  <main class="app-page">
+    <div class="container-lg">
+
+      <div class="create-recipe-card">
+        <h1 class="hero-title create-recipe-title">Edit recipe</h1>
+        <p class="hero-lead create-recipe-lead">
+          Update the title, description, ingredients and steps for your recipe.
+        </p>
+
+        <form method="post" enctype="multipart/form-data">
+          {% csrf_token %}
+
+          {% include "partials/forms/bootstrap_form.html" with form=form %}
+
+          <div class="shopping-links-helper mt-5 mb-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <div>
+                <h5 class="mb-1 shopping-links-title text-white">Shopping links</h5>
+                <p class="text-white-50 small mb-0">Add items with links to appear in the shop section.</p>
+              </div>
+              <span class="badge rounded-pill bg-white text-dark border-0">Optional</span>
+            </div>
+
+            <div class="row g-3 align-items-end shopping-links-row">
+              <div class="col-12 col-md-5 col-lg-5 shopping-links-field">
+                <label for="shop-item" class="form-label mb-1 text-white-50 small">Item Name</label>
+                <input type="text" id="shop-item" class="form-control form-control-dark" placeholder="e.g. Matcha Powder">
+              </div>
+              <div class="col-12 col-md-5 col-lg-5 shopping-links-field">
+                <label for="shop-link" class="form-label mb-1 text-white-50 small">Online Link</label>
+                <input type="url" id="shop-link" class="form-control form-control-dark" placeholder="https://...">
+              </div>
+              <div class="col-12 col-md-2 col-lg-2 col-button">
+                <button type="button" id="add-shop-link" class="btn btn-white shop-add-btn">Add</button>
+              </div>
+            </div>
+
+            <div class="mt-4 shopping-links-list">
+              <div class="small fw-bold text-white-50 mb-2 text-uppercase tracking-wide">Added Items</div>
+              <div id="shop-list" class="shopping-list-box text-white-50 small">No shopping links added yet.</div>
+            </div>
+          </div>
+
+          <div class="small text-muted mb-2 mt-4">
+            Tip: add tags like <code>#food</code>, <code>#dinner</code>, or <code>#private</code> in the tags field to control how your recipes are discovered.
+          </div>
+
+          <div class="mt-3 text-center">
+            <button type="submit" class="btn-save-recipe">
+              Save changes
+            </button>
+          </div>
+        </form>
+      </div>
+
+  </div>
+  </main>
+
+  <script>
+    (function() {
+      const formEl = document.querySelector('.create-recipe-card form');
+      const imageInput = document.getElementById('id_images');
+      const imageList = document.getElementById('image-file-list');
+      const shopImageInput = document.getElementById('id_shop_images');
+      const shopImageList = document.getElementById('shop-image-file-list');
+      
+      const ingredientsField = document.getElementById('id_ingredients_text');
+      const itemInput = document.getElementById('shop-item');
+      const linkInput = document.getElementById('shop-link');
+      const addBtn = document.getElementById('add-shop-link');
+      const listBox = document.getElementById('shop-list');
+      const shoppingList = [];
+
+      if (!formEl || !ingredientsField || !itemInput || !linkInput || !addBtn || !listBox) return;
+
+      function renderImagesList() {
+        if (!imageInput || !imageList) return;
+        const files = imageInput.files;
+        if (!files || !files.length) {
+          imageList.textContent = "";
+          return;
+        }
+        const names = Array.from(files).map(f => f.name);
+        imageList.textContent = names.join(", ");
+      }
+      if (imageInput) {
+        imageInput.addEventListener('change', renderImagesList);
+      }
+
+      function renderShopImagesList() {
+        if (!shopImageInput || !shopImageList) return;
+        const files = shopImageInput.files;
+        if (!files || !files.length) {
+          shopImageList.textContent = "";
+          return;
+        }
+        const names = Array.from(files).map(f => f.name);
+        shopImageList.textContent = names.join(", ");
+      }
+      if (shopImageInput) {
+        shopImageInput.addEventListener('change', renderShopImagesList);
+      }
+
+      function normalizeUrl(url) {
+        if (!url) return '';
+        return /^https?:\/\//i.test(url) ? url : 'https://' + url;
+      }
+
+      function renderList() {
+        if (!shoppingList.length) {
+          listBox.innerHTML = '<div class="text-white-50 small fst-italic">No shopping links added yet.</div>';
+          return;
+        }
+        listBox.innerHTML = shoppingList.map((item, idx) => `
+          <div class="shopping-list-item" data-idx="${idx}">
+            <div>
+              <span class="fw-medium">${item.name}</span>
+              <span class="note">${item.url ? '<i class="bi bi-link-45deg"></i> Linked' : ''}</span>
+            </div>
+            <button type="button" class="btn btn-sm btn-outline-danger remove py-0 px-2" data-idx="${idx}">Remove</button>
+          </div>
+        `).join('');
+
+        listBox.querySelectorAll('.remove').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const i = parseInt(btn.dataset.idx, 10);
+            shoppingList.splice(i, 1);
+            renderList();
+          });
+        });
+      }
+
+      function addLink() {
+        const name = (itemInput.value || '').trim();
+        const rawUrl = (linkInput.value || '').trim();
+        if (!name) {
+          itemInput.focus();
+          return;
+        }
+
+        shoppingList.push({ name, url: normalizeUrl(rawUrl) });
+        renderList();
+
+        itemInput.value = '';
+        linkInput.value = '';
+        itemInput.focus();
+      }
+
+      function prepareIngredientsForSubmit() {
+        const manual = (ingredientsField.value || '').trim();
+        const manualLines = manual ? manual.split(/\r?\n/).map(l => l.trim()).filter(Boolean) : [];
+        const shoppingLines = shoppingList.map(item => item.url ? `${item.name} | ${item.url}` : item.name);
+        const finalLines = [...manualLines, ...shoppingLines];
+        ingredientsField.value = finalLines.join('\n');
+      }
+
+      function bootstrapExisting() {
+        const raw = (ingredientsField.value || '').trim();
+        if (!raw) return;
+        const lines = raw.split(/\r?\n/);
+        const manualKeep = [];
+        lines.forEach(line => {
+          if (line.includes('|')) {
+            const parts = line.split('|');
+            const name = (parts[0] || '').trim();
+            const url = normalizeUrl((parts[1] || '').trim());
+            if (name) shoppingList.push({ name, url });
+          } else {
+            if (line.trim()) manualKeep.push(line.trim());
+          }
+        });
+        ingredientsField.value = manualKeep.join('\n');
+        renderList();
+      }
+
+      addBtn.addEventListener('click', addLink);
+      itemInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); addLink(); } });
+      linkInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); addLink(); } });
+      formEl.addEventListener('submit', prepareIngredientsForSubmit);
+
+      bootstrapExisting();
+      renderList();
+    })();
+  </script>
+{% endblock %}

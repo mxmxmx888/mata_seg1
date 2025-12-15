@@ -14,7 +14,7 @@ class SignUpView(LoginProhibitedMixin, FormView):
     Handles user registration via the custom SignUpForm.
     """
 
-    template_name = "sign_up.html"
+    template_name = "auth/sign_up.html"
     form_class = SignUpForm
     success_url = reverse_lazy("dashboard")
 

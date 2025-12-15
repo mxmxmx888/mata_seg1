@@ -1,0 +1,341 @@
+{% load static %}
+
+<!-- BROWSE PREVIEW / MVP HOOK -->
+<section id="browse">
+  <div class="container-fluid py-5 pb-5 border-top px-4 px-xl-5">
+    <div class="row justify-content-center">
+      <div class="col-xxl-10">
+
+        <div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-4">
+          <div>
+            <p class="small text-muted text-uppercase mb-1">Recipe browser preview</p>
+            <h2 class="display-4 fw-semibold mb-2">What browsing could look like.</h2>
+            <p class="text-muted small mb-0">
+              This section will later map directly onto the real “Browse recipes”
+              page in the MVP.
+            </p>
+          </div>
+          <a href="{% url 'dashboard' %}" class="btn btn-outline-dark btn-sm cta-browse-btn">
+            Open recipe browser (placeholder)
+          </a>
+        </div>
+
+        <div class="browse-carousel" data-autoplay="true">
+          <div class="browse-carousel-viewport">
+            <div class="browse-carousel-track">
+              <!-- Card 1 -->
+              <article class="browse-card tile-box">
+                <p class="small text-muted mb-1">Quick dinner</p>
+                <h3 class="h5 mb-1">One-pan lemon chicken</h3>
+                <p class="small text-muted mb-3">
+                  Chicken, potatoes and greens on a single tray for easy cleanup.
+                </p>
+                <p class="small text-muted mb-3">
+                  30 min · Easy · Serves 2–3
+                </p>
+                <div class="ratio ratio-1x1 overflow-hidden">
+                  <img
+                    src="{% static 'img/lemon-chicken.jpg' %}"
+                    class="square-img"
+                    alt="One-pan lemon chicken"
+                  >
+                </div>
+              </article>
+
+              <!-- Card 2 -->
+              <article class="browse-card tile-box">
+                <p class="small text-muted mb-1">Make ahead</p>
+                <h3 class="h5 mb-1">Slow baked lasagne</h3>
+                <p class="small text-muted mb-3">
+                  Layers of pasta, tomato and béchamel for a weekend cook.
+                </p>
+                <p class="small text-muted mb-3">
+                  90 min · Medium · Serves 4–6
+                </p>
+                <div class="ratio ratio-1x1 overflow-hidden">
+                  <img
+                    src="{% static 'img/lasagne.jpg' %}"
+                    class="square-img"
+                    alt="Slow baked lasagne"
+                  >
+                </div>
+              </article>
+
+              <!-- Card 3 -->
+              <article class="browse-card tile-box">
+                <p class="small text-muted mb-1">Dessert</p>
+                <h3 class="h5 mb-1">Dark chocolate brownies</h3>
+                <p class="small text-muted mb-3">
+                  Dense, fudgy brownies with a super short ingredient list.
+                </p>
+                <p class="small text-muted mb-3">
+                  45 min · Easy · Serves 8–10
+                </p>
+                <div class="ratio ratio-1x1 overflow-hidden">
+                  <img
+                    src="{% static 'img/brownies.jpg' %}"
+                    class="square-img"
+                    alt="Dark chocolate brownies"
+                  >
+                </div>
+              </article>
+
+              <!-- Card 4 -->
+              <article class="browse-card tile-box">
+                <p class="small text-muted mb-1">Breakfast</p>
+                <h3 class="h5 mb-1">Buttermilk pancakes</h3>
+                <p class="small text-muted mb-3">
+                  Fluffy weekend pancakes with crispy edges and a touch of vanilla.
+                </p>
+                <p class="small text-muted mb-3">
+                  25 min · Easy · Serves 4
+                </p>
+                <div class="ratio ratio-1x1 overflow-hidden">
+                  <img
+                    src="{% static 'img/pancakes.jpg' %}"
+                    class="square-img"
+                    alt="Stack of buttermilk pancakes"
+                  >
+                </div>
+              </article>
+            </div>
+            <div class="browse-hover-tip" data-visible="false">Next</div>
+          </div>
+          <div class="browse-carousel-dots" aria-hidden="true"></div>
+        </div>
+
+        <script>
+          document.addEventListener('DOMContentLoaded', function () {
+            var carousels = document.querySelectorAll('.browse-carousel');
+            if (!carousels.length) return;
+
+            carousels.forEach(function (carousel) {
+              var viewport = carousel.querySelector('.browse-carousel-viewport');
+              var track = carousel.querySelector('.browse-carousel-track');
+              var hoverTip = carousel.querySelector('.browse-hover-tip');
+              if (!viewport || !track) return;
+
+              var slides = Array.prototype.slice.call(track.children);
+              if (!slides.length) return;
+
+              var realSlides = slides.slice();
+              var dotsContainer = carousel.querySelector('.browse-carousel-dots');
+
+              while (track.firstChild) {
+                track.removeChild(track.firstChild);
+              }
+
+              function cloneSlide(slide, cloneIndex) {
+                var clone = slide.cloneNode(true);
+                clone.setAttribute('data-clone', 'true');
+                clone.setAttribute('data-clone-index', String(cloneIndex));
+                return clone;
+              }
+
+              var prependClones = realSlides.map(function (slide, i) {
+                return cloneSlide(slide, -realSlides.length + i);
+              });
+              var appendClones = realSlides.map(function (slide, i) {
+                return cloneSlide(slide, realSlides.length + i);
+              });
+
+              prependClones.forEach(function (clone) {
+                track.appendChild(clone);
+              });
+              realSlides.forEach(function (slide) {
+                track.appendChild(slide);
+              });
+              appendClones.forEach(function (clone) {
+                track.appendChild(clone);
+              });
+
+              var allSlides = Array.prototype.slice.call(track.children);
+
+              var dots = [];
+              if (dotsContainer) {
+                dotsContainer.innerHTML = '';
+                realSlides.forEach(function (_slide, i) {
+                  var dot = document.createElement('button');
+                  dot.type = 'button';
+                  dot.className = 'browse-carousel-dot';
+                  dot.setAttribute('aria-label', 'Go to slide ' + (i + 1));
+                  dotsContainer.appendChild(dot);
+                  dots.push(dot);
+                });
+              }
+
+              var index = 0;
+              var allowAutoplay = carousel.dataset.autoplay === 'true';
+              var timer = null;
+              var scrollTicking = false;
+              var spacing = 0;
+
+              function measureSpacing() {
+                if (allSlides.length < 2) return 0;
+                var rect1 = allSlides[0].getBoundingClientRect();
+                var rect2 = allSlides[1].getBoundingClientRect();
+                return rect2.left - rect1.left;
+              }
+
+              function positionFor(realSlide) {
+                var i = allSlides.indexOf(realSlide);
+                if (i === -1) return 0;
+                var rect = allSlides[0].getBoundingClientRect();
+                var rectThis = realSlide.getBoundingClientRect();
+                return rectThis.left - rect.left;
+              }
+
+              function goTo(realIndex, animate) {
+                if (animate === void 0) animate = true;
+                if (!realSlides[realIndex]) return;
+                index = realIndex;
+
+                var target = realSlides[realIndex];
+                var offset = positionFor(target);
+
+                if (!animate) {
+                  viewport.scrollLeft = offset;
+                } else {
+                  viewport.scrollTo({ left: offset, behavior: 'smooth' });
+                }
+
+                markActive(index);
+              }
+
+              function markActive(realIndex) {
+                realSlides.forEach(function (slide, i) {
+                  slide.dataset.active = i === realIndex ? 'true' : 'false';
+                });
+                dots.forEach(function (dot, i) {
+                  if (!dot) return;
+                  if (i === realIndex) {
+                    dot.classList.add('is-active');
+                  } else {
+                    dot.classList.remove('is-active');
+                  }
+                });
+              }
+
+              var firstClonePos = positionFor(prependClones[prependClones.length - 1]);
+              var lastClonePos = positionFor(appendClones[0]);
+
+              var pendingWrap = null;
+
+              function wrapIfNeeded() {
+                var scrollLeft = viewport.scrollLeft;
+
+                if (pendingWrap === 'first' && scrollLeft > firstClonePos) {
+                  goTo(0, false);
+                  pendingWrap = null;
+                } else if (pendingWrap === 'last' && scrollLeft < lastClonePos) {
+                  goTo(realSlides.length - 1, false);
+                  pendingWrap = null;
+                }
+              }
+
+              function syncActiveFromScroll() {
+                var scrollLeft = viewport.scrollLeft;
+                var closestIndex = index;
+                var smallestDelta = Infinity;
+
+                realSlides.forEach(function (slide, i) {
+                  var delta = Math.abs(positionFor(slide) - scrollLeft);
+                  if (delta < smallestDelta) {
+                    smallestDelta = delta;
+                    closestIndex = i;
+                  }
+                });
+
+                if (closestIndex !== index) {
+                  index = closestIndex;
+                  markActive(index);
+                }
+              }
+
+              function startAutoplay() {
+                if (!allowAutoplay) return;
+                if (timer) return;
+                timer = setInterval(function () {
+                  goTo(index + 1);
+                }, 5200);
+              }
+
+              function stopAutoplay() {
+                clearInterval(timer);
+                timer = null;
+              }
+
+              dots.forEach(function (dot, idx) {
+                dot.addEventListener('click', function () {
+                  stopAutoplay();
+                  goTo(idx);
+                  startAutoplay();
+                });
+              });
+
+              viewport.addEventListener('mouseenter', function () {
+                stopAutoplay();
+                if (hoverTip) hoverTip.dataset.visible = 'true';
+              });
+
+              viewport.addEventListener('mouseleave', function () {
+                startAutoplay();
+                if (hoverTip) hoverTip.dataset.visible = 'false';
+              });
+
+              viewport.addEventListener('pointerdown', stopAutoplay);
+              viewport.addEventListener('pointerup', startAutoplay);
+              viewport.addEventListener('touchstart', stopAutoplay, { passive: true });
+              viewport.addEventListener('touchend', startAutoplay, { passive: true });
+
+              viewport.addEventListener('mousemove', function (evt) {
+                if (!hoverTip) return;
+                var rect = viewport.getBoundingClientRect();
+                var isNext = evt.clientX >= rect.left + rect.width / 2;
+                hoverTip.textContent = isNext ? 'Next' : 'Previous';
+                var x = evt.clientX - rect.left;
+                var y = evt.clientY - rect.top;
+                hoverTip.style.transform = 'translate(' + x + 'px,' + (y - 18) + 'px)';
+                hoverTip.dataset.side = isNext ? 'next' : 'prev';
+              });
+
+              viewport.addEventListener('click', function (evt) {
+                var rect = viewport.getBoundingClientRect();
+                var isNext = evt.clientX >= rect.left + rect.width / 2;
+                stopAutoplay();
+                goTo(isNext ? index + 1 : index - 1);
+                startAutoplay();
+              });
+
+              viewport.addEventListener('scroll', function () {
+                if (scrollTicking) return;
+                scrollTicking = true;
+                requestAnimationFrame(function () {
+                  wrapIfNeeded();
+                  syncActiveFromScroll();
+                  scrollTicking = false;
+                });
+              });
+
+              window.addEventListener('resize', function () {
+                goTo(index, false);
+                wrapIfNeeded();
+              });
+
+              requestAnimationFrame(function () {
+                spacing = measureSpacing();
+                goTo(0, false);
+                wrapIfNeeded();
+                if (carousel.dataset.autoplay === 'true') {
+                  startAutoplay();
+                }
+              });
+            });
+          });
+        </script>
+
+      </div>
+    </div>
+  </div>
+</section>
+

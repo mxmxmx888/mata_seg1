@@ -13,7 +13,7 @@ class LogInView(LoginProhibitedMixin, View):
 
     def get(self, request):
         form = LogInForm()
-        return render(request, "log_in.html", {"form": form, "next": self.next})
+        return render(request, "auth/log_in.html", {"form": form, "next": self.next})
 
     def post(self, request):
         form = LogInForm(request.POST)
@@ -31,4 +31,4 @@ class LogInView(LoginProhibitedMixin, View):
                 return redirect(next_url)
 
         # if invalid, re-render form
-        return render(request, "log_in.html", {"form": form, "next": self.next})
+        return render(request, "auth/log_in.html", {"form": form, "next": self.next})

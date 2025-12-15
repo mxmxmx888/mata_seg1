@@ -1,0 +1,18 @@
+{% extends "base/base_auth.html" %}
+{% load static %}
+
+{% block content %}
+<div class="auth-page">
+  <div class="auth-panel">
+    <div class="auth-card">
+      <h1 class="auth-title">Check your email</h1>
+      <p class="auth-subtitle">
+        If there is an account with that email, we'll send steps to recover the username.
+      </p>
+      <a href="{% url 'log_in' %}" class="auth-primary-btn d-block text-center mt-3">
+        Return to log in
+      </a>
+	  </div>
+	</div>
+</div>
+{% endblock %}

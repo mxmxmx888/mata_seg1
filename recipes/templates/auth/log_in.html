@@ -1,0 +1,50 @@
+{% extends "base/base_auth.html" %}
+{% load static %}
+{% load socialaccount %}
+
+{% block content %}
+  <div class="auth-page">
+    <div class="auth-panel">
+      <div class="auth-card">
+        <h1 class="auth-title">Log in</h1>
+        <p class="auth-subtitle">
+          Access your saved recipes and cooking spaces.
+        </p>
+
+        <!-- Google sign-in -->
+        <div class="auth-oauth-buttons">
+          <a href="{% provider_login_url 'google' %}" class="btn btn-auth btn-auth-google">
+            <i class="bi bi-google"></i>
+            <span>Continue with Google</span>
+          </a>
+
+        </div>
+
+        <div class="auth-divider">
+          <span>or log in with email</span>
+        </div>
+
+        <form action="{% url 'log_in' %}" method="post">
+          {% csrf_token %}
+          <input type="hidden" name="next" value="{{ next|default_if_none:'' }}">
+          {% include "partials/forms/bootstrap_form.html" with form=form %}
+          <button type="submit" class="auth-primary-btn mt-2">
+            Enter
+          </button>
+        </form>
+
+        <p class="auth-meta">
+          Trouble signing in?
+          <a href="{% url 'password_reset' %}">Reset your password</a>
+          or
+          <a href="{% url 'username_reset' %}">Recover your username</a>
+        </p>
+
+        <p class="auth-footer-link">
+          New to Recipi?
+          <a href="{% url 'sign_up' %}">Create an account</a>
+        </p>
+      </div>
+    </div>
+  </div>
+{% endblock %}

@@ -44,7 +44,7 @@ def report_content(request, content_type, object_id):
     else:
         form = ReportForm()
 
-    return render(request, 'report_content.html', {
+    return render(request, 'content/report_content.html', {
         'form': form, 
         'content_type': content_type, 
         'object': recipe or comment
