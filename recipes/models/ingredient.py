@@ -2,6 +2,36 @@ import uuid
 from django.db import models
 from .recipe_post import RecipePost
 
+"""
+Ingredient model
+
+This table stores the ingredient list for a specific RecipePost.
+
+Each row represents ONE ingredient used in ONE recipe, with optional quantity
+and unit, plus optional “shop” metadata for linking/browsing ingredients in a
+shop-like UI.
+
+Key ideas:
+- Ingredients belong to a RecipePost (FK).
+- Ingredients are ordered inside the recipe using `position` (1, 2, 3, ...).
+- Ingredient names are normalised to lowercase on save to keep them consistent.
+
+Uniqueness rules:
+- (recipe_post, name) must be unique:
+  You can’t list “garlic” twice in the same recipe (even if typed differently).
+- (recipe_post, position) must be unique:
+  You can’t have two ingredients with the same position in the same recipe.
+
+Validation / constraints:
+- `position` must be > 0 (no zero/negative ordering).
+
+Shop fields (optional):
+- `shop_url` can link to an online product page.
+- `shop_image_upload` stores a custom product image for the shop section.
+
+The `__str__` output is meant to be human-friendly in admin/debug logs.
+"""
+
 
 class Ingredient(models.Model):
     # Composite key part 1: recipe_post_id
@@ -13,7 +43,7 @@ class Ingredient(models.Model):
         related_name='ingredients'
     )
 
-    # Composite key part 2: name (normalized: lowercased before save)
+    # Composite key part 2: name 
     name = models.CharField(max_length=255)
 
     # position in the recipe
