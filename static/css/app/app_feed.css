@@ -1,12 +1,8 @@
-/* =========================== */
-/* Logged-in feed / dashboard  */
-/* =========================== */
-
 .feed-shell {
   min-height: calc(100vh - 64px);
 }
 
-/* Tabs row for "For you" / "Following" in older layout */
+
 .feed-tabs .nav-link {
   border-radius: 999px;
   padding: 0.35rem 0.9rem;
@@ -21,7 +17,7 @@
   color: var(--text-inverse);
 }
 
-/* Search pill under the navbar (older feed layout) */
+
 .feed-search .input-group-text.feed-search-icon {
   border-radius: 999px 0 0 999px;
   border-right: 0;
@@ -34,7 +30,7 @@
   background-color: var(--bg-2);
 }
 
-/* Feed cards */
+
 .feed-card {
   border-radius: 1.5rem;
   background-color: var(--surface);
@@ -46,7 +42,7 @@
   padding: 1.2rem 1.4rem 1.1rem;
 }
 
-/* Avatar */
+
 .feed-avatar {
   width: 32px;
   height: 32px;
@@ -70,7 +66,7 @@
   margin-left: 0.3rem;
 }
 
-/* Media inside feed cards */
+
 .feed-media img {
   width: 100%;
   height: 100%;
@@ -78,7 +74,7 @@
   border-radius: 1.1rem;
 }
 
-/* Actions */
+
 .feed-actions .btn {
   color: var(--text-muted);
 }
@@ -93,7 +89,7 @@
   font-size: 0.8rem;
 }
 
-/* Shop badge on a post */
+
 .feed-badge-shop {
   background-color: var(--text-primary);
   color: var(--text-inverse);

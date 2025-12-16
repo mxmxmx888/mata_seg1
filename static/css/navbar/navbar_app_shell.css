@@ -1,6 +1,4 @@
-/* =============================== */
-/* Cosmos App Navbar               */
-/* =============================== */
+/* App Navbar */
 
 .navbar-app {
   position: fixed;
@@ -15,7 +13,7 @@
   z-index: 1040;
 }
 
-/* Prevent any stray hairline under the fixed nav on wide screens, delib */
+
 @media (min-width: 992px) {
   .navbar-app::after {
     content: "";
@@ -86,7 +84,7 @@
   margin-left: -0.15rem;
 }
 
-/* Individual heart movement */
+
 .navbar-actions #notificationDropdown {
   margin-right: -0.55rem;
 }
@@ -100,9 +98,7 @@
   box-shadow: none;
 }
 
-/* =============================== */
 /* SEARCH BAR — CENTERED / SHIFTED */
-/* =============================== */
 
 .navbar-app .container-fluid {
   display: grid;
@@ -185,7 +181,7 @@
   font-size: 1rem;
 }
 
-/* Center search bar in the navbar (no translations) */
+
 .navbar-app .navbar-actions {
   margin-left: auto;
   padding-left: 0.75rem;
@@ -211,17 +207,23 @@
     max-width: 100%;
   }
 
+  .navbar-mobile-actions {
+    display: flex !important;
+    align-items: center;
+    gap: 0.55rem;
+    order: 3;
+    margin-left: auto;
+    flex-shrink: 0;
+  }
+
   .navbar-heart-compact {
     display: flex !important;
     align-items: center;
-    order: 2;
-    margin-left: 0.25rem;
-    margin-right: -2rem; /* let the heart slide closer to the toggler */
+    margin: 0;
   }
 
   .navbar-app .navbar-toggler {
-    order: 3;
-    margin-left: 0.15rem;
+    margin: 0;
   }
 
   .navbar-app .navbar-toggler-icon {
@@ -234,15 +236,13 @@
   }
 }
 
-/* Force hamburger icon to render in dark ink on light backgrounds */
+
 .navbar-app .navbar-toggler-icon {
   color: var(--text-primary);
   background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='currentColor' stroke-linecap='round' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
 }
 
-/* =============================== */
-/* ICON BUTTONS                    */
-/* =============================== */
+/* ICON BUTTONS */
 
 .icon-button {
   border: none;
@@ -261,7 +261,7 @@
   font-size: 0.8rem;
 }
 
-/* Avatar round button (same as original) */
+
 .navbar-app .avatar-pill {
   width: 28px;
   height: 28px;

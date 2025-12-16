@@ -1,4 +1,4 @@
-/* User search cards */
+
 .user-search-grid {
   display: grid;
   grid-template-columns: repeat(8, minmax(140px, 1fr));

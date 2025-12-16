@@ -38,7 +38,7 @@
   opacity: 0.9;
 }
 
-/* Placeholder tiles when there are no posts yet */
+
 .recipi-tile-placeholder {
   background: radial-gradient(circle at top left, #4b5563, #111827);
 }

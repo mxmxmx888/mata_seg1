@@ -1,6 +1,4 @@
-/*
- * Alerts
- */
+
 
  .alert {
   border-radius: 0;
@@ -24,9 +22,7 @@
   color: #111827;
 }
 
-/*
- * General layout / cover page bits
- */
+
 
 .content {
   padding-top: 10px;
@@ -42,7 +38,7 @@
   align-items: center;
 }
 
-/* Old cover-page styles (still used on the original landing template) */
+
 h1.cover-heading {
   font-size: 4rem;
 }
@@ -72,7 +68,7 @@ ul.errorlist {
   font-weight: 300;
 }
 
-/* Awesome Serif font for headings */
+
 @font-face {
   font-family: "Awesome Serif";
   src: url("/static/fonts/Awesome%20font/AwesomeSerif-Regular.otf") format("opentype");
@@ -90,9 +86,7 @@ ul.errorlist {
 }
 
 
-/*
- * Type / text utilities
- */
+
 
 .low-key {
   color: var(--text-muted);
@@ -104,7 +98,7 @@ ul.errorlist {
   margin-bottom: 20px;
 }
 
-/* Profile snippet on the old profile page */
+
 
 .profile-image {
   width: 120px;
@@ -132,9 +126,7 @@ h3.profile-title {
 }
 
 
-/*
- * Links
- */
+
 
 .content a {
   text-decoration: none;
@@ -146,7 +138,7 @@ h3.profile-title {
   color: #0d6efd;
 }
 
-/* Landing page links inherit the surrounding text color */
+
 .home-public a:not(.btn) {
   color: inherit;
   text-decoration: none;
@@ -160,28 +152,26 @@ h3.profile-title {
 }
 
 
-/*
- * Images / tiles / buttons
- */
+
 
 .square-img {
   width: 100%;
   height: 100%;
   object-fit: cover;
   display: block;
-  border-radius: 0; /* keep image edges square */
+  border-radius: 0; 
 }
 
 .impact-hero-img {
   width: 100%;
   height: auto;
-  object-fit: cover;      /* keep aspect ratio without stretching */
+  object-fit: cover;      
   display: block;
-  border-radius: 0 !important; /* no rounded corners on the home impact image */
+  border-radius: 0 !important; 
 }
 
 .impact-hero-frame {
-  border-radius: 0 !important; /* keep the container square */
+  border-radius: 0 !important; 
 }
 
 .cta-browse-btn {

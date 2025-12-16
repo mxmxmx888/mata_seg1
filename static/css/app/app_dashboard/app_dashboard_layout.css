@@ -1,7 +1,3 @@
-/* =========================== */
-/* Cosmos-style logged-in home */
-/* =========================== */
-
 .recipi-home {
   min-height: calc(100vh - 64px);
   padding-top: 0;
@@ -15,7 +11,7 @@
   margin-top: 0.75rem;
 }
 
-/* Dashboard + Shop page background + navbar matching */
+
 body.dashboard-body {
   background-color: var(--bg-1);
   color: var(--text-primary);

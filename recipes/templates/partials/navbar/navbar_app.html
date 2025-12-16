@@ -8,7 +8,6 @@
         Recipi
       </a>
 
-      {# Desktop / large-screen primary nav #}
       <ul class="navbar-nav d-none d-lg-flex gap-3">
         <li class="nav-item">
           <a class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}" href="{% url 'dashboard' %}">Discover</a>
@@ -84,36 +83,37 @@
       </form>
     </div>
 
-    <div class="dropdown navbar-heart-compact d-lg-none">
+    <div class="navbar-mobile-actions d-lg-none">
+      <div class="dropdown navbar-heart-compact">
+        <button
+          class="icon-button position-relative"
+          type="button"
+          id="notificationDropdownMobile"
+          data-bs-toggle="dropdown"
+          aria-expanded="false"
+          data-bs-auto-close="outside"
+        >
+          <i class="bi bi-heart"></i>
+          {% if unread_notifications_count > 0 %}
+          <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle notification-dot">
+            <span class="visually-hidden">New alerts</span>
+          </span>
+          {% endif %}
+        </button>
+
+        {% include "partials/navbar/notification_dropdown_menu.html" with dropdown_id="notificationDropdownMobile" %}
+      </div>
+
       <button
-        class="icon-button position-relative"
+        class="navbar-toggler ms-2 app-menu-toggle"
         type="button"
-        id="notificationDropdownMobile"
-        data-bs-toggle="dropdown"
         aria-expanded="false"
-        data-bs-auto-close="outside"
+        aria-label="Toggle navigation"
       >
-        <i class="bi bi-heart"></i>
-        {% if unread_notifications_count > 0 %}
-        <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle notification-dot">
-          <span class="visually-hidden">New alerts</span>
-        </span>
-        {% endif %}
+        <span class="navbar-toggler-icon"></span>
+        <span class="app-menu-close-icon">&times;</span>
       </button>
-
-      {% include "partials/navbar/notification_dropdown_menu.html" with dropdown_id="notificationDropdownMobile" %}
     </div>
-
-    <!-- Mobile hamburger toggler: opens full-screen menu -->
-    <button
-      class="navbar-toggler d-lg-none ms-2 app-menu-toggle"
-      type="button"
-      aria-expanded="false"
-      aria-label="Toggle navigation"
-    >
-      <span class="navbar-toggler-icon"></span>
-      <span class="app-menu-close-icon">&times;</span>
-    </button>
 
     <div class="collapse navbar-collapse justify-content-end" id="appNavbarMenu">
       <div class="navbar-actions ms-auto d-flex align-items-center">
@@ -205,7 +205,6 @@
   </div>
 </nav>
 
-{# Full-screen mobile nav overlay #}
 <div class="app-fullscreen-menu d-lg-none" id="appFullScreenMenu" aria-hidden="true">
   <button
     type="button"

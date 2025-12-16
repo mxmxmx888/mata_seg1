@@ -1,4 +1,4 @@
-/* Collection detail page */
+
 
 .collection-shell {
   max-width: 100%;
@@ -282,7 +282,7 @@ body[data-theme="light"] .collection-header-dropdown .dropdown-item {
   transform: translateY(-1px);
 }
 
-/* Five-column layout for collection detail masonry */
+
 .collection-masonry {
   display: flex;
   align-items: flex-start;

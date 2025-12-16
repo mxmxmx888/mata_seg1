@@ -1,4 +1,4 @@
-/* Profile actions + collections grid */
+
 
 .profile-actions {
   margin-top: 1.25rem;
@@ -103,7 +103,7 @@
   padding-bottom: 0.5rem;
 }
 
-/* Light theme overrides for profile + collections */
+
 body[data-theme="light"].profile-body {
   background-color: var(--bg-1);
   color: var(--text-primary);

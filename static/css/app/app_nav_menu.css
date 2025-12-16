@@ -1,6 +1,6 @@
-/* App full-screen mobile nav + tray */
 
-/* Full-screen mobile nav menu used by the app navbar */
+
+
 .app-fullscreen-menu {
   position: fixed;
   inset: 0;
@@ -82,12 +82,12 @@
   outline-offset: 2px;
 }
 
-/* Prevent background scroll while menu is open */
+
 body.app-menu-open {
   overflow: hidden;
 }
 
-/* Hamburger ↔ X icon toggle */
+
 .app-menu-toggle .app-menu-close-icon {
   display: none;
   font-size: 1.75rem;

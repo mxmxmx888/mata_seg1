@@ -1,4 +1,4 @@
-/* Home: browse preview carousel */
+
 .browse-carousel {
   position: relative;
 }
@@ -100,7 +100,7 @@
   opacity: 1;
 }
 
-/* Dark mode: keep dots visible */
+
 [data-theme="dark"] .browse-carousel-dot {
   background: rgba(255, 255, 255, 0.5);
 }

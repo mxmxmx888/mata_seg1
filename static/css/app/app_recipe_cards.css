@@ -1,4 +1,4 @@
-/* My recipes grid + cards */
+
 
 .my-recipes-title {
   font-size: 1.9rem;
@@ -94,7 +94,7 @@
   margin-bottom: 1.25rem;
 }
 
-/*  3-COLUMN MY RECIPES GRID (used across profile, My recipes, Discover) */
+
 .my-recipes-grid {
   column-count: 3;
   column-gap: 1.8rem;
@@ -102,7 +102,7 @@
 
 @media (max-width: 1200px) {
   .my-recipes-grid {
-    column-count: 2;  /* tablet view */
+    column-count: 2;  
   }
 }
 
@@ -146,7 +146,7 @@
   margin-bottom: 0.1rem;
 }
 
-/* Responsive masonry layout for dashboard feed (For you / Following) */
+
 .feed-masonry-grid {
   display: flex;
   gap: 1.6rem;
@@ -201,7 +201,7 @@ body[data-theme="light"] .my-recipe-description {
   color: var(--text-primary);
 }
 
-/* Light theme cards for feed grids */
+
 body[data-theme="light"] .my-recipe-card {
   background-color: var(--bg-2);
   border-color: var(--border-subtle);

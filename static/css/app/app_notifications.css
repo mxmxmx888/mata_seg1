@@ -1,6 +1,6 @@
-/* App notification dropdown panel */
 
-/* Notification bell / activity heart in navbar: icon only, no pill */
+
+
 .navbar-app #notificationDropdown.icon-button,
 .navbar-app #notificationDropdownMobile.icon-button {
   padding: 0;
@@ -26,18 +26,18 @@
   max-height: clamp(360px, 75vh, 580px);
   right: 0;
   left: auto;
-  margin-top: calc(var(--navbar-dropdown-offset) + 35px) !important; /* align with other navbar dropdowns */
+  margin-top: calc(var(--navbar-dropdown-offset) + 140px) !important; 
   padding: 0;
   border-radius: 22px;
   background-color: var(--bg-2);
   color: var(--text-primary);
   border: 1px solid var(--border-subtle);
-  overflow: hidden; /* keep header fixed while list scrolls */
+  overflow: hidden; 
   box-shadow: none;
 }
 
 .navbar-app .navbar-heart-compact .notification-menu {
-  margin-top: calc(var(--navbar-dropdown-offset) + 110px) !important;
+  margin-top: calc(var(--navbar-dropdown-offset) + 320px) !important;
 }
 
 .navbar-app .notification-menu.show {

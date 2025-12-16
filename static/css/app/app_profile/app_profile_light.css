@@ -1,4 +1,4 @@
-/* Light theme overrides for profile + collections */
+
 body[data-theme="light"].profile-body {
   background-color: var(--bg-1);
   color: var(--text-primary);

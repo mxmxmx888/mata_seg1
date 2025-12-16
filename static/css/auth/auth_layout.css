@@ -1,4 +1,4 @@
-/* Shared layout shells */
+
 
 .auth-page {
   --auth-card-width: clamp(320px, 36vw, 400px);
@@ -6,7 +6,7 @@
   --auth-card-pad-x: clamp(1.45rem, 3vw, 1.9rem);
   --auth-card-radius: clamp(1.2rem, 1.8vw, 1.55rem);
   --auth-card-scale: clamp(0.86, 0.64 + 0.03vw + 0.03vh, 0.95);
-  min-height: 100vh; /* fill the viewport so nothing is clipped */
+  min-height: 100vh; 
   display: flex;
   align-items: center;
   justify-content: center;
@@ -15,7 +15,7 @@
   box-sizing: border-box;
 }
 
-/* Split layout for login (visual on the left, card on the right) */
+
 .auth-page-split {
   min-height: 100vh;
   display: flex;
@@ -29,7 +29,7 @@
   column-gap: 4rem;
 }
 
-/* Allow scrolling on shorter viewports by relaxing centering */
+
 @media (max-height: 840px) {
   .auth-page,
   .auth-page-split {
@@ -39,7 +39,7 @@
   }
 }
 
-/* Placeholder for the blob / orb animation on login */
+
 .auth-visual {
   flex: 0 0 480px;
   display: flex;
@@ -56,7 +56,7 @@
   opacity: 0.55;
 }
 
-/* Right-hand panel that holds the actual card */
+
 .auth-panel {
   flex: 1 1 420px;
   display: flex;

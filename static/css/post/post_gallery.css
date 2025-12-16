@@ -1,4 +1,4 @@
-/* Post media stacks & gallery */
+
 
 .post-media-extras {
   background-color: transparent;
@@ -111,17 +111,17 @@ body[data-theme="dark"]:not(.auth-body) .post-gallery-tile {
   }
 }
 
-/* Create recipe page layout */
+
 
 .recipe-create-page {
   background: rgb(13, 13, 13);
   min-height: calc(100vh - 64px);
-  padding: 0 0 4rem; /* no extra space above the navbar */
+  padding: 0 0 4rem; 
 }
 
 .recipe-create-shell {
   max-width: 900px;
-  margin: 2.75rem auto 0; /* this is the gap BELOW the navbar */
+  margin: 2.75rem auto 0; 
 }
 
 .recipe-create-hero h1 {

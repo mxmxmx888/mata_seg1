@@ -1,4 +1,4 @@
-/* Shop page */
+
 body.shop-body {
   background: #f4f2ed;
   color: #1c1c1c;
@@ -123,7 +123,7 @@ body.shop-body {
   box-shadow: 0 20px 48px rgba(0, 0, 0, 0.08);
 }
 
-/* Theme adjustments */
+
 body[data-theme="dark"].shop-body {
   background: #0f1014;
   color: #f5f5f5;

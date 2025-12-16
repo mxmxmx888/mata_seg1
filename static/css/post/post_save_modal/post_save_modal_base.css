@@ -1,4 +1,4 @@
-/* Save modal */
+
 
 .save-modal {
   background: linear-gradient(145deg, #0f0f0f, #0c0c0c);
@@ -7,7 +7,7 @@
   border-radius: 1.6rem;
   box-shadow: 0 30px 80px rgba(0, 0, 0, 0.55);
   overflow: hidden;
-  /* tokens for search + input fields */
+  
   --save-field-bg: #121212;
   --save-field-border: rgba(255, 255, 255, 0.18);
   --save-field-text: #9ca3af;

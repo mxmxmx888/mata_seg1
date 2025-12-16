@@ -1,4 +1,4 @@
-/* Create recipe page */
+
 
 .app-body {
   background-color: var(--bg-1);
@@ -149,7 +149,7 @@
   }
 }
 
-/* Shopping links helper */
+
 .shopping-links-helper {
   background: var(--bg-2);
   border: 1px solid var(--border-subtle);

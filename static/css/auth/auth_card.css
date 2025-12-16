@@ -1,4 +1,4 @@
-/* Base card – light mode version */
+
 .auth-card {
   width: min(100%, var(--auth-card-width));
   background: var(--surface);
@@ -27,7 +27,7 @@
   line-height: 1;
 }
 
-/* OAuth buttons on auth pages */
+
 
 .auth-oauth-buttons {
   display: flex;
@@ -61,7 +61,7 @@
   color: var(--text-primary);
 }
 
-/* Divider between OAuth and email form */
+
 
 .auth-divider {
   display: flex;
@@ -84,7 +84,7 @@
   background: linear-gradient(to left, transparent, rgba(255, 255, 255, 0.16));
 }
 
-/* Email/password inputs */
+
 
 .auth-card .nolabel label {
   display: none;
@@ -117,7 +117,7 @@
   box-shadow: 0 0 0 1000px var(--surface) inset;
 }
 
-/* Remove success/invalid ticks and keep borders neutral on auth inputs */
+
 .auth-card .form-control.is-valid,
 .auth-card .form-control.is-valid:focus {
   background-image: none;
@@ -126,7 +126,7 @@
   padding-right: 1rem;
 }
 
-/* Error state: thin red outline when validation fails */
+
 .auth-card .form-control.is-invalid {
   background-image: none;
   border-color: #ef4444;
@@ -140,7 +140,7 @@
   box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.35);
 }
 
-/* Primary auth button (Continue / Enter) */
+
 
 .auth-primary-btn {
   width: 100%;
@@ -162,7 +162,7 @@
   text-decoration: none;
 }
 
-/* Copy under the button */
+
 
 .auth-meta {
   margin-top: 0.9rem;

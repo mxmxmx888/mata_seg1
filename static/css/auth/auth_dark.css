@@ -1,4 +1,4 @@
-/* Dark mode overrides */
+
 
 body[data-theme="dark"].auth-body {
   background-color: rgb(13, 13, 13);
@@ -133,7 +133,7 @@ body[data-theme="dark"] .auth-footer-link a {
   text-underline-offset: 3px;
 }
 
-/* Auth layout on smaller screens */
+
 
 @media (max-width: 768px) {
   .auth-page {
@@ -164,7 +164,7 @@ body[data-theme="dark"] .auth-footer-link a {
   }
 }
 
-/* Shrink padding and allow easier scroll on short screens */
+
 @media (max-height: 760px) {
   .auth-page,
   .auth-page-split {

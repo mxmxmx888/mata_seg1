@@ -1,8 +1,4 @@
-/* =================================== */
-/* Navbar styles                       */
-/* =================================== */
 
-/* Older Palantir-style navbar (kept for reference) */
 .navbar-palantir {
   font-size: 0.85rem;
   padding-top: 0.5rem;
@@ -13,12 +9,12 @@
   font-size: 0.9rem;
 }
 
-/* Rounded tiles to match image corners elsewhere */
+
 .tile-box {
   border-radius: 0;
 }
 
-/* Larger serif headings inside tile-style cards */
+
 .tile-box h5,
 .tile-box .h5 {
   font-size: 1.5rem;
@@ -31,12 +27,12 @@
   line-height: 1.2;
 }
 
-/* Buttons default to square for that Squarespace look */
+
 .btn {
   border-radius: 0;
 }
 
-/* Shared navbar layout (landing + logged-in) */
+
 .navbar-recipi {
   position: fixed;
   top: 0;
@@ -54,7 +50,7 @@
   transition: background-color 0.3s ease, box-shadow 0.3s ease, color 0.3s ease;
 }
 
-/* Mask any stray hairline on wide screens (logged-out/public) */
+
 @media (min-width: 992px) {
   .navbar-recipi::after {
     content: "";
@@ -68,7 +64,7 @@
   }
 }
 
-/* Strip any bootstrap hairlines */
+
 .navbar,
 .navbar::before,
 .navbar::after,
@@ -78,7 +74,7 @@
   box-shadow: none !important;
 }
 
-/* Brand sizing */
+
 .navbar-recipi .navbar-brand {
   position: relative;
   top: -1px;
@@ -94,7 +90,7 @@
   color: #ffffff;
 }
 
-/* Public landing: keep the bar white so it blends into the page */
+
 body.public-body .navbar-recipi {
   background-color: #ffffff;
 }
@@ -114,7 +110,7 @@ body.auth-body .navbar-recipi .nav-link {
   color: #111827;
 }
 
-/* When scrolled */
+
 .navbar-recipi.navbar-solid {
   background-color: #ffffff;
   border-bottom: none !important;
@@ -127,7 +123,7 @@ body.auth-body .navbar-recipi .nav-link {
   color: #000;
 }
 
-/* Outline button */
+
 .navbar-recipi.navbar-solid .btn.btn-outline-dark {
   color: #000;
   border-color: #000;
@@ -141,7 +137,7 @@ body.auth-body .navbar-recipi .nav-link {
   border-color: #000000;
 }
 
-/* Mobile toggler */
+
 .navbar-recipi .navbar-toggler {
   border: none;
   padding: 0.25rem 0.35rem;
@@ -161,12 +157,12 @@ body.auth-body .navbar-recipi .nav-link {
   background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba(0,0,0,0.85)' stroke-linecap='round' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
 }
 
-/* Dark-mode toggler */
+
 body[data-theme="dark"] .navbar-recipi .navbar-toggler-icon {
   background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba(255,255,255,0.92)' stroke-linecap='round' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
 }
 
-/* Mobile collapsed menu */
+
 @media (max-width: 991.98px) {
   .navbar-recipi .navbar-collapse {
     position: absolute;
@@ -197,20 +193,20 @@ body[data-theme="dark"] .navbar-recipi .navbar-toggler-icon {
   }
 }
 
-/* Explicit light theme */
+
 body[data-theme="light"] .navbar-recipi .navbar-brand,
 body[data-theme="light"] .navbar-recipi .nav-link {
   color: #000000 !important;
 }
 
-/* In dark theme, keep the logged-out outline button visible when the navbar goes solid */
+
 body[data-theme="dark"]:not(.auth-body) .navbar-recipi.navbar-solid .btn.btn-outline-dark {
   color: #f6f6f6;
   border-color: #f6f6f6;
   background-color: transparent;
 }
 
-/* System dark mode handling */
+
 @media (prefers-color-scheme: dark) {
   body.auth-body .navbar-recipi {
     background-color: transparent;
@@ -222,7 +218,7 @@ body[data-theme="dark"]:not(.auth-body) .navbar-recipi.navbar-solid .btn.btn-out
     color: #f6f6f6;
   }
 
-  /* Logged-in app: keep dark surfaces with light nav items */
+  
   body:not(.auth-body) .navbar-recipi {
     background-color: transparent;
     box-shadow: none !important;
@@ -244,7 +240,7 @@ body[data-theme="dark"]:not(.auth-body) .navbar-recipi.navbar-solid .btn.btn-out
   }
 }
 
-/* Hard override: keep nav items light on dark app surfaces */
+
 body:not(.auth-body):is([data-theme="dark"], .dashboard-body:not([data-theme="light"]), .shop-body:not([data-theme="light"]), .app-body:not([data-theme="light"])) .navbar-recipi .navbar-brand,
 body:not(.auth-body):is([data-theme="dark"], .dashboard-body:not([data-theme="light"]), .shop-body:not([data-theme="light"]), .app-body:not([data-theme="light"])) .navbar-recipi .nav-link {
   color: #f8fafc !important;
@@ -255,7 +251,7 @@ body:not(.auth-body):is([data-theme="dark"], .dashboard-body:not([data-theme="li
   color: #f8fafc !important;
 }
 
-/* In dark system mode, keep the public landing nav dark-on-light */
+
 body.public-body[data-theme="dark"] .navbar-recipi .navbar-brand,
 body.public-body[data-theme="dark"] .navbar-recipi .nav-link {
   color: #111827 !important;

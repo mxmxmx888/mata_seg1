@@ -1,23 +1,8 @@
-{% comment %}
-  posts: iterable of recipe-like objects with fields you support, e.g.
-  - post.author.username
-  - post.author.avatar_url (optional)
-  - post.title
-  - post.subtitle / short_description
-  - post.image_url
-  - post.cook_time_minutes
-  - post.difficulty
-  - post.num_ingredients
-  - post.likes
-  - post.saves
-{% endcomment %}
-
 {% if posts %}
   {% for post in posts %}
     <article class="feed-card mb-3">
       <div class="feed-card-body">
 
-        <!-- Author row -->
         <div class="d-flex align-items-center justify-content-between mb-2">
           <div class="d-flex align-items-center gap-2">
             <div class="feed-avatar">
@@ -44,7 +29,6 @@
           {% endif %}
         </div>
 
-        <!-- Title + summary -->
         <h2 class="h6 mb-1">{{ post.title }}</h2>
         {% if post.short_description %}
           <p class="small text-muted mb-2">
@@ -52,7 +36,6 @@
           </p>
         {% endif %}
 
-        <!-- Recipe meta row -->
         <div class="feed-meta small mb-2">
           {% if post.cook_time_minutes %}
             <span>⏱ {{ post.cook_time_minutes }} min</span>
@@ -68,14 +51,12 @@
           {% endif %}
         </div>
 
-        <!-- Image / video placeholder -->
         {% if post.image_url %}
           <div class="feed-media ratio ratio-16x9 mb-2">
             <img src="{{ post.image_url }}" alt="{{ post.title }}">
           </div>
         {% endif %}
 
-        <!-- Actions -->
         <div class="d-flex align-items-center justify-content-between mt-2">
           <div class="d-flex align-items-center gap-3 feed-actions">
             <button type="button" class="btn btn-link btn-sm p-0">

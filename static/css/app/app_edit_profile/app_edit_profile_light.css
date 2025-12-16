@@ -1,4 +1,4 @@
-/* Light theme overrides */
+
 body[data-theme="light"] .edit-profile-modal .modal-content {
   background-color: var(--bg-1);
   color: var(--text-primary);
