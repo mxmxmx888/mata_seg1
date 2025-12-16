@@ -1,6 +1,20 @@
 from django.db import models
 from .recipe_post import RecipePost
 
+"""
+RecipeStep model
+
+This table stores the step-by-step instructions for a recipe.
+
+- Each step belongs to a single RecipePost (via the `recipe_post` foreign key).
+- Steps are ordered using `position` (1, 2, 3, ...). This is what lets you
+  display instructions in the correct sequence.
+- The combination (recipe_post, position) must be unique, so a recipe can’t
+  accidentally have two “Step 1” rows.
+- A database check constraint enforces that `position` is always > 0.
+- `description` contains the actual instruction text (up to 1000 characters).
+"""
+
 class RecipeStep(models.Model):
     recipe_post = models.ForeignKey(
         RecipePost,

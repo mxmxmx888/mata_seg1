@@ -3,9 +3,23 @@ from django.db import models
 from .user import User
 from .recipe_post import RecipePost
 
+"""
+Comment model
+
+This table stores comments that users leave on recipe posts.
+
+Each row represents one comment:
+- `recipe_post` points to the RecipePost being commented on.
+- `user` points to the User who wrote the comment.
+- `text` holds the comment content (up to 2000 characters).
+- `created_at` records when the comment was created.
+- `is_hidden` lets admins hide a comment (e.g. after reports) without deleting it.
+
+The `__str__` method is just for readable debugging/admin display.
+"""
 
 class Comment(models.Model):
-    # PK: uuid v7 (using uuid4 as closest stable replacement)
+    # PK: uuid 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
     # FK → recipe_post.id

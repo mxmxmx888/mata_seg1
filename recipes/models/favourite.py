@@ -2,6 +2,28 @@ import uuid
 from django.conf import settings
 from django.db import models
 
+"""
+Favourite model
+
+This table represents a user's “collection” of saved recipe posts.
+
+Examples:
+- "favourites"
+- "dinner ideas"
+- "meal prep"
+
+Key points:
+- Each Favourite belongs to exactly one user.
+- `name` is the label for the collection and must be unique per user
+  (so the same user can’t have two collections both called "favourites",
+  but different users can).
+- `cover_post` is optional and lets you pin a specific RecipePost as the
+  collection cover image/preview. If that post gets deleted, Django sets
+  this field to NULL (it doesn't delete the collection).
+- Index on `user` speeds up loading all favourites for a user.
+
+The `__str__` method just gives a readable representation for debugging/admin.
+"""
 
 class Favourite(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)

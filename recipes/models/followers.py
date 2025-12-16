@@ -4,6 +4,41 @@ from django.conf import settings
 from django.db import models
 from django.db.models import Q, F
 
+"""
+Follower model
+
+This table stores the “who follows who” relationship.
+
+Each row means:
+    follower  ->  author
+
+Example:
+- If Alice follows Bob, we store one row where:
+  follower = Alice, author = Bob
+
+Key points:
+- Both fields are ForeignKeys to the User table.
+- `related_name="following"` lets you do:
+    user.following.all()
+  to get all follow relationships where the user is the follower (outgoing edges).
+- `related_name="followers"` lets you do:
+    user.followers.all()
+  to get all follow relationships where the user is the author being followed (incoming edges).
+
+Constraints / integrity rules:
+- A user can’t follow the same person twice (UniqueConstraint on follower+author).
+- A user can’t follow themselves (CheckConstraint).
+
+Indexes:
+- Indexes on follower and author make “get my followers” / “get who I follow”
+  queries faster.
+
+ID:
+- Uses uuid7 if available, otherwise falls back to uuid4 (works across Python versions).
+
+The `__str__` method is mainly for readable debug/admin output.
+"""
+
 def _uuid7_or_4() -> uuid.UUID:
     return getattr(uuid, "uuid7", uuid.uuid4)()
 

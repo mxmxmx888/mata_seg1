@@ -7,7 +7,7 @@ are left untouched—if a create fails (e.g., due to duplicates), the error
 is swallowed and generation continues.
 """
 
-
+import os
 from typing import Any, Dict, List, Set, Tuple
 from random import sample, randint, choice
 from uuid import uuid4
@@ -17,11 +17,13 @@ from django.core.management.base import BaseCommand
 from django.db import transaction
 from django.utils import timezone
 from django.db.models import Q
+from django.conf import settings
+from django.core.files.uploadedfile import SimpleUploadedFile
 
 from recipes.models import User
 from recipes.models.followers import Follower
 from recipes.models.follows import Follows
-from recipes.models.recipe_post import RecipePost
+from recipes.models.recipe_post import RecipePost, RecipeImage
 from recipes.models.recipe_step import RecipeStep
 from recipes.models.favourite import Favourite
 from recipes.models.favourite_item import FavouriteItem
@@ -36,16 +38,24 @@ user_fixtures = [
     {'username': '@janedoe', 'email': 'jane.doe@example.org', 'first_name': 'Jane', 'last_name': 'Doe'},
     {'username': '@charlie', 'email': 'charlie.johnson@example.org', 'first_name': 'Charlie', 'last_name': 'Johnson'},
 ]
-image_pool = [
-    "/static/images/chotko.jpeg",
-    "/static/images/toothless.jpg",
-    "/static/images/meal.jpg.webp",
 
-
-
+# Used for the RecipePost.image string “cover” field
+recipe_image_file_pool = [
+    "static/images/meal1.jpg",
+    "static/images/meal2.jpg",
+    "static/images/meal3.jpg",
+    "static/images/meal4.jpg",
+    "static/images/meal5.jpg",
+    "static/images/meal6.jpg",
+    "static/images/meal7.jpg",
+    "static/images/meal8.jpg"  
 ]
+
+
 categories = ["Breakfast", "Lunch", "Dinner", "Dessert", "Vegan"]
 tags_pool = ["quick", "family", "spicy", "budget", "comfort", "healthy", "high_protein", "low_carb"]
+
+#names for collections
 favourite_names = [
     "favourites",
     "dinner ideas",
@@ -57,11 +67,12 @@ favourite_names = [
     "budget",
 ]
 
+# comments for seeding
 comment_phrases = [
-    "I love Amir...",
-    "Maksym is sooo handsome",
-    "Ayan I am your stan",
-    "Tunjay is such a cutie"
+    "Amazing!!",
+    "Looks yummy",
+    "Okay that has to be my favourite",
+    "Definitely will be trying this out"
 ]
 
 bio_phrases = [
@@ -77,17 +88,95 @@ bio_phrases = [
     "i cook, i taste, i improvise",
 ]
 
-main_ingredients_pool = [
-    "chicken breast", "salmon", "eggs", "milk", "butter", "cheddar",
-    "onion", "garlic", "tomato", "bell pepper", "spinach", "mushrooms",
-    "potatoes", "rice", "pasta", "flour", "yogurt", "lemon", "carrot",
-    "broccoli", "canned beans", "chickpeas",
-]
-
-spices_pool = [
-    "salt", "black pepper", "paprika", "cumin", "turmeric", "curry powder",
-    "chilli flakes", "oregano", "basil", "thyme", "rosemary", "garam masala",
-    "cinnamon", "nutmeg",
+SHOP_INGREDIENT_SETS = [
+    [
+        {
+            "name": "Spaghetti",
+            "shop_url": "https://www.amazon.com/De-Cecco-Spaghetti-Pasta/dp/B000LKX6QY/",
+        },
+        {
+            "name": "San Marzano tomatoes",
+            "shop_url": "https://www.amazon.com/Mutti-Peeled-Tomatoes-28-Ounce/dp/B074MHKZVN/",
+        },
+        {
+            "name": "Extra-virgin olive oil",
+            "shop_url": "https://www.amazon.com/Partanna-Extra-Virgin-Olive-34-Ounce/dp/B000BWY8QW/",
+        },
+        {
+            "name": "Parmigiano Reggiano",
+            "shop_url": "https://www.amazon.com/Parmigiano-Reggiano-DOP-2-2-lb/dp/B00JHHWJ08/",
+        },
+        {
+            "name": "Calabrian chilli flakes",
+            "shop_url": "https://www.amazon.com/Flatiron-Pepper-Original-Red-Chili/dp/B01LXNJUN4/",
+        },
+    ],
+    [
+        {
+            "name": "Corn tortillas",
+            "shop_url": "https://www.amazon.com/Mi-Tierra-Organic-Corn-Tortillas/dp/B07C5Q5FQN/",
+        },
+        {
+            "name": "Black beans",
+            "shop_url": "https://www.amazon.com/Whole-Foods-365-Organic-Black/dp/B074H56LNT/",
+        },
+        {
+            "name": "Chipotle peppers in adobo",
+            "shop_url": "https://www.amazon.com/La-Costena-Chipotle-Peppers-Adobo/dp/B0000G6KAM/",
+        },
+        {
+            "name": "Queso fresco",
+            "shop_url": "https://www.amazon.com/Cacique-Queso-Fresco-Round-10oz/dp/B00HZX8QIK/",
+        },
+        {
+            "name": "Avocado oil",
+            "shop_url": "https://www.amazon.com/Chosen-Foods-Avocado-High-Heat-Cooking/dp/B00P2DK8QW/",
+        },
+    ],
+    [
+        {
+            "name": "Bread flour",
+            "shop_url": "https://www.amazon.com/King-Arthur-Organic-Bread-Flour/dp/B0000BYDR1/",
+        },
+        {
+            "name": "Pure vanilla extract",
+            "shop_url": "https://www.amazon.com/Nielsen-Massey-Madagascar-Bourbon-Vanilla-Extract/dp/B0000E2PEM/",
+        },
+        {
+            "name": "Dark chocolate chips",
+            "shop_url": "https://www.amazon.com/Ghirardelli-Chocolate-Premium-Baking-Chips/dp/B006Y6DSBM/",
+        },
+        {
+            "name": "Almond flour",
+            "shop_url": "https://www.amazon.com/Bobs-Red-Mill-Super-Fine-Almond/dp/B00A2A2X02/",
+        },
+        {
+            "name": "Maldon sea salt",
+            "shop_url": "https://www.amazon.com/Maldon-Sea-Salt-Flakes-ounce/dp/B00017028M/",
+        },
+    ],
+    [
+        {
+            "name": "Rolled oats",
+            "shop_url": "https://www.amazon.com/Bobs-Red-Mill-Gluten-Whole/dp/B000EDM1SY/",
+        },
+        {
+            "name": "Maple syrup",
+            "shop_url": "https://www.amazon.com/Butternut-Mountain-Farm-Organic-Maple/dp/B004N5MBS8/",
+        },
+        {
+            "name": "Almond butter",
+            "shop_url": "https://www.amazon.com/Barney-Butter-Almond-Bare-Butter/dp/B006S5SC8E/",
+        },
+        {
+            "name": "Chia seeds",
+            "shop_url": "https://www.amazon.com/Viva-Naturals-Organic-Chia-Seeds/dp/B00HYIKCNE/",
+        },
+        {
+            "name": "Colombian coffee beans",
+            "shop_url": "https://www.amazon.com/Devocion-Colombia-Whole-Coffee-12oz/dp/B0B5G5OMTQ/",
+        },
+    ],
 ]
 
 
@@ -114,6 +203,19 @@ class Command(BaseCommand):
         """Initialize the command with a locale-specific Faker instance."""
         super().__init__(*args, **kwargs)
         self.faker = Faker('en_GB')
+
+    def _make_uploaded_image(self, rel_path: str) -> SimpleUploadedFile:
+        """
+        Loads a real image file from disk (relative to BASE_DIR) and wraps it
+        into a Django SimpleUploadedFile so it can be assigned to ImageField.
+        """
+        abs_path = os.path.join(settings.BASE_DIR, rel_path.lstrip("/"))
+        with open(abs_path, "rb") as f:
+            return SimpleUploadedFile(
+                name=os.path.basename(abs_path),
+                content=f.read(),
+                content_type="image/jpeg",
+            )
 
     def handle(self, *args, **options):
         """
@@ -187,6 +289,13 @@ class Command(BaseCommand):
             pass
 
     def seed_followers_and_follows(self, follow_k: int = 5) -> None:
+
+        """
+        Creates follower relationships between users.
+        For each user, randomly picks up to follow_k other users to follow.
+        Inserts into both Follower and Follows tables.
+        """
+
         ids = list(User.objects.values_list("id", flat=True))
         n = len(ids)
         if n < 2:
@@ -210,24 +319,35 @@ class Command(BaseCommand):
             Follows.objects.bulk_create(follows_rows, ignore_conflicts=True, batch_size=1000)
 
     def seed_recipe_posts(self, *, per_user: int = 3) -> None:
+
+        """
+        Creates RecipePost rows for each user (1..per_user posts),
+        and also seeds 2–4 RecipeImage rows per post using real files from disk.
+        """
+
         user_ids = list(User.objects.values_list("id", flat=True))
         if not user_ids:
             return
 
-        rows: List[RecipePost] = []
+        posts_to_create: List[RecipePost] = []
+        images_to_create: List[RecipeImage] = []
+
+
+
+
         for author_id in user_ids:
             count = randint(1, max(1, per_user))
             for _ in range(count):
                 title = self.faker.sentence(nb_words=5).rstrip(".")[:255]
                 description = self.faker.paragraph(nb_sentences=3)[:4000]
-                image = choice(image_pool)
+                image = choice(recipe_image_file_pool)  # your old string “cover” field
                 prep = randint(0, 60)
                 cook = randint(0, 90)
                 tags = list(set(sample(tags_pool, randint(0, min(4, len(tags_pool))))))
                 nutrition = f"kcal={randint(250, 800)}; protein={randint(5, 40)}g"
                 category = choice(categories)
 
-                rows.append(RecipePost(
+                post = RecipePost(
                     author_id=author_id,
                     title=title,
                     description=description,
@@ -239,12 +359,42 @@ class Command(BaseCommand):
                     category=category,
                     saved_count=0,
                     published_at=timezone.now(),
-                ))
+                )
+                posts_to_create.append(post)
 
-        RecipePost.objects.bulk_create(rows, ignore_conflicts=True, batch_size=500)
-        self.stdout.write(f"Recipe posts created: {len(rows)}")
+                # Seed 2–4 images for each post
+                img_count = randint(2, 4)
+                chosen = sample(recipe_image_file_pool, k=min(img_count, len(recipe_image_file_pool)))
 
+                for position, rel_path in enumerate(chosen):
+                    try:
+                        uploaded = self._make_uploaded_image(rel_path)
+                    except FileNotFoundError:
+                        # If the file doesn't exist locally, skip it 
+                        continue
+
+                    images_to_create.append(
+                        RecipeImage(
+                            recipe_post_id=post.id,  # post.id exists already (UUID)
+                            image=uploaded,
+                            position=position,
+                        )
+                    )
+
+        with transaction.atomic():
+            RecipePost.objects.bulk_create(posts_to_create, ignore_conflicts=True, batch_size=500)
+            RecipeImage.objects.bulk_create(images_to_create, ignore_conflicts=True, batch_size=500)
+
+        self.stdout.write(f"Recipe posts created: {len(posts_to_create)}")
+        self.stdout.write(f"Recipe images created (attempted): {len(images_to_create)}")
+    
     def seed_recipe_steps(self, *, min_steps: int = 4, max_steps: int = 7) -> None:
+
+        """
+        Creates a sequence of RecipeStep rows for each RecipePost.
+        Each post gets between min_steps and max_steps steps.
+        """
+
         post_ids = list(RecipePost.objects.values_list("id", flat=True))
         if not post_ids:
             return
@@ -253,18 +403,13 @@ class Command(BaseCommand):
 
         for post_id in post_ids:
             step_count = randint(min_steps, max_steps)
-
             for pos in range(1, step_count + 1):
-                # keep it within your 1–1000 constraint
                 text = self.faker.sentence(nb_words=12)
-                if len(text) > 1000:
-                    text = text[:1000]
-
                 rows.append(
                     RecipeStep(
                         recipe_post_id=post_id,
                         position=pos,
-                        description=text,
+                        description=text[:1000],
                     )
                 )
 
@@ -272,12 +417,12 @@ class Command(BaseCommand):
             RecipeStep.objects.bulk_create(rows, ignore_conflicts=True, batch_size=1000)
 
         self.stdout.write(f"recipe steps created (attempted): {len(rows)}")
-    
-    
+
+
     def seed_likes(self, max_likes_per_post: int = 20) -> None:
         """
-        seed likes for recipe posts.
-        each post gets a random number of likes from random users.
+        Creates Like rows. For each post, selects a random number of users
+        (up to max_likes_per_post) and creates one Like per user.
         """
         users = list(User.objects.values_list("id", flat=True))
         posts = list(RecipePost.objects.values_list("id", flat=True))
@@ -303,7 +448,14 @@ class Command(BaseCommand):
             Like.objects.bulk_create(rows, ignore_conflicts=True, batch_size=1000)
 
         self.stdout.write(f"likes created: {len(rows)}")
+
     def seed_comments(self, max_comments_per_post: int = 5) -> None:
+    
+        """
+        Creates Comment rows. For each post, picks up to max_comments_per_post
+        distinct users and assigns each one random text.
+        """
+
         users = list(User.objects.values_list("id", flat=True))
         posts = list(RecipePost.objects.values_list("id", flat=True))
 
@@ -329,54 +481,31 @@ class Command(BaseCommand):
         self.stdout.write(f"Comments created: {len(rows)}")
     
 
-    def seed_ingredients(
-    self,
-    *,
-    min_main: int = 4,
-    max_main: int = 8,
-    min_spices: int = 1,
-    max_spices: int = 4,
-) -> None:
+    def seed_ingredients(self) -> None:
+        """Create deterministic shop-ready ingredients with stable product links."""
+
         post_ids = list(RecipePost.objects.values_list("id", flat=True))
         if not post_ids:
             return
 
+        if not SHOP_INGREDIENT_SETS:
+            self.stdout.write("no shop ingredient sets configured, skipping ingredients seeding.")
+            return
+
         rows: List[Ingredient] = []
+        set_count = len(SHOP_INGREDIENT_SETS)
 
-        for post_id in post_ids:
-            main_count = randint(min_main, max_main)
-            spice_count = randint(min_spices, max_spices)
-
-            mains = sample(main_ingredients_pool, k=min(main_count, len(main_ingredients_pool)))
-            spices = sample(spices_pool, k=min(spice_count, len(spices_pool)))
-
-            chosen = mains + spices
+        for idx, post_id in enumerate(post_ids):
+            ingredient_set = SHOP_INGREDIENT_SETS[idx % set_count]
             position = 1
 
-            for name in chosen:
-                # randomly decide whether to add quantity/unit (optional fields)
-                qty = None
-                unit = None
-
-                if randint(0, 1) == 1:
-                    # simple, human-ish quantities
-                    unit = choice(["g", "kg", "ml", "l", "tsp", "tbsp", "cup", "pinch", ""])
-                    if unit == "pinch":
-                        qty = None
-                    elif unit in ("",):
-                        qty = None
-                        unit = None
-                    else:
-                        # keep >= 0
-                        qty = choice([0.5, 1, 2, 3, 4, 100, 200, 250])
-
+            for item in ingredient_set:
                 rows.append(
                     Ingredient(
                         recipe_post_id=post_id,
-                        name=name,
+                        name=item["name"],
                         position=position,
-                        quantity=qty,
-                        unit=unit,
+                        shop_url=item.get("shop_url"),
                     )
                 )
                 position += 1
@@ -402,13 +531,13 @@ class Command(BaseCommand):
             self.stdout.write("no recipe posts found, skipping favourites seeding.")
             return
 
-        # clamp to available names
+        
         collections_per_user = min(per_user, len(favourite_names))
 
         favourites_to_create: List[Favourite] = []
         fav_keys: Set[Tuple[str, str]] = set()  # (user_id, name)
 
-        # 1) create favourites (collections)
+       
         for user_id in user_ids:
             chosen = sample(favourite_names, k=collections_per_user)
             for name in chosen:
