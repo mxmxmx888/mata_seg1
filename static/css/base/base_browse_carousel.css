@@ -84,7 +84,7 @@
   }
 }
 
-.browse-dot {
+.browse-carousel-dot {
   width: 10px;
   height: 10px;
   border-radius: 999px;
@@ -94,27 +94,27 @@
   transition: width 0.25s ease, background 0.25s ease, opacity 0.25s ease;
 }
 
-.browse-dot.is-active {
+.browse-carousel-dot.is-active {
   width: 28px;
   background: #0c0c0c;
   opacity: 1;
 }
 
 /* Dark mode: keep dots visible */
-[data-theme="dark"] .browse-dot {
+[data-theme="dark"] .browse-carousel-dot {
   background: rgba(255, 255, 255, 0.5);
 }
 
-[data-theme="dark"] .browse-dot.is-active {
+[data-theme="dark"] .browse-carousel-dot.is-active {
   background: #ffffff;
   opacity: 1;
 }
 
 @media (prefers-color-scheme: dark) {
-  body:not([data-theme="light"]) .browse-dot {
+  body:not([data-theme="light"]) .browse-carousel-dot {
     background: rgba(255, 255, 255, 0.5);
   }
-  body:not([data-theme="light"]) .browse-dot.is-active {
+  body:not([data-theme="light"]) .browse-carousel-dot.is-active {
     background: #ffffff;
     opacity: 1;
   }

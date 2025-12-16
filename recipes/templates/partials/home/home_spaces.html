@@ -16,7 +16,6 @@
           <!-- Space 1 -->
           <div class="row align-items-center py-4 border-bottom">
             <div class="col-md-3 mb-3 mb-md-0">
-              <p class="small text-muted mb-1">Space</p>
               <h3 class="h5 mb-0">My recipes</h3>
             </div>
             <div class="col-md-6 mb-3 mb-md-0">
@@ -27,8 +26,8 @@
               </p>
             </div>
             <div class="col-md-3 text-md-end">
-              <a href="#browse" class="small text-decoration-none">
-                View example list →
+              <a href="{% url 'profile' %}" class="small text-decoration-none">
+                View your very own collection of recipes →
               </a>
             </div>
           </div>
@@ -36,7 +35,6 @@
           <!-- Space 2 -->
           <div class="row align-items-center py-4 border-bottom">
             <div class="col-md-3 mb-3 mb-md-0">
-              <p class="small text-muted mb-1">Space</p>
               <h3 class="h5 mb-0">Browse & search</h3>
             </div>
             <div class="col-md-6 mb-3 mb-md-0">
@@ -47,7 +45,7 @@
             </div>
             <div class="col-md-3 text-md-end">
               <a href="#browse" class="small text-decoration-none">
-                Explore how browsing will work →
+                Explore how browsing recipes works →
               </a>
             </div>
           </div>
@@ -55,7 +53,6 @@
           <!-- Space 3 -->
           <div class="row align-items-center py-4 border-bottom">
             <div class="col-md-3 mb-3 mb-md-0">
-              <p class="small text-muted mb-1">Space</p>
               <h3 class="h5 mb-0">Cooking view</h3>
             </div>
             <div class="col-md-6 mb-3 mb-md-0">
@@ -66,8 +63,8 @@
               </p>
             </div>
             <div class="col-md-3 text-md-end">
-              <a href="#browse" class="small text-decoration-none">
-                See how cooking view is structured →
+              <a href="{% url 'dashboard' %}" class="small text-decoration-none">
+                See how cooks share their culinary art →
               </a>
             </div>
           </div>
@@ -75,20 +72,17 @@
           <!-- Space 4 -->
           <div class="row align-items-center py-4 border-bottom">
             <div class="col-md-3 mb-3 mb-md-0">
-              <p class="small text-muted mb-1">Space</p>
               <h3 class="h5 mb-0">Collections & sharing</h3>
             </div>
             <div class="col-md-6 mb-3 mb-md-0">
               <p class="small text-muted mb-0">
-                Planned extension for saving favourites, building collections
-                (e.g. “Weeknight meals”), and sharing selected recipes with
-                friends or family.
+                Save your favourites to personalised collections.
               </p>
             </div>
             <div class="col-md-3 text-md-end">
-              <span class="badge text-bg-light text-muted small">
-                Marked as future work
-              </span>
+              <a href="{% url 'collections' %}" class="small text-decoration-none">
+                Save your favourites to personalised collections →
+              </a>
             </div>
           </div>
 
@@ -98,4 +92,3 @@
     </div>
   </div>
 </section>
-

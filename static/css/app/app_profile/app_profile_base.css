@@ -1,0 +1,152 @@
+/* =========================== */
+/* Profile + Collections pages */
+/* =========================== */
+
+body.profile-body {
+  background-color: rgb(244, 244, 244);
+  color: #111827;
+}
+
+body.profile-body .navbar-app {
+  background-color: #ffffff;
+}
+
+body.profile-body .navbar-app .navbar-brand,
+body.profile-body .navbar-app .nav-link,
+body.profile-body .navbar-app .icon-button {
+  color: #111827;
+}
+
+body.profile-body .navbar-app .btn.btn-light {
+  background-color: #111827;
+  color: #f9fafb;
+}
+
+body.profile-body .recipi-nav-search {
+  background-color: rgb(236, 236, 236);
+  border-color: #e1e1e6;
+}
+
+body.profile-body .recipi-nav-search:focus-within {
+  background-color: rgb(236, 236, 236);
+  border-color: #cbd5f5;
+  box-shadow: none;
+}
+
+body.profile-body .recipi-nav-search-input {
+  color: #4b5563;
+}
+
+body.profile-body .recipi-nav-search-input::placeholder {
+  color: #9ca3af;
+}
+
+:is(:root[data-theme="dark"] body.profile-body, body[data-theme="dark"].profile-body) {
+  background-color: #0c0c0c;
+  color: #f4f4f7;
+}
+
+:is(:root[data-theme="dark"] body.profile-body, body[data-theme="dark"].profile-body) .navbar-app {
+  background-color: #0c0c0c;
+}
+
+:is(:root[data-theme="dark"] body.profile-body, body[data-theme="dark"].profile-body) .navbar-app .navbar-brand,
+:is(:root[data-theme="dark"] body.profile-body, body[data-theme="dark"].profile-body) .navbar-app .nav-link,
+:is(:root[data-theme="dark"] body.profile-body, body[data-theme="dark"].profile-body) .navbar-app .icon-button {
+  color: #f4f4f7;
+}
+
+:is(:root[data-theme="dark"] body.profile-body, body[data-theme="dark"].profile-body) .navbar-app .btn.btn-light {
+  background-color: #f4f4f7;
+  color: #0c0c0c;
+}
+
+:is(:root[data-theme="dark"] body.profile-body, body[data-theme="dark"].profile-body) .recipi-nav-search {
+  background-color: #111111;
+  border-color: #1f1f27;
+}
+
+:is(:root[data-theme="dark"] body.profile-body, body[data-theme="dark"].profile-body) .recipi-nav-search:focus-within {
+  box-shadow: none;
+  border-color: #30303a;
+}
+
+:is(:root[data-theme="dark"] body.profile-body, body[data-theme="dark"].profile-body) .recipi-nav-search-input {
+  color: #e5e5eb;
+}
+
+:is(:root[data-theme="dark"] body.profile-body, body[data-theme="dark"].profile-body) .recipi-nav-search-input::placeholder {
+  color: #8e9097;
+}
+
+.profile-shell {
+  max-width: min(1280px, 94vw);
+  margin-inline: auto;
+  padding-top: 5rem;
+}
+
+.profile-hero {
+  margin-bottom: 1.5rem;
+}
+
+.profile-avatar {
+  width: 112px;
+  height: 112px;
+  margin: 0 auto 1.25rem;
+  border-radius: 50%;
+  padding: 0;
+  background: none;
+  overflow: hidden;
+}
+
+.profile-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50% !important;
+  clip-path: circle(50%);
+  display: block;
+  background-color: transparent;
+  border: none;
+}
+
+.profile-handle {
+  color: #a8a9b3;
+  letter-spacing: 0.01em;
+  text-transform: none;
+  font-size: 0.78rem;
+}
+
+.profile-name {
+  font-size: clamp(1.3rem, 1.9vw, 1.7rem);
+  letter-spacing: -0.02em;
+  margin-bottom: 0.9rem;
+}
+
+.profile-tagline {
+  color: #d2d2da;
+  font-size: 0.85rem;
+}
+
+.profile-follow-count {
+  border: none;
+  background: transparent;
+  color: inherit;
+  font-size: 0.85rem;
+  font-weight: 400;
+  padding: 0;
+  margin: 0 0.1rem;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.profile-follow-count:hover,
+.profile-follow-count:focus-visible {
+  color: #111827;
+  text-decoration: none;
+}
+
+:is(:root[data-theme="dark"] body.profile-body, body[data-theme="dark"].profile-body) .profile-follow-count:hover,
+:is(:root[data-theme="dark"] body.profile-body, body[data-theme="dark"].profile-body) .profile-follow-count:focus-visible {
+  color: #f4f4f7;
+}

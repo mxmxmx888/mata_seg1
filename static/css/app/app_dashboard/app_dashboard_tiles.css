@@ -1,0 +1,45 @@
+.recipi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 1rem;
+}
+
+.recipi-tile {
+  position: relative;
+  border-radius: 0.75rem;
+  overflow: hidden;
+  background-color: rgb(236, 236, 236);
+}
+
+.recipi-tile-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.recipi-tile-meta {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 0.6rem 0.7rem;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.65), transparent);
+  color: #f9fafb;
+}
+
+.recipi-tile-title {
+  font-size: 0.9rem;
+  margin: 0 0 0.1rem;
+}
+
+.recipi-tile-sub {
+  margin: 0;
+  font-size: 0.75rem;
+  opacity: 0.9;
+}
+
+/* Placeholder tiles when there are no posts yet */
+.recipi-tile-placeholder {
+  background: radial-gradient(circle at top left, #4b5563, #111827);
+}
+

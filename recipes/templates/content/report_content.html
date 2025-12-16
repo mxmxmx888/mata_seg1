@@ -1,15 +1,39 @@
 {% extends 'base/base_content.html' %}
 
 {% block content %}
-<div class="container mt-4">
-    <h2>Report Content</h2>
-    <p>You are reporting: <strong>{{ object }}</strong></p>
-    
-    <form method="post">
-        {% csrf_token %}
-        {{ form.as_p }}
+<div class="container report-content-shell">
+  <div class="report-card">
+    <h2 class="mb-1">Report Content</h2>
+    <p class="report-target">You are reporting: <strong>{{ object }}</strong></p>
+
+    <form method="post" class="report-form">
+      {% csrf_token %}
+
+      {% if form.non_field_errors %}
+        <div class="report-form-error">{{ form.non_field_errors|join:", " }}</div>
+      {% endif %}
+
+      <div class="report-field">
+        <label for="{{ form.reason.id_for_label }}">Reason</label>
+        {{ form.reason }}
+        {% if form.reason.errors %}
+          <div class="report-field-error">{{ form.reason.errors|striptags }}</div>
+        {% endif %}
+      </div>
+
+      <div class="report-field">
+        <label for="{{ form.description.id_for_label }}">Description</label>
+        {{ form.description }}
+        {% if form.description.errors %}
+          <div class="report-field-error">{{ form.description.errors|striptags }}</div>
+        {% endif %}
+      </div>
+
+      <div class="report-form-actions">
         <button type="submit" class="btn btn-danger">Submit Report</button>
         <a href="javascript:history.back()" class="btn btn-secondary">Cancel</a>
+      </div>
     </form>
+  </div>
 </div>
 {% endblock %}

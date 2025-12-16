@@ -1,0 +1,21 @@
+@media (max-width: 768px) {
+  .edit-profile-layout {
+    flex-direction: column;
+    min-height: auto;
+  }
+
+  .edit-profile-sidebar {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid #1c1d24;
+    padding: 1.25rem 1.5rem 1.4rem;
+  }
+
+  .edit-profile-main {
+    padding: 1.4rem 1.4rem 1.1rem;
+  }
+
+  .edit-profile-sidebar-footer {
+    margin-top: 1.5rem;
+  }
+}

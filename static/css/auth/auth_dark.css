@@ -57,6 +57,14 @@ body[data-theme="dark"] .auth-card .form-control:focus {
   box-shadow: 0 0 0 1px rgba(246, 246, 246, 0.35);
 }
 
+body[data-theme="dark"] .auth-card .form-control:-webkit-autofill,
+body[data-theme="dark"] .auth-card .form-control:-webkit-autofill:hover,
+body[data-theme="dark"] .auth-card .form-control:-webkit-autofill:focus {
+  background-color: #181924;
+  -webkit-text-fill-color: #f6f6f6;
+  box-shadow: 0 0 0 1000px #181924 inset;
+}
+
 body[data-theme="dark"] .auth-card .form-control.is-valid,
 body[data-theme="dark"] .auth-card .form-control.is-valid:focus {
   background-image: none;
@@ -100,6 +108,13 @@ body[data-theme="dark"] .auth-footer-link {
 body[data-theme="dark"] .auth-primary-btn {
   background-color: #f6f6f6;
   color: rgb(13, 13, 13);
+}
+
+body[data-theme="dark"] .auth-primary-btn:hover,
+body[data-theme="dark"] .auth-primary-btn:focus-visible {
+  background-color: #f6f6f6;
+  color: rgb(13, 13, 13);
+  text-decoration: none;
 }
 
 body[data-theme="dark"] .auth-footer-link {

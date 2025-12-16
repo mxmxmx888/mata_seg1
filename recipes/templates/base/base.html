@@ -5,6 +5,14 @@
   <head>
     <meta charset="utf-8">
 	    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script>
+      (function setInitialTheme() {
+        var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)');
+        var theme = prefersDark && prefersDark.matches ? 'dark' : 'light';
+        document.documentElement.dataset.theme = theme;
+        document.documentElement.style.colorScheme = theme;
+      })();
+    </script>
 
 	    <link rel="icon" href="{% static 'images/favicon.ico' %}">
 	    <link rel="icon" type="image/png" sizes="16x16" href="{% static 'images/favicon-16x16.png' %}">
@@ -32,7 +40,7 @@
        
 	  </head>
 
-	  <body class="{% block body_class %}{% endblock %}">
+	  <body data-theme="light" class="{% block body_class %}{% endblock %}">
 	    {% block body %}
 	    {% endblock %}
 		    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.10.2/dist/umd/popper.min.js" integrity="sha384-7+zCNj/IqJ95wo16oMtfsKbZ9ccEh31eOz1HGyDuCQ6wgnyJNSYdrPa03rtR1zdB" crossorigin="anonymous"></script>
@@ -40,13 +48,16 @@
 
 		    <script>
 		      document.addEventListener('DOMContentLoaded', function () {
-		        const nav = document.querySelector('.navbar-squarespace');
+		        const nav = document.querySelector('.navbar-recipi');
 		        const isAuth = document.body.classList.contains('auth-body');
 		        const prefersDark = window.matchMedia &&
 		          window.matchMedia('(prefers-color-scheme: dark)');
 
 		        function applyThemeFromSystem() {
-		          document.body.dataset.theme = prefersDark && prefersDark.matches ? 'dark' : 'light';
+		          const theme = prefersDark && prefersDark.matches ? 'dark' : 'light';
+		          document.documentElement.dataset.theme = theme;
+		          document.documentElement.style.colorScheme = theme;
+		          document.body.dataset.theme = theme;
 		        }
 
 		        if (nav && !isAuth) {
@@ -66,17 +77,21 @@
 		          prefersDark.addEventListener('change', applyThemeFromSystem);
 		        }
 
-		        if (!window.bootstrap || !window.bootstrap.Collapse) {
-		          document.querySelectorAll('.navbar-toggler[data-bs-target]').forEach(function (btn) {
-		            btn.addEventListener('click', function () {
-		              const targetSelector = btn.getAttribute('data-bs-target');
-		              if (!targetSelector) return;
-		              const target = document.querySelector(targetSelector);
-		              if (!target) return;
-		              target.classList.toggle('show');
-		            });
-		          });
-		        }
+        if (!window.bootstrap || !window.bootstrap.Collapse) {
+          document.querySelectorAll('[data-bs-toggle=\"collapse\"]').forEach(function (toggle) {
+            const targetSelector = toggle.getAttribute('data-bs-target') || toggle.getAttribute('href');
+            if (!targetSelector) return;
+            const target = document.querySelector(targetSelector);
+            if (!target) return;
+
+            toggle.addEventListener('click', function (event) {
+              event.preventDefault();
+              const isOpen = target.classList.toggle('show');
+              toggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+              toggle.classList.toggle('collapsed', !isOpen);
+            });
+          });
+        }
 
 		        if (!window.bootstrap || !window.bootstrap.Dropdown) {
 		          document.querySelectorAll('[data-bs-toggle="dropdown"]').forEach(function (toggle) {

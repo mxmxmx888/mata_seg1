@@ -17,6 +17,8 @@ class SignUpView(LoginProhibitedMixin, FormView):
     template_name = "auth/sign_up.html"
     form_class = SignUpForm
     success_url = reverse_lazy("dashboard")
+    # Visiting sign up while logged in (including via browser back) logs out first.
+    redirect_when_logged_in_url = 'log_out'
 
     def get(self, request, *args, **kwargs):
         form = self.form_class()

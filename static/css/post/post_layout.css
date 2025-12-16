@@ -1,10 +1,15 @@
 /* Post detail view            */
 /* =========================== */
 
+body.post-body {
+  padding-top: 0;
+}
+
 .post-page {
   min-height: calc(100vh - 40px);
-  background-color: rgb(236, 236, 236);
-  margin-top: 1.25rem;
+  background-color: rgb(244, 244, 244);
+  margin-top: 0;
+  padding: clamp(1.5rem, 4vw, 3rem) clamp(1.5rem, 4vw, 3rem) 2.5rem;
 }
 
 .post-media-wrap {
@@ -34,9 +39,25 @@
   margin-bottom: 0.75rem;
 }
 
-.post-meta span {
+.post-meta span:not(.badge) {
   font-size: 0.95rem;
   color: #6b7280;
+}
+
+.post-meta {
+  align-items: center;
+  gap: 1.25rem; /* give meta items a bit more breathing room */
+}
+
+.post-meta i {
+  position: relative;
+  top: 1px; /* nudge icons slightly lower for better baseline alignment */
+}
+
+.post-meta .badge {
+  font-size: 0.8rem;
+  color: rgb(244, 244, 244);
+  padding: 0.3rem 0.65rem;
 }
 
 .post-summary {
@@ -48,12 +69,28 @@
   font-family: "Awesome Serif", "Rethink Sans", system-ui, -apple-system, sans-serif;
   color: #6b7280;
   letter-spacing: 0.01em;
+  display: flex;
+  align-items: baseline;
+  gap: 0.25rem;
+}
+
+.post-author-link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.post-author-link:hover {
+  color: #111827;
+  text-decoration: underline;
 }
 
 .post-ingredients,
 .post-steps {
   color: #4b5563;
-  padding-left: 1.25rem;
+}
+
+.post-ingredients {
+  padding-left: 0;
 }
 
 .post-primary {
@@ -66,7 +103,8 @@
 
 @media (min-width: 992px) {
   .post-primary {
-    padding-left: 1.25rem;
+    padding-left: 0;
+    padding-right: 0;
   }
 }
 
@@ -123,17 +161,17 @@
 
 .post-back-button {
   position: absolute;
-  left: -1.4rem;
-  top: 2rem;
+  left: -2rem;
+  top: 0;
   width: 32px;
   height: 32px;
   border-radius: 999px;
-  background-color: #ffffff;
+  background-color: rgb(236, 236, 236);
   border: 1px solid rgba(15, 23, 42, 0.12);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 10px 25px rgba(15, 23, 42, 0.12);
+  box-shadow: none;
   color: #111827;
   z-index: 5;
   font-size: 0.9rem;
@@ -145,19 +183,19 @@
 
 @media (max-width: 991px) {
   .post-back-button {
-    left: 0.5rem;
-    top: 1rem;
+    left: -1.4rem;
+    top: 0;
   }
 }
 
 @media (max-width: 820px) {
   .post-back-button {
-    left: 0.35rem; /* nudge further left on narrow screens */
-    top: -2.5rem; /* lift button above the media */
-    background-color: #ffffff;
+    left: -1rem; /* keep a small gap from the media on narrow screens */
+    top: 0;
+    background-color: rgb(236, 236, 236);
     color: #111827;
     border-color: rgba(15, 23, 42, 0.2);
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    box-shadow: none;
   }
 
   .post-back-button:hover {

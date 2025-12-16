@@ -60,11 +60,44 @@ body[data-theme="light"] .modal-backdrop.custom-modal-backdrop.show {
   opacity: 0.45;
 }
 
+.follow-modal .modal-content {
+  border-radius: 32px;
+  border: none;
+}
+
 body.profile-body .follow-modal .modal-content {
+  background-color: rgb(244, 244, 244);
+  color: #111827;
+}
+
+:is(:root[data-theme="dark"] body.profile-body, body[data-theme="dark"].profile-body) .follow-modal .modal-content {
   background-color: #101010;
   color: #f4f4f7;
-  border-radius: 18px;
-  border: 1px solid #23242c;
+}
+
+.follow-modal .form-control {
+  border-radius: 999px;
+}
+
+body.profile-body .follow-modal .form-control {
+  background-color: #ffffff;
+  color: #111827;
+  border-color: #d1d5db;
+}
+
+.follow-modal .form-control:focus {
+  box-shadow: none;
+}
+
+body.profile-body .follow-modal .form-control:focus {
+  border-color: #cbd5e1;
+}
+
+:is(:root[data-theme="dark"] body.profile-body, body[data-theme="dark"].profile-body) .follow-modal .form-control {
+  background-color: #0f1014;
+  color: #e5e5eb;
+  box-shadow: none;
+  border-color: #3a3b44;
 }
 
 .follow-modal .modal-header {
@@ -74,7 +107,7 @@ body.profile-body .follow-modal .modal-content {
 
 .follow-modal .follow-modal-title {
   text-align: center;
-  font-size: 1.1rem;
+  font-size: 1rem;
   letter-spacing: 0.04em;
 }
 
@@ -82,6 +115,37 @@ body.profile-body .follow-modal .modal-content {
   position: absolute;
   right: 1.25rem;
   top: 1.1rem;
+}
+
+body.profile-body .follow-modal .btn-close {
+  filter: none;
+  opacity: 0.6;
+  --bs-btn-close-bg: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%23111827' stroke-linecap='round' stroke-width='1.6'%3e%3cpath d='M3.5 3.5l9 9m0-9l-9 9'/%3e%3c/svg%3e");
+}
+
+body.profile-body .follow-modal .btn-close:hover {
+  opacity: 1;
+}
+
+:is(:root[data-theme="dark"] body.profile-body, body[data-theme="dark"].profile-body) .follow-modal .btn-close {
+  filter: invert(1);
+}
+
+body.profile-body .follow-modal .btn-outline-light {
+  color: #111827;
+  border-color: #d1d5db;
+}
+
+body.profile-body .follow-modal .btn-outline-light:hover,
+body.profile-body .follow-modal .btn-outline-light:focus-visible {
+  color: #111827;
+  background-color: #e5e7eb;
+  border-color: #cbd5e1;
+}
+
+:is(:root[data-theme="dark"] body.profile-body, body[data-theme="dark"].profile-body) .follow-modal .btn-outline-light {
+  color: #f4f4f7;
+  border-color: #8a8c96;
 }
 
 .follow-empty-text {
@@ -93,9 +157,19 @@ body.profile-body .follow-modal .modal-content {
 }
 
 body.profile-body .follow-modal .follow-user-name {
-  color: #f4f4f7;
+  color: #111827;
+  font-size: 0.98rem;
 }
 
 body.profile-body .follow-modal .follow-user-handle {
+  color: #60636d;
+  font-size: 0.86rem;
+}
+
+:is(:root[data-theme="dark"] body.profile-body, body[data-theme="dark"].profile-body) .follow-modal .follow-user-name {
+  color: #f4f4f7;
+}
+
+:is(:root[data-theme="dark"] body.profile-body, body[data-theme="dark"].profile-body) .follow-modal .follow-user-handle {
   color: #a8a9b3;
 }

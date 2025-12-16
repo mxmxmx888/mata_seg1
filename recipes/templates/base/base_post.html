@@ -1,10 +1,10 @@
-{% extends "base/base_app.html" %}
+{% extends "base/base.html" %}
 
-{# Base layout for post detail pages #}
+{# Base layout for post detail pages without the app navbar #}
 
-{% block body_class %}dashboard-body{% endblock %}
+{% block body_class %}dashboard-body post-body{% endblock %}
 
-{% block content %}
+{% block body %}
+  {% include "partials/common/messages.html" %}
   {% block post_content %}{% endblock %}
 {% endblock %}
-

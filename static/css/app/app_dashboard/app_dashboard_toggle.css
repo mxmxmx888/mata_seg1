@@ -1,0 +1,38 @@
+.recipi-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0;
+  background: transparent;
+}
+
+.recipi-toggle .nav-item {
+  margin: 0;
+}
+
+.recipi-toggle .nav-link {
+  border-radius: 999px;
+  border: none;
+  background: transparent;
+  padding: 0.2rem 0.6rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #9ca3af;
+}
+
+.recipi-toggle .nav-link.active {
+  padding: 0.2rem 0.9rem;
+  background-color: #27272f;
+  color: #f9fafb;
+  box-shadow: none;
+}
+
+body.dashboard-body:not([data-theme="dark"]) .recipi-toggle .nav-link.active {
+  background-color: rgb(236, 236, 236);
+  color: #111827;
+}
+
+body[data-theme="light"] .recipi-toggle .nav-link.active {
+  background-color: rgb(236, 236, 236);
+  color: #111827;
+}

@@ -3,6 +3,7 @@
     var modal = document.getElementById("editProfileModal");
     if (!modal) return;
 
+    var shouldShowOnLoad = modal.getAttribute("data-show-on-load") === "1";
     var navItems = modal.querySelectorAll(".edit-profile-nav-item");
     var sections = modal.querySelectorAll(".edit-profile-section");
     var profileForm = modal.querySelector("#editProfileForm");
@@ -42,6 +43,7 @@
       avatarInitials.forEach(function (span) {
         span.classList.remove("d-none");
       });
+      if (removeAvatarBtn) removeAvatarBtn.classList.add("d-none");
     }
 
     function showAvatarImage(url) {
@@ -53,6 +55,7 @@
       avatarInitials.forEach(function (span) {
         span.classList.add("d-none");
       });
+      if (removeAvatarBtn) removeAvatarBtn.classList.remove("d-none");
     }
 
     function recomputeDirty() {
@@ -227,6 +230,37 @@
 
     recomputeDirty();
     updateButtons();
+
+    function openEditProfileModal() {
+      var bootstrapModal = window.bootstrap && window.bootstrap.Modal;
+      if (bootstrapModal) {
+        bootstrapModal.getOrCreateInstance(modal).show();
+        return;
+      }
+
+      var trigger = document.querySelector('[data-bs-target="#editProfileModal"]');
+      if (trigger) {
+        trigger.dispatchEvent(new Event("click", { bubbles: true, cancelable: true }));
+        return;
+      }
+
+      modal.classList.add("show");
+      modal.style.display = "block";
+      modal.removeAttribute("aria-hidden");
+      document.body.classList.add("modal-open");
+      document.body.style.overflow = "hidden";
+    }
+
+    if (shouldShowOnLoad) {
+      var runShow = function () {
+        window.setTimeout(openEditProfileModal, 0);
+      };
+
+      if (document.readyState === "complete") {
+        runShow();
+      } else {
+        window.addEventListener("load", runShow, { once: true });
+      }
+    }
   })();
 </script>
-

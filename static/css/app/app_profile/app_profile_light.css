@@ -1,0 +1,76 @@
+/* Light theme overrides for profile + collections */
+body[data-theme="light"].profile-body {
+  background-color: rgb(244, 244, 244);
+  color: #111827;
+}
+
+body[data-theme="light"].profile-body .navbar-app {
+  background-color: #ffffff;
+}
+
+body[data-theme="light"].profile-body .navbar-app .navbar-brand,
+body[data-theme="light"].profile-body .navbar-app .nav-link,
+body[data-theme="light"].profile-body .navbar-app .icon-button {
+  color: #111827;
+}
+
+body[data-theme="light"].profile-body .navbar-app .btn.btn-light {
+  background-color: #111827;
+  color: #f9fafb;
+}
+
+body[data-theme="light"].profile-body .recipi-nav-search {
+  background-color: rgb(236, 236, 236);
+  border-color: #e1e1e6;
+}
+
+body[data-theme="light"].profile-body .recipi-nav-search:focus-within {
+  background-color: rgb(236, 236, 236);
+  border-color: #cbd5f5;
+  box-shadow: none;
+}
+
+body[data-theme="light"].profile-body .recipi-nav-search-input {
+  color: #4b5563;
+}
+
+body[data-theme="light"].profile-body .recipi-nav-search-input::placeholder {
+  color: #9ca3af;
+}
+
+body[data-theme="light"].profile-body .profile-collections .collection-title {
+  color: #111827;
+}
+
+body[data-theme="light"].profile-body .profile-tagline {
+  color: #111827;
+}
+
+body[data-theme="light"].profile-body .collection-sub {
+  color: #6b7280;
+}
+
+body[data-theme="light"].profile-body .collection-header-subtitle {
+  color: #6b7280;
+}
+
+body[data-theme="light"].profile-body .collection-header-handle {
+  color: #111827;
+}
+
+body[data-theme="light"].profile-body .profile-footer {
+  color: #6b7280 !important;
+}
+
+body[data-theme="light"].profile-body .profile-pill {
+  border: none;
+  background: rgb(236, 236, 236);
+  color: #111827;
+}
+
+body[data-theme="light"].profile-body .profile-pill:hover,
+body[data-theme="light"].profile-body .profile-pill:focus-visible {
+  border: none;
+  background: rgb(236, 236, 236);
+  color: #111827;
+}

@@ -1,19 +1,12 @@
 {% if messages %}
-<div class="toast-container position-fixed p-3 app-toast-container" style="z-index: 9999;">
+<div
+  class="toast-container position-fixed start-50 translate-middle-x p-3 app-toast-container"
+  style="z-index: 1100; top: 1rem;"
+>
   {% for message in messages %}
-    <div class="toast align-items-center border-0 shadow-lg show mb-3 app-toast" role="alert" aria-live="assertive" aria-atomic="true">
-      <div class="d-flex">
-        <div class="toast-body d-flex align-items-center gap-3 py-3">
-          {% if 'success' in message.tags %}
-            <i class="bi bi-check-circle-fill" style="color: #4ade80; font-size: 1.1rem;"></i>
-          {% elif 'error' in message.tags %}
-            <i class="bi bi-exclamation-circle-fill" style="color: #f87171; font-size: 1.1rem;"></i>
-          {% elif 'info' in message.tags %}
-            <i class="bi bi-info-circle-fill" style="color: #60a5fa; font-size: 1.1rem;"></i>
-          {% endif %}
-          <span style="font-weight: 500; font-size: 0.95rem; letter-spacing: 0.01em;">{{ message }}</span>
-        </div>
-        <button type="button" class="btn-close me-3 m-auto app-toast-close" data-bs-dismiss="toast" aria-label="Close"></button>
+    <div class="toast border-0 shadow-sm fade show mb-2 app-toast" role="alert" aria-live="assertive" aria-atomic="true">
+      <div class="toast-body text-center app-toast-body">
+        {{ message }}
       </div>
     </div>
   {% endfor %}
@@ -23,7 +16,26 @@
   document.addEventListener('DOMContentLoaded', function () {
     var toastElList = [].slice.call(document.querySelectorAll('.toast'));
     toastElList.forEach(function (toastEl) {
-      new bootstrap.Toast(toastEl, { delay: 5000 }).show();
+      var duration = 2000;
+      var toast = window.bootstrap && window.bootstrap.Toast
+        ? new bootstrap.Toast(toastEl, { delay: duration, autohide: true })
+        : null;
+
+      if (toast) {
+        toast.show();
+      } else {
+        // Fallback when Bootstrap JS is unavailable: mimic show state.
+        toastEl.classList.add('show');
+      }
+
+      setTimeout(function () {
+        if (toast && toast.hide) {
+          toast.hide();
+        } else {
+          toastEl.classList.remove('show');
+          toastEl.classList.add('hide');
+        }
+      }, duration);
     });
   });
 </script>

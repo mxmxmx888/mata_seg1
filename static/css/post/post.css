@@ -3,6 +3,7 @@
 @import url("post_gallery.css");
 @import url("post_comments.css");
 @import url("post_save_modal.css");
+@import url("post_report.css");
 
 @media (prefers-color-scheme: dark) {
   body:not(.auth-body) .btn.btn-outline-dark:hover,

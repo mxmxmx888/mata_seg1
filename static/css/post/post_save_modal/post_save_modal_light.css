@@ -1,0 +1,36 @@
+@media (prefers-color-scheme: light) {
+  .save-modal {
+    background: rgb(236, 236, 236);
+    color: #1f2937;
+    border-color: rgba(15, 23, 42, 0.08);
+    box-shadow: 0 24px 70px rgba(0, 0, 0, 0.15);
+    --save-field-bg: rgb(236, 236, 236);
+    --save-field-border: #d6dce6;
+    --save-field-text: #4b5563;
+    --save-field-placeholder: #6b7280;
+    --save-field-shadow: 0 0 0 1px rgba(209, 213, 219, 0.7);
+    --save-row-hover-bg: rgba(15, 23, 42, 0.08);
+  }
+
+  .save-modal .modal-title {
+    color: #0f172a;
+  }
+
+  .save-modal .modal-body,
+  .save-modal .modal-body p {
+    color: #4b5563;
+  }
+
+  .save-modal-header-actions .save-modal-icon-btn {
+    color: #111827;
+  }
+
+  .save-modal-header-actions .save-modal-icon-btn:hover {
+    color: #121212;
+  }
+
+  .save-modal-action,
+  .save-modal-action .bi {
+    color: var(--save-field-text) !important;
+  }
+}

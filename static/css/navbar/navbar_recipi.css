@@ -37,7 +37,7 @@
 }
 
 /* Shared navbar layout (landing + logged-in) */
-.navbar-squarespace {
+.navbar-recipi {
   position: fixed;
   top: 0;
   left: 0;
@@ -54,6 +54,20 @@
   transition: background-color 0.3s ease, box-shadow 0.3s ease, color 0.3s ease;
 }
 
+/* Mask any stray hairline on wide screens (logged-out/public) */
+@media (min-width: 992px) {
+  .navbar-recipi::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -1px;
+    height: 1px;
+    background-color: inherit;
+    pointer-events: none;
+  }
+}
+
 /* Strip any bootstrap hairlines */
 .navbar,
 .navbar::before,
@@ -65,7 +79,7 @@
 }
 
 /* Brand sizing */
-.navbar-squarespace .navbar-brand {
+.navbar-recipi .navbar-brand {
   position: relative;
   top: -1px;
   font-size: 1.8rem;
@@ -75,93 +89,93 @@
   font-family: var(--heading-font);
 }
 
-.navbar-squarespace .navbar-brand,
-.navbar-squarespace .nav-link {
+.navbar-recipi .navbar-brand,
+.navbar-recipi .nav-link {
   color: #ffffff;
 }
 
 /* Public landing: keep the bar white so it blends into the page */
-body.public-body .navbar-squarespace {
+body.public-body .navbar-recipi {
   background-color: #ffffff;
 }
 
-body.public-body .navbar-squarespace .navbar-brand,
-body.public-body .navbar-squarespace .nav-link {
+body.public-body .navbar-recipi .navbar-brand,
+body.public-body .navbar-recipi .nav-link {
   color: #111827 !important;
 }
 
-body.public-body .navbar-squarespace .navbar-toggler-icon {
+body.public-body .navbar-recipi .navbar-toggler-icon {
   background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba(17,24,39,0.92)' stroke-linecap='round' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
 }
 
 
-body.auth-body .navbar-squarespace .navbar-brand,
-body.auth-body .navbar-squarespace .nav-link {
+body.auth-body .navbar-recipi .navbar-brand,
+body.auth-body .navbar-recipi .nav-link {
   color: #111827;
 }
 
 /* When scrolled */
-.navbar-squarespace.navbar-solid {
+.navbar-recipi.navbar-solid {
   background-color: #ffffff;
   border-bottom: none !important;
   box-shadow: none !important;
   border: 0 !important;
 }
 
-.navbar-squarespace.navbar-solid .navbar-brand,
-.navbar-squarespace.navbar-solid .nav-link {
+.navbar-recipi.navbar-solid .navbar-brand,
+.navbar-recipi.navbar-solid .nav-link {
   color: #000;
 }
 
 /* Outline button */
-.navbar-squarespace.navbar-solid .btn.btn-outline-dark {
+.navbar-recipi.navbar-solid .btn.btn-outline-dark {
   color: #000;
   border-color: #000;
   background-color: transparent;
 }
 
-.navbar-squarespace .btn.btn-outline-dark:hover,
-.navbar-squarespace .btn.btn-outline-dark:focus-visible {
+.navbar-recipi .btn.btn-outline-dark:hover,
+.navbar-recipi .btn.btn-outline-dark:focus-visible {
   background-color: #000000;
   color: #ffffff;
   border-color: #000000;
 }
 
 /* Create button */
-.navbar-squarespace.navbar-solid .btn.btn-dark {
+.navbar-recipi.navbar-solid .btn.btn-dark {
   background-color: #000;
   color: #fff;
   border-color: #000;
 }
 
 /* Mobile toggler */
-.navbar-squarespace .navbar-toggler {
+.navbar-recipi .navbar-toggler {
   border: none;
   padding: 0.25rem 0.35rem;
   box-shadow: none;
   background: transparent;
 }
 
-.navbar-squarespace .navbar-toggler:focus {
+.navbar-recipi .navbar-toggler:focus {
   box-shadow: none;
 }
 
-.navbar-squarespace .navbar-toggler-icon {
+.navbar-recipi .navbar-toggler-icon {
   background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba(255,255,255,0.92)' stroke-linecap='round' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
 }
 
-.navbar-squarespace.navbar-solid .navbar-toggler-icon {
+.navbar-recipi.navbar-solid .navbar-toggler-icon {
   background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba(0,0,0,0.85)' stroke-linecap='round' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
 }
 
 /* Dark-mode toggler */
-body[data-theme="dark"] .navbar-squarespace .navbar-toggler-icon {
+body[data-theme="dark"] .navbar-recipi .navbar-toggler-icon {
   background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba(255,255,255,0.92)' stroke-linecap='round' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
 }
 
 /* Mobile collapsed menu */
 @media (max-width: 991.98px) {
-  .navbar-squarespace .navbar-collapse {
+  .navbar-recipi .navbar-collapse {
     position: absolute;
     top: 100%;
     left: 0;
@@ -173,31 +187,31 @@ body[data-theme="dark"] .navbar-squarespace .navbar-toggler-icon {
     z-index: 1050;
   }
 
-  .navbar-squarespace .navbar-collapse .d-flex {
+  .navbar-recipi .navbar-collapse .d-flex {
     flex-direction: column;
     gap: 0.5rem;
     padding: 0 0.25rem;
   }
 
-  .navbar-squarespace .navbar-collapse .btn {
+  .navbar-recipi .navbar-collapse .btn {
     width: 100%;
   }
 }
 
 @media (max-width: 991.98px) and (prefers-color-scheme: dark) {
-  .navbar-squarespace:not(.navbar-solid) .navbar-collapse {
+  .navbar-recipi:not(.navbar-solid) .navbar-collapse {
     background-color: rgb(13, 13, 13);
   }
 }
 
 /* Explicit light theme */
-body[data-theme="light"] .navbar-squarespace .navbar-brand,
-body[data-theme="light"] .navbar-squarespace .nav-link {
+body[data-theme="light"] .navbar-recipi .navbar-brand,
+body[data-theme="light"] .navbar-recipi .nav-link {
   color: #000000 !important;
 }
 
 /* In dark theme, keep the logged-out outline button visible when the navbar goes solid */
-body[data-theme="dark"]:not(.auth-body) .navbar-squarespace.navbar-solid .btn.btn-outline-dark {
+body[data-theme="dark"]:not(.auth-body) .navbar-recipi.navbar-solid .btn.btn-outline-dark {
   color: #f6f6f6;
   border-color: #f6f6f6;
   background-color: transparent;
@@ -205,55 +219,55 @@ body[data-theme="dark"]:not(.auth-body) .navbar-squarespace.navbar-solid .btn.bt
 
 /* System dark mode handling */
 @media (prefers-color-scheme: dark) {
-  body.auth-body .navbar-squarespace {
+  body.auth-body .navbar-recipi {
     background-color: transparent;
     box-shadow: none !important;
   }
 
-  body.auth-body .navbar-squarespace .navbar-brand,
-  body.auth-body .navbar-squarespace .nav-link {
+  body.auth-body .navbar-recipi .navbar-brand,
+  body.auth-body .navbar-recipi .nav-link {
     color: #f6f6f6;
   }
 
   /* Logged-in app: keep dark surfaces with light nav items */
-  body:not(.auth-body) .navbar-squarespace {
+  body:not(.auth-body) .navbar-recipi {
     background-color: transparent;
     box-shadow: none !important;
   }
 
-  body:not(.auth-body) .navbar-squarespace .navbar-brand,
-  body:not(.auth-body) .navbar-squarespace .nav-link {
+  body:not(.auth-body) .navbar-recipi .navbar-brand,
+  body:not(.auth-body) .navbar-recipi .nav-link {
     color: #f6f6f6;
   }
 
-  body:not(.auth-body) .navbar-squarespace.navbar-solid {
+  body:not(.auth-body) .navbar-recipi.navbar-solid {
     background-color: rgb(13, 13, 13);
     box-shadow: none !important;
   }
 
-  body:not(.auth-body) .navbar-squarespace.navbar-solid .navbar-brand,
-  body:not(.auth-body) .navbar-squarespace.navbar-solid .nav-link {
+  body:not(.auth-body) .navbar-recipi.navbar-solid .navbar-brand,
+  body:not(.auth-body) .navbar-recipi.navbar-solid .nav-link {
     color: #f6f6f6;
   }
 }
 
 /* Hard override: keep nav items light on dark app surfaces */
-body:not(.auth-body):is([data-theme="dark"], .dashboard-body:not([data-theme="light"]), .shop-body:not([data-theme="light"]), .app-body:not([data-theme="light"])) .navbar-squarespace .navbar-brand,
-body:not(.auth-body):is([data-theme="dark"], .dashboard-body:not([data-theme="light"]), .shop-body:not([data-theme="light"]), .app-body:not([data-theme="light"])) .navbar-squarespace .nav-link {
+body:not(.auth-body):is([data-theme="dark"], .dashboard-body:not([data-theme="light"]), .shop-body:not([data-theme="light"]), .app-body:not([data-theme="light"])) .navbar-recipi .navbar-brand,
+body:not(.auth-body):is([data-theme="dark"], .dashboard-body:not([data-theme="light"]), .shop-body:not([data-theme="light"]), .app-body:not([data-theme="light"])) .navbar-recipi .nav-link {
   color: #f8fafc !important;
 }
 
-body:not(.auth-body):is([data-theme="dark"], .dashboard-body:not([data-theme="light"]), .shop-body:not([data-theme="light"]), .app-body:not([data-theme="light"])) .navbar-squarespace.navbar-solid .navbar-brand,
-body:not(.auth-body):is([data-theme="dark"], .dashboard-body:not([data-theme="light"]), .shop-body:not([data-theme="light"]), .app-body:not([data-theme="light"])) .navbar-squarespace.navbar-solid .nav-link {
+body:not(.auth-body):is([data-theme="dark"], .dashboard-body:not([data-theme="light"]), .shop-body:not([data-theme="light"]), .app-body:not([data-theme="light"])) .navbar-recipi.navbar-solid .navbar-brand,
+body:not(.auth-body):is([data-theme="dark"], .dashboard-body:not([data-theme="light"]), .shop-body:not([data-theme="light"]), .app-body:not([data-theme="light"])) .navbar-recipi.navbar-solid .nav-link {
   color: #f8fafc !important;
 }
 
 /* In dark system mode, keep the public landing nav dark-on-light */
-body.public-body[data-theme="dark"] .navbar-squarespace .navbar-brand,
-body.public-body[data-theme="dark"] .navbar-squarespace .nav-link {
+body.public-body[data-theme="dark"] .navbar-recipi .navbar-brand,
+body.public-body[data-theme="dark"] .navbar-recipi .nav-link {
   color: #111827 !important;
 }
 
-body.public-body[data-theme="dark"] .navbar-squarespace .navbar-toggler-icon {
+body.public-body[data-theme="dark"] .navbar-recipi .navbar-toggler-icon {
   background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba(17,24,39,0.92)' stroke-linecap='round' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
 }

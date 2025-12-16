@@ -1,0 +1,42 @@
+/* =========================== */
+/* Cosmos-style logged-in home */
+/* =========================== */
+
+.recipi-home {
+  min-height: calc(100vh - 64px);
+  padding-top: 0;
+}
+
+.recipi-home .container-fluid {
+  padding-top: 0;
+}
+
+.recipi-home .row.mt-3 {
+  margin-top: 0.75rem;
+}
+
+/* Dashboard + Shop page background + navbar matching */
+body.dashboard-body {
+  background-color: rgb(13, 13, 13);
+  color: #f5f5f5;
+}
+
+body[data-theme="light"].dashboard-body {
+  background-color: rgb(244, 244, 244);
+  color: #111827;
+}
+
+body[data-theme="dark"].dashboard-body {
+  background-color: rgb(13, 13, 13);
+  color: #f5f5f5;
+}
+
+body.dashboard-body .navbar-recipi,
+body.dashboard-body .navbar-app,
+body.shop-body .navbar-recipi,
+body.shop-body .navbar-app,
+body.app-body .navbar-recipi,
+body.app-body .navbar-app {
+  background-color: inherit !important;
+}
+

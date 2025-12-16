@@ -67,82 +67,82 @@
 }
 
 /* Explicit dark theme via data-theme (aligns with auth + app pages) */
-body[data-theme="dark"]:not(.auth-body) {
+:is(:root[data-theme="dark"] body:not(.auth-body), body[data-theme="dark"]:not(.auth-body)) {
   background-color: rgb(13, 13, 13);
   color: #f6f6f6;
 }
 
-body[data-theme="dark"]:not(.auth-body) .bg-white,
-body[data-theme="dark"]:not(.auth-body) .bg-light {
+:is(:root[data-theme="dark"] body:not(.auth-body), body[data-theme="dark"]:not(.auth-body)) .bg-white,
+:is(:root[data-theme="dark"] body:not(.auth-body), body[data-theme="dark"]:not(.auth-body)) .bg-light {
   background-color: rgb(13, 13, 13) !important;
 }
 
-body[data-theme="dark"]:not(.auth-body) .text-dark,
-body[data-theme="dark"]:not(.auth-body) .text-body {
+:is(:root[data-theme="dark"] body:not(.auth-body), body[data-theme="dark"]:not(.auth-body)) .text-dark,
+:is(:root[data-theme="dark"] body:not(.auth-body), body[data-theme="dark"]:not(.auth-body)) .text-body {
   color: #f6f6f6 !important;
 }
 
-body[data-theme="dark"]:not(.auth-body) .text-muted {
+:is(:root[data-theme="dark"] body:not(.auth-body), body[data-theme="dark"]:not(.auth-body)) .text-muted {
   color: #a5a6b5 !important;
 }
 
-body[data-theme="dark"]:not(.auth-body) .border,
-body[data-theme="dark"]:not(.auth-body) .border-top,
-body[data-theme="dark"]:not(.auth-body) .border-bottom {
+:is(:root[data-theme="dark"] body:not(.auth-body), body[data-theme="dark"]:not(.auth-body)) .border,
+:is(:root[data-theme="dark"] body:not(.auth-body), body[data-theme="dark"]:not(.auth-body)) .border-top,
+:is(:root[data-theme="dark"] body:not(.auth-body), body[data-theme="dark"]:not(.auth-body)) .border-bottom {
   border-color: #272730 !important;
 }
 
-body[data-theme="dark"]:not(.auth-body) .tile-box {
+:is(:root[data-theme="dark"] body:not(.auth-body), body[data-theme="dark"]:not(.auth-body)) .tile-box {
   background-color: #101117;
   border-color: #272730;
   color: #f6f6f6;
 }
 
-body[data-theme="dark"]:not(.auth-body) .btn.btn-outline-dark {
+:is(:root[data-theme="dark"] body:not(.auth-body), body[data-theme="dark"]:not(.auth-body)) .btn.btn-outline-dark {
   color: #f6f6f6;
   border-color: #f6f6f6;
   background-color: transparent;
 }
 
-body[data-theme="dark"]:not(.auth-body) .cta-browse-btn:hover,
-body[data-theme="dark"]:not(.auth-body) .cta-browse-btn:focus-visible {
+:is(:root[data-theme="dark"] body:not(.auth-body), body[data-theme="dark"]:not(.auth-body)) .cta-browse-btn:hover,
+:is(:root[data-theme="dark"] body:not(.auth-body), body[data-theme="dark"]:not(.auth-body)) .cta-browse-btn:focus-visible {
   background-color: #f6f6f6 !important;
   color: #050507 !important;
   border-color: #f6f6f6 !important;
 }
 
-body[data-theme="dark"]:not(.auth-body) .cta-browse-btn.btn-outline-dark:hover,
-body[data-theme="dark"]:not(.auth-body) .cta-browse-btn.btn-outline-dark:focus-visible {
+:is(:root[data-theme="dark"] body:not(.auth-body), body[data-theme="dark"]:not(.auth-body)) .cta-browse-btn.btn-outline-dark:hover,
+:is(:root[data-theme="dark"] body:not(.auth-body), body[data-theme="dark"]:not(.auth-body)) .cta-browse-btn.btn-outline-dark:focus-visible {
   background-color: #ffffff !important;
   color: #000000 !important;
   border-color: #ffffff !important;
 }
 
-body[data-theme="dark"]:not(.auth-body) .btn.btn-outline-dark:hover,
-body[data-theme="dark"]:not(.auth-body) .btn.btn-outline-dark:focus-visible {
+:is(:root[data-theme="dark"] body:not(.auth-body), body[data-theme="dark"]:not(.auth-body)) .btn.btn-outline-dark:hover,
+:is(:root[data-theme="dark"] body:not(.auth-body), body[data-theme="dark"]:not(.auth-body)) .btn.btn-outline-dark:focus-visible {
   background-color: #f6f6f6;
   color: #050507;
   border-color: #f6f6f6;
 }
 
-body[data-theme="dark"]:not(.auth-body) .btn.btn-dark {
+:is(:root[data-theme="dark"] body:not(.auth-body), body[data-theme="dark"]:not(.auth-body)) .btn.btn-dark {
   background-color: #f6f6f6;
   color: #050507;
   border-color: #f6f6f6;
 }
 
 /* Explicit light theme should stay light even if system prefers dark */
-body[data-theme="light"]:not(.auth-body) {
+:is(:root[data-theme="light"] body:not(.auth-body), body[data-theme="light"]:not(.auth-body)) {
   background-color: rgb(244, 244, 244);
   color: #111827;
 }
 
-body[data-theme="light"]:not(.auth-body) .bg-white,
-body[data-theme="light"]:not(.auth-body) .bg-light {
+:is(:root[data-theme="light"] body:not(.auth-body), body[data-theme="light"]:not(.auth-body)) .bg-white,
+:is(:root[data-theme="light"] body:not(.auth-body), body[data-theme="light"]:not(.auth-body)) .bg-light {
   background-color: #ffffff !important;
 }
 
-body[data-theme="light"]:not(.auth-body) .text-dark,
-body[data-theme="light"]:not(.auth-body) .text-body {
+:is(:root[data-theme="light"] body:not(.auth-body), body[data-theme="light"]:not(.auth-body)) .text-dark,
+:is(:root[data-theme="light"] body:not(.auth-body), body[data-theme="light"]:not(.auth-body)) .text-body {
   color: #111827 !important;
 }

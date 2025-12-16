@@ -8,6 +8,7 @@
   tabindex="-1"
   aria-labelledby="editProfileModalLabel"
   aria-hidden="true"
+  data-show-on-load="{% if show_edit_profile_modal %}1{% endif %}"
 >
   <div class="modal-dialog modal-dialog-centered modal-xl">
     <div class="modal-content">
@@ -29,6 +30,14 @@
                 >
                   {{ request.user.username|first|upper }}
                 </span>
+                <button
+                  type="button"
+                  class="edit-profile-avatar-remove {% if not edit_profile_avatar_url %}d-none{% endif %}"
+                  aria-label="Remove profile photo"
+                  data-remove-avatar
+                >
+                  <i class="bi bi-trash-fill"></i>
+                </button>
                 <button
                   type="button"
                   class="edit-profile-avatar-edit"
@@ -103,14 +112,12 @@
                     </div>
                   {% elif field.name == "is_private" %}
                     <div class="mb-3">
-                      <div class="d-flex align-items-center justify-content-between gap-3 p-3 rounded-3" style="background:#161616; border:1px solid #2a2a2a;" data-privacy-toggle>
-                        <div>
-                          <div class="text-muted small text-uppercase">Privacy</div>
-                          <div class="fw-semibold" data-privacy-status>
-                            {% if field.value %}Private{% else %}Public{% endif %}
-                          </div>
+                      <label class="form-label mb-2" for="{{ field.id_for_label }}">Privacy</label>
+                      <div class="edit-profile-privacy-row" data-privacy-toggle>
+                        <div class="edit-profile-privacy-status" data-privacy-status>
+                          {% if field.value %}Private{% else %}Public{% endif %}
                         </div>
-                        <button type="button" class="btn btn-light rounded-pill px-3" data-privacy-button>
+                        <button type="button" class="btn btn-sm privacy-toggle-btn" data-privacy-button>
                           {% if field.value %}Make public{% else %}Make private{% endif %}
                         </button>
                       </div>

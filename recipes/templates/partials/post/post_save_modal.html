@@ -24,7 +24,11 @@
           </div>
           <ul class="save-modal-list list-unstyled mb-0">
             {% for col in save_collections %}
-            <li class="save-modal-row" data-collection-id="{{ col.id }}">
+            <li
+              class="save-modal-row"
+              data-collection-id="{{ col.id }}"
+              data-collection-name="{{ col.name|default_if_none:''|lower }}"
+            >
               <div
                 class="save-modal-avatar{% if col.thumb_url %} save-modal-avatar-has-thumb{% endif %}"
                 aria-hidden="true"
@@ -60,7 +64,7 @@
         </div>
         <div class="save-modal-view d-none" data-save-view="create">
           <form id="save-modal-create-form">
-            <div class="mb-3">
+            <div class="mb-3 create-collection-field">
               <label for="new-collection-name" class="form-label text-muted small">Collection name</label>
               <input type="text" class="save-modal-input" id="new-collection-name" name="name" placeholder="e.g. Cozy winter dishes" required>
             </div>
@@ -74,4 +78,3 @@
     </div>
   </div>
 </div>
-

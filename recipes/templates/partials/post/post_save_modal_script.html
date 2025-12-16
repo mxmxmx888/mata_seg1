@@ -5,15 +5,75 @@ document.addEventListener('DOMContentLoaded', function () {
 
   const saveModalViews = Array.from(saveModal.querySelectorAll('.save-modal-view'));
   const saveModalList = saveModal.querySelector('.save-modal-list');
+  const saveSearchInput = saveModal.querySelector('.save-modal-search input');
   const saveOpenCreate = saveModal.querySelector('[data-save-open-create]');
   const saveBackBtn = saveModal.querySelector('[data-save-back]');
   const saveCreateForm = document.getElementById('save-modal-create-form');
   const saveNameInput = document.getElementById('new-collection-name');
   const hasBootstrapModal = typeof bootstrap !== 'undefined' && bootstrap.Modal;
+  let fallbackBackdrop = null;
+  let saveNoResultsRow = null;
   const saveToggleButtons = Array.from(saveModal.querySelectorAll('[data-save-toggle]'));
   const csrfInput = document.querySelector('input[name=csrfmiddlewaretoken]');
   const csrfToken = csrfInput ? csrfInput.value : '';
   const saveEndpoint = "{% url 'toggle_favourite' recipe.id %}";
+
+  function getSaveRows() {
+    if (!saveModalList) return [];
+    return Array.from(saveModalList.querySelectorAll('.save-modal-row'));
+  }
+
+  function ensureSaveNoResultsRow() {
+    if (saveNoResultsRow || !saveModalList) return saveNoResultsRow;
+    saveNoResultsRow = saveModalList.querySelector('.save-modal-no-results');
+    if (saveNoResultsRow) return saveNoResultsRow;
+    saveNoResultsRow = document.createElement('li');
+    saveNoResultsRow.className = 'text-muted small px-1 py-2 save-modal-no-results d-none';
+    saveNoResultsRow.textContent = 'No collections found';
+    saveModalList.appendChild(saveNoResultsRow);
+    return saveNoResultsRow;
+  }
+
+  function setRowSearchValue(row, name) {
+    if (!row) return;
+    row.setAttribute('data-collection-name', (name || '').toLowerCase());
+  }
+
+  function filterSaveModalList() {
+    if (!saveModalList || !saveSearchInput) return;
+    const rows = getSaveRows();
+    if (!rows.length) return;
+    const term = saveSearchInput.value.trim().toLowerCase();
+    let visibleCount = 0;
+    rows.forEach((row) => {
+      const name = row.getAttribute('data-collection-name') || '';
+      const match = !term || name.indexOf(term) !== -1;
+      row.classList.toggle('d-none', !match);
+      if (match) visibleCount += 1;
+    });
+    const noResults = ensureSaveNoResultsRow();
+    if (noResults) {
+      noResults.classList.toggle('d-none', visibleCount !== 0);
+    }
+  }
+
+  function resetSaveModalSearch() {
+    if (!saveSearchInput) return;
+    saveSearchInput.value = '';
+    filterSaveModalList();
+  }
+
+  if (saveModalList) {
+    getSaveRows().forEach((row) => {
+      const nameEl = row.querySelector('.fw-semibold');
+      const rowName = nameEl ? nameEl.textContent : '';
+      setRowSearchValue(row, rowName);
+    });
+  }
+
+  if (saveSearchInput) {
+    saveSearchInput.addEventListener('input', filterSaveModalList);
+  }
 
   function setSaveView(view) {
     if (!saveModalViews.length) return;
@@ -38,16 +98,34 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 
+  function ensureFallbackBackdrop() {
+    if (fallbackBackdrop) return fallbackBackdrop;
+    const el = document.createElement('div');
+    el.className = 'modal-backdrop fade custom-modal-backdrop';
+    document.body.appendChild(el);
+    fallbackBackdrop = el;
+    return el;
+  }
+
   function showSaveModal() {
+    setSaveView('list');
+    resetSaveModalSearch();
     if (hasBootstrapModal) {
       const instance = bootstrap.Modal.getOrCreateInstance(saveModal);
-      setSaveView('list');
       instance.show();
       return;
     }
+    const backdrop = ensureFallbackBackdrop();
+    backdrop.style.display = 'block';
+    window.requestAnimationFrame(() => backdrop.classList.add('show'));
+    backdrop.onclick = hideSaveModal;
+
     saveModal.classList.add('show');
     saveModal.style.display = 'block';
+    saveModal.removeAttribute('aria-hidden');
+
     document.body.classList.add('modal-open');
+    document.body.style.overflow = 'hidden';
   }
 
   function hideSaveModal() {
@@ -58,7 +136,16 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     saveModal.classList.remove('show');
     saveModal.style.display = 'none';
+    saveModal.setAttribute('aria-hidden', 'true');
+
+    if (fallbackBackdrop) {
+      fallbackBackdrop.classList.remove('show');
+      fallbackBackdrop.style.display = 'none';
+      fallbackBackdrop.onclick = null;
+    }
+
     document.body.classList.remove('modal-open');
+    document.body.style.overflow = '';
   }
 
   const saveButtons = Array.from(document.querySelectorAll('[data-open-save-modal]'));
@@ -194,6 +281,7 @@ document.addEventListener('DOMContentLoaded', function () {
           const nameEl = row.querySelector('p.mb-0.fw-semibold') || row.querySelector('p.fw-semibold');
           if (nameEl) {
             nameEl.textContent = col.name || '';
+            setRowSearchValue(row, col.name || '');
           }
           const toggleBtn = row.querySelector('[data-save-toggle]');
           const icon = toggleBtn ? toggleBtn.querySelector('i') : null;
@@ -202,6 +290,7 @@ document.addEventListener('DOMContentLoaded', function () {
             icon.classList.toggle('bi-bookmark', !saved);
           }
           attachToggleHandler(toggleBtn);
+          filterSaveModalList();
           setSaveView('list');
           hideSaveModal();
         })
@@ -213,8 +302,18 @@ document.addEventListener('DOMContentLoaded', function () {
 
   saveToggleButtons.forEach(attachToggleHandler);
 
+  // Ensure clicking outside the dialog closes the modal (covers fallback + bootstrap)
+  saveModal.addEventListener('click', (e) => {
+    if (!saveModal.classList.contains('show')) return;
+    const dialog = saveModal.querySelector('.modal-dialog');
+    if (dialog && dialog.contains(e.target)) return;
+    hideSaveModal();
+  });
+
   if (hasBootstrapModal) {
     saveModal.addEventListener('shown.bs.modal', () => setSaveView('list'));
   }
+
+  filterSaveModalList();
 });
 </script>

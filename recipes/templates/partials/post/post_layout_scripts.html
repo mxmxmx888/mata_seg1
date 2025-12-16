@@ -26,7 +26,8 @@ document.addEventListener('DOMContentLoaded', function () {
     if (!masonry || masonryItems.length === 0) return;
     const cols = ensureMasonryCols();
     if (cols.length === 0) return;
-    const colCount = 2;
+    const colCount = window.innerWidth <= 768 ? 1 : 2;
+    masonry.style.gridTemplateColumns = `repeat(${colCount}, minmax(0, 1fr))`;
     const activeCols = cols.slice(0, colCount);
     cols.forEach((col, index) => {
       col.innerHTML = '';
@@ -93,6 +94,80 @@ document.addEventListener('DOMContentLoaded', function () {
 
   setBaselines();
   updateSimilarColumns();
+
+  const backButton = document.querySelector('.post-back-button');
+  const lightbox = document.getElementById('lightbox');
+  const triggerBack = () => {
+    if (backButton) {
+      backButton.click();
+      return;
+    }
+    window.history.back();
+  };
+
+  document.addEventListener('keydown', (event) => {
+    if (event.key !== 'Escape' || event.defaultPrevented) return;
+    const modalOpen = document.querySelector('.modal.show');
+    const lightboxOpen = lightbox && !lightbox.classList.contains('d-none');
+    if (modalOpen || lightboxOpen) return;
+    triggerBack();
+  });
+
+  const likeForm = document.querySelector('[data-like-form]');
+  if (likeForm) {
+    const likeButton = likeForm.querySelector('[data-like-toggle]');
+    const likeIcon = likeButton ? likeButton.querySelector('i') : null;
+    const likeCountEl = likeForm.querySelector('[data-like-count]');
+    const csrfInput = likeForm.querySelector('input[name=csrfmiddlewaretoken]')
+      || document.querySelector('input[name=csrfmiddlewaretoken]');
+    const csrfToken = csrfInput ? csrfInput.value : '';
+
+    const setLikeState = (liked, count) => {
+      if (!likeButton || !likeIcon) return;
+      likeButton.dataset.liked = liked ? 'true' : 'false';
+      likeButton.setAttribute('aria-pressed', liked ? 'true' : 'false');
+      likeIcon.classList.toggle('bi-heart-fill', liked);
+      likeIcon.classList.toggle('bi-heart', !liked);
+      likeButton.classList.toggle('is-liked', liked);
+      if (likeCountEl && typeof count === 'number' && !Number.isNaN(count)) {
+        likeCountEl.textContent = Math.max(0, count);
+      }
+    };
+
+    const parseCount = () => {
+      if (!likeCountEl) return 0;
+      const parsed = parseInt(likeCountEl.textContent, 10);
+      return Number.isNaN(parsed) ? 0 : parsed;
+    };
+
+    likeForm.addEventListener('submit', (event) => {
+      if (!likeButton || !likeIcon || !csrfToken || typeof fetch === 'undefined') return;
+      event.preventDefault();
+      const wasLiked = likeButton.dataset.liked === 'true';
+      const nextCount = wasLiked ? parseCount() - 1 : parseCount() + 1;
+      likeButton.disabled = true;
+
+      fetch(likeForm.action, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
+          'X-CSRFToken': csrfToken,
+          'X-Requested-With': 'XMLHttpRequest',
+        },
+        body: '',
+      })
+        .then((resp) => {
+          if (resp && resp.ok) {
+            setLikeState(!wasLiked, nextCount);
+            return;
+          }
+          likeForm.submit();
+        })
+        .catch(() => likeForm.submit())
+        .finally(() => {
+          likeButton.disabled = false;
+        });
+    });
+  }
 });
 </script>
-

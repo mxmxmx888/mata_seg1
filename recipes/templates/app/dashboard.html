@@ -2,7 +2,7 @@
 {% load static %}
 
 {% block content %}
-<main class="cosmos-home">
+<main class="recipi-home">
   <div class="container-fluid px-4 px-xl-5 py-4">
 
     <form method="get" class="mb-4 d-flex align-items-center justify-content-center dashboard-filters">
@@ -48,7 +48,7 @@
         </option>
       </select>
 
-      <div class="d-flex align-items-center ms-3 gap-2 dashboard-have-ingredients">
+      <div class="d-flex align-items-center gap-2 dashboard-have-ingredients">
         <input
           type="text"
           name="have_ingredients"
@@ -67,7 +67,7 @@
 
       <div class="row justify-content-center mb-4">
         <div class="col-auto">
-          <ul class="nav nav-pills cosmos-toggle" id="searchScopeTabs" role="tablist">
+          <ul class="nav nav-pills recipi-toggle" id="searchScopeTabs" role="tablist">
 
             <li class="nav-item" role="presentation">
               <a
@@ -97,21 +97,24 @@
 
       {% if scope == "users" %}
         {% if users_results %}
-          <div class="row g-3 justify-content-center">
+          <div class="user-search-grid">
             {% for u in users_results %}
-              <div class="col-12 col-md-6 col-lg-4 col-xl-3">
-                <a href="{% url 'profile' %}?user={{ u.username }}" class="card text-decoration-none text-light bg-transparent border border-secondary rounded-4 p-3 user-card">
-                  <div class="d-flex align-items-center gap-3">
-                    <div class="rounded-circle overflow-hidden" style="width:56px; height:56px; background:#111;">
-                      <img src="{{ u.mini_avatar_url }}" alt="{{ u.username }} avatar" style="width:100%; height:100%; object-fit: cover;">
-                    </div>
-                    <div>
-                      <div class="fw-semibold">{{ u.get_full_name|default:u.username }}</div>
-                      <div class="small text-muted">{{ u.username }}</div>
-                    </div>
-                  </div>
-                </a>
-              </div>
+              <a
+                href="{% url 'profile' %}?user={{ u.username }}"
+                class="user-search-card text-decoration-none"
+                aria-label="{{ u.get_full_name|default:u.username }}"
+              >
+                <div class="user-search-avatar {% if not u.mini_avatar_url %}is-placeholder{% endif %}">
+                  {% if u.mini_avatar_url %}
+                    <img src="{{ u.mini_avatar_url }}" alt="{{ u.username }} avatar" loading="lazy">
+                  {% else %}
+                    <span aria-hidden="true">{{ u.username|first|upper }}</span>
+                    <span class="visually-hidden">{{ u.username }} avatar placeholder</span>
+                  {% endif %}
+                </div>
+                <div class="user-search-name">{{ u.get_full_name|default:u.username }}</div>
+                <div class="user-search-handle">{{ u.username }}</div>
+              </a>
             {% endfor %}
           </div>
         {% else %}
@@ -137,7 +140,7 @@
 
       <div class="row justify-content-center mb-4">
         <div class="col-auto">
-          <ul class="nav nav-pills cosmos-toggle" id="cosmosFeedTabs" role="tablist">
+          <ul class="nav nav-pills recipi-toggle" id="recipiFeedTabs" role="tablist">
 
             <li class="nav-item" role="presentation">
               <button

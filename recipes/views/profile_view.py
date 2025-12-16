@@ -278,6 +278,7 @@ def profile(request):
 
     edit_profile_form = UserForm(instance=request.user)
     password_form = PasswordForm(user=request.user)
+    show_edit_profile_modal = request.session.pop("show_edit_profile_modal", False)
 
     if request.method == "POST":
         if request.POST.get("cancel_request") == "1":
@@ -297,10 +298,12 @@ def profile(request):
                 if non_avatar_changes:
                     messages.add_message(request, messages.SUCCESS, "Profile updated!")
 
+            request.session["show_edit_profile_modal"] = True
             return redirect("profile")
         else:
             # keep the bound form in the modal so validation errors surface
             edit_profile_form = form
+            show_edit_profile_modal = True
     else:
         if profile_user == request.user:
             form = UserForm(instance=request.user)
@@ -331,20 +334,21 @@ def profile(request):
             "form": form,
             "edit_profile_form": edit_profile_form,
             "password_form": password_form,
-            "profile_user": profile_user,
-            "is_own_profile": profile_user == request.user,
-            "is_following": is_following,
+        "profile_user": profile_user,
+        "is_own_profile": profile_user == request.user,
+        "is_following": is_following,
             "followers_count": followers_count,
             "following_count": following_count,
             "followers_users": followers_users,
             "following_users": following_users,
             "close_friends": close_friends,
             "posts": posts,
-            "can_view_profile": can_view_profile,
-            "pending_follow_request": pending_request,
-            "close_friend_ids": close_friend_ids,
-        },
-    )
+        "can_view_profile": can_view_profile,
+        "pending_follow_request": pending_request,
+        "close_friend_ids": close_friend_ids,
+        "show_edit_profile_modal": show_edit_profile_modal,
+    },
+)
 
 @login_required
 def collections_overview(request):

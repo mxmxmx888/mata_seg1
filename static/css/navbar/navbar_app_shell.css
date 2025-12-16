@@ -15,6 +15,20 @@
   z-index: 1040;
 }
 
+/* Prevent any stray hairline under the fixed nav on wide screens, delib */
+@media (min-width: 992px) {
+  .navbar-app::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -1px;
+    height: 1px;
+    background-color: inherit;
+    pointer-events: none;
+  }
+}
+
 
 .navbar-app .navbar-brand,
 .navbar-app .nav-link {
@@ -94,7 +108,7 @@
   justify-self: center;
 }
 
-.cosmos-nav-search {
+.recipi-nav-search {
   width: 100%;
   min-width: 0;
   height: 40px;
@@ -107,7 +121,7 @@
   gap: 0.45rem;
 }
 
-.cosmos-nav-search-input {
+.recipi-nav-search-input {
   flex: 1;
   border: none;
   outline: none;
@@ -116,31 +130,31 @@
   font-size: 0.85rem;
 }
 
-.cosmos-nav-search-input::placeholder {
+.recipi-nav-search-input::placeholder {
   color: #9ca3af;
 }
 
-.cosmos-nav-search-input:focus {
+.recipi-nav-search-input:focus {
   background-color: transparent !important;
   box-shadow: none !important;
   border-color: transparent !important;
   outline: none;
 }
 
-.cosmos-nav-search .form-control:focus {
+.recipi-nav-search .form-control:focus {
   background-color: transparent !important;
   box-shadow: none !important;
   border-color: transparent !important;
 }
 
-.cosmos-nav-search:focus-within {
+.recipi-nav-search:focus-within {
   background-color: rgb(236, 236, 236);
   border-color: #cbd5f5;
   transform: scale(1.015);
   box-shadow: none;
 }
 
-.cosmos-nav-search-icon {
+.recipi-nav-search-icon {
   border: none;
   background: transparent;
   color: #9ca3af;
@@ -173,7 +187,7 @@
     transform: none;
   }
 
-  .navbar-app .navbar-search-wrapper .cosmos-nav-search {
+  .navbar-app .navbar-search-wrapper .recipi-nav-search {
     max-width: 100%;
   }
 
@@ -227,24 +241,24 @@
     color: #111111;
   }
 
-  body:not(.auth-body) .cosmos-nav-search {
+  body:not(.auth-body) .recipi-nav-search {
     background-color: #262626;
     border-color: #383838;
   }
 
-  body:not(.auth-body) .cosmos-nav-search-input {
+  body:not(.auth-body) .recipi-nav-search-input {
     color: #e5e5eb;
   }
 
-  body:not(.auth-body) .cosmos-nav-search-input::placeholder {
+  body:not(.auth-body) .recipi-nav-search-input::placeholder {
     color: #7c7d88;
   }
 
-  body:not(.auth-body) .cosmos-nav-search-icon {
+  body:not(.auth-body) .recipi-nav-search-icon {
     color: #a3a3ac;
   }
 
-  body:not(.auth-body) .cosmos-nav-search:focus-within {
+  body:not(.auth-body) .recipi-nav-search:focus-within {
     background-color: #303030;
     border-color: #4b5563;
     box-shadow: none;

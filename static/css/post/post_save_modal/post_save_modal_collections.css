@@ -1,0 +1,112 @@
+.save-modal-avatar-has-thumb {
+  background: #050505;
+  background-size: cover;
+  background-position: center;
+  color: transparent;
+  font-size: 0;
+}
+
+.edit-collection-modal {
+  background: #101010;
+  border-radius: 1.6rem;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  box-shadow: none;
+  --save-field-bg: #18181b;
+  --save-field-border: rgba(148, 163, 184, 0.35);
+  --save-field-text: #f9fafb;
+  --save-field-placeholder: #9ca3af;
+}
+
+.edit-collection-modal .modal-header {
+  padding-bottom: 0.4rem;
+}
+
+.edit-collection-modal .modal-body {
+  padding-top: 0.75rem;
+}
+
+.edit-collection-modal .modal-title {
+  font-size: 1.35rem;
+}
+
+.edit-collection-modal .save-modal-input,
+.edit-collection-modal .form-control,
+.create-collection-field .save-modal-input {
+  background: none !important;
+  background-color: transparent !important;
+  border-radius: 0 !important;
+  border: none !important;
+  box-shadow: none !important;
+  -webkit-box-shadow: none !important;
+  color: var(--save-field-text) !important;
+  padding: 0 !important;
+  padding-left: 0 !important;
+  text-indent: 0;
+  font-size: 0.9rem;
+  width: 100%;
+  margin: 0;
+  outline: none !important;
+}
+
+.create-collection-field .save-modal-input:focus,
+.edit-collection-modal .save-modal-input:focus,
+.edit-collection-modal .form-control:focus {
+  background-color: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+.create-collection-field .save-modal-input:not(:focus),
+.create-collection-field .save-modal-input:hover,
+.create-collection-field .save-modal-input:active,
+.edit-collection-modal .save-modal-input:not(:focus),
+.edit-collection-modal .form-control:not(:focus),
+.edit-collection-modal .save-modal-input:hover,
+.edit-collection-modal .form-control:hover,
+.edit-collection-modal .save-modal-input:active,
+.edit-collection-modal .form-control:active {
+  background: none !important;
+  background-color: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  -webkit-box-shadow: none !important;
+}
+
+.create-collection-field,
+.edit-collection-modal .edit-collection-field {
+  margin-bottom: 0.9rem;
+  padding: 0.75rem 1.1rem 0.7rem;
+  background-color: var(--save-field-bg);
+  border-radius: 18px;
+  border: 1px solid #c0c6d2;
+}
+
+.create-collection-field .form-label,
+.edit-collection-modal .edit-collection-field .form-label {
+  display: block;
+  margin-bottom: 0.15rem;
+  font-size: 0.78rem;
+  font-weight: 400;
+  color: var(--save-field-placeholder);
+}
+
+.create-collection-field .save-modal-input,
+.edit-collection-modal .edit-collection-field .save-modal-input,
+.edit-collection-modal .edit-collection-field .form-control {
+  padding-top: 0;
+  padding-bottom: 0;
+  color: var(--save-field-text) !important;
+}
+
+.create-collection-field .save-modal-input::placeholder {
+  color: #e6e9f0 !important;
+  font-weight: 400;
+}
+
+.edit-collection-modal .edit-collection-done-btn {
+  border-radius: 0.9rem;
+  padding: 0.3rem 1.2rem;
+  font-size: 0.9rem;
+}

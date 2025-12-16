@@ -1,11 +1,15 @@
 <div class="col-xxl-4 col-xl-4 col-lg-4">
   <header class="mb-4">
-    <p class="post-author text-muted mb-1">by {{ author_handle }}</p>
+    {% with recipe.author.username|default:author_handle|cut:"@" as author_username %}
+    <p class="post-author text-muted mb-1">
+      by <a class="post-author-link" href="{% url 'profile' %}?user={{ author_username }}">{{ author_username }}</a>
+    </p>
+    {% endwith %}
     <h1 class="post-title">{{ title }}</h1>
     <div class="d-flex flex-wrap gap-3 post-meta">
-      <span>⏱ {{ cook_time }}</span>
-      <span>� Serves {{ serves }}</span>
-      <span>� {{ ingredients|length }} ingredients</span>
+      <span><i class="bi bi-clock-history me-1"></i>{{ cook_time }}</span>
+      <span><i class="bi bi-people-fill me-1"></i>Serves {{ serves }}</span>
+      <span><i class="bi bi-list-ul me-1"></i>{{ ingredients|length }} ingredients</span>
       <span class="badge bg-secondary text-uppercase" style="letter-spacing:0.05em;">
         {% if recipe.visibility == 'public' %}Public{% elif recipe.visibility == 'followers' %}Followers only{% else %}Close friends only{% endif %}
       </span>
@@ -71,4 +75,3 @@
   </section>
   {% endif %}
 </div>
-

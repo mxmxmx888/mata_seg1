@@ -1,0 +1,29 @@
+/* Search pill under navbar */
+.recipi-search {
+  border-radius: 999px;
+  overflow: hidden;
+  background-color: rgb(236, 236, 236);
+}
+
+.recipi-search-icon {
+  border: none;
+  background-color: transparent;
+}
+
+.recipi-search-input {
+  border: none;
+  background-color: transparent;
+  font-size: 0.9rem;
+}
+
+.recipi-search-input:focus {
+  box-shadow: none;
+}
+
+.recipi-search-filter {
+  border: none;
+  border-radius: 0;
+  background-color: transparent;
+  font-size: 0.9rem;
+}
+

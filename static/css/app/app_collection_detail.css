@@ -78,6 +78,10 @@
   outline: none !important;
 }
 
+body[data-theme="light"] .collection-header-menu-btn {
+  color: #111827;
+}
+
 .collection-header-menu-btn:focus,
 .collection-header-menu-btn:active {
   border: none !important;
@@ -93,6 +97,11 @@
   color: #ffffff;
   box-shadow: none;
   outline: none;
+}
+
+body[data-theme="light"] .collection-header-menu-btn:hover,
+body[data-theme="light"] .collection-header-menu-btn:focus-visible {
+  color: #111827;
 }
 
 .collection-header-dropdown {
@@ -119,6 +128,10 @@ body[data-theme="light"] .collection-header-dropdown {
   color: #f5f5f5;
   padding: 0.5rem 1rem;
   font-size: 0.85rem;
+}
+
+body[data-theme="light"] .collection-header-dropdown .dropdown-item {
+  color: #111827;
 }
 
 .collection-header-dropdown .dropdown-item:hover,

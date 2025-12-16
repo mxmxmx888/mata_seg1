@@ -109,6 +109,14 @@
   box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.35);
 }
 
+.auth-card .form-control:-webkit-autofill,
+.auth-card .form-control:-webkit-autofill:hover,
+.auth-card .form-control:-webkit-autofill:focus {
+  background-color: #ffffff;
+  -webkit-text-fill-color: #111827;
+  box-shadow: 0 0 0 1000px #ffffff inset;
+}
+
 /* Remove success/invalid ticks and keep borders neutral on auth inputs */
 .auth-card .form-control.is-valid,
 .auth-card .form-control.is-valid:focus {
@@ -143,6 +151,15 @@
   border: none;
   background-color: #111827;
   color: #f9fafb;
+  text-decoration: none;
+  transition: none;
+}
+
+.auth-primary-btn:hover,
+.auth-primary-btn:focus-visible {
+  background-color: #111827;
+  color: #f9fafb;
+  text-decoration: none;
 }
 
 /* Copy under the button */
@@ -151,4 +168,10 @@
   margin-top: 0.9rem;
   font-size: 0.75rem;
   color: #80818c;
+}
+
+.auth-footer-link {
+  margin-top: 1.1rem;
+  font-size: 0.9rem;
+  color: #1f2937;
 }

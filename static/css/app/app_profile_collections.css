@@ -124,22 +124,22 @@ body[data-theme="light"].profile-body .navbar-app .btn.btn-light {
   color: #f9fafb;
 }
 
-body[data-theme="light"].profile-body .cosmos-nav-search {
+body[data-theme="light"].profile-body .recipi-nav-search {
   background-color: rgb(236, 236, 236);
   border-color: #e1e1e6;
 }
 
-body[data-theme="light"].profile-body .cosmos-nav-search:focus-within {
+body[data-theme="light"].profile-body .recipi-nav-search:focus-within {
   background-color: rgb(236, 236, 236);
   border-color: #cbd5f5;
   box-shadow: none;
 }
 
-body[data-theme="light"].profile-body .cosmos-nav-search-input {
+body[data-theme="light"].profile-body .recipi-nav-search-input {
   color: #4b5563;
 }
 
-body[data-theme="light"].profile-body .cosmos-nav-search-input::placeholder {
+body[data-theme="light"].profile-body .recipi-nav-search-input::placeholder {
   color: #9ca3af;
 }
 

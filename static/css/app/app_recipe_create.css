@@ -20,13 +20,17 @@
 .app-page .create-recipe-title {
   margin-top: 0;
   margin-bottom: 0.8rem;
+  text-align: center;
 }
 
 .app-page .create-recipe-lead {
   margin-top: 0;
   margin-bottom: 0.9rem;
+  margin-left: auto;
+  margin-right: auto;
   color: #4b5563;
   font-size: 0.98rem;
+  text-align: center;
 }
 
 .app-page .create-recipe-card .mb-3 {
@@ -53,6 +57,31 @@
   padding: 0;
   font-size: 0.95rem;
   box-shadow: none;
+}
+
+.app-page .create-recipe-card input[type="file"] {
+  background-color: transparent;
+  color: #111827;
+  border: 1px solid #cfcfcf;
+  border-radius: 999px;
+  padding: 0.45rem 0.75rem;
+  box-shadow: none;
+}
+
+.app-page .create-recipe-card input[type="file"]::file-selector-button,
+.app-page .create-recipe-card input[type="file"]::-webkit-file-upload-button {
+  background-color: transparent;
+  color: #111827;
+  border: none;
+  border-right: 1px solid #cfcfcf;
+  border-radius: 999px;
+  padding: 0.35rem 0.9rem;
+  margin-right: 0.65rem;
+}
+
+.app-page .create-recipe-card input[type="file"]:hover::file-selector-button,
+.app-page .create-recipe-card input[type="file"]:hover::-webkit-file-upload-button {
+  background-color: #e1e1e1;
 }
 
 .app-page .create-recipe-card .form-control::placeholder {

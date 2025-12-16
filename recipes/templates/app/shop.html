@@ -4,29 +4,24 @@
 
 {% block content %}
 
-<main class="container shop-wrapper py-5">
-  <div class="row mb-5 text-center">
-    <div class="col-12 col-md-8 offset-md-2">
-      <span class="text-uppercase tracking-wide text-muted small fw-bold mb-2 d-block">Curated Kitchen</span>
-      <h1 class="display-5 fw-bold mb-3">Shop Ingredients</h1>
-      <p class="lead text-muted">Discover and buy the products used in our favorite recipes.</p>
-    </div>
+<main class="shop-shell container">
+  <div class="shop-header">
+    <h1 class="shop-title mb-1">Shop</h1>
+    <p class="shop-subtitle text-muted mb-0">Items pulled from the recipes you follow.</p>
   </div>
 
-  <div class="row g-4" id="shop-items-container">
-    {% if items %}
+  {% if items %}
+    <div class="shop-masonry" id="shop-items-container">
       {% include 'partials/shop/shop_items.html' with items=items %}
-    {% else %}
-    <div class="col-12 text-center py-5">
-      <div class="empty-state">
-        <div class="mb-4 text-muted display-4"><i class="bi bi-shop"></i></div>
-        <h3>Your shop is empty</h3>
-        <p class="text-muted mb-4">Add ingredients with shop links to your recipes to see them here.</p>
-        <a href="{% url 'recipe_create' %}" class="btn btn-primary rounded-pill px-4">Create a Recipe</a>
-      </div>
     </div>
-    {% endif %}
-  </div>
+  {% else %}
+    <div class="shop-empty text-center py-5" id="shop-items-container">
+      <div class="mb-3 text-muted display-5"><i class="bi bi-bag"></i></div>
+      <h3 class="mb-2">Nothing in the shop yet</h3>
+      <p class="text-muted mb-4">Add items with shop links to your recipes to see them here.</p>
+      <a href="{% url 'recipe_create' %}" class="btn btn-dark rounded-pill px-4">Create a Recipe</a>
+    </div>
+  {% endif %}
 </main>
 
 <script>

@@ -48,9 +48,10 @@ class LogInViewTestCase(TestCase, LogInTester, MenuTesterMixin):
     def test_get_log_in_redirects_when_logged_in(self):
         self.client.login(username=self.user.username, password="Password123")
         response = self.client.get(self.url, follow=True)
-        redirect_url = reverse('dashboard')
+        redirect_url = reverse('home')
         self.assertRedirects(response, redirect_url, status_code=302, target_status_code=200)
-        self.assertTemplateUsed(response, 'app/dashboard.html')
+        self.assertTemplateUsed(response, 'public/home.html')
+        self.assertFalse(self._is_logged_in())
 
     def test_unsuccesful_log_in(self):
         form_input = { 'username': '@johndoe', 'password': 'WrongPassword123' }
@@ -116,9 +117,10 @@ class LogInViewTestCase(TestCase, LogInTester, MenuTesterMixin):
         self.client.login(username=self.user.username, password="Password123")
         form_input = { 'username': '@wronguser', 'password': 'WrongPassword123' }
         response = self.client.post(self.url, form_input, follow=True)
-        redirect_url = reverse('dashboard')
+        redirect_url = reverse('home')
         self.assertRedirects(response, redirect_url, status_code=302, target_status_code=200)
-        self.assertTemplateUsed(response, 'app/dashboard.html')
+        self.assertTemplateUsed(response, 'public/home.html')
+        self.assertFalse(self._is_logged_in())
 
     def test_post_log_in_with_incorrect_credentials_and_redirect(self):
         redirect_url = reverse('profile')

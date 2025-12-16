@@ -1,9 +1,82 @@
-<aside class="col-xxl-3 col-xl-3 col-lg-3">
+<aside class="col-xxl-4 col-xl-4 col-lg-4">
   <div class="post-comments-panel">
-    <header class="d-flex align-items-center justify-content-between mb-3">
-      <h2 class="h6 mb-0">Comments</h2>
-      <span class="badge bg-secondary rounded-pill">{{ comments|length }}</span>
+    <header class="post-comments-topbar mb-3">
+      <div class="dropdown post-actions-dropdown">
+        <button
+          class="comment-icon-btn"
+          type="button"
+          id="post-actions-dropdown-{{ recipe.id }}"
+          data-bs-toggle="dropdown"
+          data-bs-display="static"
+          aria-expanded="false"
+          aria-label="More options"
+        >
+          <i class="bi bi-three-dots"></i>
+        </button>
+        <ul
+          class="dropdown-menu dropdown-menu-end post-actions-dropdown-menu"
+          aria-labelledby="post-actions-dropdown-{{ recipe.id }}"
+        >
+          {% if request.user.is_authenticated %}
+            {% if request.user == recipe.author %}
+              <li>
+                <form
+                  action="{% url 'delete_my_recipe' recipe.id %}"
+                  method="post"
+                  onsubmit="return confirm('Delete this post? This cannot be undone.');"
+                >
+                  {% csrf_token %}
+                  <button type="submit" class="dropdown-item text-danger">Delete post</button>
+                </form>
+              </li>
+            {% else %}
+              <li>
+                <a class="dropdown-item text-danger" href="{% url 'report_content' 'recipe' recipe.id %}">
+                  Report post
+                </a>
+              </li>
+            {% endif %}
+          {% else %}
+            <li>
+              <a class="dropdown-item" href="{% url 'log_in' %}">Log in to report</a>
+            </li>
+          {% endif %}
+        </ul>
+      </div>
+      <div class="post-comments-topbar-actions">
+        <form
+          method="post"
+          action="{% url 'toggle_like' recipe.id %}"
+          class="comment-like-form"
+          data-like-form
+        >
+          {% csrf_token %}
+          <span class="comment-like-count" data-like-count aria-live="polite">
+            {{ likes_count|default:0 }}
+          </span>
+          <button
+            type="submit"
+            class="comment-icon-btn comment-like-btn {% if user_liked %}is-liked{% endif %}"
+            data-like-toggle
+            data-liked="{{ user_liked|yesno:'true,false' }}"
+            aria-label="{% if user_liked %}Unlike{% else %}Like{% endif %}"
+            aria-pressed="{{ user_liked|yesno:'true,false' }}"
+          >
+            <i class="bi {% if user_liked %}bi-heart-fill{% else %}bi-heart{% endif %}"></i>
+          </button>
+        </form>
+        <button
+          class="comment-icon-btn comment-icon-btn--primary"
+          type="button"
+          aria-label="Save to collection"
+          data-open-save-modal
+        >
+          <i class="bi bi-plus-lg"></i>
+        </button>
+      </div>
     </header>
+
+    <p class="text-muted small mb-3">Comments · {{ comments|length }}</p>
 
     {% if request.user.is_authenticated %}
     <form action="{% url 'add_comment' recipe.id %}" method="post" class="mb-3">
@@ -31,36 +104,33 @@
 
     <div class="post-comments-list">
       {% for comment in comments %}
-      <div class="post-comment d-flex align-items-start justify-content-between mb-3">
-        <div class="d-flex align-items-start gap-2">
-          <div class="comment-avatar" style="min-width: 32px; width: 32px; height: 32px; border-radius: 50%; background: #eee; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: bold; color: #555;">
+      <div class="post-comment">
+        <div class="comment-avatar">
             <img
               src="{{ comment.user.mini_avatar_url }}"
               alt="{{ comment.user.username }} avatar"
-              style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;"
+              style="width: 100%; height: 100%; object-fit: cover;"
             >
           </div>
-          <div>
-            <div class="d-flex align-items-baseline gap-2">
-              <p class="mb-0 fw-bold" style="font-size: 0.9rem;">{{ comment.user.username }}</p>
-              <span class="text-muted small" style="font-size: 0.75rem;">{{ comment.created_at|timesince }} ago</span>
-            </div>
-            <p class="mb-0 text-dark small" style="line-height: 1.4;">{{ comment.text }}</p>
+        <div class="comment-body">
+          <div class="comment-header">
+            <span class="comment-author">{{ comment.user.username }}</span>
+            <span class="comment-timestamp">{{ comment.created_at|timesince }} ago</span>
           </div>
+          <p class="comment-text">{{ comment.text }}</p>
         </div>
-        
-        <div class="d-flex align-items-center gap-2">
+        <div class="comment-actions">
           {% if request.user == comment.user %}
           <form action="{% url 'delete_comment' comment.id %}" method="post" onsubmit="return confirm('Delete this comment?');">
             {% csrf_token %}
-            <button type="submit" class="btn btn-link text-danger p-0 border-0 opacity-50 hover-opacity-100" style="font-size: 0.8rem;" title="Delete">
+            <button type="submit" class="comment-action-btn" title="Delete">
               <i class="bi bi-trash"></i>
             </button>
           </form>
           {% endif %}
           
-          <a href="{% url 'report_content' 'comment' comment.id %}" class="text-secondary opacity-50 hover-opacity-100" title="Report">
-            <i class="bi bi-flag" style="font-size: 0.8rem;"></i>
+          <a href="{% url 'report_content' 'comment' comment.id %}" class="comment-action-btn" title="Report">
+            <i class="bi bi-flag"></i>
           </a>
         </div>
       </div>
@@ -72,4 +142,3 @@
     </div>
   </div>
 </aside>
-

@@ -106,7 +106,7 @@ body[data-theme="light"] .nav-account-menu .dropdown-divider {
 }
 
 .nav-account-menu-name {
-  margin-top: 0.5rem;
+  margin-top: 0.15rem;
   font-weight: 500;
   font-size: 0.95rem;
   color: inherit;

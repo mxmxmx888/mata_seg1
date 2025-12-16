@@ -1,19 +1,137 @@
 /* Comments & sidebar panel */
 
 .post-comments-panel {
-  background-color: #ffffff;
-  border: 1px solid rgba(15, 23, 42, 0.08);
-  border-radius: 1.75rem;
-  padding: 1.5rem;
-  box-shadow: 0 24px 50px rgba(15, 23, 42, 0.08);
+  background-color: rgb(236, 236, 236);
+  border: none;
+  border-radius: 1.5rem;
+  padding: 1.25rem;
+  box-shadow: none;
   position: relative;
+  display: flex;
+  flex-direction: column;
+  overflow: visible;
 }
 
-@media (min-width: 1200px) {
+@media (min-width: 992px) {
   .post-comments-panel {
     position: sticky;
-    top: 2rem;
+    top: 1.5rem;
+    height: calc(100vh - 5.7rem);
+    max-height: calc(100vh - 5.7rem);
   }
+}
+
+.post-comments-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.post-comments-topbar-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.comment-like-form {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.comment-like-count {
+  font-weight: 600;
+  color: #4b5563;
+  min-width: 1.5rem;
+  text-align: center;
+  font-size: 0.95rem;
+}
+
+.post-actions-dropdown .dropdown-menu {
+  min-width: 180px;
+  padding: 0.35rem 0;
+  border-radius: 14px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  box-shadow: none;
+  background-color: rgb(230, 230, 230);
+  left: 50%;
+  right: auto;
+  transform: translate(-50%, 8px);
+}
+
+.post-actions-dropdown .dropdown-item {
+  font-size: 0.9rem;
+  color: #1f2937;
+  padding: 0.55rem 1rem;
+}
+
+.post-actions-dropdown .dropdown-item:active {
+  color: #111827;
+  background-color: rgba(15, 23, 42, 0.04);
+}
+
+.post-actions-dropdown .dropdown-item:hover,
+.post-actions-dropdown .dropdown-item:focus {
+  background-color: transparent;
+}
+
+.post-actions-dropdown .dropdown-item.text-danger {
+  color: #b91c1c;
+}
+
+.comment-icon-btn {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: none;
+  background-color: rgb(230, 230, 230);
+  color: #111827;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.05rem;
+  box-shadow: none;
+  transition: transform 0.1s ease, box-shadow 0.15s ease;
+}
+
+.comment-like-btn {
+  width: auto;
+  height: auto;
+  padding: 0;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+}
+
+.comment-icon-btn i {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.comment-icon-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: none;
+}
+
+.comment-icon-btn:active {
+  transform: translateY(0);
+}
+
+.comment-icon-btn--primary {
+  background-color: #000000;
+  color: #ffffff;
+}
+
+.comment-like-btn.is-liked {
+  color: #ef4444;
+}
+
+.comment-like-btn i {
+  font-size: 1.2rem;
+  transform: translateY(1px);
 }
 
 .post-save-button {
@@ -49,29 +167,111 @@
 .post-comments-list {
   display: flex;
   flex-direction: column;
-  gap: 0.9rem;
+  gap: 0.8rem;
+  overflow-y: auto;
+  flex: 1; 
+  min-height: 0;
 }
 
 .post-comment {
-  padding-bottom: 0.75rem;
-  border-bottom: 1px solid rgba(15, 23, 42, 0.06);
-}
-
-.post-comment:last-child {
-  border-bottom: none;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+  background-color: rgb(230, 230, 230);
+  border-radius: 1.1rem;
+  padding: 0.8rem 0.95rem;
+  box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.03);
 }
 
 .comment-avatar {
-  width: 38px;
-  height: 38px;
+  width: 40px;
+  height: 40px;
   border-radius: 999px;
-  background: radial-gradient(circle at 30% 20%, #fde68a, #f472b6);
+  background: #d9d9d9;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   font-weight: 600;
   color: #111827;
+  font-size: 0.9rem;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.comment-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.comment-header {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  margin-bottom: 0.2rem;
+}
+
+.comment-author {
+  font-weight: 600;
   font-size: 0.95rem;
+  color: #0f172a;
+}
+
+.comment-timestamp {
+  font-size: 0.78rem;
+  color: #6b7280;
+}
+
+.comment-text {
+  margin: 0;
+  color: #374151;
+  line-height: 1.5;
+  font-size: 0.92rem;
+}
+
+.comment-meta {
+  font-size: 0.78rem;
+  color: #6b7280;
+  margin-top: 0.1rem;
+}
+
+.comment-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-shrink: 0;
+}
+
+.comment-action-btn {
+  border: none;
+  background: transparent;
+  color: #9ca3af;
+  padding: 0.15rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.comment-action-btn:hover {
+  color: #4b5563;
+}
+
+.post-comments-panel textarea.form-control {
+  background-color: rgb(236, 236, 236);
+  border-radius: 1rem;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  padding: 0.75rem 0.9rem;
+  color: #111827;
+  box-shadow: none;
+}
+
+.post-comments-panel textarea.form-control:focus {
+  background-color: rgb(236, 236, 236);
+  border-color: rgba(15, 23, 42, 0.18);
+  box-shadow: none;
+}
+
+.post-comments-panel textarea.form-control::placeholder {
+  color: #9ca3af;
 }
 
 @media (max-width: 991px) {
@@ -95,19 +295,41 @@
     background-color: #f6f6f6;
     color: rgb(13, 13, 13);
   }
+
+  body:not(.auth-body) .comment-like-count {
+    color: #d5d6e1;
+  }
 }
 
 body[data-theme="dark"]:not(.auth-body) .post-comments-panel {
   background-color: #0e0e0e;
-  border-color: #2b2c35;
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.75);
+  border: 1px solid #2b2c35;
+  box-shadow: none;
 }
 
 body[data-theme="dark"]:not(.auth-body) .comment-avatar {
   color: #0b0b0b;
 }
 
+body[data-theme="dark"]:not(.auth-body) .post-comments-panel textarea.form-control {
+  background-color: #0e0e0e;
+  border-color: #2b2c35;
+  color: #e5e7eb;
+}
+
+body[data-theme="dark"]:not(.auth-body) .post-comments-panel textarea.form-control:focus {
+  border-color: #3d3e4a;
+}
+
+body[data-theme="dark"]:not(.auth-body) .post-comment {
+  background-color: #171717;
+}
+
 body[data-theme="dark"]:not(.auth-body) .post-save-button {
   background-color: #f6f6f6;
   color: rgb(13, 13, 13);
+}
+
+body[data-theme="dark"]:not(.auth-body) .comment-like-count {
+  color: #d5d6e1;
 }

@@ -6,6 +6,10 @@ from recipes.forms.log_in_form import LogInForm
 from recipes.views.decorators import LoginProhibitedMixin
 
 class LogInView(LoginProhibitedMixin, View):
+    # If an authenticated user tries to access the login page (e.g. via browser
+    # back), send them through the logout flow instead of erroring.
+    redirect_when_logged_in_url = 'log_out'
+
     def dispatch(self, request, *args, **kwargs):
         # store ?next= from GET or POST
         self.next = request.POST.get("next") or request.GET.get("next") or None
