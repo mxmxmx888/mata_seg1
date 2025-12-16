@@ -141,13 +141,6 @@ body.auth-body .navbar-recipi .nav-link {
   border-color: #000000;
 }
 
-/* Create button */
-.navbar-recipi.navbar-solid .btn.btn-dark {
-  background-color: #000;
-  color: #fff;
-  border-color: #000;
-}
-
 /* Mobile toggler */
 .navbar-recipi .navbar-toggler {
   border: none;

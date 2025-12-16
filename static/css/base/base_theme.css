@@ -1,148 +1,117 @@
-/* System-level dark mode adjustments for non-auth pages */
+/* Theme tokens + shared light/dark behavior */
+
+:root {
+  color-scheme: light;
+  --bg-1: rgb(244, 244, 244);
+  --bg-2: rgb(236, 236, 236);
+  --bg-3: rgb(230, 230, 230);
+  --surface: #ffffff;
+  --text-primary: #111827;
+  --text-muted: #4b5563;
+  --text-inverse: #f9fafb;
+  --border-subtle: #e1e1e6;
+  --border-strong: #cbd5e1;
+  --comment-author-color: #0f172a;
+  --comment-text-color: #374151;
+  --comment-meta-color: #6b7280;
+}
+
+:root[data-theme="dark"],
+body[data-theme="dark"],
+body.dashboard-body:not([data-theme="light"]),
+body.shop-body:not([data-theme="light"]),
+body.app-body:not([data-theme="light"]) {
+  color-scheme: dark;
+  --bg-1: rgb(13, 13, 13);
+  --bg-2: rgb(29, 29, 29);
+  --bg-3: rgb(36, 36, 36);
+  --surface: #0f1014;
+  --text-primary: #f6f6f7;
+  --text-muted: #a5a6b5;
+  --text-inverse: #0b1220;
+  --border-subtle: #272730;
+  --border-strong: #3a3a46;
+  --comment-author-color: var(--text-primary);
+  --comment-text-color: color-mix(in srgb, var(--text-primary) 88%, var(--text-muted) 12%);
+  --comment-meta-color: color-mix(in srgb, var(--text-muted) 82%, var(--text-primary) 18%);
+}
 
 @media (prefers-color-scheme: dark) {
-  body:not(.auth-body) {
-    background-color: rgb(13, 13, 13);
-    color: #f6f6f6;
-  }
-
-  body:not(.auth-body) .bg-white,
-  body:not(.auth-body) .bg-light {
-    background-color: rgb(13, 13, 13) !important;
-  }
-
-  body:not(.auth-body) .text-dark,
-  body:not(.auth-body) .text-body {
-    color: #f6f6f6 !important;
-  }
-
-  body:not(.auth-body) .text-muted {
-    color: #a5a6b5 !important;
-  }
-
-  body:not(.auth-body) .border,
-  body:not(.auth-body) .border-top,
-  body:not(.auth-body) .border-bottom {
-    border-color: #272730 !important;
-  }
-
-  body:not(.auth-body) .tile-box {
-    background-color: #101117;
-    border-color: #272730;
-    color: #f6f6f6;
-  }
-
-  body:not(.auth-body) .btn.btn-outline-dark {
-    color: #f6f6f6;
-    border-color: #f6f6f6;
-    background-color: transparent;
-  }
-
-  body:not(.auth-body) .cta-browse-btn:hover,
-  body:not(.auth-body) .cta-browse-btn:focus-visible {
-    background-color: #f6f6f6 !important;
-    color: #050507 !important;
-    border-color: #f6f6f6 !important;
-  }
-
-  body:not(.auth-body) .cta-browse-btn.btn-outline-dark:hover,
-  body:not(.auth-body) .cta-browse-btn.btn-outline-dark:focus-visible {
-    background-color: #ffffff !important;
-    color: #000000 !important;
-    border-color: #ffffff !important;
-  }
-
-  body:not(.auth-body) .btn.btn-outline-dark:hover,
-  body:not(.auth-body) .btn.btn-outline-dark:focus-visible {
-    background-color: #f6f6f6;
-    color: #050507;
-    border-color: #f6f6f6;
-  }
-
-  body:not(.auth-body) .btn.btn-dark {
-    background-color: #f6f6f6;
-    color: #050507;
-    border-color: #f6f6f6;
+  :root:not([data-theme="light"]),
+  body:not([data-theme="light"]):not(.auth-body):not(.public-body) {
+    color-scheme: dark;
+    --bg-1: rgb(13, 13, 13);
+    --bg-2: rgb(29, 29, 29);
+    --bg-3: rgb(36, 36, 36);
+    --surface: #0f1014;
+    --text-primary: #f6f6f7;
+    --text-muted: #a5a6b5;
+    --text-inverse: #0b1220;
+    --border-subtle: #272730;
+    --border-strong: #3a3a46;
   }
 }
 
-/* Explicit dark theme via data-theme (aligns with auth + app pages) */
-:is(:root[data-theme="dark"] body:not(.auth-body), body[data-theme="dark"]:not(.auth-body)) {
-  background-color: rgb(13, 13, 13);
-  color: #f6f6f6;
+body:not(.auth-body) {
+  background-color: var(--bg-1);
+  color: var(--text-primary);
 }
 
-:is(:root[data-theme="dark"] body:not(.auth-body), body[data-theme="dark"]:not(.auth-body)) .bg-white,
-:is(:root[data-theme="dark"] body:not(.auth-body), body[data-theme="dark"]:not(.auth-body)) .bg-light {
-  background-color: rgb(13, 13, 13) !important;
+body:not(.auth-body) .bg-white,
+body:not(.auth-body) .bg-light {
+  background-color: var(--surface) !important;
 }
 
-:is(:root[data-theme="dark"] body:not(.auth-body), body[data-theme="dark"]:not(.auth-body)) .text-dark,
-:is(:root[data-theme="dark"] body:not(.auth-body), body[data-theme="dark"]:not(.auth-body)) .text-body {
-  color: #f6f6f6 !important;
+body:not(.auth-body) .text-dark,
+body:not(.auth-body) .text-body {
+  color: var(--text-primary) !important;
 }
 
-:is(:root[data-theme="dark"] body:not(.auth-body), body[data-theme="dark"]:not(.auth-body)) .text-muted {
-  color: #a5a6b5 !important;
+body:not(.auth-body) .text-muted {
+  color: var(--text-muted) !important;
 }
 
-:is(:root[data-theme="dark"] body:not(.auth-body), body[data-theme="dark"]:not(.auth-body)) .border,
-:is(:root[data-theme="dark"] body:not(.auth-body), body[data-theme="dark"]:not(.auth-body)) .border-top,
-:is(:root[data-theme="dark"] body:not(.auth-body), body[data-theme="dark"]:not(.auth-body)) .border-bottom {
-  border-color: #272730 !important;
+body:not(.auth-body) .border,
+body:not(.auth-body) .border-top,
+body:not(.auth-body) .border-bottom {
+  border-color: var(--border-subtle) !important;
 }
 
-:is(:root[data-theme="dark"] body:not(.auth-body), body[data-theme="dark"]:not(.auth-body)) .tile-box {
-  background-color: #101117;
-  border-color: #272730;
-  color: #f6f6f6;
+body:not(.auth-body) .tile-box {
+  background-color: var(--bg-2);
+  border-color: var(--border-subtle);
+  color: var(--text-primary);
 }
 
-:is(:root[data-theme="dark"] body:not(.auth-body), body[data-theme="dark"]:not(.auth-body)) .btn.btn-outline-dark {
-  color: #f6f6f6;
-  border-color: #f6f6f6;
+body:not(.auth-body) .btn.btn-outline-dark {
+  color: var(--text-primary);
+  border-color: var(--text-primary);
   background-color: transparent;
 }
 
-:is(:root[data-theme="dark"] body:not(.auth-body), body[data-theme="dark"]:not(.auth-body)) .cta-browse-btn:hover,
-:is(:root[data-theme="dark"] body:not(.auth-body), body[data-theme="dark"]:not(.auth-body)) .cta-browse-btn:focus-visible {
-  background-color: #f6f6f6 !important;
-  color: #050507 !important;
-  border-color: #f6f6f6 !important;
+body:not(.auth-body) .cta-browse-btn:hover,
+body:not(.auth-body) .cta-browse-btn:focus-visible {
+  background-color: var(--text-primary) !important;
+  color: var(--text-inverse) !important;
+  border-color: var(--text-primary) !important;
 }
 
-:is(:root[data-theme="dark"] body:not(.auth-body), body[data-theme="dark"]:not(.auth-body)) .cta-browse-btn.btn-outline-dark:hover,
-:is(:root[data-theme="dark"] body:not(.auth-body), body[data-theme="dark"]:not(.auth-body)) .cta-browse-btn.btn-outline-dark:focus-visible {
-  background-color: #ffffff !important;
-  color: #000000 !important;
-  border-color: #ffffff !important;
+body:not(.auth-body) .cta-browse-btn.btn-outline-dark:hover,
+body:not(.auth-body) .cta-browse-btn.btn-outline-dark:focus-visible {
+  background-color: var(--surface) !important;
+  color: var(--text-primary) !important;
+  border-color: var(--surface) !important;
 }
 
-:is(:root[data-theme="dark"] body:not(.auth-body), body[data-theme="dark"]:not(.auth-body)) .btn.btn-outline-dark:hover,
-:is(:root[data-theme="dark"] body:not(.auth-body), body[data-theme="dark"]:not(.auth-body)) .btn.btn-outline-dark:focus-visible {
-  background-color: #f6f6f6;
-  color: #050507;
-  border-color: #f6f6f6;
+body:not(.auth-body) .btn.btn-outline-dark:hover,
+body:not(.auth-body) .btn.btn-outline-dark:focus-visible {
+  background-color: var(--text-primary);
+  color: var(--text-inverse);
+  border-color: var(--text-primary);
 }
 
-:is(:root[data-theme="dark"] body:not(.auth-body), body[data-theme="dark"]:not(.auth-body)) .btn.btn-dark {
-  background-color: #f6f6f6;
-  color: #050507;
-  border-color: #f6f6f6;
-}
-
-/* Explicit light theme should stay light even if system prefers dark */
-:is(:root[data-theme="light"] body:not(.auth-body), body[data-theme="light"]:not(.auth-body)) {
-  background-color: rgb(244, 244, 244);
-  color: #111827;
-}
-
-:is(:root[data-theme="light"] body:not(.auth-body), body[data-theme="light"]:not(.auth-body)) .bg-white,
-:is(:root[data-theme="light"] body:not(.auth-body), body[data-theme="light"]:not(.auth-body)) .bg-light {
-  background-color: #ffffff !important;
-}
-
-:is(:root[data-theme="light"] body:not(.auth-body), body[data-theme="light"]:not(.auth-body)) .text-dark,
-:is(:root[data-theme="light"] body:not(.auth-body), body[data-theme="light"]:not(.auth-body)) .text-body {
-  color: #111827 !important;
+body:not(.auth-body) .btn.btn-dark {
+  background-color: var(--text-primary);
+  color: var(--text-inverse);
+  border-color: var(--text-primary);
 }

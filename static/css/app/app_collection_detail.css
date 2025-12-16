@@ -119,9 +119,9 @@ body[data-theme="light"] .collection-header-menu-btn:focus-visible {
 }
 
 body[data-theme="light"] .collection-header-dropdown {
-  background-color: rgb(236, 236, 236);
-  color: #111827;
-  border-color: #d1d5db;
+  background-color: var(--bg-2);
+  color: var(--text-primary);
+  border-color: var(--border-subtle);
 }
 
 .collection-header-dropdown .dropdown-item {
@@ -131,7 +131,7 @@ body[data-theme="light"] .collection-header-dropdown {
 }
 
 body[data-theme="light"] .collection-header-dropdown .dropdown-item {
-  color: #111827;
+  color: var(--text-primary);
 }
 
 .collection-header-dropdown .dropdown-item:hover,

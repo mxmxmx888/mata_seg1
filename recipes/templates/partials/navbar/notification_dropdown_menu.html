@@ -1,0 +1,72 @@
+<div class="dropdown-menu dropdown-menu-end notification-menu border-0" aria-labelledby="{{ dropdown_id }}">
+  <div class="dropdown-header notification-header">
+    <span>Activity</span>
+  </div>
+
+  <div class="notification-list">
+    {% for notif in notifications %}
+    <div
+      class="dropdown-item px-3 py-3 d-flex align-items-start gap-3 {% if not notif.is_read %}notification-unread{% endif %}"
+      data-notification-id="{{ notif.id }}"
+    >
+      <a href="{% url 'profile' %}?user={{ notif.sender.username|urlencode }}" class="flex-shrink-0">
+        <img src="{{ notif.sender.mini_avatar_url }}" alt="{{ notif.sender.username }}" class="rounded-circle" width="40" height="40" style="object-fit: cover;">
+      </a>
+      
+      <div class="flex-grow-1">
+        <p class="mb-0 small text-wrap notification-text">
+          <span class="fw-bold notification-username">{{ notif.sender.username }}</span>
+          <span class="notification-message">
+          {% if notif.notification_type == 'like' %}
+            liked your recipe.
+          {% elif notif.notification_type == 'comment' %}
+            commented: "{{ notif.comment.text|truncatechars:30 }}"
+          {% elif notif.notification_type == 'follow' %}
+            started following you.
+          {% elif notif.notification_type == 'follow_request' %}
+            requested to follow you.
+          {% elif notif.notification_type == 'tag' %}
+            tagged you in a comment.
+          {% endif %}
+          </span>
+          <span class="notification-time text-muted d-block mt-1">{{ notif.created_at|timesince }} ago</span>
+        </p>
+      </div>
+
+      {% if notif.post and notif.post.image %}
+      <a href="{% url 'recipe_detail' notif.post.id %}" class="flex-shrink-0">
+        <img src="{{ notif.post.image }}" class="rounded-1" width="40" height="40" style="object-fit: cover;">
+      </a>
+      {% elif notif.notification_type == 'follow' %}
+         {% if following_ids and notif.sender.id in following_ids %}
+           <form method="post" action="{% url 'toggle_follow' notif.sender.username %}" class="ms-auto notification-follow-form" data-follow-state="following">
+            {% csrf_token %}
+            <button class="btn btn-outline-light btn-sm py-0 px-2 rounded-3" style="font-size: 0.75rem;" data-follow-state="following">Remove</button>
+           </form>
+         {% else %}
+           <form method="post" action="{% url 'toggle_follow' notif.sender.username %}" class="ms-auto notification-follow-form" data-follow-state="not-following">
+            {% csrf_token %}
+            <button class="btn btn-primary btn-sm py-0 px-2 rounded-3" style="font-size: 0.75rem;" data-follow-state="not-following">Follow</button>
+           </form>
+         {% endif %}
+      {% elif notif.notification_type == 'follow_request' and notif.follow_request %}
+         <div class="d-flex gap-2 ms-auto notification-follow-request-actions">
+           <form method="post" action="{% url 'accept_follow_request' notif.follow_request.id %}" class="notification-follow-request-form" data-action="accept">
+             {% csrf_token %}
+             <button class="btn btn-primary btn-sm py-0 px-2 rounded-3" style="font-size: 0.75rem;">Accept</button>
+           </form>
+           <form method="post" action="{% url 'reject_follow_request' notif.follow_request.id %}" class="notification-follow-request-form" data-action="reject">
+             {% csrf_token %}
+             <button class="btn btn-outline-light btn-sm py-0 px-2 rounded-3" style="font-size: 0.75rem;">Reject</button>
+           </form>
+         </div>
+      {% endif %}
+    </div>
+    {% empty %}
+    <div class="text-center py-5 empty-notifications">
+      <i class="bi bi-bell-slash mb-3 d-block" style="font-size: 1.6rem;"></i>
+      <p class="small mb-0">No notifications yet.</p>
+    </div>
+    {% endfor %}
+  </div>
+</div>

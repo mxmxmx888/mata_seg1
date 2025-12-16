@@ -17,7 +17,7 @@
 
 .notification-list .dropdown-item:active {
   color: inherit;
-  background-color: rgb(236, 236, 236);
+  background-color: var(--bg-2);
 }
 
 .notification-dot {
@@ -35,6 +35,6 @@
 }
 
 .notification-menu::-webkit-scrollbar-thumb {
-  background-color: rgb(236, 236, 236);
+  background-color: var(--bg-2);
   border-radius: 4px;
 }

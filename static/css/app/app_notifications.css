@@ -1,14 +1,20 @@
 /* App notification dropdown panel */
 
 /* Notification bell / activity heart in navbar: icon only, no pill */
-.navbar-app #notificationDropdown.icon-button {
-  border-radius: 0;
+.navbar-app #notificationDropdown.icon-button,
+.navbar-app #notificationDropdownMobile.icon-button {
   padding: 0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
 }
 
 .navbar-app #notificationDropdown.icon-button:focus,
 .navbar-app #notificationDropdown.icon-button:focus-visible,
-.navbar-app #notificationDropdown.icon-button:active {
+.navbar-app #notificationDropdown.icon-button:active,
+.navbar-app #notificationDropdownMobile.icon-button:focus,
+.navbar-app #notificationDropdownMobile.icon-button:focus-visible,
+.navbar-app #notificationDropdownMobile.icon-button:active {
   outline: none;
   box-shadow: none;
   background: transparent;
@@ -17,17 +23,21 @@
 .navbar-app .notification-menu {
   width: 420px;
   max-width: 92vw;
-  max-height: 580px;
+  max-height: clamp(360px, 75vh, 580px);
   right: 0;
   left: auto;
-  margin-top: var(--navbar-dropdown-offset); /* align with other navbar dropdowns */
+  margin-top: calc(var(--navbar-dropdown-offset) + 35px) !important; /* align with other navbar dropdowns */
   padding: 0;
   border-radius: 22px;
-  background-color: #252525;
-  color: #f5f5f5;
-  border: 1px solid #1c1c1c;
-  overflow: hidden;
+  background-color: var(--bg-2);
+  color: var(--text-primary);
+  border: 1px solid var(--border-subtle);
+  overflow: hidden; /* keep header fixed while list scrolls */
   box-shadow: none;
+}
+
+.navbar-app .navbar-heart-compact .notification-menu {
+  margin-top: calc(var(--navbar-dropdown-offset) + 110px) !important;
 }
 
 .navbar-app .notification-menu.show {
@@ -36,7 +46,7 @@
 }
 
 .navbar-app .notification-list {
-  max-height: 520px;
+  max-height: calc(clamp(360px, 75vh, 580px) - 64px);
   overflow-y: auto;
   padding: 0.35rem 0.6rem 0.7rem;
   display: flex;
@@ -44,6 +54,7 @@
   gap: 0.35rem;
   flex: 1;
   min-height: 0;
+  overscroll-behavior: contain;
 }
 
 .navbar-app .notification-header {
@@ -51,7 +62,7 @@
   align-items: center;
   justify-content: center;
   padding: 0.85rem 1.1rem;
-  border-bottom: 1px solid #303030; /* neutral grey separator */
+  border-bottom: 1px solid var(--border-subtle); 
   background-color: transparent;
 }
 
@@ -61,12 +72,12 @@
   font-weight: 500;
   flex: 1;
   text-align: center;
-  color: #ffffff;
+  color: var(--text-primary);
 }
 
 .navbar-app .notification-header .mark-all-read-link {
   font-size: 0.75rem;
-  color: #a0a0aa;
+  color: var(--text-muted);
   text-decoration: none;
   font-weight: 500;
   padding: 4px 8px;
@@ -75,13 +86,8 @@
 }
 
 .navbar-app .notification-header .mark-all-read-link:hover {
-  background-color: rgba(255, 255, 255, 0.08);
-  color: #ffffff;
-}
-
-body[data-theme="light"] .navbar-app .notification-header .mark-all-read-link:hover {
-  background-color: rgba(15, 23, 42, 0.06);
-  color: #111827;
+  background-color: color-mix(in srgb, var(--text-primary) 12%, transparent);
+  color: var(--text-primary);
 }
 
 .navbar-app .notification-list .dropdown-item {
@@ -95,7 +101,7 @@ body[data-theme="light"] .navbar-app .notification-header .mark-all-read-link:ho
 }
 
 .navbar-app .notification-list .dropdown-item:hover {
-  background-color: rgba(255, 255, 255, 0.05);
+  background-color: color-mix(in srgb, var(--text-primary) 10%, transparent);
   box-shadow: 0 12px 26px rgba(0, 0, 0, 0.24);
   transform: translateY(-1px);
 }
@@ -106,6 +112,14 @@ body[data-theme="light"] .navbar-app .notification-header .mark-all-read-link:ho
 
 .navbar-app .notification-list .dropdown-item p {
   font-size: 0.8rem;
+}
+
+.navbar-app .notification-time {
+  margin-left: 0 !important;
+}
+
+.navbar-app .notification-message {
+  margin-left: 4px;
 }
 
 .navbar-app .notification-dot {
@@ -123,7 +137,7 @@ body[data-theme="light"] .navbar-app .notification-header .mark-all-read-link:ho
 }
 
 .navbar-app .notification-menu::-webkit-scrollbar-thumb {
-  background-color: #3f3f46;
+  background-color: color-mix(in srgb, var(--text-primary) 35%, transparent);
   border-radius: 999px;
 }
 
@@ -131,57 +145,17 @@ body[data-theme="light"] .navbar-app .notification-header .mark-all-read-link:ho
   background-color: transparent;
 }
 
-/* Light theme overrides */
-body[data-theme="light"] .navbar-app .notification-menu {
-  background-color: rgb(236, 236, 236);
-  color: #111827;
-  border-color: rgb(236, 236, 236);
-  box-shadow: none;
+.navbar-app .notification-list .btn-outline-light {
+  color: var(--text-primary);
+  border-color: var(--text-primary);
 }
 
-body[data-theme="light"] .navbar-app .notification-header {
-  border-bottom: 1px solid #e5e7eb;
+.navbar-app .notification-list .btn-outline-light:hover,
+.navbar-app .notification-list .btn-outline-light:focus-visible {
+  background-color: color-mix(in srgb, var(--text-primary) 10%, transparent);
+  color: var(--text-primary);
+  border-color: var(--text-primary);
 }
-
-body[data-theme="light"] .navbar-app .notification-header span {
-  color: #0f172a;
-}
-
-body[data-theme="light"] .navbar-app .notification-header .mark-all-read-link {
-  color: #6b7280;
-}
-
-body[data-theme="light"] .navbar-app .notification-list .dropdown-item {
-  border: none;
-  background-color: inherit;
-}
-
-body[data-theme="light"] .navbar-app .notification-list .dropdown-item:hover {
-  background-color: rgba(17, 24, 39, 0.06);
-  box-shadow: 0 10px 18px rgba(15, 23, 42, 0.08);
-}
-
-/* Keep follow actions legible in light mode */
-body[data-theme="light"] .navbar-app .notification-list .btn-outline-light {
-  color: #0f172a;
-  border-color: #0f172a;
-}
-
-body[data-theme="light"] .navbar-app .notification-list .btn-outline-light:hover,
-body[data-theme="light"] .navbar-app .notification-list .btn-outline-light:focus-visible {
-  background-color: rgba(15, 23, 42, 0.06);
-  color: #0b1220;
-  border-color: #0f172a;
-}
-
-body[data-theme="light"] .navbar-app .notification-list .notification-unread {
-  background-color: inherit;
-}
-
-body[data-theme="light"] .navbar-app .notification-menu::-webkit-scrollbar-thumb {
-  background-color: #e5e7eb;
-}
-
-body[data-theme="light"] .navbar-app .empty-notifications {
-  color: #4b5563;
+.navbar-app .empty-notifications {
+  color: var(--text-muted);
 }

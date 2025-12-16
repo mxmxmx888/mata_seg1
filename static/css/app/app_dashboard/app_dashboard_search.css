@@ -2,7 +2,7 @@
 .recipi-search {
   border-radius: 999px;
   overflow: hidden;
-  background-color: rgb(236, 236, 236);
+  background-color: var(--bg-2);
 }
 
 .recipi-search-icon {
@@ -26,4 +26,3 @@
   background-color: transparent;
   font-size: 0.9rem;
 }
-

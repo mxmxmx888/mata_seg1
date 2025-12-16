@@ -20,14 +20,11 @@
 
   {% if shop_ingredients %}
   <section class="mb-4">
-    <h2 class="h6 fw-bold text-uppercase mb-3 text-muted small tracking-wide">
-      <i class="bi bi-bag-fill me-2"></i>Shop this recipe
-    </h2>
     <div class="d-flex flex-wrap gap-2">
       {% for ing in shop_ingredients %}
       <a href="{{ ing.shop_url }}" target="_blank" class="btn btn-dark rounded-pill d-inline-flex align-items-center gap-2 py-2 px-3" style="background-color: #000; border-color: #000; font-size: 0.85rem;">
         <span>{{ ing.name|title }}</span>
-        <i class="bi bi-arrow-up-right small text-white-50"></i>
+        <i class="bi bi-arrow-up-right small text-white"></i>
       </a>
       {% endfor %}
     </div>

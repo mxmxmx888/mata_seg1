@@ -84,6 +84,26 @@
       </form>
     </div>
 
+    <div class="dropdown navbar-heart-compact d-lg-none">
+      <button
+        class="icon-button position-relative"
+        type="button"
+        id="notificationDropdownMobile"
+        data-bs-toggle="dropdown"
+        aria-expanded="false"
+        data-bs-auto-close="outside"
+      >
+        <i class="bi bi-heart"></i>
+        {% if unread_notifications_count > 0 %}
+        <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle notification-dot">
+          <span class="visually-hidden">New alerts</span>
+        </span>
+        {% endif %}
+      </button>
+
+      {% include "partials/navbar/notification_dropdown_menu.html" with dropdown_id="notificationDropdownMobile" %}
+    </div>
+
     <!-- Mobile hamburger toggler: opens full-screen menu -->
     <button
       class="navbar-toggler d-lg-none ms-2 app-menu-toggle"
@@ -96,101 +116,36 @@
     </button>
 
     <div class="collapse navbar-collapse justify-content-end" id="appNavbarMenu">
-      <div class="navbar-actions ms-auto d-flex align-items-center gap-2">
-        <a href="{% url 'recipe_create' %}" class="btn btn-dark rounded-pill px-2">
+      <div class="navbar-actions ms-auto d-flex align-items-center">
+        <a
+          href="{% url 'recipe_create' %}"
+          class="btn btn-dark rounded-pill px-3 d-none d-lg-inline-flex navbar-create-btn"
+        >
           Create
         </a>
+        <div class="dropdown d-none d-lg-inline-flex">
+          <button
+            class="icon-button position-relative"
+            type="button"
+            id="notificationDropdown"
+            data-bs-toggle="dropdown"
+            aria-expanded="false"
+            data-bs-auto-close="outside"
+          >
+            <i class="bi bi-heart"></i>
+            {% if unread_notifications_count > 0 %}
+            <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle notification-dot">
+              <span class="visually-hidden">New alerts</span>
+            </span>
+            {% endif %}
+          </button>
 
-      <div class="dropdown">
-        <button
-          class="icon-button position-relative"
-          type="button"
-          id="notificationDropdown"
-          data-bs-toggle="dropdown"
-          aria-expanded="false"
-          data-bs-auto-close="outside"
-        >
-          <i class="bi bi-heart"></i>
-          {% if unread_notifications_count > 0 %}
-          <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle notification-dot">
-            <span class="visually-hidden">New alerts</span>
-          </span>
-          {% endif %}
-        </button>
-
-          <div class="dropdown-menu dropdown-menu-end notification-menu border-0" aria-labelledby="notificationDropdown">
-            <div class="dropdown-header notification-header">
-              <span>Activity</span>
-            </div>
-
-          <div class="notification-list">
-            {% for notif in notifications %}
-            <div class="dropdown-item px-3 py-3 d-flex align-items-start gap-3 {% if not notif.is_read %}notification-unread{% endif %}">
-              <a href="{% url 'profile_api' %}?u={{ notif.sender.username }}" class="flex-shrink-0">
-                <img src="{{ notif.sender.mini_avatar_url }}" alt="{{ notif.sender.username }}" class="rounded-circle" width="40" height="40" style="object-fit: cover;">
-              </a>
-              
-              <div class="flex-grow-1">
-                <p class="mb-0 small text-wrap">
-                  <span class="fw-bold">{{ notif.sender.username }}</span>
-                  {% if notif.notification_type == 'like' %}
-                    liked your recipe.
-                  {% elif notif.notification_type == 'comment' %}
-                    commented: "{{ notif.comment.text|truncatechars:30 }}"
-                  {% elif notif.notification_type == 'follow' %}
-                    started following you.
-                  {% elif notif.notification_type == 'follow_request' %}
-                    requested to follow you.
-                  {% elif notif.notification_type == 'tag' %}
-                    tagged you in a comment.
-                  {% endif %}
-                  
-                  <span class="text-muted ms-1">{{ notif.created_at|timesince }} ago</span>
-                </p>
-              </div>
-
-              {% if notif.post and notif.post.image %}
-              <a href="{% url 'recipe_detail' notif.post.id %}" class="flex-shrink-0">
-                <img src="{{ notif.post.image }}" class="rounded-1" width="40" height="40" style="object-fit: cover;">
-              </a>
-              {% elif notif.notification_type == 'follow' %}
-                 {% if following_ids and notif.sender.id in following_ids %}
-                   <form method="post" action="{% url 'toggle_follow' notif.sender.username %}" class="ms-auto notification-follow-form" data-follow-state="following">
-                    {% csrf_token %}
-                    <button class="btn btn-outline-light btn-sm py-0 px-2 rounded-3" style="font-size: 0.75rem;" data-follow-state="following">Remove</button>
-                   </form>
-                 {% else %}
-                   <form method="post" action="{% url 'toggle_follow' notif.sender.username %}" class="ms-auto notification-follow-form" data-follow-state="not-following">
-                    {% csrf_token %}
-                    <button class="btn btn-primary btn-sm py-0 px-2 rounded-3" style="font-size: 0.75rem;" data-follow-state="not-following">Follow</button>
-                   </form>
-                 {% endif %}
-              {% elif notif.notification_type == 'follow_request' and notif.follow_request %}
-                 <div class="d-flex gap-2 ms-auto">
-                   <form method="post" action="{% url 'accept_follow_request' notif.follow_request.id %}">
-                     {% csrf_token %}
-                     <button class="btn btn-primary btn-sm py-0 px-2 rounded-3" style="font-size: 0.75rem;">Accept</button>
-                   </form>
-                   <form method="post" action="{% url 'reject_follow_request' notif.follow_request.id %}">
-                     {% csrf_token %}
-                     <button class="btn btn-outline-light btn-sm py-0 px-2 rounded-3" style="font-size: 0.75rem;">Reject</button>
-                   </form>
-                 </div>
-              {% endif %}
-            </div>
-            {% empty %}
-            <div class="text-center py-5 empty-notifications">
-              <i class="bi bi-bell-slash mb-3 d-block" style="font-size: 1.6rem;"></i>
-              <p class="small mb-0">No notifications yet.</p>
-            </div>
-            {% endfor %}
-      </div>
+          {% include "partials/navbar/notification_dropdown_menu.html" with dropdown_id="notificationDropdown" %}
         </div>
-      </div>
 
-      <a href="{% url 'collections' %}" class="icon-button d-none d-md-inline-flex">
-        <i class="bi {% if request.resolver_match.url_name == 'collections' %}bi-bookmark-fill{% else %}bi-bookmark{% endif %}"></i>
-      </a>
+        <a href="{% url 'collections' %}" class="icon-button d-none d-md-inline-flex">
+          <i class="bi {% if request.resolver_match.url_name == 'collections' %}bi-bookmark-fill{% else %}bi-bookmark{% endif %}"></i>
+        </a>
 
         <a
           href="{% url 'profile' %}"

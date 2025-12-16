@@ -1,12 +1,12 @@
 /* Base card – light mode version */
 .auth-card {
   width: min(100%, var(--auth-card-width));
-  background: #ffffff;
+  background: var(--surface);
   border-radius: var(--auth-card-radius);
   padding: var(--auth-card-pad-y) var(--auth-card-pad-x);
-  border: 1px solid rgba(15, 23, 42, 0.08);
+  border: 1px solid var(--border-subtle);
   box-shadow: 0 24px 60px rgba(15, 23, 42, 0.12);
-  color: #111827;
+  color: var(--text-primary);
   transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
@@ -18,7 +18,7 @@
 
 .auth-card p.auth-subtitle {
   font-size: 0.95rem;
-  color: #6b7280;
+  color: var(--text-muted);
   margin-bottom: 1.7rem;
 }
 
@@ -39,9 +39,9 @@
 .btn-auth {
   width: 100%;
   border-radius: 999px;
-  border: 1px solid rgba(15, 23, 42, 0.12);
-  background-color: #111827;
-  color: #f9fafb;
+  border: 1px solid var(--border-subtle);
+  background-color: var(--text-primary);
+  color: var(--text-inverse);
   font-size: 0.95rem;
   font-weight: 500;
   padding: 0.85rem 1.1rem;
@@ -52,13 +52,13 @@
 }
 
 .btn-auth-apple {
-  background-color: #111827;
-  color: #f9fafb;
+  background-color: var(--text-primary);
+  color: var(--text-inverse);
 }
 
 .btn-auth-google {
-  background-color: rgb(236, 236, 236);
-  color: #111827;
+  background-color: var(--bg-2);
+  color: var(--text-primary);
 }
 
 /* Divider between OAuth and email form */
@@ -92,29 +92,29 @@
 
 .auth-card .form-control {
   border-radius: 999px;
-  border: 1px solid rgba(15, 23, 42, 0.12);
-  background-color: rgb(236, 236, 236);
-  color: #111827;
+  border: 1px solid var(--border-subtle);
+  background-color: var(--bg-2);
+  color: var(--text-primary);
   padding: 0.85rem 1rem;
   font-size: 0.95rem;
 }
 
 .auth-card .form-control::placeholder {
-  color: #9ca3af;
+  color: color-mix(in srgb, var(--text-muted) 65%, var(--text-primary) 35%);
 }
 
 .auth-card .form-control:focus {
-  background-color: #ffffff;
-  border-color: #111827;
-  box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.35);
+  background-color: var(--surface);
+  border-color: var(--text-primary);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--text-primary) 35%, transparent);
 }
 
 .auth-card .form-control:-webkit-autofill,
 .auth-card .form-control:-webkit-autofill:hover,
 .auth-card .form-control:-webkit-autofill:focus {
-  background-color: #ffffff;
-  -webkit-text-fill-color: #111827;
-  box-shadow: 0 0 0 1000px #ffffff inset;
+  background-color: var(--surface);
+  -webkit-text-fill-color: var(--text-primary);
+  box-shadow: 0 0 0 1000px var(--surface) inset;
 }
 
 /* Remove success/invalid ticks and keep borders neutral on auth inputs */

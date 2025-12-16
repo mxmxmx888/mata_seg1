@@ -96,6 +96,45 @@ document.addEventListener('DOMContentLoaded', function () {
   updateSimilarColumns();
 
   const backButton = document.querySelector('.post-back-button');
+  const parseUrl = (value) => {
+    if (!value) return null;
+    try {
+      return new URL(value, window.location.href);
+    } catch (error) {
+      return null;
+    }
+  };
+
+  const resolveBackTarget = () => {
+    if (!backButton) return { target: null, referrer: null, fallback: null };
+    const fallbackHref = backButton.dataset.fallback || backButton.getAttribute('href') || '/';
+    const refValue = backButton.dataset.entry || document.referrer || '';
+    const parsedRef = parseUrl(refValue);
+    const isSameOrigin = parsedRef && parsedRef.origin === window.location.origin && parsedRef.href !== window.location.href;
+    const target = isSameOrigin ? parsedRef.href : fallbackHref;
+    backButton.setAttribute('href', target);
+    return {
+      target,
+      referrer: isSameOrigin ? parsedRef.href : null,
+      fallback: fallbackHref,
+    };
+  };
+
+  const backState = resolveBackTarget();
+  if (backButton) {
+    backButton.addEventListener('click', (event) => {
+      const hasHistory = window.history.length > 1 && backState.referrer;
+      if (hasHistory) {
+        event.preventDefault();
+        window.history.back();
+        return;
+      }
+      if (backState.referrer && backState.target === backState.referrer) {
+        event.preventDefault();
+        window.location.assign(backState.referrer);
+      }
+    });
+  }
   const lightbox = document.getElementById('lightbox');
   const triggerBack = () => {
     if (backButton) {

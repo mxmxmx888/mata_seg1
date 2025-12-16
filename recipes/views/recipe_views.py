@@ -199,7 +199,7 @@ def recipe_detail(request, post_id):
         except ValueError:
             image_url = None
     if not image_url:
-        image_url = recipe.image or "https://placehold.co/1200x800/0f0f14/ffffff?text=Recipe"
+        image_url = recipe.image or None
 
     gallery_images = []
     if images_qs.count() > 1:
@@ -254,14 +254,6 @@ def recipe_detail(request, post_id):
     return render(request, "post/post_detail.html", context)
 
 @login_required
-def my_recipes(request):
-    posts = post_repo.list_for_user(
-        request.user.id,
-        order_by=("-created_at",),
-    )
-    return render(request, "app/my_recipes.html", {"posts": posts})
-
-@login_required
 def saved_recipes(request):
     favourite_items = (
         FavouriteItem.objects.filter(favourite__user=request.user)
@@ -287,7 +279,7 @@ def delete_my_recipe(request, post_id):
     if request.method == "POST":
         recipe.delete()
         messages.success(request, "Recipe deleted.")
-        return redirect("my_recipes")
+        return redirect("profile")
 
     return redirect("recipe_detail", post_id=recipe.id)
 

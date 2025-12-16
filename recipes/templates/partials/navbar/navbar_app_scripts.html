@@ -48,6 +48,51 @@
 </script>
 
 <script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const requestForms = document.querySelectorAll('.notification-follow-request-form');
+    if (!requestForms.length) return;
+
+    requestForms.forEach(function (form) {
+      form.addEventListener('submit', function (event) {
+        event.preventDefault();
+
+        const action = form.dataset.action;
+        const item = form.closest('[data-notification-id]');
+        const message = item?.querySelector('.notification-message');
+        const actionsRow = item?.querySelector('.notification-follow-request-actions');
+        const csrfInput = form.querySelector('input[name="csrfmiddlewaretoken"]');
+        const csrfToken = csrfInput ? csrfInput.value : null;
+
+        fetch(form.action, {
+          method: 'POST',
+          body: new FormData(form),
+          headers: Object.assign(
+            { 'X-Requested-With': 'XMLHttpRequest' },
+            csrfToken ? { 'X-CSRFToken': csrfToken } : {}
+          ),
+          redirect: 'manual'
+        }).then(function () {
+          if (!item) return;
+
+          if (action === 'accept') {
+            if (message) {
+              message.textContent = 'started following you.';
+            }
+            if (actionsRow) {
+              actionsRow.remove();
+            }
+          } else if (action === 'reject') {
+            item.remove();
+          }
+        }).catch(function () {
+          form.submit();
+        });
+      });
+    });
+  });
+</script>
+
+<script>
   (function () {
     const toggleBtn = document.getElementById("prepTimeToggle");
     const popover = document.getElementById("prepFilterPopover");
@@ -68,77 +113,80 @@
 </script>
 
 <script>
-  const notifDropdown = document.getElementById('notificationDropdown');
-  if (notifDropdown) {
-    const icon = notifDropdown.querySelector('i');
-    const dot = notifDropdown.querySelector('.notification-dot');
-    const dropdownMenu = notifDropdown.closest('.dropdown')?.querySelector('.dropdown-menu');
+  const notifDropdowns = Array.from(document.querySelectorAll('#notificationDropdown, #notificationDropdownMobile'));
+  if (notifDropdowns.length) {
     let markedRead = false;
-
-    const fillHeart = () => {
-      if (!icon) return;
-      icon.classList.remove('bi-heart');
-      icon.classList.add('bi-heart-fill');
-    };
-
-    const unfillHeart = () => {
-      if (!icon) return;
-      icon.classList.remove('bi-heart-fill');
-      icon.classList.add('bi-heart');
-    };
-
-    const clearDot = () => {
-      if (dot && dot.parentNode) {
-        dot.remove();
-      }
-    };
 
     const markRead = () => {
       if (markedRead) return;
       markedRead = true;
       fetch("{% url 'mark_notifications_read' %}", {
         method: "POST",
-        headers: {
-          "X-CSRFToken": "{{ csrf_token }}"
-        }
+        headers: { "X-CSRFToken": "{{ csrf_token }}" }
       }).catch(() => {});
     };
 
-    const handleOpen = () => {
-      clearDot();
-      fillHeart();
-      markRead();
-    };
+    const attachHandlers = (dropdownEl) => {
+      const icon = dropdownEl.querySelector('i');
+      const dropdownMenu = dropdownEl.closest('.dropdown')?.querySelector('.dropdown-menu');
 
-    const handleClose = () => {
-      unfillHeart();
-    };
+      const fillHeart = () => {
+        if (!icon) return;
+        icon.classList.remove('bi-heart');
+        icon.classList.add('bi-heart-fill');
+      };
 
-    const syncFromState = () => {
-      const isOpen =
-        notifDropdown.getAttribute('aria-expanded') === 'true' ||
-        (dropdownMenu && dropdownMenu.classList.contains('show'));
+      const unfillHeart = () => {
+        if (!icon) return;
+        icon.classList.remove('bi-heart-fill');
+        icon.classList.add('bi-heart');
+      };
 
-      if (isOpen) {
-        handleOpen();
-      } else {
-        handleClose();
+      const clearDot = () => {
+        const dot = dropdownEl.querySelector('.notification-dot');
+        if (dot && dot.parentNode) {
+          dot.remove();
+        }
+      };
+
+      const handleOpen = () => {
+        clearDot();
+        fillHeart();
+        markRead();
+      };
+
+      const handleClose = () => {
+        unfillHeart();
+      };
+
+      const syncFromState = () => {
+        const isOpen =
+          dropdownEl.getAttribute('aria-expanded') === 'true' ||
+          (dropdownMenu && dropdownMenu.classList.contains('show'));
+
+        if (isOpen) {
+          handleOpen();
+        } else {
+          handleClose();
+        }
+      };
+
+      dropdownEl.addEventListener('show.bs.dropdown', handleOpen);
+      dropdownEl.addEventListener('shown.bs.dropdown', handleOpen);
+      dropdownEl.addEventListener('hidden.bs.dropdown', handleClose);
+
+      // Fallback: keep icon state in sync if Bootstrap events are unavailable
+      dropdownEl.addEventListener('click', function () {
+        setTimeout(syncFromState, 0);
+      });
+
+      if (dropdownMenu && window.MutationObserver) {
+        const observer = new MutationObserver(syncFromState);
+        observer.observe(dropdownMenu, { attributes: true, attributeFilter: ['class'] });
       }
     };
 
-    notifDropdown.addEventListener('show.bs.dropdown', handleOpen);
-    notifDropdown.addEventListener('shown.bs.dropdown', handleOpen);
-    notifDropdown.addEventListener('hidden.bs.dropdown', handleClose);
-
-    // Fallback: keep icon state in sync if Bootstrap events are unavailable
-    notifDropdown.addEventListener('click', function () {
-      setTimeout(syncFromState, 0);
-    });
-
-    if (dropdownMenu && window.MutationObserver) {
-      const observer = new MutationObserver(syncFromState);
-      observer.observe(dropdownMenu, { attributes: true, attributeFilter: ['class'] });
-    }
+    notifDropdowns.forEach(attachHandlers);
   }
 
   const searchInput = document.querySelector('.recipi-nav-search-input');

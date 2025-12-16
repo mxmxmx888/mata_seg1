@@ -71,8 +71,8 @@ body[data-theme="light"] .modal-backdrop.custom-modal-backdrop.show {
 }
 
 body.profile-body .follow-modal .modal-content {
-  background-color: rgb(244, 244, 244);
-  color: #111827;
+  background-color: var(--bg-1);
+  color: var(--text-primary);
 }
 
 :is(:root[data-theme="dark"] body.profile-body, body[data-theme="dark"].profile-body) .follow-modal .modal-content {

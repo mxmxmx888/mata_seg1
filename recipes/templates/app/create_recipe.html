@@ -12,7 +12,7 @@
           Give it a title, a short description, then list ingredients and steps.
         </p>
 
-        <form method="post" enctype="multipart/form-data">
+        <form method="post" enctype="multipart/form-data" data-form-bound="{{ form.is_bound|yesno:'true,false' }}" data-form-has-errors="{% if form.errors %}true{% else %}false{% endif %}">
           {% csrf_token %}
 
           {% include "partials/forms/bootstrap_form.html" with form=form %}
@@ -69,6 +69,10 @@
       const imageList = document.getElementById('image-file-list');
       const shopImageInput = document.getElementById('id_shop_images');
       const shopImageList = document.getElementById('shop-image-file-list');
+      const isBound = formEl && formEl.dataset.formBound === 'true';
+      const hasErrors = formEl && formEl.dataset.formHasErrors === 'true';
+      const IMG_STORAGE_KEY = 'create-recipe-images';
+      const SHOP_IMG_STORAGE_KEY = 'create-recipe-shop-images';
       
       const ingredientsField = document.getElementById('id_ingredients_text');
       const itemInput = document.getElementById('shop-item');
@@ -90,7 +94,10 @@
         imageList.textContent = names.join(", ");
       }
       if (imageInput) {
-        imageInput.addEventListener('change', renderImagesList);
+        imageInput.addEventListener('change', () => {
+          renderImagesList();
+          persistFiles(imageInput, IMG_STORAGE_KEY);
+        });
       }
 
       function renderShopImagesList() {
@@ -104,7 +111,10 @@
         shopImageList.textContent = names.join(", ");
       }
       if (shopImageInput) {
-        shopImageInput.addEventListener('change', renderShopImagesList);
+        shopImageInput.addEventListener('change', () => {
+          renderShopImagesList();
+          persistFiles(shopImageInput, SHOP_IMG_STORAGE_KEY);
+        });
       }
 
       function normalizeUrl(url) {
@@ -160,6 +170,73 @@
         ingredientsField.value = finalLines.join('\n');
       }
 
+      function persistFiles(input, storageKey) {
+        if (!input || !storageKey) return;
+        const files = input.files;
+        if (!files || !files.length) {
+          try { sessionStorage.removeItem(storageKey); } catch (err) {}
+          return;
+        }
+
+        const entries = Array.from(files).slice(0, 10).map((file) => new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve({
+            name: file.name,
+            type: file.type,
+            lastModified: file.lastModified,
+            data: reader.result,
+          });
+          reader.onerror = () => resolve(null);
+          reader.readAsDataURL(file);
+        }));
+
+        Promise.all(entries).then((results) => {
+          const cleaned = results.filter(Boolean);
+          if (!cleaned.length) {
+            try { sessionStorage.removeItem(storageKey); } catch (err) {}
+            return;
+          }
+          try {
+            sessionStorage.setItem(storageKey, JSON.stringify(cleaned));
+          } catch (err) {
+            // If storage fails, silently skip keeping images.
+          }
+        });
+      }
+
+      async function restoreFiles(input, storageKey, onAfterRestore) {
+        if (!input || !storageKey) return;
+        if (typeof DataTransfer === 'undefined') return;
+        let stored = [];
+        try {
+          stored = JSON.parse(sessionStorage.getItem(storageKey) || '[]');
+        } catch (err) {
+          return;
+        }
+        if (!Array.isArray(stored) || !stored.length) return;
+
+        const dataTransfer = new DataTransfer();
+        for (const item of stored) {
+          if (!item || !item.data) continue;
+          try {
+            const response = await fetch(item.data);
+            const blob = await response.blob();
+            const file = new File([blob], item.name || 'upload', {
+              type: item.type || blob.type || 'application/octet-stream',
+              lastModified: item.lastModified || Date.now(),
+            });
+            dataTransfer.items.add(file);
+          } catch (err) {
+            continue;
+          }
+        }
+
+        if (dataTransfer.files.length) {
+          input.files = dataTransfer.files;
+          if (typeof onAfterRestore === 'function') onAfterRestore();
+        }
+      }
+
       function bootstrapExisting() {
         const raw = (ingredientsField.value || '').trim();
         if (!raw) return;
@@ -182,7 +259,23 @@
       addBtn.addEventListener('click', addLink);
       itemInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); addLink(); } });
       linkInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); addLink(); } });
-      formEl.addEventListener('submit', prepareIngredientsForSubmit);
+      formEl.addEventListener('submit', () => {
+        prepareIngredientsForSubmit();
+        persistFiles(imageInput, IMG_STORAGE_KEY);
+        persistFiles(shopImageInput, SHOP_IMG_STORAGE_KEY);
+      });
+
+      if (!isBound) {
+        // Fresh form: clear any stale cached files from older attempts.
+        try {
+          sessionStorage.removeItem(IMG_STORAGE_KEY);
+          sessionStorage.removeItem(SHOP_IMG_STORAGE_KEY);
+        } catch (err) {}
+      } else if (hasErrors) {
+        // Restore selected files after a failed submit so they stay visible.
+        restoreFiles(imageInput, IMG_STORAGE_KEY, renderImagesList);
+        restoreFiles(shopImageInput, SHOP_IMG_STORAGE_KEY, renderShopImagesList);
+      }
 
       bootstrapExisting();
       renderList();

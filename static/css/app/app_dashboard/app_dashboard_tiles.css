@@ -8,7 +8,7 @@
   position: relative;
   border-radius: 0.75rem;
   overflow: hidden;
-  background-color: rgb(236, 236, 236);
+  background-color: var(--bg-2);
 }
 
 .recipi-tile-media img {
@@ -42,4 +42,3 @@
 .recipi-tile-placeholder {
   background: radial-gradient(circle at top left, #4b5563, #111827);
 }
-

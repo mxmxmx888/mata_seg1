@@ -1,4 +1,4 @@
-{# 3-column masonry-style grid for dashboard feeds (For you / Following) #}
+{# Masonry-style grid for dashboard feeds (For you / Following) #}
 {% if posts %}
   <div class="feed-masonry-grid"{% if grid_id %} id="{{ grid_id }}"{% endif %}>
     <div class="feed-masonry-column">
@@ -26,4 +26,3 @@
 {% else %}
   <p class="text-muted mt-3">You haven’t created any recipes yet.</p>
 {% endif %}
-

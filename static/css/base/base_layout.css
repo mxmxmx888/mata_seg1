@@ -11,7 +11,7 @@
 }
 
 .app-toast {
-  background-color: rgb(236, 236, 236);
+  background-color: var(--bg-2);
   border-radius: 999px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
   min-width: 0;
@@ -52,7 +52,7 @@ p.cover-text {
 }
 
 .cover-card {
-  background-color: rgba(236, 236, 236, 0.6);
+  background-color: var(--bg-2);
   max-width: 30rem;
   padding: 30px 50px;
   border-radius: 15%;
@@ -95,7 +95,7 @@ ul.errorlist {
  */
 
 .low-key {
-  color: #777777;
+  color: var(--text-muted);
   font-weight: 300;
 }
 
@@ -122,7 +122,7 @@ h3.profile-title {
 }
 
 .profile-username {
-  color: #777777;
+  color: var(--text-muted);
   font-weight: 300;
   font-style: italic;
 }
@@ -190,14 +190,14 @@ h3.profile-title {
 
 .cta-browse-btn:hover,
 .cta-browse-btn:focus-visible {
-  background-color: #000 !important;
-  color: #fff !important;
-  border-color: #000 !important;
+  background-color: var(--text-primary) !important;
+  color: var(--text-inverse) !important;
+  border-color: var(--text-primary) !important;
 }
 
 .btn.btn-outline-dark:hover,
 .btn.btn-outline-dark:focus-visible {
-  background-color: #000;
-  color: #fff;
-  border-color: #000;
+  background-color: var(--text-primary);
+  color: var(--text-inverse);
+  border-color: var(--text-primary);
 }

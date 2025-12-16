@@ -128,7 +128,18 @@ class FollowService:
         fr.status = FollowRequest.STATUS_ACCEPTED
         fr.save(update_fields=["status"])
         self._notify(fr.requester, fr.target, "follow")
-        Notification.objects.filter(follow_request=fr, recipient=self.actor).delete()
+
+        # Keep the original request notification visible, but mark it as a "follow"
+        # so the UI shows "[user] started following you" instead of disappearing.
+        existing_notif = (
+            Notification.objects.filter(follow_request=fr, recipient=self.actor)
+            .order_by("-created_at", "-id")
+            .first()
+        )
+        if existing_notif:
+            existing_notif.notification_type = "follow"
+            existing_notif.follow_request = None
+            existing_notif.save(update_fields=["notification_type", "follow_request"])
         return True
 
     @transaction.atomic

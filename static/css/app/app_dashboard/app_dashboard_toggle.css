@@ -22,17 +22,17 @@
 
 .recipi-toggle .nav-link.active {
   padding: 0.2rem 0.9rem;
-  background-color: #27272f;
-  color: #f9fafb;
+  background-color: var(--text-primary);
+  color: var(--text-inverse);
   box-shadow: none;
 }
 
 body.dashboard-body:not([data-theme="dark"]) .recipi-toggle .nav-link.active {
-  background-color: rgb(236, 236, 236);
-  color: #111827;
+  background-color: var(--bg-2);
+  color: var(--text-primary);
 }
 
 body[data-theme="light"] .recipi-toggle .nav-link.active {
-  background-color: rgb(236, 236, 236);
-  color: #111827;
+  background-color: var(--bg-2);
+  color: var(--text-primary);
 }

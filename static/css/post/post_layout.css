@@ -7,7 +7,7 @@ body.post-body {
 
 .post-page {
   min-height: calc(100vh - 40px);
-  background-color: rgb(244, 244, 244);
+  background-color: var(--bg-1);
   margin-top: 0;
   padding: clamp(1.5rem, 4vw, 3rem) clamp(1.5rem, 4vw, 3rem) 2.5rem;
 }
@@ -18,13 +18,13 @@ body.post-body {
 
 .post-media {
   border-radius: 1.75rem;
-  background-color: rgb(236, 236, 236);
+  background-color: var(--bg-2);
   min-height: 420px;
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.05);
+  box-shadow: inset 0 0 0 1px var(--border-subtle);
 }
 
 .post-media img {
@@ -41,7 +41,7 @@ body.post-body {
 
 .post-meta span:not(.badge) {
   font-size: 0.95rem;
-  color: #6b7280;
+  color: var(--text-muted);
 }
 
 .post-meta {
@@ -56,18 +56,18 @@ body.post-body {
 
 .post-meta .badge {
   font-size: 0.8rem;
-  color: rgb(244, 244, 244);
+  color: var(--text-inverse);
   padding: 0.3rem 0.65rem;
 }
 
 .post-summary {
   font-size: 1rem;
-  color: #4b5563;
+  color: var(--text-muted);
 }
 
 .post-author {
   font-family: "Awesome Serif", "Rethink Sans", system-ui, -apple-system, sans-serif;
-  color: #6b7280;
+  color: var(--text-muted);
   letter-spacing: 0.01em;
   display: flex;
   align-items: baseline;
@@ -80,13 +80,13 @@ body.post-body {
 }
 
 .post-author-link:hover {
-  color: #111827;
+  color: var(--text-primary);
   text-decoration: underline;
 }
 
 .post-ingredients,
 .post-steps {
-  color: #4b5563;
+  color: var(--text-muted);
 }
 
 .post-ingredients {
@@ -143,20 +143,20 @@ body.post-body {
 
 .post-tag-pill {
   border-radius: 999px;
-  border: 1px solid rgba(15, 23, 42, 0.15);
+  border: 1px solid var(--border-subtle);
   padding: 0.2rem 0.9rem;
   font-size: 0.85rem;
-  color: #4b5563;
+  color: var(--text-muted);
 }
 
 .post-source-link {
   font-size: 0.9rem;
-  color: #6b7280;
+  color: var(--text-muted);
   text-decoration: none;
 }
 
 .post-source-link:hover {
-  color: #111827;
+  color: var(--text-primary);
 }
 
 .post-back-button {
@@ -166,13 +166,13 @@ body.post-body {
   width: 32px;
   height: 32px;
   border-radius: 999px;
-  background-color: rgb(236, 236, 236);
-  border: 1px solid rgba(15, 23, 42, 0.12);
+  background-color: var(--bg-2);
+  border: 1px solid var(--border-subtle);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   box-shadow: none;
-  color: #111827;
+  color: var(--text-primary);
   z-index: 5;
   font-size: 0.9rem;
 }
@@ -192,110 +192,14 @@ body.post-body {
   .post-back-button {
     left: -1rem; /* keep a small gap from the media on narrow screens */
     top: 0;
-    background-color: rgb(236, 236, 236);
-    color: #111827;
-    border-color: rgba(15, 23, 42, 0.2);
+    background-color: var(--bg-2);
+    color: var(--text-primary);
+    border-color: var(--border-subtle);
     box-shadow: none;
   }
 
   .post-back-button:hover {
     color: #000000;
-    background-color: rgb(236, 236, 236);
+    background-color: var(--bg-2);
   }
-}
-
-@media (prefers-color-scheme: dark) {
-  body:not(.auth-body) .post-page {
-    background-color: rgb(13, 13, 13);
-    color: #f6f6f6;
-  }
-
-  body:not(.auth-body) .post-media {
-    background-color: transparent;
-    box-shadow: none;
-  }
-
-  body:not(.auth-body) .post-meta span,
-  body:not(.auth-body) .post-source-link {
-    color: #a5a6b5;
-  }
-
-  body:not(.auth-body) .post-source-link:hover {
-    color: #ffffff;
-  }
-
-  body:not(.auth-body) .post-summary,
-  body:not(.auth-body) .post-ingredients,
-  body:not(.auth-body) .post-steps {
-    color: #d5d6e1;
-  }
-
-  body:not(.auth-body) .post-tag-pill {
-    border-color: #2b2c35;
-    color: #e5e7eb;
-    background-color: #0d0e13;
-  }
-}
-
-/* Fallback for explicit theme toggle */
-body[data-theme="dark"]:not(.auth-body) .post-page {
-  background-color: rgb(13, 13, 13);
-  color: #f6f6f6;
-}
-
-body[data-theme="dark"]:not(.auth-body) .post-media {
-  background-color: transparent;
-  box-shadow: none;
-}
-
-body[data-theme="dark"]:not(.auth-body) .post-meta span,
-body[data-theme="dark"]:not(.auth-body) .post-source-link {
-  color: #a5a6b5;
-}
-
-body[data-theme="dark"]:not(.auth-body) .post-source-link:hover {
-  color: #ffffff;
-}
-
-body[data-theme="dark"]:not(.auth-body) .post-summary,
-body[data-theme="dark"]:not(.auth-body) .post-ingredients,
-body[data-theme="dark"]:not(.auth-body) .post-steps {
-  color: #d5d6e1;
-}
-
-body[data-theme="dark"]:not(.auth-body) .post-tag-pill {
-  border-color: #2b2c35;
-  color: #e5e7eb;
-  background-color: #0d0e13;
-}
-
-body[data-theme="dark"]:not(.auth-body) .post-page {
-  background-color: rgb(13, 13, 13);
-  color: #f6f6f6;
-}
-
-body[data-theme="dark"]:not(.auth-body) .post-media {
-  background-color: transparent;
-  box-shadow: none;
-}
-
-body[data-theme="dark"]:not(.auth-body) .post-meta span,
-body[data-theme="dark"]:not(.auth-body) .post-source-link {
-  color: #a5a6b5;
-}
-
-body[data-theme="dark"]:not(.auth-body) .post-source-link:hover {
-  color: #ffffff;
-}
-
-body[data-theme="dark"]:not(.auth-body) .post-summary,
-body[data-theme="dark"]:not(.auth-body) .post-ingredients,
-body[data-theme="dark"]:not(.auth-body) .post-steps {
-  color: #d5d6e1;
-}
-
-body[data-theme="dark"]:not(.auth-body) .post-tag-pill {
-  border-color: #2b2c35;
-  color: #e5e7eb;
-  background-color: #0e0e0e;
 }

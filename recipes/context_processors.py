@@ -39,14 +39,12 @@ def notifications(request):
         for n in notifs:
             if n.notification_type == "follow" and n.sender_id in pending_request_ids:
                 continue
-            if n.notification_type == "follow" and n.sender_id in following_ids:
-                continue
             if n.notification_type == "follow":
                 if n.sender_id in seen_follow_senders:
                     continue
                 seen_follow_senders.add(n.sender_id)
             filtered.append(n)
-        notifs = filtered[:10]
+        notifs = filtered
         unread_count = sum(1 for n in notifs if not n.is_read)
         return {
             'notifications': notifs,

@@ -1,7 +1,7 @@
 /* Create recipe page */
 
 .app-body {
-  background-color: rgb(236, 236, 236);
+  background-color: var(--bg-1);
 }
 
 .app-page {
@@ -10,9 +10,9 @@
 }
 
 .app-page .create-recipe-card {
-  background: rgb(236, 236, 236);
+  background: var(--bg-2);
   border-radius: 22px;
-  border: 1px solid #d1d1d1;
+  border: 1px solid var(--border-subtle);
   padding: 2rem 2.25rem;
   box-shadow: none;
 }
@@ -28,7 +28,7 @@
   margin-bottom: 0.9rem;
   margin-left: auto;
   margin-right: auto;
-  color: #4b5563;
+  color: var(--text-muted);
   font-size: 0.98rem;
   text-align: center;
 }
@@ -36,9 +36,9 @@
 .app-page .create-recipe-card .mb-3 {
   margin-bottom: 0.9rem;
   padding: 0.8rem 1rem 0.75rem;
-  background-color: rgb(236, 236, 236);
+  background-color: var(--bg-2);
   border-radius: 18px;
-  border: 1px solid #d1d1d1;
+  border: 1px solid var(--border-subtle);
 }
 
 .app-page .create-recipe-card form label {
@@ -46,12 +46,12 @@
   margin-bottom: 0.15rem;
   font-size: 0.8rem;
   font-weight: 400;
-  color: #9ca3af;
+  color: var(--text-muted);
 }
 
 .app-page .create-recipe-card .form-control {
   background-color: transparent;
-  color: #111827;
+  color: var(--text-primary);
   border: none;
   border-radius: 0;
   padding: 0;
@@ -61,8 +61,8 @@
 
 .app-page .create-recipe-card input[type="file"] {
   background-color: transparent;
-  color: #111827;
-  border: 1px solid #cfcfcf;
+  color: var(--text-primary);
+  border: 1px solid var(--border-subtle);
   border-radius: 999px;
   padding: 0.45rem 0.75rem;
   box-shadow: none;
@@ -71,9 +71,9 @@
 .app-page .create-recipe-card input[type="file"]::file-selector-button,
 .app-page .create-recipe-card input[type="file"]::-webkit-file-upload-button {
   background-color: transparent;
-  color: #111827;
+  color: var(--text-primary);
   border: none;
-  border-right: 1px solid #cfcfcf;
+  border-right: 1px solid var(--border-subtle);
   border-radius: 999px;
   padding: 0.35rem 0.9rem;
   margin-right: 0.65rem;
@@ -85,7 +85,7 @@
 }
 
 .app-page .create-recipe-card .form-control::placeholder {
-  color: #9ca3af;
+  color: color-mix(in srgb, var(--text-muted) 65%, var(--text-primary) 35%);
 }
 
 .app-page .create-recipe-card .form-control:focus {
@@ -122,9 +122,9 @@
   padding: 0.55rem 1.9rem;
   font-size: 0.95rem;
   font-weight: 500;
-  border: 1px solid #d1d1d1;
-  background-color: rgb(225, 225, 225);
-  color: #0b0b0f;
+  border: 1px solid var(--border-subtle);
+  background-color: var(--bg-2);
+  color: var(--text-primary);
   transition:
     background-color 0.15s ease,
     color 0.15s ease,
@@ -132,8 +132,8 @@
 }
 
 .app-page .btn-save-recipe:hover {
-  background-color: rgb(225, 225, 225);
-  color: #0b0b0f;
+  background-color: var(--bg-2);
+  color: var(--text-primary);
   transform: translateY(-1px);
 }
 
@@ -151,15 +151,15 @@
 
 /* Shopping links helper */
 .shopping-links-helper {
-  background: rgb(225, 225, 225);
-  border: 1px solid #cfcfcf;
+  background: var(--bg-2);
+  border: 1px solid var(--border-subtle);
   border-radius: 16px;
   padding: 1.5rem;
   overflow: hidden;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
   position: relative;
   z-index: 10;
-  color: #111827;
+  color: var(--text-primary);
 }
 
 .shopping-links-title {
@@ -185,24 +185,24 @@
 
 .shopping-links-field {
   padding: 0.75rem 0.95rem 0.7rem;
-  background-color: rgb(225, 225, 225);
+  background-color: var(--bg-2);
   border-radius: 16px;
-  border: 1px solid #cfcfcf;
+  border: 1px solid var(--border-subtle);
   display: flex;
   flex-direction: column;
-  color: #111827;
+  color: var(--text-primary);
 }
 
 .shopping-links-field .form-label {
   margin-bottom: 0.15rem;
   font-size: 0.8rem;
-  color: #111827;
+  color: var(--text-primary);
 }
 
 .form-control-dark {
   background-color: transparent;
   border: none;
-  color: #111827;
+  color: var(--text-primary);
   padding: 0;
   box-shadow: none;
 }
@@ -210,12 +210,12 @@
 .form-control-dark:focus {
   background-color: transparent;
   border: none;
-  color: #111827;
+  color: var(--text-primary);
   box-shadow: none;
 }
 
 .form-control-dark::placeholder {
-  color: #9ca3af;
+  color: color-mix(in srgb, var(--text-muted) 65%, var(--text-primary) 35%);
 }
 
 .shop-add-btn {
@@ -223,8 +223,8 @@
   font-size: 0.9rem;
   font-weight: 700;
   border-radius: 16px;
-  background: #fff;
-  color: #000;
+  background: var(--text-primary);
+  color: var(--text-inverse);
   border: none;
   height: 100%;
   min-height: 0;
@@ -235,16 +235,16 @@
 }
 
 .shop-add-btn:hover {
-  background: #e2e2e2;
+  background: var(--text-primary);
 }
 
 .shopping-list-box {
-  background: rgb(225, 225, 225);
-  border: 1px dashed #c0c0c0;
+  background: var(--bg-2);
+  border: 1px dashed var(--border-subtle);
   border-radius: 10px;
   padding: 1rem;
   min-height: 48px;
-  color: #111827;
+  color: var(--text-primary);
 }
 
 .shopping-list-item {
@@ -252,9 +252,9 @@
   align-items: center;
   justify-content: space-between;
   gap: 0.5rem;
-  color: #111827;
+  color: var(--text-primary);
   padding: 8px 0;
-  border-bottom: 1px solid #d4d4d4;
+  border-bottom: 1px solid var(--border-subtle);
 }
 
 .shopping-list-item:last-child {
@@ -262,7 +262,7 @@
 }
 
 .shopping-list-item .note {
-  color: #4b5563;
+  color: var(--text-muted);
   font-size: 0.85rem;
   margin-left: 0.5rem;
 }

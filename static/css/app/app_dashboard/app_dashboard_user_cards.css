@@ -7,15 +7,15 @@
 }
 
 .user-search-card {
-  background: rgb(236, 236, 236);
-  border: 1px solid #e5e5e5;
+  background: var(--bg-2);
+  border: 1px solid var(--border-subtle);
   border-radius: 16px;
   padding: 1.25rem 1rem;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 0;
-  color: #0f172a !important;
+  color: var(--text-primary) !important;
   box-shadow: none;
   transition: transform 0.15s ease, border-color 0.15s ease;
   text-align: center;
@@ -24,7 +24,7 @@
 .user-search-card:hover,
 .user-search-card:focus-visible {
   transform: translateY(-3px);
-  border-color: #d1d5db;
+  border-color: var(--border-strong);
   box-shadow: none;
 }
 
@@ -67,35 +67,13 @@
 
 .user-search-handle {
   font-size: 0.9rem;
-  color: #6b7280;
+  color: var(--text-muted);
   line-height: 1.1;
   margin-top: -0.05rem;
 }
 
-body[data-theme="dark"] .user-search-card {
-  background: #1a1b22;
-  border-color: #2f323c;
-  color: #e5e7eb;
-  box-shadow: none;
-}
-
-body[data-theme="dark"] .user-search-card:hover,
-body[data-theme="dark"] .user-search-card:focus-visible {
-  border-color: #3d4250;
-  box-shadow: none;
-}
-
-body[data-theme="dark"] .user-search-avatar {
-  border-color: #2f323c;
-  box-shadow: none;
-}
-
-body[data-theme="dark"] .user-search-handle {
-  color: #9ca3af;
-}
-
 .user-search-card:focus-visible {
-  outline: 2px solid #9ca3af;
+  outline: 2px solid var(--text-muted);
   outline-offset: 3px;
 }
 

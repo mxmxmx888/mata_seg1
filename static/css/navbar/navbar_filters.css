@@ -4,6 +4,12 @@
   position: relative; /* needed so the popover can be positioned */
 }
 
+.prep-filter-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
 .prep-filter-popover {
   position: absolute;
   right: 0.75rem;
@@ -11,10 +17,10 @@
   width: 240px;
   padding: 0.75rem 0.9rem;
   border-radius: 16px;
-  background-color: rgb(236, 236, 236);
-  border: 1px solid #d9d9d9;
-  color: #0f172a;
-  box-shadow: 0 18px 45px rgba(15, 23, 42, 0.12);
+  background-color: var(--bg-2);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+  box-shadow: 0 12px 26px rgba(15, 23, 42, 0.12);
   display: none;
   z-index: 30;
 }
@@ -28,7 +34,7 @@
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #9ca3af;
+  color: var(--text-muted);
   margin-bottom: 0.4rem;
 }
 
@@ -42,7 +48,7 @@
 .prep-filter-row label {
   flex: 0 0 auto;
   font-size: 0.78rem;
-  color: #0f172a;
+  color: var(--text-primary);
 }
 
 .prep-filter-row input[type="number"] {
@@ -50,19 +56,19 @@
   font-size: 0.8rem;
   padding: 0.2rem 0.4rem;
   border-radius: 999px;
-  border: 1px solid #cfd3d9;
-  background-color: #ffffff;
-  color: #0f172a;
+  border: 1px solid var(--border-subtle);
+  background-color: var(--surface);
+  color: var(--text-primary);
   outline: none;
 }
 
 .prep-filter-row input[type="number"]:focus {
-  border-color: #0f172a;
+  border-color: var(--text-primary);
 }
 
 .prep-filter-unit {
   font-size: 0.75rem;
-  color: #4b5563;
+  color: var(--text-muted);
 }
 
 .prep-filter-actions {
@@ -73,150 +79,11 @@
 
 .prep-filter-submit {
   background-color: transparent;
-  color: #0f172a;
-  border: 1px solid #4b5563;
+  color: var(--text-primary);
+  border: 1px solid var(--text-muted);
   box-shadow: none;
   padding: 0.22rem 0.7rem;
   font-size: 0.82rem;
-}
-
-body[data-theme="dark"] .prep-filter-popover {
-  background-color: #252525;
-  border: 1px solid #1c1c1c;
-  color: #f5f5f5;
-  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.6);
-}
-
-body[data-theme="dark"] .prep-filter-row label {
-  color: #f5f5f5;
-}
-
-body[data-theme="dark"] .prep-filter-row input[type="number"] {
-  border: 1px solid #1c1c1c;
-  background-color: #252525;
-  color: #f5f5f5;
-}
-
-body[data-theme="dark"] .prep-filter-row input[type="number"]:focus {
-  border-color: #f5f5f5;
-}
-
-body[data-theme="dark"] .prep-filter-unit {
-  color: #a0a0a0;
-}
-
-body[data-theme="dark"] .prep-filter-submit {
-  background-color: transparent;
-  color: #f5f5f5;
-  border: 1px solid #4b5563;
-}
-
-@media (prefers-color-scheme: dark) {
-  body:not([data-theme="light"]) .prep-filter-popover {
-    background-color: #252525;
-    border: 1px solid #1c1c1c;
-    color: #f5f5f5;
-    box-shadow: 0 18px 45px rgba(0, 0, 0, 0.6);
-  }
-
-  body:not([data-theme="light"]) .prep-filter-row label {
-    color: #f5f5f5;
-  }
-
-  body:not([data-theme="light"]) .prep-filter-row input[type="number"] {
-    border: 1px solid #1c1c1c;
-    background-color: #252525;
-    color: #f5f5f5;
-  }
-
-  body:not([data-theme="light"]) .prep-filter-row input[type="number"]:focus {
-    border-color: #f5f5f5;
-  }
-
-  body:not([data-theme="light"]) .prep-filter-unit {
-    color: #a0a0a0;
-  }
-
-  body:not([data-theme="light"]) .prep-filter-submit {
-    background-color: transparent;
-    color: #f5f5f5;
-    border: 1px solid #4b5563;
-  }
-}
-
-/* Wrapper so the popover is positioned relative to the clock icon */
-.prep-filter-wrapper {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
-/* The popover itself */
-.prep-filter-popover {
-  position: absolute;
-  right: 0;
-  top: calc(100% + var(--navbar-dropdown-offset));           /* below the clock icon */
-  width: 240px;
-  padding: 0.75rem 0.9rem;
-  border-radius: 16px;
-  background-color: rgb(236, 236, 236);
-  border: 1px solid #d9d9d9;
-  color: #0f172a;
-  box-shadow: 0 18px 45px rgba(15, 23, 42, 0.12);
-  display: none;       /* hidden by default */
-  z-index: 9999;
-}
-
-.prep-filter-popover.prep-filter-open {
-  display: block;      /* shown when the JS toggles this class */
-}
-
-.prep-filter-header {
-  font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: #9ca3af;
-  margin-bottom: 0.4rem;
-}
-
-.prep-filter-row {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  margin-bottom: 0.4rem;
-}
-
-.prep-filter-row label {
-  flex: 0 0 auto;
-  font-size: 0.78rem;
-  color: #0f172a;
-}
-
-.prep-filter-row input[type="number"] {
-  flex: 1;
-  font-size: 0.8rem;
-  padding: 0.2rem 0.4rem;
-  border-radius: 999px;
-  border: 1px solid #cfd3d9;
-  background-color: #ffffff;
-  color: #0f172a;
-  outline: none;
-}
-
-.prep-filter-row input[type="number"]:focus {
-  border-color: #0f172a;
-}
-
-.prep-filter-unit {
-  font-size: 0.75rem;
-  color: #4b5563;
-}
-
-.prep-filter-actions {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: 0.3rem;
 }
 
 .have-ingredients-wrapper {

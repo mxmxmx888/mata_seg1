@@ -1,26 +1,26 @@
 /* Light theme overrides */
 body[data-theme="light"] .edit-profile-modal .modal-content {
-  background-color: rgb(244, 244, 244);
-  color: #111827;
+  background-color: var(--bg-1);
+  color: var(--text-primary);
   border-radius: 24px;
   padding: 0;
 }
 
 body[data-theme="light"] .edit-profile-modal .edit-profile-main,
 body[data-theme="light"] .edit-profile-modal .edit-profile-sidebar {
-  background-color: rgb(244, 244, 244);
+  background-color: var(--bg-1);
 }
 
 body[data-theme="light"] .edit-profile-modal .edit-profile-sidebar {
-  border-right: 1px solid #e5e7eb;
+  border-right: 1px solid var(--border-subtle);
 }
 
 body[data-theme="light"] .edit-profile-modal .form-control,
 body[data-theme="light"] .edit-profile-modal .form-control.is-valid,
 body[data-theme="light"] .edit-profile-modal .form-control.is-invalid {
-  background-color: rgb(244, 244, 244);
-  border-color: #e5e7eb;
-  color: #111827;
+  background-color: var(--bg-1);
+  border-color: var(--border-subtle);
+  color: var(--text-primary);
   border-radius: 0;
   padding: 0;
   font-size: 0.95rem;
@@ -28,8 +28,8 @@ body[data-theme="light"] .edit-profile-modal .form-control.is-invalid {
 }
 
 body[data-theme="light"] .edit-profile-modal .form-control:focus {
-  background-color: rgb(244, 244, 244);
-  border-color: #e5e7eb;
+  background-color: var(--bg-1);
+  border-color: var(--border-subtle);
   outline: none;
   box-shadow: none;
 }
@@ -64,9 +64,9 @@ body[data-theme="light"] .edit-profile-modal .modal-header .modal-title {
 body[data-theme="light"] .edit-profile-modal .modal-body .mb-3 {
   margin-bottom: 1rem;
   padding: 0.75rem 1.3rem 0.7rem;
-  background-color: rgb(244, 244, 244);
+  background-color: var(--bg-1);
   border-radius: 18px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--border-subtle);
 }
 
 body[data-theme="light"] .edit-profile-modal .modal-body label {
@@ -74,11 +74,11 @@ body[data-theme="light"] .edit-profile-modal .modal-body label {
   margin-bottom: 0.15rem;
   font-size: 0.8rem;
   font-weight: 400;
-  color: #6b7280;
+  color: var(--text-muted);
 }
 
 body[data-theme="light"] .edit-profile-modal .form-control::placeholder {
-  color: #b5b5c0;
+  color: color-mix(in srgb, var(--text-muted) 65%, var(--text-primary) 35%);
 }
 
 body[data-theme="light"] .edit-profile-modal textarea.form-control {
@@ -92,58 +92,58 @@ body[data-theme="light"] .edit-profile-modal .modal-footer {
 }
 
 body[data-theme="light"] .edit-profile-modal .edit-profile-nav-label {
-  color: #9ca3af;
+  color: var(--text-muted);
 }
 
 body[data-theme="light"] .edit-profile-modal .edit-profile-nav-item {
-  color: #374151;
+  color: var(--text-primary);
   background: transparent;
 }
 
 body[data-theme="light"] .edit-profile-modal .edit-profile-nav-item.active {
-  background: rgb(236, 236, 236);
-  color: #111827;
+  background: var(--bg-2);
+  color: var(--text-primary);
 }
 
 body[data-theme="light"] .edit-profile-modal .edit-profile-header-eyebrow {
-  color: #9ca3af;
+  color: var(--text-muted);
 }
 
 body[data-theme="light"] .edit-profile-modal .edit-profile-main .modal-title {
-  color: #111827;
+  color: var(--text-primary);
 }
 
 body[data-theme="light"] .edit-profile-modal .edit-profile-avatar-compact {
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--border-subtle);
 }
 
 body[data-theme="light"] .edit-profile-modal .edit-profile-slack-cta {
-  border: 1px solid #e5e7eb;
-  background: rgb(244, 244, 244);
-  color: #111827;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-1);
+  color: var(--text-primary);
 }
 
 body[data-theme="light"] .edit-profile-modal .btn.btn-outline-light {
   border-radius: 999px;
   border: none;
   background-color: transparent;
-  color: #6b7280;
+  color: var(--text-muted);
 }
 
 body[data-theme="light"] .edit-profile-modal .btn.btn-outline-light:hover,
 body[data-theme="light"] .edit-profile-modal .btn.btn-outline-light:focus-visible {
   background-color: transparent;
-  color: #111827;
+  color: var(--text-primary);
 }
 
 body[data-theme="light"] .edit-profile-modal .btn.btn-light {
   border-radius: 999px;
   border: none;
-  background-color: #111827;
-  color: #ffffff;
+  background-color: var(--text-primary);
+  color: var(--text-inverse);
 }
 
 body[data-theme="light"] .edit-profile-modal .btn.btn-light:hover,
 body[data-theme="light"] .edit-profile-modal .btn.btn-light:focus-visible {
-  background-color: #000000;
-  color: #ffffff;
+  background-color: var(--text-primary);
+  color: var(--text-inverse);

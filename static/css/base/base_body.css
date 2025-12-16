@@ -15,7 +15,8 @@ body {
   font-family: "Rethink Sans", system-ui, -apple-system, BlinkMacSystemFont,
                "Segoe UI", sans-serif;
   letter-spacing: -0.01em;
-  background-color: rgb(244, 244, 244); /* normal pages */
+  background-color: var(--bg-1); /* normal pages driven by theme tokens */
+  color: var(--text-primary);
 }
 
 /* Public landing pages stay bright so the navbar blends into the hero */
@@ -27,8 +28,8 @@ body.public-body {
 
 /* Auth pages get their own body class so I can treat them like a separate surface */
 body.auth-body {
-  background-color: rgb(244, 244, 244);
-  background-image: radial-gradient(circle at 0 0, #ffffff 0, rgb(244, 244, 244) 55%);
+  background-color: var(--bg-1);
+  background-image: radial-gradient(circle at 0 0, #ffffff 0, var(--bg-1) 55%);
   background-repeat: no-repeat;
   background-attachment: fixed;
   min-height: 100vh;
@@ -128,7 +129,6 @@ h3 {
  */
 
 :root {
-  color-scheme: light;
   --heading-font: "Awesome Serif", "Rethink Sans", system-ui, -apple-system,
                   BlinkMacSystemFont, "Segoe UI", sans-serif;
 }

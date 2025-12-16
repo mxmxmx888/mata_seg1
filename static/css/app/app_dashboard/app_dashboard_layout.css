@@ -17,18 +17,8 @@
 
 /* Dashboard + Shop page background + navbar matching */
 body.dashboard-body {
-  background-color: rgb(13, 13, 13);
-  color: #f5f5f5;
-}
-
-body[data-theme="light"].dashboard-body {
-  background-color: rgb(244, 244, 244);
-  color: #111827;
-}
-
-body[data-theme="dark"].dashboard-body {
-  background-color: rgb(13, 13, 13);
-  color: #f5f5f5;
+  background-color: var(--bg-1);
+  color: var(--text-primary);
 }
 
 body.dashboard-body .navbar-recipi,
@@ -39,4 +29,3 @@ body.app-body .navbar-recipi,
 body.app-body .navbar-app {
   background-color: inherit !important;
 }
-

@@ -117,6 +117,31 @@ class RecipePostForm(forms.ModelForm):
             raise forms.ValidationError("You can upload up to 10 shopping images.")
         return files
 
+    def clean(self):
+        cleaned_data = super().clean()
+
+        # Enforce an uploaded image for every ingredient line that includes a shop link
+        lines = self._split_lines("ingredients_text")
+        link_count = 0
+        for line in lines:
+            if "|" not in line:
+                continue
+            parts = line.split("|", 1)
+            raw_url = parts[1].strip() if len(parts) > 1 else ""
+            if raw_url:
+                link_count += 1
+
+        shop_images = self.files.getlist("shop_images")
+        if link_count and len(shop_images) < link_count:
+            self.add_error(
+                "shop_images",
+                forms.ValidationError(
+                    f"Add one shopping image for each ingredient with a link (need {link_count}, provided {len(shop_images)})."
+                ),
+            )
+
+        return cleaned_data
+
 
     def clean_images(self):
         files = self.files.getlist("images")
@@ -223,5 +248,4 @@ class RecipePostForm(forms.ModelForm):
                 image=f,
                 position=idx,
             )
-
 

@@ -1,76 +1,76 @@
 /* Light theme overrides for profile + collections */
 body[data-theme="light"].profile-body {
-  background-color: rgb(244, 244, 244);
-  color: #111827;
+  background-color: var(--bg-1);
+  color: var(--text-primary);
 }
 
 body[data-theme="light"].profile-body .navbar-app {
-  background-color: #ffffff;
+  background-color: var(--surface);
 }
 
 body[data-theme="light"].profile-body .navbar-app .navbar-brand,
 body[data-theme="light"].profile-body .navbar-app .nav-link,
 body[data-theme="light"].profile-body .navbar-app .icon-button {
-  color: #111827;
+  color: var(--text-primary);
 }
 
 body[data-theme="light"].profile-body .navbar-app .btn.btn-light {
-  background-color: #111827;
-  color: #f9fafb;
+  background-color: var(--text-primary);
+  color: var(--text-inverse);
 }
 
 body[data-theme="light"].profile-body .recipi-nav-search {
-  background-color: rgb(236, 236, 236);
-  border-color: #e1e1e6;
+  background-color: var(--bg-2);
+  border-color: var(--border-subtle);
 }
 
 body[data-theme="light"].profile-body .recipi-nav-search:focus-within {
-  background-color: rgb(236, 236, 236);
-  border-color: #cbd5f5;
+  background-color: var(--bg-2);
+  border-color: var(--border-strong);
   box-shadow: none;
 }
 
 body[data-theme="light"].profile-body .recipi-nav-search-input {
-  color: #4b5563;
+  color: var(--text-muted);
 }
 
 body[data-theme="light"].profile-body .recipi-nav-search-input::placeholder {
-  color: #9ca3af;
+  color: color-mix(in srgb, var(--text-muted) 65%, var(--text-primary) 35%);
 }
 
 body[data-theme="light"].profile-body .profile-collections .collection-title {
-  color: #111827;
+  color: var(--text-primary);
 }
 
 body[data-theme="light"].profile-body .profile-tagline {
-  color: #111827;
+  color: var(--text-primary);
 }
 
 body[data-theme="light"].profile-body .collection-sub {
-  color: #6b7280;
+  color: var(--text-muted);
 }
 
 body[data-theme="light"].profile-body .collection-header-subtitle {
-  color: #6b7280;
+  color: var(--text-muted);
 }
 
 body[data-theme="light"].profile-body .collection-header-handle {
-  color: #111827;
+  color: var(--text-primary);
 }
 
 body[data-theme="light"].profile-body .profile-footer {
-  color: #6b7280 !important;
+  color: var(--text-muted) !important;
 }
 
 body[data-theme="light"].profile-body .profile-pill {
   border: none;
-  background: rgb(236, 236, 236);
-  color: #111827;
+  background: var(--bg-2);
+  color: var(--text-primary);
 }
 
 body[data-theme="light"].profile-body .profile-pill:hover,
 body[data-theme="light"].profile-body .profile-pill:focus-visible {
   border: none;
-  background: rgb(236, 236, 236);
-  color: #111827;
+  background: var(--bg-2);
+  color: var(--text-primary);
 }

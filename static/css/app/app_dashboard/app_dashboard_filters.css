@@ -14,15 +14,15 @@
 
 .dashboard-filter-select,
 .dashboard-filter-input {
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--border-subtle);
   border-radius: 999px;
   padding: 0.35rem 0.95rem;
   font-size: 0.85rem;
-  color: #9ca3af;
+  color: var(--text-muted);
   box-shadow: none;
   width: auto;
   flex: 0 0 auto;
-  background-color: #f9fafb;
+  background-color: var(--bg-2);
 }
 
 .dashboard-filter-select {
@@ -52,16 +52,16 @@
 .dashboard-have-ingredients .btn {
   flex: 0 0 auto;
   white-space: nowrap;
-  color: #111827;
-  border: 1px solid #d1d5db;
-  background-color: #f9fafb;
+  color: var(--text-primary);
+  border: 1px solid var(--border-subtle);
+  background-color: var(--bg-2);
 }
 
 .dashboard-have-ingredients .btn:hover,
 .dashboard-have-ingredients .btn:focus-visible {
-  background-color: rgb(236, 236, 236);
-  color: #111827;
-  border-color: #c5c8d0;
+  background-color: var(--bg-2);
+  color: var(--text-primary);
+  border-color: var(--border-strong);
 }
 
 .dashboard-filter-select:focus,
@@ -74,43 +74,11 @@
 .dashboard-filter-select:focus,
 .dashboard-filter-input:hover,
 .dashboard-filter-input:focus {
-  background-color: #18181b;
-  color: #f9fafb;
-  border-color: #3f3f46;
-}
-
-body[data-theme="light"] .dashboard-filter-select:hover,
-body[data-theme="light"] .dashboard-filter-select:focus,
-body[data-theme="light"] .dashboard-filter-input:hover,
-body[data-theme="light"] .dashboard-filter-input:focus,
-body[data-theme="light"] .dashboard-filter-select-wrapper:hover,
-body[data-theme="light"] .dashboard-filter-select-wrapper:focus-within {
-  background-color: rgb(236, 236, 236);
-  color: #111827;
-  border-color: #c5c8d0;
+  background-color: var(--bg-2);
+  color: var(--text-primary);
+  border-color: var(--border-strong);
 }
 
 .dashboard-filter-input::placeholder {
-  color: #9ca3af;
+  color: color-mix(in srgb, var(--text-muted) 65%, var(--text-primary) 35%);
 }
-
-body[data-theme="dark"] .dashboard-filter-select,
-body[data-theme="dark"] .dashboard-filter-input {
-  border-color: rgba(255, 255, 255, 0.18);
-  background-color: rgba(255, 255, 255, 0.04);
-  color: #d1d5db;
-}
-
-body[data-theme="dark"] .dashboard-have-ingredients .btn {
-  color: #f9fafb;
-  border-color: rgba(255, 255, 255, 0.18);
-  background-color: rgba(255, 255, 255, 0.04);
-}
-
-body[data-theme="dark"] .dashboard-have-ingredients .btn:hover,
-body[data-theme="dark"] .dashboard-have-ingredients .btn:focus-visible {
-  background-color: #18181b;
-  border-color: #3f3f46;
-  color: #f9fafb;
-}
-
