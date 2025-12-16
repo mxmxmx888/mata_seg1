@@ -1,46 +1,55 @@
 import re
 from allauth.account.adapter import DefaultAccountAdapter
 
-
 class CustomAccountAdapter(DefaultAccountAdapter):
     def clean_username(self, username, shallow=False):
-        """
-        Allow usernames without '@'. Only allow letters, digits, underscore, dot.
-        If invalid, raise ValueError to trigger form errors.
-        """
-        if username.startswith("@"):
-            username = username[1:]
-        if not re.match(r"^[a-zA-Z0-9_.]+$", username):
-            raise ValueError("Username must contain only letters, numbers, underscores, or dots.")
+        username = username or ""
+        username = username.strip().lower()
+        username = username.replace(" ", ".")
+        username = username.replace("-", ".")
+        username = re.sub(r"[^a-z0-9_.]", "", username)
+        username = re.sub(r"[.]{2,}", ".", username)
+        username = re.sub(r"[_]{2,}", "_", username)
+        username = username.strip("._")
+
+        if not username:
+            username = "user"
+
+        max_len = getattr(self, "get_username_max_length", lambda: 150)()
+        username = username[:max_len]
+
         return username
 
     def populate_username(self, request, user):
-        """
-        Deterministic username generation:
-        - If user.username exists -> clean and use it.
-        - Else use email local-part / first_name / 'user'
-        - If collision -> append 1,2,3... (so 'test' -> 'test1')
-        """
-        UserModel = type(user)
+        try:
+            username = super().populate_username(request, user)
+            if username:
+                user.username = self.clean_username(username)
+                return user.username
+        except NotImplementedError:
+            pass
 
-        base = (user.username or "").strip()
-        if base:
-            base = base.lstrip("@")
+        base = ""
+        if getattr(user, "username", None):
+            base = user.username
+        elif getattr(user, "email", None):
+            base = user.email.split("@")[0]
+        elif getattr(user, "first_name", None):
+            base = user.first_name
         else:
-            email = (getattr(user, "email", "") or "").strip()
-            if email and "@" in email:
-                base = email.split("@", 1)[0]
-            else:
-                base = (getattr(user, "first_name", "") or "").strip() or "user"
+            base = "user"
 
-        base = base.lstrip("@")
-        base = re.sub(r"[^a-zA-Z0-9_.]", "", base).lower() or "user"
+        base = self.clean_username(base)
 
+        UserModel = type(user)
         username = base
-        if UserModel.objects.filter(username=username).exists():
-            counter = 1
-            while UserModel.objects.filter(username=f"{base}{counter}").exists():
-                counter += 1
-            username = f"{base}{counter}"
+        counter = 1
 
-        return username
+        while UserModel.objects.filter(username=username).exists():
+            suffix = str(counter)
+            cut = max(1, len(base) - len(suffix))
+            username = f"{base[:cut]}{suffix}"
+            counter += 1
+
+        user.username = username
+        return user.username
