@@ -81,16 +81,15 @@
 }
 
 .comment-icon-btn {
-  width: 42px;
-  height: 42px;
-  border-radius: 50%;
+  width: 36px;
+  height: 36px;
   border: none;
-  background-color: var(--bg-3);
+  background: transparent;
   color: var(--text-primary);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.05rem;
+  font-size: 1rem;
   box-shadow: none;
   transition: transform 0.1s ease, box-shadow 0.15s ease;
 }
@@ -121,8 +120,8 @@
 }
 
 .comment-icon-btn--primary {
-  background-color: #000000;
-  color: #ffffff;
+  background: transparent;
+  color: var(--text-primary);
 }
 
 .comment-like-btn.is-liked {

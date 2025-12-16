@@ -222,12 +222,20 @@ body[data-theme="dark"]:not(.auth-body) .post-gallery-tile {
   position: relative;
   max-width: 90vw;
   max-height: 90vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  box-sizing: border-box;
   z-index: 1;
 }
 
 .lightbox-image {
-  max-width: 100%;
-  max-height: 100%;
+  max-width: 90vw;
+  max-height: 90vh;
+  width: auto;
+  height: auto;
+  object-fit: contain;
   border-radius: 18px;
   display: block;
 }
@@ -244,7 +252,7 @@ body[data-theme="dark"]:not(.auth-body) .post-gallery-tile {
 }
 
 .lightbox-arrow {
-  position: absolute;
+  position: fixed;
   top: 50%;
   transform: translateY(-50%);
   border: none;
@@ -255,22 +263,23 @@ body[data-theme="dark"]:not(.auth-body) .post-gallery-tile {
   height: 44px;
   border-radius: 999px;
   cursor: pointer;
+  z-index: 2;
 }
 
 .lightbox-arrow--left {
-  left: -56px;
+  left: 32px;
 }
 
 .lightbox-arrow--right {
-  right: -56px;
+  right: 32px;
 }
 
 @media (max-width: 768px) {
   .lightbox-arrow--left {
-    left: 10px;
+    left: 16px;
   }
 
   .lightbox-arrow--right {
-    right: 10px;
+    right: 16px;
   }
 }

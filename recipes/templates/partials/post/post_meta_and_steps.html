@@ -20,11 +20,11 @@
 
   {% if shop_ingredients %}
   <section class="mb-4">
-    <div class="d-flex flex-wrap gap-2">
+    <div class="post-shop-links d-flex flex-wrap">
       {% for ing in shop_ingredients %}
-      <a href="{{ ing.shop_url }}" target="_blank" class="btn btn-dark rounded-pill d-inline-flex align-items-center gap-2 py-2 px-3" style="background-color: #000; border-color: #000; font-size: 0.85rem;">
+      <a href="{{ ing.shop_url }}" target="_blank" class="post-shop-link btn rounded-pill d-inline-flex align-items-center gap-2 py-2 px-3">
         <span>{{ ing.name|title }}</span>
-        <i class="bi bi-arrow-up-right small text-white"></i>
+        <i class="bi bi-arrow-up-right small"></i>
       </a>
       {% endfor %}
     </div>
@@ -37,11 +37,6 @@
       {% for ingredient in ingredients %}
       <li class="d-flex align-items-center justify-content-between">
         <span>{{ ingredient.name|title }}</span>
-        {% if ingredient.shop_url %}
-        <a href="{{ ingredient.shop_url }}" target="_blank" class="text-decoration-none text-muted opacity-75 hover-opacity-100" title="Buy {{ ingredient.name }}">
-          <i class="bi bi-bag-fill"></i>
-        </a>
-        {% endif %}
       </li>
       {% endfor %}
     </ul>
