@@ -1,7 +1,7 @@
 import requests
 from django.conf import settings
 from firebase_admin import auth as firebase_auth
-from .firebase_admin_client import get_app
+from .firebase_admin_client import get_app, _is_running_tests
 
 
 def create_firebase_user(uid: str, email: str, password: str):
@@ -18,6 +18,15 @@ def create_firebase_user(uid: str, email: str, password: str):
 
 
 def sign_in_with_email_and_password(email: str, password: str):
+    # Avoid real network calls during most test runs unless the HTTP client is mocked.
+    if _is_running_tests():
+        try:
+            is_mocked = "unittest.mock" in type(requests.post).__module__
+        except Exception:
+            is_mocked = False
+        if not is_mocked:
+            return None
+
     api_key = getattr(settings, "FIREBASE_API_KEY", None)
     if not api_key:
         print("DEBUG: No FIREBASE_API_KEY configured in settings")

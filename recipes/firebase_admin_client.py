@@ -1,6 +1,15 @@
 import os
+import sys
 import firebase_admin
 from firebase_admin import credentials, auth, firestore
+
+
+def _is_running_tests():
+    """
+    Return True when Django is executing the test suite.
+    This prevents Firebase from attempting network calls during tests.
+    """
+    return any(arg in sys.argv for arg in ["test", "pytest"])
 
 _app = None
 
@@ -38,6 +47,9 @@ def get_app():
 
 def get_firestore_client():
     """Helper to get Firestore client safely."""
+    # Skip Firestore entirely during test runs to avoid network calls.
+    if _is_running_tests():
+        return None
     app = get_app()
     if not app:
         return None
