@@ -5,13 +5,19 @@
 {% block content %}
 
 <main class="shop-shell container">
-  <div class="shop-header">
-  </div>
-
   {% if items %}
-    <div class="shop-masonry" id="shop-items-container">
+    <div
+      class="shop-masonry"
+      id="shop-items-container"
+      data-page="{{ page_obj.number }}"
+    >
       {% include 'partials/shop/shop_items.html' with items=items %}
     </div>
+    <div id="shop-loading" class="shop-loading d-none">
+      <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+      Loading more items…
+    </div>
+    <div id="shop-sentinel" aria-hidden="true"></div>
   {% else %}
     <div class="shop-empty text-center py-5" id="shop-items-container">
       <div class="mb-3 text-muted display-5"><i class="bi bi-bag"></i></div>
@@ -25,15 +31,92 @@
 <script>
   document.addEventListener('DOMContentLoaded', function () {
     const container = document.getElementById('shop-items-container');
-    if (!container) return;
+    const sentinel = document.getElementById('shop-sentinel');
+    const loadingEl = document.getElementById('shop-loading');
+    if (!container || !sentinel) return;
 
-    let page = 1;
+    const breakpoints = [
+      { width: 1600, count: 6 },
+      { width: 1400, count: 5 },
+      { width: 1200, count: 4 },
+      { width: 992, count: 3 },
+      { width: 768, count: 3 },
+      { width: 520, count: 2 },
+      { width: 0, count: 2 },
+    ];
+
+    function getColumnCount() {
+      const w = window.innerWidth;
+      for (const bp of breakpoints) {
+        if (w >= bp.width) return bp.count;
+      }
+      return 2;
+    }
+
+    let columns = [];
+
+    function buildColumns() {
+      const desiredCount = getColumnCount();
+      if (columns.length === desiredCount) return;
+
+      // Collect existing items before rebuilding.
+      const cards = Array.from(
+        container.querySelectorAll('.shop-masonry-item')
+      );
+      container.innerHTML = '';
+      columns = [];
+      for (let i = 0; i < desiredCount; i += 1) {
+        const col = document.createElement('div');
+        col.className = 'shop-column';
+        container.appendChild(col);
+        columns.push(col);
+      }
+      placeItems(cards);
+    }
+
+    function shortestColumn() {
+      let target = columns[0];
+      for (let i = 1; i < columns.length; i += 1) {
+        if (columns[i].offsetHeight < target.offsetHeight) {
+          target = columns[i];
+        }
+      }
+      return target;
+    }
+
+    function placeItems(nodes) {
+      if (!nodes || !nodes.length) return;
+      nodes.forEach(function (node) {
+        const target = shortestColumn();
+        target.appendChild(node);
+      });
+    }
+
+    let page = Number(container.dataset.page || '1');
     let loading = false;
     let hasNext = {{ page_obj.has_next|yesno:"true,false" }};
 
+    function setLoading(state) {
+      loading = state;
+      if (!loadingEl) return;
+      if (state) {
+        loadingEl.classList.remove('d-none');
+      } else {
+        loadingEl.classList.add('d-none');
+      }
+    }
+
+    function appendHtml(html) {
+      if (!html) return;
+      const temp = document.createElement('div');
+      temp.innerHTML = html;
+      const items = Array.from(temp.children);
+      placeItems(items);
+    }
+
     function loadMoreShopItems() {
       if (loading || !hasNext) return;
-      loading = true;
+      setLoading(true);
 
       page += 1;
       const url = new URL(window.location.href);
@@ -52,27 +135,45 @@
           return response.json();
         })
         .then(function (data) {
-          if (data && data.html) {
-            container.insertAdjacentHTML('beforeend', data.html);
-          }
+          if (data && data.html) appendHtml(data.html);
           hasNext = Boolean(data && data.has_next);
-          loading = false;
+          if (!hasNext && observer) {
+            observer.disconnect();
+          }
+          setLoading(false);
         })
         .catch(function () {
-          loading = false;
+          page -= 1; // roll back page on error to retry
+          setLoading(false);
         });
     }
 
-    window.addEventListener('scroll', function () {
-      if (loading || !hasNext) return;
+    const observer = 'IntersectionObserver' in window
+      ? new IntersectionObserver(function (entries) {
+          entries.forEach(function (entry) {
+            if (entry.isIntersecting) {
+              loadMoreShopItems();
+            }
+          });
+        }, { rootMargin: '600px 0px' })
+      : null;
 
-      const scrollPosition = window.innerHeight + window.scrollY;
-      const threshold = document.body.offsetHeight - 300;
+    if (observer) {
+      observer.observe(sentinel);
+    } else {
+      window.addEventListener('scroll', function () {
+        if (loading || !hasNext) return;
+        const scrollPosition = window.innerHeight + window.scrollY;
+        const threshold = document.body.offsetHeight - 300;
+        if (scrollPosition >= threshold) {
+          loadMoreShopItems();
+        }
+      });
+    }
 
-      if (scrollPosition >= threshold) {
-        loadMoreShopItems();
-      }
-    });
+    // Initialise columns on load and resize.
+    buildColumns();
+    window.addEventListener('resize', buildColumns);
   });
 </script>
 {% endblock %}

@@ -49,6 +49,27 @@
 
 <script>
   document.addEventListener('DOMContentLoaded', function () {
+    const notifItems = document.querySelectorAll('.notification-item[data-post-url]');
+    if (!notifItems.length) return;
+
+    notifItems.forEach(function (item) {
+      item.addEventListener('click', function (event) {
+        const url = item.dataset.postUrl;
+        if (!url) return;
+
+        // Ignore clicks on interactive children (links, buttons, forms)
+        if (event.target.closest('a, button, form')) {
+          return;
+        }
+
+        window.location.href = url;
+      });
+    });
+  });
+</script>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
     const requestForms = document.querySelectorAll('.notification-follow-request-form');
     if (!requestForms.length) return;
 

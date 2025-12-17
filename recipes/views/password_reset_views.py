@@ -9,29 +9,21 @@ from recipes.firebase_auth_services import generate_password_reset_link
 
 
 class PasswordResetRequestView(LoginProhibitedMixin, FormView):
-    """
-    Collect the user's email address to start a password reset flow.
-
-    The form intentionally behaves the same regardless of whether an account
-    exists to avoid leaking user existence.
-    """
-
     template_name = 'auth/password_reset_request.html'
     form_class = PasswordResetRequestForm
     success_url = reverse_lazy('password_reset_done')
     redirect_when_logged_in_url = settings.REDIRECT_URL_WHEN_LOGGED_IN
 
+    # ✅ makes it patchable in tests without touching Firebase
+    reset_link_generator = staticmethod(generate_password_reset_link)
+
     def form_valid(self, form):
-        """
-        Accept the email and proceed to the confirmation step.
-        """
         email = form.cleaned_data['email']
-        
         user = User.objects.filter(email=email).first()
-        
+
         if user:
-            link = generate_password_reset_link(email)
-            
+            link = self.reset_link_generator(email)
+
             if link:
                 send_mail(
                     subject='Password Reset Request',
@@ -40,40 +32,26 @@ class PasswordResetRequestView(LoginProhibitedMixin, FormView):
                     recipient_list=[email],
                     fail_silently=False,
                 )
-            else:
-                print(f"Failed to generate Firebase reset link for {email}")
 
+        # Always respond the same (no user-enumeration)
         return super().form_valid(form)
 
 
 class PasswordResetDoneView(LoginProhibitedMixin, TemplateView):
-    """Show a neutral confirmation after a reset request is submitted."""
-
     template_name = 'auth/password_reset_done.html'
     redirect_when_logged_in_url = settings.REDIRECT_URL_WHEN_LOGGED_IN
 
 
 class UsernameResetRequestView(LoginProhibitedMixin, FormView):
-    """
-    Collect the user's email address to help recover their username.
-
-    The flow mirrors the password reset experience and keeps responses neutral
-    to avoid leaking account existence.
-    """
-
     template_name = 'auth/username_reset_request.html'
     form_class = UsernameResetRequestForm
     success_url = reverse_lazy('username_reset_done')
     redirect_when_logged_in_url = settings.REDIRECT_URL_WHEN_LOGGED_IN
 
     def form_valid(self, form):
-        """
-        Accept the email and proceed to the confirmation step.
-        """
         email = form.cleaned_data['email']
-        
         user = User.objects.filter(email=email).first()
-        
+
         if user:
             send_mail(
                 subject='Username Recovery',
@@ -87,7 +65,5 @@ class UsernameResetRequestView(LoginProhibitedMixin, FormView):
 
 
 class UsernameResetDoneView(LoginProhibitedMixin, TemplateView):
-    """Show a neutral confirmation after a username reset request."""
-
     template_name = 'auth/username_reset_done.html'
     redirect_when_logged_in_url = settings.REDIRECT_URL_WHEN_LOGGED_IN

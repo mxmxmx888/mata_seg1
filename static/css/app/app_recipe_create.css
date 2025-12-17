@@ -85,7 +85,8 @@
 }
 
 .app-page .create-recipe-card .form-control::placeholder {
-  color: color-mix(in srgb, var(--text-muted) 65%, var(--text-primary) 35%);
+  color: color-mix(in srgb, var(--text-muted) 82%, var(--text-primary) 18%);
+  opacity: 0.45;
 }
 
 .app-page .create-recipe-card .form-control:focus {
@@ -122,9 +123,9 @@
   padding: 0.55rem 1.9rem;
   font-size: 0.95rem;
   font-weight: 500;
-  border: 1px solid var(--border-subtle);
-  background-color: var(--bg-2);
-  color: var(--text-primary);
+  border: 1px solid var(--text-primary);
+  background-color: var(--text-primary);
+  color: var(--text-inverse);
   transition:
     background-color 0.15s ease,
     color 0.15s ease,
@@ -132,8 +133,8 @@
 }
 
 .app-page .btn-save-recipe:hover {
-  background-color: var(--bg-2);
-  color: var(--text-primary);
+  background-color: color-mix(in srgb, var(--text-primary) 85%, var(--surface) 15%);
+  color: var(--text-inverse);
   transform: translateY(-1px);
 }
 
@@ -215,7 +216,8 @@
 }
 
 .form-control-dark::placeholder {
-  color: color-mix(in srgb, var(--text-muted) 65%, var(--text-primary) 35%);
+  color: color-mix(in srgb, var(--text-muted) 82%, var(--text-primary) 18%);
+  opacity: 0.45;
 }
 
 .shop-add-btn {

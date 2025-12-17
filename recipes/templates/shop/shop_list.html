@@ -1,0 +1,4 @@
+{# Backward-compatible wrapper: render grid-style shop items even if older code includes this template #}
+{% with items=items|default:ingredients %}
+  {% include "partials/shop/shop_items.html" with items=items only %}
+{% endwith %}

@@ -6,8 +6,9 @@
   <div class="notification-list">
     {% for notif in notifications %}
     <div
-      class="dropdown-item px-3 py-3 d-flex align-items-start gap-3 {% if not notif.is_read %}notification-unread{% endif %}"
+      class="dropdown-item px-3 py-3 d-flex align-items-start gap-3 {% if not notif.is_read %}notification-unread{% endif %} notification-item"
       data-notification-id="{{ notif.id }}"
+      {% if notif.post %}data-post-url="{% url 'recipe_detail' notif.post.id %}"{% endif %}
     >
       <a href="{% url 'profile' %}?user={{ notif.sender.username|urlencode }}" class="flex-shrink-0">
         <img src="{{ notif.sender.mini_avatar_url }}" alt="{{ notif.sender.username }}" class="rounded-circle" width="40" height="40" style="object-fit: cover;">
@@ -33,10 +34,14 @@
         </p>
       </div>
 
-      {% if notif.post and notif.post.image %}
-      <a href="{% url 'recipe_detail' notif.post.id %}" class="flex-shrink-0">
-        <img src="{{ notif.post.image }}" class="rounded-1" width="40" height="40" style="object-fit: cover;">
-      </a>
+      {% if notif.post %}
+        {% with post_thumb=notif.post.primary_image_url|default:notif.post.image %}
+          {% if post_thumb %}
+          <div class="flex-shrink-0">
+            <img src="{{ post_thumb }}" class="rounded-1" width="40" height="40" style="object-fit: cover;">
+          </div>
+          {% endif %}
+        {% endwith %}
       {% elif notif.notification_type == 'follow' %}
          {% if following_ids and notif.sender.id in following_ids %}
            <form method="post" action="{% url 'toggle_follow' notif.sender.username %}" class="ms-auto notification-follow-form" data-follow-state="following">

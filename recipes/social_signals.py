@@ -1,49 +1,86 @@
-from django.dispatch import receiver
+# recipes/social_signals.py
+
+import logging
+
+from django.contrib.auth import get_user_model
 from django.contrib.auth.signals import user_logged_in
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+
 from allauth.socialaccount.signals import social_account_added, social_account_updated
 
-from .firebase_admin_client import ensure_firebase_user
+from recipes.firebase_admin_client import ensure_firebase_user, get_firestore_client
+
+logger = logging.getLogger(__name__)
+User = get_user_model()
 
 
 @receiver(social_account_added)
 @receiver(social_account_updated)
 def sync_google_user_to_firebase_on_social(sender, request, sociallogin, **kwargs):
     """
-    When a social account (e.g., Google) is added/updated,
-    ensure the user exists in Firebase.
+    allauth social signal handler signature MUST be:
+    (sender, request, sociallogin, **kwargs)
     """
-    user = sociallogin.user
-    email = getattr(user, "email", None)
-    name = user.get_full_name() or getattr(user, "username", None)
-
-    print(f"[SIGNAL social] social_account_* fired for email={email}, name={name}")
-
-    if not email:
-        print("[SIGNAL social] No email on user, skipping Firebase sync.")
-        return
-
     try:
-        ensure_firebase_user(email=email, display_name=name)
+        user = getattr(sociallogin, "user", None)
+        if not user:
+            return
+
+        email = getattr(user, "email", None)
+        if not email:
+            return
+
+        full_name = ""
+        if hasattr(user, "get_full_name"):
+            full_name = (user.get_full_name() or "").strip()
+
+        display_name = full_name or (getattr(user, "username", "") or "").strip() or email
+
+        ensure_firebase_user(email=email, display_name=display_name)
+
     except Exception as e:
-        print("[SIGNAL social] Error while syncing to Firebase:", e)
+        logger.warning("Firebase sync (social) failed: %s", e)
 
 
 @receiver(user_logged_in)
 def sync_user_to_firebase_on_login(sender, request, user, **kwargs):
-    """
-    On ANY login (password or Google), ensure user is in Firebase.
-    This catches existing Google accounts that were created before signals.
-    """
-    email = getattr(user, "email", None)
-    name = user.get_full_name() or getattr(user, "username", None)
+    try:
+        email = getattr(user, "email", None)
+        if not email:
+            return
 
-    print(f"[SIGNAL login] user_logged_in fired for email={email}, name={name}")
+        full_name = ""
+        if hasattr(user, "get_full_name"):
+            full_name = (user.get_full_name() or "").strip()
 
-    if not email:
-        print("[SIGNAL login] No email on user, skipping Firebase sync.")
+        display_name = full_name or (getattr(user, "username", "") or "").strip() or email
+
+        ensure_firebase_user(email=email, display_name=display_name)
+
+    except Exception as e:
+        logger.warning("Firebase sync (login) failed: %s", e)
+
+
+@receiver(post_save, sender=User)
+def sync_user_data_to_firestore(sender, instance, created, **kwargs):
+    """
+    Whenever the Django User model is saved, copy the data to Firestore.
+    """
+    db = get_firestore_client()
+    if db is None:
         return
 
     try:
-        ensure_firebase_user(email=email, display_name=name)
+        user_data = {
+            "username": instance.username,
+            "email": instance.email,
+            "is_staff": instance.is_staff,
+            "date_joined": instance.date_joined,
+            "id": instance.id,
+        }
+
+        db.collection("users").document(str(instance.id)).set(user_data, merge=True)
+
     except Exception as e:
-        print("[SIGNAL login] Error while syncing to Firebase:", e)
+        logger.warning("Error syncing to Firestore: %s", e)

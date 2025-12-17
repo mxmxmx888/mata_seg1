@@ -41,7 +41,7 @@ class PasswordView(LoginRequiredMixin, FormView):
         """
 
         form.save()
-        login(self.request, self.request.user)
+        login(self.request, self.request.user, backend='django.contrib.auth.backends.ModelBackend')
         return super().form_valid(form)
 
     def get_success_url(self):

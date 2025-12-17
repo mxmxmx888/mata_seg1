@@ -4,8 +4,8 @@
       <div class="shop-item-figure">
         {% if item.shop_image_upload %}
           <img src="{{ item.shop_image_upload.url }}" alt="{{ item.name }}" class="shop-item-img">
-        {% elif item.recipe_post.image %}
-          <img src="{{ item.recipe_post.image }}" alt="{{ item.recipe_post.title }}" class="shop-item-img">
+        {% elif item.recipe_post.primary_image_url %}
+          <img src="{{ item.recipe_post.primary_image_url }}" alt="{{ item.recipe_post.title }}" class="shop-item-img" loading="lazy">
         {% else %}
           <div class="shop-item-placeholder">
             <i class="bi bi-image"></i>

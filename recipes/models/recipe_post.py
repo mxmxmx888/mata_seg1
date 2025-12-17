@@ -107,6 +107,11 @@ class RecipePost(models.Model):
         if self.image:
             return self.image
         return None
+    
+    @property
+    def likes_count(self):
+        return self.likes.count()
+
 
 
 

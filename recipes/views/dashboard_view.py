@@ -209,8 +209,12 @@ def dashboard(request):
         )
 
     if q:
+        # Search across core recipe fields, not just ingredient names
         discover_qs = discover_qs.filter(
-            ingredients__name__icontains=q.lower()
+            Q(title__icontains=q)
+            | Q(description__icontains=q)
+            | Q(tags__icontains=q)
+            | Q(ingredients__name__icontains=q)
         ).distinct()
 
     if category and category != "all":
@@ -285,7 +289,7 @@ def dashboard(request):
 
         posts = _get_for_you_posts(request.user, limit=limit, offset=offset, seed=for_you_seed, privacy=privacy)
         html = render_to_string(
-            "partials/recipes/recipe_grid_items.html",
+            "partials/feed/feed_cards.html",
             {"posts": posts, "request": request},
             request=request,
         )
@@ -309,7 +313,7 @@ def dashboard(request):
 
         if is_ajax:
             html = render_to_string(
-                "partials/recipes/recipe_grid_items.html",
+                "partials/feed/feed_cards.html",
                 {"posts": page_obj.object_list, "request": request},
                 request=request,
             )

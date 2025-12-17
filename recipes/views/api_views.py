@@ -1,9 +1,13 @@
+from rest_framework import generics, filters, permissions
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
-from recipes.models import Notification
+
+from recipes.models import Notification, RecipePost
+from recipes.serializers import RecipeSerializer
+from recipes.permissions import IsOwnerOrReadOnly
 
 
 @api_view(['GET'])
@@ -19,7 +23,42 @@ def profile_api(request):
         "email": user.email,
     })
 
+
 @login_required
 def mark_notifications_read(request):
     Notification.objects.filter(recipient=request.user, is_read=False).update(is_read=True)
     return JsonResponse({'status': 'success'})
+
+
+class RecipeListApi(generics.ListCreateAPIView):
+    serializer_class = RecipeSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['title', 'description', 'category']
+    ordering_fields = ['average_rating', 'created_at']
+
+    def get_queryset(self):
+        """
+        Optionally restricts the returned recipes by filtering
+        against a `category` or `search` query parameter in the URL.
+        """
+        queryset = RecipePost.objects.all()
+        category = self.request.query_params.get('category')
+        search = self.request.query_params.get('search')
+
+        if category:
+            queryset = queryset.filter(category__iexact=category)
+        if search:
+            queryset = queryset.filter(title__icontains=search)
+
+        return queryset
+
+    def perform_create(self, serializer):
+        serializer.save(author=self.request.user)
+
+
+class RecipeDetailApi(generics.RetrieveUpdateDestroyAPIView):
+    queryset = RecipePost.objects.all()
+    serializer_class = RecipeSerializer
+    permission_classes = [IsOwnerOrReadOnly]

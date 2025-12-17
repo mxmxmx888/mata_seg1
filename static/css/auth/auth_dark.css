@@ -122,13 +122,13 @@ body[data-theme="dark"] .auth-footer-link {
 }
 
 body[data-theme="dark"] .auth-footer-link a {
-  color: #ffffff;
+  color: var(--text-primary);
   text-decoration: underline;
   text-underline-offset: 3px;
 }
 
 .auth-footer-link a {
-  color: #111827;
+  color: var(--text-primary);
   text-decoration: underline;
   text-underline-offset: 3px;
 }

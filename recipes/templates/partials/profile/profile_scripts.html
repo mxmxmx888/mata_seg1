@@ -150,6 +150,71 @@
           });
         });
       }
+
+      function attachAjaxModalForms(modalId, onSuccess) {
+        var modalEl = document.getElementById(modalId);
+        if (!modalEl) return;
+
+        modalEl.querySelectorAll("form").forEach(function (form) {
+          if (form.dataset.ajaxBound === "1") return;
+          form.dataset.ajaxBound = "1";
+
+          form.addEventListener("submit", function (event) {
+            event.preventDefault();
+            var url = form.getAttribute("action");
+            if (!url) return;
+
+            var formData = new FormData(form);
+
+            fetch(url, {
+              method: "POST",
+              body: formData,
+              headers: { "X-Requested-With": "XMLHttpRequest" },
+              credentials: "same-origin",
+            })
+              .then(function (response) {
+                if (!response.ok) {
+                  throw new Error("Request failed");
+                }
+                return response.json().catch(function () {
+                  return {};
+                });
+              })
+              .then(function (payload) {
+                if (typeof onSuccess === "function") {
+                  onSuccess({ form: form, url: url, payload: payload || {} });
+                }
+              })
+              .catch(function () {
+                form.submit();
+              });
+          });
+        });
+      }
+
+      attachAjaxModalForms("closeFriendsModal", function (ctx) {
+        var form = ctx.form;
+        var url = ctx.url;
+        var btn = form.querySelector("button");
+        var isAdd = url.indexOf("/add/") !== -1;
+        var toggled = isAdd
+          ? url.replace("/add/", "/remove/")
+          : url.replace("/remove/", "/add/");
+        form.setAttribute("action", toggled);
+        if (btn) {
+          btn.textContent = isAdd ? "Remove" : "Add";
+        }
+      });
+
+      attachAjaxModalForms("followersModal", function (ctx) {
+        var li = ctx.form.closest("li");
+        if (li) li.remove();
+      });
+
+      attachAjaxModalForms("followingModal", function (ctx) {
+        var li = ctx.form.closest("li");
+        if (li) li.remove();
+      });
     }
 
     if (document.readyState === "loading") {

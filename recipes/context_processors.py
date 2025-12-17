@@ -22,7 +22,7 @@ def notifications(request):
         notifs_qs = Notification.objects.filter(recipient=request.user).exclude(
             notification_type="follow_request",
             follow_request__status__in=["accepted", "rejected"],
-        ).select_related("sender", "post", "follow_request").order_by("-created_at")
+        ).select_related("sender", "post", "follow_request").prefetch_related("post__images").order_by("-created_at")
         notifs = list(notifs_qs)
         following_ids = set(
             Follower.objects.filter(follower=request.user).values_list("author_id", flat=True)

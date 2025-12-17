@@ -1,0 +1,196 @@
+from django.test import TestCase
+from django.core.files.uploadedfile import SimpleUploadedFile
+from django.utils.datastructures import MultiValueDict
+
+from recipes.forms.recipe_forms import (
+    MultiFileInput,
+    MultiFileField,
+    RecipePostForm,
+)
+from recipes.models import User
+from recipes.models.recipe_post import RecipePost, RecipeImage
+from recipes.models.recipe_step import RecipeStep
+from recipes.models.ingredient import Ingredient
+
+
+def fake_image(name="img.jpg"):
+    # Minimal bytes; enough for SimpleUploadedFile usage in tests
+    return SimpleUploadedFile(name, b"fake-image-bytes", content_type="image/jpeg")
+
+
+class MultiFileInputTests(TestCase):
+    def test_value_from_datadict_returns_getlist(self):
+        w = MultiFileInput()
+        files = MultiValueDict({"images": [fake_image("a.jpg"), fake_image("b.jpg")]})
+        out = w.value_from_datadict(data={}, files=files, name="images")
+        self.assertEqual(len(out), 2)
+        self.assertEqual(out[0].name, "a.jpg")
+        self.assertEqual(out[1].name, "b.jpg")
+
+
+class MultiFileFieldTests(TestCase):
+    def test_clean_accepts_list(self):
+        field = MultiFileField(required=False)
+        f1, f2 = fake_image("1.jpg"), fake_image("2.jpg")
+        cleaned = field.clean([f1, f2])
+        self.assertEqual(len(cleaned), 2)
+
+    def test_clean_accepts_single_file(self):
+        field = MultiFileField(required=False)
+        cleaned = field.clean(fake_image("one.jpg"))
+        self.assertEqual(len(cleaned), 1)
+        self.assertEqual(cleaned[0].name, "one.jpg")
+
+    def test_required_raises_if_no_files(self):
+        field = MultiFileField(required=True)
+        with self.assertRaisesMessage(Exception, "This field is required."):
+            field.clean([])
+
+
+class RecipePostFormTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="@tester",
+            email="tester@example.org",
+            password="Password123",
+        )
+
+    def make_recipe(self):
+        return RecipePost.objects.create(
+            author=self.user,
+            title="T",
+            description="D",
+            category="Breakfast",
+            prep_time_min=1,
+            cook_time_min=2,
+            nutrition="n",
+            visibility=RecipePost.VISIBILITY_PUBLIC,
+        )
+
+    def test_parse_tags_adds_category_tag(self):
+        form = RecipePostForm(
+            data={
+                "title": "Pasta",
+                "description": "Nice",
+                "category": "dinner",
+                "prep_time_min": 1,
+                "cook_time_min": 1,
+                "nutrition": "",
+                "visibility": RecipePost.VISIBILITY_PUBLIC,
+                "tags_text": "quick, ,  family ",
+            }
+        )
+        self.assertTrue(form.is_valid(), form.errors)
+        tags = form.parse_tags()
+        self.assertIn("quick", tags)
+        self.assertIn("family", tags)
+        self.assertIn("category:dinner", tags)
+
+    def test_split_lines_strips_and_ignores_blanks(self):
+        form = RecipePostForm(data={"category": "dinner"})
+        form.cleaned_data = {"ingredients_text": "  a \n\n b \n   \n"}
+        self.assertEqual(form._split_lines("ingredients_text"), ["a", "b"])
+
+    def test_create_steps_replaces_existing(self):
+        recipe = self.make_recipe()
+        RecipeStep.objects.create(recipe_post=recipe, position=1, description="old")
+
+        form = RecipePostForm(data={"category": "dinner"})
+        form.cleaned_data = {"steps_text": "step 1\nstep 2"}
+        form.create_steps(recipe)
+
+        steps = list(RecipeStep.objects.filter(recipe_post=recipe).order_by("position"))
+        self.assertEqual(len(steps), 2)
+        self.assertEqual(steps[0].position, 1)
+        self.assertEqual(steps[0].description, "step 1")
+        self.assertEqual(steps[1].position, 2)
+        self.assertEqual(steps[1].description, "step 2")
+
+    def test_create_images_replaces_existing_and_caps_at_10(self):
+        recipe = self.make_recipe()
+        RecipeImage.objects.create(recipe_post=recipe, image=fake_image("old.jpg"), position=0)
+
+        files = [fake_image(f"{i}.jpg") for i in range(12)]
+        form = RecipePostForm(data={"category": "dinner"}, files=MultiValueDict({"images": files}))
+
+        form.create_images(recipe)
+
+        imgs = list(RecipeImage.objects.filter(recipe_post=recipe).order_by("position"))
+        self.assertEqual(len(imgs), 10)  # capped
+        self.assertEqual(imgs[0].position, 0)
+        self.assertEqual(imgs[9].position, 9)
+
+    def test_create_ingredients_replaces_existing_dedupes_and_parses_shop_url(self):
+        recipe = self.make_recipe()
+        Ingredient.objects.create(recipe_post=recipe, name="old", position=1)
+
+        # 1st has url without scheme -> should become https://...
+        # 2nd is dup (case-insensitive) -> skipped
+        # 3rd has no url -> url stays None (and should not consume a shop_image)
+        # 4th has https url -> should be stored as-is and consume the 2nd shop image
+        ingredients_text = "\n".join([
+            "Matcha Powder | amazon.com/matcha",
+            "  matcha powder  | https://example.com/dup ",
+            "Flour",
+            "Milk | https://store.com/milk",
+        ])
+
+        shop_imgs = [fake_image("s1.jpg"), fake_image("s2.jpg")]
+        form = RecipePostForm(data={"category": "dinner"}, files=MultiValueDict({"shop_images": shop_imgs}))
+        form.cleaned_data = {
+            "ingredients_text": ingredients_text,
+            "shop_images": shop_imgs,
+        }
+
+        form.create_ingredients(recipe)
+
+        ings = list(Ingredient.objects.filter(recipe_post=recipe).order_by("position"))
+        self.assertEqual(len(ings), 3)  # dup removed, old removed
+
+        self.assertEqual(ings[0].name, "matcha powder")
+        self.assertEqual(ings[0].shop_url, "https://amazon.com/matcha")
+        self.assertTrue(bool(ings[0].shop_image_upload))  # consumed s1
+
+        self.assertEqual(ings[1].name, "flour")
+        self.assertIsNone(ings[1].shop_url)
+        self.assertFalse(bool(ings[1].shop_image_upload))  # should NOT consume an image
+
+        self.assertEqual(ings[2].name, "milk")
+        self.assertEqual(ings[2].shop_url, "https://store.com/milk")
+        self.assertTrue(bool(ings[2].shop_image_upload))  # consumed s2
+
+    def test_clean_images_limits_to_10(self):
+        files = [fake_image(f"{i}.jpg") for i in range(11)]
+        form = RecipePostForm(
+            data={
+                "title": "X",
+                "description": "Y",
+                "category": "dinner",
+                "prep_time_min": 1,
+                "cook_time_min": 1,
+                "nutrition": "",
+                "visibility": RecipePost.VISIBILITY_PUBLIC,
+            },
+            files=MultiValueDict({"images": files}),
+        )
+        self.assertFalse(form.is_valid())
+        self.assertIn("images", form.errors)
+        self.assertIn("up to 10 images", str(form.errors["images"]))
+
+    def test_clean_shop_images_limits_to_10(self):
+        files = [fake_image(f"{i}.jpg") for i in range(11)]
+        form = RecipePostForm(
+            data={
+                "title": "X",
+                "description": "Y",
+                "category": "dinner",
+                "prep_time_min": 1,
+                "cook_time_min": 1,
+                "nutrition": "",
+                "visibility": RecipePost.VISIBILITY_PUBLIC,
+            },
+            files=MultiValueDict({"shop_images": files}),
+        )
+        self.assertFalse(form.is_valid())
+        self.assertIn("shop_images", form.errors)
+        self.assertIn("up to 10 shopping images", str(form.errors["shop_images"]))

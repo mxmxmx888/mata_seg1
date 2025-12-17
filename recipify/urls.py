@@ -36,6 +36,7 @@ from recipes.views.profile_view import collections_overview
 from recipes.views.profile_view import remove_follower
 from recipes.views.profile_view import remove_following
 from recipes.views.profile_view import add_close_friend, remove_close_friend
+from recipes.views.api_views import RecipeListApi, RecipeDetailApi
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -76,6 +77,8 @@ urlpatterns = [
     path('api/notifications/read/', views.mark_notifications_read, name='mark_notifications_read'),
     path('recipes/<uuid:post_id>/comment/', views.add_comment, name='add_comment'),
     path('comments/<uuid:comment_id>/delete/', views.delete_comment, name='delete_comment'),
+    path('api/recipes/', RecipeListApi.as_view(), name='recipe_list_api'),
+    path('api/recipes/<uuid:pk>/', RecipeDetailApi.as_view(), name='recipe_detail_api'),
 ]
 
 urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

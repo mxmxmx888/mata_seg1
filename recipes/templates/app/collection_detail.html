@@ -107,6 +107,7 @@ document.addEventListener('DOMContentLoaded', function () {
   const editModalEl = document.getElementById('editCollectionModal');
   const editForm = document.getElementById('edit-collection-form');
   const titleInput = document.getElementById('edit-collection-title');
+  const closeBtn = editModalEl ? editModalEl.querySelector('.save-modal-close') : null;
   const hasBootstrapModal = !!(window.bootstrap && bootstrap.Modal);
   const csrfToken = "{{ csrf_token }}";
   const collectionId = "{{ collection.slug }}";
@@ -114,6 +115,7 @@ document.addEventListener('DOMContentLoaded', function () {
   const deleteEndpoint = "{% url 'delete_collection' slug=collection.slug %}";
 
   let editModalInstance = null;
+  let fallbackBackdrop = null;
 
   function showEditModal() {
     if (!editModalEl) return;
@@ -125,6 +127,11 @@ document.addEventListener('DOMContentLoaded', function () {
       editModalInstance = bootstrap.Modal.getOrCreateInstance(editModalEl);
       editModalInstance.show();
     } else {
+      if (!fallbackBackdrop) {
+        fallbackBackdrop = document.createElement('div');
+        fallbackBackdrop.className = 'modal-backdrop custom-modal-backdrop fade show';
+        document.body.appendChild(fallbackBackdrop);
+      }
       editModalEl.classList.add('show');
       editModalEl.style.display = 'block';
       editModalEl.removeAttribute('aria-hidden');
@@ -137,6 +144,10 @@ document.addEventListener('DOMContentLoaded', function () {
     if (hasBootstrapModal && editModalInstance) {
       editModalInstance.hide();
     } else {
+      if (fallbackBackdrop) {
+        fallbackBackdrop.remove();
+        fallbackBackdrop = null;
+      }
       editModalEl.classList.remove('show');
       editModalEl.style.display = 'none';
       editModalEl.setAttribute('aria-hidden', 'true');
@@ -184,6 +195,21 @@ document.addEventListener('DOMContentLoaded', function () {
         .catch(() => {
           hideEditModal();
         });
+    });
+  }
+
+  if (closeBtn) {
+    closeBtn.addEventListener('click', function (e) {
+      e.preventDefault();
+      hideEditModal();
+    });
+  }
+
+  if (editModalEl) {
+    editModalEl.addEventListener('click', function (e) {
+      if (e.target === editModalEl) {
+        hideEditModal();
+      }
     });
   }
 

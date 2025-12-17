@@ -154,6 +154,9 @@ body.profile-body .follow-modal .btn-outline-light:focus-visible {
 
 .follow-modal .modal-body {
   overflow-y: auto;
+  height: min(520px, 70vh);
+  min-height: 360px;
+  max-height: min(520px, 70vh);
 }
 
 body.profile-body .follow-modal .follow-user-name {

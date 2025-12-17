@@ -26,7 +26,9 @@
   max-height: clamp(360px, 75vh, 580px);
   right: 0;
   left: auto;
-  margin-top: calc(var(--navbar-dropdown-offset) + 140px) !important; 
+  top: calc(100% + var(--navbar-dropdown-offset)) !important;
+  margin-top: 0 !important;
+  transform: none !important;
   padding: 0;
   border-radius: 22px;
   background-color: var(--bg-2);
@@ -37,7 +39,7 @@
 }
 
 .navbar-app .navbar-heart-compact .notification-menu {
-  margin-top: calc(var(--navbar-dropdown-offset) + 320px) !important;
+  top: calc(100% + var(--navbar-dropdown-offset)) !important;
 }
 
 .navbar-app .notification-menu.show {
@@ -97,13 +99,13 @@
   margin: 0;
   background-color: inherit;
   color: inherit;
-  transition: background-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+  transition: background-color 0.18s ease;
 }
 
 .navbar-app .notification-list .dropdown-item:hover {
-  background-color: color-mix(in srgb, var(--text-primary) 10%, transparent);
-  box-shadow: 0 12px 26px rgba(0, 0, 0, 0.24);
-  transform: translateY(-1px);
+  background-color: color-mix(in srgb, var(--bg-2) 85%, var(--text-primary) 15%);
+  box-shadow: none;
+  transform: none;
 }
 
 .navbar-app .notification-list .notification-unread {

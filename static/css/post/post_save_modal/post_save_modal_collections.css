@@ -7,14 +7,33 @@
 }
 
 .edit-collection-modal {
-  background: #101010;
+  background: var(--surface);
+  color: var(--text-primary);
   border-radius: 1.6rem;
-  border: 1px solid rgba(148, 163, 184, 0.35);
-  box-shadow: none;
-  --save-field-bg: #18181b;
-  --save-field-border: rgba(148, 163, 184, 0.35);
-  --save-field-text: #f9fafb;
-  --save-field-placeholder: #9ca3af;
+  border: 1px solid var(--border-subtle);
+  box-shadow: 0 22px 70px rgba(0, 0, 0, 0.18);
+  --save-field-bg: var(--surface);
+  --save-field-border: var(--border-subtle);
+  --save-field-text: var(--text-primary);
+  --save-field-placeholder: var(--text-muted);
+}
+
+.edit-collection-modal .modal-title {
+  color: var(--text-primary);
+}
+
+.edit-collection-modal .modal-body,
+.edit-collection-modal .modal-body p {
+  color: var(--text-muted);
+}
+
+.edit-collection-modal .save-modal-close {
+  filter: none;
+  opacity: 0.5;
+}
+
+.edit-collection-modal .save-modal-close:hover {
+  opacity: 0.9;
 }
 
 .edit-collection-modal .modal-header {
@@ -80,7 +99,7 @@
   padding: 0.75rem 1.1rem 0.7rem;
   background-color: var(--save-field-bg);
   border-radius: 18px;
-  border: 1px solid #c0c6d2;
+  border: 1px solid var(--save-field-border);
 }
 
 .create-collection-field .form-label,
@@ -101,7 +120,7 @@
 }
 
 .create-collection-field .save-modal-input::placeholder {
-  color: #e6e9f0 !important;
+  color: var(--save-field-placeholder) !important;
   font-weight: 400;
 }
 
@@ -109,4 +128,42 @@
   border-radius: 0.9rem;
   padding: 0.3rem 1.2rem;
   font-size: 0.9rem;
+}
+
+body[data-theme="dark"] .edit-collection-modal,
+:root[data-theme="dark"] .edit-collection-modal {
+  background: #101010;
+  color: #f9fafb;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  box-shadow: none;
+  --save-field-bg: #101010;
+  --save-field-border: rgba(148, 163, 184, 0.35);
+  --save-field-text: #f9fafb;
+  --save-field-placeholder: #9ca3af;
+}
+
+body[data-theme="dark"] .edit-collection-modal .save-modal-close,
+:root[data-theme="dark"] .edit-collection-modal .save-modal-close {
+  filter: invert(1);
+  opacity: 0.7;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .edit-collection-modal,
+  body:not([data-theme="light"]) .edit-collection-modal {
+    background: #101010;
+    color: #f9fafb;
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    box-shadow: none;
+    --save-field-bg: #101010;
+    --save-field-border: rgba(148, 163, 184, 0.35);
+    --save-field-text: #f9fafb;
+    --save-field-placeholder: #9ca3af;
+  }
+
+  :root:not([data-theme="light"]) .edit-collection-modal .save-modal-close,
+  body:not([data-theme="light"]) .edit-collection-modal .save-modal-close {
+    filter: invert(1);
+    opacity: 0.7;
+  }
 }

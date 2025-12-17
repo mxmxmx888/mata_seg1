@@ -11,7 +11,7 @@
   align-items: center;
   justify-content: center;
   padding: clamp(3rem, 6vh, 4rem) clamp(1.5rem, 4vw, 3rem);
-  color: #111827;
+  color: var(--text-primary);
   box-sizing: border-box;
 }
 
@@ -22,7 +22,7 @@
   align-items: center;
   justify-content: center;
   padding: clamp(3rem, 6vh, 4.25rem) 5vw;
-  color: #111827;
+  color: var(--text-primary);
   box-sizing: border-box;
   max-width: 1200px;
   margin: 0 auto;

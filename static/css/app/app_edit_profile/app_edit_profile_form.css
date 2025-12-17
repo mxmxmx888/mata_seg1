@@ -33,6 +33,11 @@
   box-shadow: none;
 }
 
+.edit-profile-modal textarea.form-control {
+  min-height: 120px;
+  resize: vertical;
+}
+
 .edit-profile-modal .edit-profile-privacy-row {
   display: flex;
   align-items: center;

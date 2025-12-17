@@ -18,8 +18,9 @@ body[data-theme="light"] .edit-profile-modal .edit-profile-sidebar {
 body[data-theme="light"] .edit-profile-modal .form-control,
 body[data-theme="light"] .edit-profile-modal .form-control.is-valid,
 body[data-theme="light"] .edit-profile-modal .form-control.is-invalid {
-  background-color: var(--bg-1);
-  border-color: var(--border-subtle);
+  background-color: transparent;
+  border-color: transparent;
+  border: none;
   color: var(--text-primary);
   border-radius: 0;
   padding: 0;
@@ -28,8 +29,9 @@ body[data-theme="light"] .edit-profile-modal .form-control.is-invalid {
 }
 
 body[data-theme="light"] .edit-profile-modal .form-control:focus {
-  background-color: var(--bg-1);
-  border-color: var(--border-subtle);
+  background-color: transparent;
+  border-color: transparent;
+  border: none;
   outline: none;
   box-shadow: none;
 }
@@ -79,11 +81,6 @@ body[data-theme="light"] .edit-profile-modal .modal-body label {
 
 body[data-theme="light"] .edit-profile-modal .form-control::placeholder {
   color: color-mix(in srgb, var(--text-muted) 65%, var(--text-primary) 35%);
-}
-
-body[data-theme="light"] .edit-profile-modal textarea.form-control {
-  min-height: 120px;
-  resize: vertical;
 }
 
 body[data-theme="light"] .edit-profile-modal .modal-footer {
