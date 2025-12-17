@@ -7,7 +7,6 @@ from django.urls import reverse
 from recipes.forms import PasswordForm, UserForm
 from recipes.repos.post_repo import PostRepo
 from recipes.repos.user_repo import UserRepo
-from recipes.models import Follower
 from recipes.models.follow_request import FollowRequest
 from recipes.models.close_friend import CloseFriend
 from recipes.services import PrivacyService
@@ -23,119 +22,6 @@ post_repo = PostRepo()
 user_repo = UserRepo()
 privacy_service = PrivacyService()
 follow_service_factory = FollowService
-
-COMMON_COLLECTION_ITEMS = [
-    "https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=1200&q=80",
-    "https://images.unsplash.com/photo-1482049016688-2d3e1b311543?auto=format&fit=crop&w=1200&q=80",
-    "https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=1200&q=80",
-    "https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&w=1200&q=80",
-    "https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=1200&q=80",
-    "https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=1200&q=80",
-    "https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=1200&q=80",
-    "https://images.unsplash.com/photo-1481931715705-36fdd4e1bf4d?auto=format&fit=crop&w=1200&q=80",
-    "https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=1200&q=80",
-]
-
-TRAVERSE_ITEMS = [
-    "https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?auto=format&fit=crop&w=1200&q=80",
-    "https://images.unsplash.com/photo-1512058564366-18510be2db19?auto=format&fit=crop&w=1200&q=80",
-    "https://images.unsplash.com/photo-1481391032119-d89fee407e44?auto=format&fit=crop&w=1200&q=80",
-    "https://images.unsplash.com/photo-1521017432531-fbd92d768814?auto=format&fit=crop&w=1200&q=80",
-    "https://images.unsplash.com/photo-1473093295043-cdd812d0e601?auto=format&fit=crop&w=1200&q=80",
-    "https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&w=1200&q=80",
-    "https://images.unsplash.com/photo-1481931715705-36fdd4e1bf4d?auto=format&fit=crop&w=1200&q=80",
-    "https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=1200&q=80",
-    "https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=1200&q=80",
-]
-
-PROFILE_COLLECTIONS = [
-    {
-        "slug": "all-recipes",
-        "title": "All Recipes",
-        "count": 300,
-        "privacy": "Private",
-        "cover": "https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=1200&q=80",
-        "items": COMMON_COLLECTION_ITEMS,
-    },
-    {
-        "slug": "comfort-classics",
-        "title": "Comfort Classics",
-        "count": 65,
-        "cover": "https://images.unsplash.com/photo-1473093295043-cdd812d0e601?auto=format&fit=crop&w=1200&q=80",
-        "items": COMMON_COLLECTION_ITEMS,
-    },
-    {
-        "slug": "travel-eats",
-        "title": "Travel Eats",
-        "count": 10,
-        "cover": "https://images.unsplash.com/photo-1512058564366-18510be2db19?auto=format&fit=crop&w=1200&q=80",
-        "description": "My journeys",
-        "items": TRAVERSE_ITEMS,
-    },
-    {
-        "slug": "weeknight-dinners",
-        "title": "Weeknight Dinners",
-        "count": 37,
-        "cover": "https://images.unsplash.com/photo-1478144592103-25e218a04891?auto=format&fit=crop&w=1200&q=80",
-        "items": COMMON_COLLECTION_ITEMS,
-    },
-    {
-        "slug": "baking-basics",
-        "title": "Baking Basics",
-        "count": 41,
-        "cover": "https://images.unsplash.com/photo-1467003909585-2f8a72700288?auto=format&fit=crop&w=1200&q=80",
-        "items": COMMON_COLLECTION_ITEMS,
-    },
-    {
-        "slug": "quick-and-easy",
-        "title": "Quick & Easy",
-        "count": 11,
-        "cover": "https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=1200&q=80",
-        "items": COMMON_COLLECTION_ITEMS,
-    },
-    {
-        "slug": "meal-prep",
-        "title": "Meal Prep",
-        "count": 60,
-        "cover": "https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=1200&q=80",
-        "items": COMMON_COLLECTION_ITEMS,
-    },
-    {
-        "slug": "vegetarian-favorites",
-        "title": "Vegetarian Favorites",
-        "count": 17,
-        "cover": "https://images.unsplash.com/photo-1478145046317-39f10e56b5e9?auto=format&fit=crop&w=1200&q=80",
-        "items": COMMON_COLLECTION_ITEMS,
-    },
-    {
-        "slug": "sweet-tooth",
-        "title": "Sweet Tooth",
-        "count": 2,
-        "cover": "https://images.unsplash.com/photo-1505253758473-96b7015fcd40?auto=format&fit=crop&w=1200&q=80",
-        "items": COMMON_COLLECTION_ITEMS,
-    },
-    {
-        "slug": "brunch-staples",
-        "title": "Brunch Staples",
-        "count": 16,
-        "cover": "https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&w=1200&q=80",
-        "items": COMMON_COLLECTION_ITEMS,
-    },
-    {
-        "slug": "fresh-and-seasonal",
-        "title": "Fresh & Seasonal",
-        "count": 18,
-        "cover": "https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=1200&q=80",
-        "items": COMMON_COLLECTION_ITEMS,
-    },
-    {
-        "slug": "one-pot-wonders",
-        "title": "One-Pot Wonders",
-        "count": 10,
-        "cover": "https://images.unsplash.com/photo-1478144592103-25e218a04891?auto=format&fit=crop&w=1200&q=80",
-        "items": COMMON_COLLECTION_ITEMS,
-    },
-]
 
 def _profile_data_for_user(user):
     fallback_handle = "@anmzn"

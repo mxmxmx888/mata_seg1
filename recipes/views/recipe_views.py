@@ -1,13 +1,11 @@
 from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
-from django.http import HttpResponse, Http404
-from django.http import HttpResponse, JsonResponse
+from django.http import HttpResponse, Http404, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
 from recipes.forms.recipe_forms import RecipePostForm
-from recipes.repos.post_repo import PostRepo
 from recipes.forms.comment_form import CommentForm
 from recipes.services import PrivacyService
 from recipes.services import FollowService
@@ -22,16 +20,70 @@ except Exception:
     from mata_seg1.recipes.models.collection import Favourite
     from recipes.models.like import Like
     from recipes.models.comment import Comment
-
 try:
     from recipes.models.followers import Follower
 except Exception:
     from recipes.models import Follower
 
 User = get_user_model()
-post_repo = PostRepo()
 privacy_service = PrivacyService()
 follow_service_factory = FollowService
+
+def _is_hx(request):
+    return request.headers.get("HX-Request") or request.headers.get("x-requested-with") == "XMLHttpRequest"
+
+def _primary_image_url(recipe):
+    first = recipe.images.first()
+    if not first:
+        return recipe.image or None
+    try:
+        return first.image.url
+    except ValueError:
+        return recipe.image or None
+
+def _gallery_images(images_qs):
+    gallery = []
+    for extra in images_qs[1:]:
+        try:
+            gallery.append(extra.image.url)
+        except ValueError:
+            continue
+    return gallery
+
+def _collections_modal_state(user, recipe):
+    collections = []
+    favourites_qs = Favourite.objects.filter(user=user).prefetch_related("items__recipe_post", "cover_post")
+    for fav in favourites_qs:
+        items = list(fav.items.all())
+        is_in_collection = any(item.recipe_post_id == recipe.id for item in items)
+        last_saved_at = fav.created_at
+        cover_post = fav.cover_post
+
+        for item in items:
+            if item.added_at and (last_saved_at is None or item.added_at > last_saved_at):
+                last_saved_at = item.added_at
+            if not cover_post and item.recipe_post:
+                cover_post = item.recipe_post
+
+        thumb_url = getattr(cover_post, "primary_image_url", None) or getattr(cover_post, "image", None)
+        if not thumb_url:
+            thumb_url = "https://placehold.co/1200x800/0f0f14/ffffff?text=Collection"
+
+        collections.append(
+            {
+                "id": str(fav.id),
+                "name": fav.name,
+                "saved": is_in_collection,
+                "count": len(items),
+                "thumb_url": thumb_url,
+                "last_saved_at": last_saved_at,
+            }
+        )
+
+    collections.sort(key=lambda c: c.get("last_saved_at") or c.get("created_at"), reverse=True)
+    collections.sort(key=lambda c: 0 if c.get("saved") else 1)
+    return collections
+
 
 @login_required
 def recipe_create(request):
@@ -120,68 +172,16 @@ def recipe_detail(request, post_id):
         raise Http404("Post not available.")
 
     comments = recipe.comments.select_related("user").order_by("-created_at")
-    user_liked = False
-    user_saved = False
-    is_following_author = False
-
+    user_liked = user_saved = is_following_author = False
     collections_for_modal = []
 
     if request.user.is_authenticated:
         user_liked = Like.objects.filter(user=request.user, recipe_post=recipe).exists()
-
         user_saved = FavouriteItem.objects.filter(
             favourite__user=request.user,
             recipe_post=recipe,
         ).exists()
-
-        # build per-collection state for the save modal
-        favourites_qs = Favourite.objects.filter(user=request.user).prefetch_related(
-            "items__recipe_post",
-            "cover_post",
-        )
-        for fav in favourites_qs:
-            items = list(fav.items.all())
-            is_in_collection = False
-            last_saved_at = fav.created_at
-            cover_post = fav.cover_post
-
-            for item in items:
-                if item.recipe_post_id == recipe.id:
-                    is_in_collection = True
-                if item.added_at and (last_saved_at is None or item.added_at > last_saved_at):
-                    last_saved_at = item.added_at
-                if not cover_post and item.recipe_post:
-                    cover_post = item.recipe_post
-
-            thumb_url = None
-            if cover_post:
-                thumb_url = getattr(cover_post, "primary_image_url", None) or getattr(
-                    cover_post,
-                    "image",
-                    None,
-                )
-            if not thumb_url:
-                thumb_url = "https://placehold.co/1200x800/0f0f14/ffffff?text=Collection"
-
-            collections_for_modal.append(
-                {
-                    "id": str(fav.id),
-                    "name": fav.name,
-                    "saved": is_in_collection,
-                    "count": len(items),
-                    "thumb_url": thumb_url,
-                    "last_saved_at": last_saved_at,
-                }
-            )
-
-        # sort so that collections containing this recipe appear first,
-        # and within each group, most recently used collections come first
-        collections_for_modal.sort(
-            key=lambda c: c.get("last_saved_at") or c.get("created_at"),
-            reverse=True,
-        )
-        collections_for_modal.sort(key=lambda c: 0 if c.get("saved") else 1)
-
+        collections_for_modal = _collections_modal_state(request.user, recipe)
         is_following_author = Follower.objects.filter(
             follower=request.user,
             author=recipe.author,
@@ -191,23 +191,8 @@ def recipe_detail(request, post_id):
 
     saves_count = FavouriteItem.objects.filter(recipe_post=recipe).count()
 
-    image_url = None
-    if images_qs:
-        first_image = images_qs[0]
-        try:
-            image_url = first_image.image.url
-        except ValueError:
-            image_url = None
-    if not image_url:
-        image_url = recipe.image or None
-
-    gallery_images = []
-    if images_qs.count() > 1:
-        for extra in images_qs[1:]:
-            try:
-                gallery_images.append(extra.image.url)
-            except ValueError:
-                continue
+    image_url = _primary_image_url(recipe)
+    gallery_images = _gallery_images(images_qs) if images_qs.count() > 1 else []
     author_handle = getattr(recipe.author, "username", "")
     total_time = (recipe.prep_time_min or 0) + (recipe.cook_time_min or 0)
     cook_time = f"{total_time} min" if total_time else "N/A"
@@ -319,7 +304,7 @@ def toggle_favourite(request, post_id):
 
     RecipePost.objects.filter(id=recipe.id).update(saved_count=new_count)
 
-    is_ajax = request.headers.get("HX-Request") or request.headers.get("x-requested-with") == "XMLHttpRequest"
+    is_ajax = _is_hx(request)
     if is_ajax:
         # choose a thumbnail for this collection: explicit cover_post first,
         # otherwise fall back to the current recipe that was just toggled
@@ -354,7 +339,7 @@ def toggle_like(request, post_id):
     else:
         Like.objects.create(user=request.user, recipe_post=recipe)
 
-    if request.headers.get("HX-Request") or request.headers.get("x-requested-with") == "XMLHttpRequest":
+    if _is_hx(request):
         return HttpResponse(status=204)
 
     return redirect(request.META.get("HTTP_REFERER") or reverse("recipe_detail", args=[recipe.id]))
@@ -371,7 +356,7 @@ def toggle_follow(request, username):
     service = follow_service_factory(request.user)
     result = service.toggle_follow(target_user)
 
-    if request.headers.get("HX-Request") or request.headers.get("x-requested-with") == "XMLHttpRequest":
+    if _is_hx(request):
         return HttpResponse(status=204)
 
     return redirect(request.META.get("HTTP_REFERER") or reverse("dashboard"))

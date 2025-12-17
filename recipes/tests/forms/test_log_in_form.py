@@ -1,6 +1,9 @@
 """Unit tests of the log in form."""
+from unittest.mock import patch
+
 from django import forms
 from django.test import TestCase
+
 from recipes.forms import LogInForm
 from recipes.models import User
 
@@ -67,3 +70,37 @@ class LogInFormTestCase(TestCase):
         form = LogInForm(data=form_input)
         user = form.get_user()
         self.assertEqual(user, None)
+
+    @patch("recipes.forms.log_in_form.authenticate")
+    @patch("recipes.forms.log_in_form.sign_in_with_email_and_password")
+    def test_get_user_prefers_firebase_result(self, mock_sign_in, mock_authenticate):
+        mock_sign_in.return_value = {"uid": "abc"}
+        mock_authenticate.return_value = None
+
+        form = LogInForm(data=self.form_input)
+        user = form.get_user()
+
+        mock_sign_in.assert_called_once_with(
+            email="johndoe@example.org",
+            password="Password123",
+        )
+        mock_authenticate.assert_not_called()
+        self.assertEqual(user.username, "@johndoe")
+        self.assertEqual(user.backend, "django.contrib.auth.backends.ModelBackend")
+
+    @patch("recipes.forms.log_in_form.authenticate")
+    @patch("recipes.forms.log_in_form.sign_in_with_email_and_password")
+    def test_get_user_falls_back_to_authenticate(self, mock_sign_in, mock_authenticate):
+        mock_sign_in.return_value = None
+        fallback_user = User.objects.get(username="@johndoe")
+        mock_authenticate.return_value = fallback_user
+
+        form = LogInForm(data=self.form_input)
+        user = form.get_user()
+
+        mock_sign_in.assert_called_once()
+        mock_authenticate.assert_called_once_with(
+            username="@johndoe",
+            password="Password123",
+        )
+        self.assertEqual(user, fallback_user)

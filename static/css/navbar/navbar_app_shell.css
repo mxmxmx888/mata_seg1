@@ -1,32 +1,7 @@
-/* App Navbar */
-
 .navbar-app {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
   --navbar-dropdown-offset: 18px;
-  border-bottom: none;
-  padding-top: 0.2rem;
-  padding-bottom: 0.2rem;
   overflow: visible;
-  z-index: 1040;
 }
-
-
-@media (min-width: 992px) {
-  .navbar-app::after {
-    content: "";
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: -1px;
-    height: 1px;
-    background-color: inherit;
-    pointer-events: none;
-  }
-}
-
 
 .navbar-app .navbar-brand,
 .navbar-app .nav-link {

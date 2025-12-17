@@ -40,7 +40,7 @@ body.profile-body .recipi-nav-search-input::placeholder {
 .profile-shell {
   max-width: min(1280px, 94vw);
   margin-inline: auto;
-  padding-top: 0.5rem;
+  padding-top: 2.5rem;
 }
 
 .profile-hero {

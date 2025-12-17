@@ -194,3 +194,43 @@ class RecipePostFormTests(TestCase):
         self.assertFalse(form.is_valid())
         self.assertIn("shop_images", form.errors)
         self.assertIn("up to 10 shopping images", str(form.errors["shop_images"]))
+
+    def test_clean_requires_shop_images_for_each_link(self):
+        files = MultiValueDict({"shop_images": [fake_image("only1.jpg")]})
+        form = RecipePostForm(
+            data={
+                "title": "X",
+                "description": "Y",
+                "category": "dinner",
+                "prep_time_min": 1,
+                "cook_time_min": 1,
+                "nutrition": "",
+                "visibility": RecipePost.VISIBILITY_PUBLIC,
+                "ingredients_text": "Milk | https://store.com/milk\nFlour | amazon.com/flour",
+            },
+            files=files,
+        )
+
+        self.assertFalse(form.is_valid())
+        self.assertIn("shop_images", form.errors)
+        self.assertIn("need 2, provided 1", str(form.errors["shop_images"]))
+
+    def test_clean_accepts_enough_shop_images_for_links(self):
+        files = MultiValueDict({
+            "shop_images": [fake_image("milk.jpg"), fake_image("flour.jpg")],
+        })
+        form = RecipePostForm(
+            data={
+                "title": "X",
+                "description": "Y",
+                "category": "dinner",
+                "prep_time_min": 1,
+                "cook_time_min": 1,
+                "nutrition": "",
+                "visibility": RecipePost.VISIBILITY_PUBLIC,
+                "ingredients_text": "Milk | https://store.com/milk\nFlour | amazon.com/flour",
+            },
+            files=files,
+        )
+
+        self.assertTrue(form.is_valid(), form.errors)
