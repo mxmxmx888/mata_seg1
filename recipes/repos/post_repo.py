@@ -17,7 +17,7 @@ class PostRepo(DB_Accessor):
         *,
         category: Optional[str] = None,
         author_id: Optional[int] = None,
-        order_by: Sequence[str] = ("-created_at",),
+        order_by: Sequence[str] = ("created_at",),
         limit: Optional[int] = None,
         offset: int = 0,
     ) -> QuerySet:
@@ -42,7 +42,7 @@ class PostRepo(DB_Accessor):
         self,
         user_id: int,
         *,
-        order_by: Sequence[str] = ("-created_at",),
+        order_by: Sequence[str] = ("created_at",),
         limit: Optional[int] = None,
         offset: int = 0,
     ) -> QuerySet:
@@ -61,9 +61,15 @@ class PostRepo(DB_Accessor):
         )
 
         if not followee_ids:
-            from recipes.models import Post
-            return Post.objects.none()
+            model_cls = getattr(self, "model", RecipePost)
+            return model_cls.objects.none()
 
-        qs = self.list_for_feed(user_id) if hasattr(self, "list_for_feed") else self.list_all()
+        if hasattr(self, "list_for_feed"):
+            qs = self.list_for_feed()
+        elif hasattr(self, "list_all"):
+            qs = self.list_all()
+        else:
+            model_cls = getattr(self, "model", RecipePost)
+            qs = model_cls.objects.all()
 
         return qs.filter(author_id__in=followee_ids).order_by("-created_at")[:limit]
