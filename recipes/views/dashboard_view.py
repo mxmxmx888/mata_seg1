@@ -11,7 +11,7 @@ from django.views.decorators.http import require_GET
 from recipes.services import PrivacyService
 try:
     from recipes.models import RecipePost, Favourite, FavouriteItem, Like, Follower, Ingredient
-except Exception:  # pragma: no cover - fallback imports for alternate module paths
+except Exception:  
     from recipes.models.recipe_post import RecipePost
     from recipes.models.favourite import Favourite
     from recipes.models.favourite_item import FavouriteItem
@@ -81,7 +81,6 @@ def _score_post_for_user(post, preferred_tags):
     return score
 
 privacy_service = PrivacyService()
-
 def _get_for_you_posts(user, query=None, limit=12, offset=0, seed=None, privacy=privacy_service):
     qs = privacy.filter_visible_posts(_base_posts_queryset(), user)
 
@@ -123,7 +122,6 @@ def _filter_posts_by_prep_time(posts, min_prep, max_prep):
         ]
 
     return posts
-
 
 def _get_following_posts(user, query=None, limit=12, offset=0):
     followed_ids = list(
@@ -209,7 +207,6 @@ def dashboard(request):
         )
 
     if q:
-        # Search across core recipe fields, not just ingredient names
         discover_qs = discover_qs.filter(
             Q(title__icontains=q)
             | Q(description__icontains=q)
@@ -262,7 +259,6 @@ def dashboard(request):
         ).filter(has_disallowed=False, has_allowed=True)
 
     discover_qs = privacy.filter_visible_posts(discover_qs, request.user)
-
     if sort == "popular":
         discover_qs = discover_qs.order_by("-saved_count", "-published_at", "-created_at")
     elif sort == "oldest":
@@ -276,7 +272,6 @@ def dashboard(request):
     shopping_items = []
     shopping_has_next = False
     shopping_page = page_number
-
     if request.GET.get("for_you_ajax") == "1":
         limit = 12
         try:
@@ -326,7 +321,6 @@ def dashboard(request):
             request.user,
         ).values_list("id", flat=True)
         items_qs = items_qs.filter(recipe_post_id__in=visible_posts)
-
         if q:
             items_qs = items_qs.filter(
                 Q(name__icontains=q)
@@ -337,7 +331,6 @@ def dashboard(request):
 
         paginator = Paginator(items_qs, 24)
         page_obj = paginator.get_page(page_number)
-
         if is_ajax:
             html = render_to_string(
                 "partials/shop/shop_items.html",
@@ -350,7 +343,7 @@ def dashboard(request):
                     "has_next": page_obj.has_next(),
                 }
             )
-
+        
         shopping_items = list(page_obj.object_list)
         shopping_has_next = page_obj.has_next()
         shopping_page = page_obj.number
