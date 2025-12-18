@@ -13,7 +13,7 @@ from recipes.services import FollowService
 try:
     from recipes.models import RecipePost, Ingredient, RecipeStep, Favourite, Like, Comment
     from recipes.models.favourite_item import FavouriteItem
-except Exception:
+except Exception:  # pragma: no cover - fallback imports for alternate module paths
     from recipes.models.recipe_post import RecipePost
     from recipes.models.ingredient import Ingredient
     from recipes.models.recipe_step import RecipeStep
@@ -22,7 +22,7 @@ except Exception:
     from recipes.models.comment import Comment
 try:
     from recipes.models.followers import Follower
-except Exception:
+except Exception:  # pragma: no cover - fallback imports for alternate module paths
     from recipes.models import Follower
 
 User = get_user_model()

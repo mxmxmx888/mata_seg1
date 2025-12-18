@@ -11,7 +11,7 @@ from django.views.decorators.http import require_GET
 from recipes.services import PrivacyService
 try:
     from recipes.models import RecipePost, Favourite, FavouriteItem, Like, Follower, Ingredient
-except Exception:
+except Exception:  # pragma: no cover - fallback imports for alternate module paths
     from recipes.models.recipe_post import RecipePost
     from recipes.models.favourite import Favourite
     from recipes.models.favourite_item import FavouriteItem
