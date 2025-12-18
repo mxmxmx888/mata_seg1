@@ -167,7 +167,7 @@ def dashboard(request):
 
     q = (request.GET.get("q") or "").strip()
     scope = (request.GET.get("scope") or "recipes").strip().lower()
-    if scope not in ("recipes", "users"):
+    if scope not in ("recipes", "users", "shopping"):
         scope = "recipes"
     category = (request.GET.get("category") or "all").strip()
     ingredient_q = (request.GET.get("ingredient") or "").strip()
@@ -273,6 +273,9 @@ def dashboard(request):
     popular_recipes = []
     popular_has_next = False
     users_results = []
+    shopping_items = []
+    shopping_has_next = False
+    shopping_page = page_number
 
     if request.GET.get("for_you_ajax") == "1":
         limit = 12
@@ -307,6 +310,54 @@ def dashboard(request):
         popular_recipes = []
         for_you_posts = []
         following_posts = []
+    elif has_search and scope == "shopping":
+        items_qs = (
+            Ingredient.objects.filter(
+                Q(shop_url__isnull=False) & ~Q(shop_url__regex=r"^\s*$")
+            )
+            .select_related("recipe_post")
+            .order_by("-id")
+        )
+
+        visible_posts = privacy.filter_visible_posts(
+            RecipePost.objects.filter(
+                id__in=items_qs.values_list("recipe_post_id", flat=True).distinct()
+            ),
+            request.user,
+        ).values_list("id", flat=True)
+        items_qs = items_qs.filter(recipe_post_id__in=visible_posts)
+
+        if q:
+            items_qs = items_qs.filter(
+                Q(name__icontains=q)
+                | Q(recipe_post__title__icontains=q)
+                | Q(recipe_post__description__icontains=q)
+                | Q(recipe_post__tags__icontains=q)
+            ).distinct()
+
+        paginator = Paginator(items_qs, 24)
+        page_obj = paginator.get_page(page_number)
+
+        if is_ajax:
+            html = render_to_string(
+                "partials/shop/shop_items.html",
+                {"items": page_obj.object_list},
+                request=request,
+            )
+            return JsonResponse(
+                {
+                    "html": html,
+                    "has_next": page_obj.has_next(),
+                }
+            )
+
+        shopping_items = list(page_obj.object_list)
+        shopping_has_next = page_obj.has_next()
+        shopping_page = page_obj.number
+        popular_recipes = []
+        for_you_posts = []
+        following_posts = []
+        users_results = []
     elif has_search:
         paginator = Paginator(discover_qs, 18)
         page_obj = paginator.get_page(page_number)
@@ -347,5 +398,8 @@ def dashboard(request):
         "scope": scope,
         "users_results": users_results,
         "have_ingredients": have_ingredients_raw,
+        "shopping_items": shopping_items,
+        "shopping_has_next": shopping_has_next,
+        "shopping_page_number": shopping_page,
     }
     return render(request, "app/dashboard.html", context)
