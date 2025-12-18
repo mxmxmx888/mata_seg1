@@ -8,8 +8,8 @@
 .footer-cta {
   position: relative;
   overflow: hidden;
-  background-color: #0c0c0c;
-  color: #e7e7ea;
+  background-color: var(--bg-1);
+  color: var(--text-primary);
 }
 
 .footer-cta .container-fluid {
@@ -26,7 +26,7 @@
   font-size: clamp(40rem, 80vw, 80rem);
   line-height: 0.78;
   letter-spacing: -0.08em;
-  color: #e7e7ea;
+  color: var(--text-primary);
   white-space: nowrap;
   pointer-events: none;
   user-select: none;
@@ -34,35 +34,35 @@
 }
 
 .footer-cta .text-muted {
-  color: rgba(231, 231, 234, 0.72) !important;
+  color: var(--text-muted) !important;
 }
 
 .footer-cta a {
-  color: #e7e7ea;
+  color: var(--text-primary);
 }
 
 .footer-cta .btn-outline-light {
-  color: #e7e7ea;
-  border-color: #e7e7ea;
+  color: var(--text-primary);
+  border-color: var(--text-primary);
 }
 
 .footer-cta .btn-outline-light:hover,
 .footer-cta .btn-outline-light:focus-visible {
-  background-color: #e7e7ea;
-  color: #0c0c0c;
-  border-color: #e7e7ea;
+  background-color: var(--text-primary);
+  color: var(--text-inverse);
+  border-color: var(--text-primary);
 }
 
 .footer-cta .btn-outline-secondary {
-  color: #e7e7ea;
-  border-color: rgba(231, 231, 234, 0.35);
+  color: var(--text-primary);
+  border-color: var(--border-subtle);
 }
 
 .footer-cta .btn-outline-secondary:hover,
 .footer-cta .btn-outline-secondary:focus-visible {
-  border-color: #e7e7ea;
-  color: #0c0c0c;
-  background-color: #e7e7ea;
+  border-color: var(--text-primary);
+  color: var(--text-inverse);
+  background-color: var(--text-primary);
 }
 
 .footer-cta-title {
@@ -75,7 +75,7 @@
   font-family: "Awesome Serif", "Rethink Sans", system-ui, -apple-system, sans-serif;
   font-size: clamp(10rem, 30vw, 32rem); 
   line-height: 0.9;
-  color: #0c0c0c;
+  color: var(--text-primary);
   font-weight: 400;
   letter-spacing: -0.04em;
   user-select: none;

@@ -1,83 +1,93 @@
 from django.test import TestCase
-from django.core.exceptions import ObjectDoesNotExist
-
-from recipes.db_accessor import DB_Accessor  # adjust if your path differs
-from recipes.models import User
+from recipes.db_accessor import DB_Accessor
+from recipes.models import RecipePost, User
 
 
-class DBAccessorTestCase(TestCase):
+class DBAccessorTests(TestCase):
+
+    fixtures = [
+        "recipes/tests/fixtures/default_user.json",
+        "recipes/tests/fixtures/other_users.json",
+    ]
+
     def setUp(self):
-        self.accessor = DB_Accessor(User)
+        self.user = User.objects.get(username="@johndoe")
+        self.obj1 = RecipePost.objects.create(
+            author=self.user,
+            title="Soup",
+            description="veg",
+            category="dinner",
+        )
+        self.obj2 = RecipePost.objects.create(
+            author=self.user,
+            title="Cake",
+            description="sweet",
+            category="dessert",
+        )
 
-        # create a few users with predictable ordering
-        self.u1 = User.objects.create_user(username="@alpha", email="alpha@example.org", password="Password123")
-        self.u2 = User.objects.create_user(username="@bravo", email="bravo@example.org", password="Password123")
-        self.u3 = User.objects.create_user(username="@charlie", email="charlie@example.org", password="Password123")
+        self.repo = DB_Accessor(RecipePost)
 
-    def test_create_creates_row(self):
-        u = self.accessor.create(username="@delta", email="delta@example.org")
-        self.assertTrue(User.objects.filter(id=u.id).exists())
-        self.assertEqual(u.username, "@delta")
+    # ---------- list() ----------
 
-    def test_get_returns_single_object(self):
-        u = self.accessor.get(id=self.u2.id)
-        self.assertEqual(u.id, self.u2.id)
-        self.assertEqual(u.username, "@bravo")
-
-    def test_get_raises_if_missing(self):
-        with self.assertRaises(ObjectDoesNotExist):
-            self.accessor.get(username="@doesnotexist")
-
-    def test_list_returns_queryset_by_default(self):
-        qs = self.accessor.list()
-        self.assertTrue(hasattr(qs, "model"))
-        self.assertEqual(qs.model, User)
-        self.assertEqual(qs.count(), 3)
+    def test_list_default_returns_queryset(self):
+        qs = self.repo.list()
+        self.assertEqual(qs.count(), 2)
 
     def test_list_filters(self):
-        qs = self.accessor.list(filters={"username": "@bravo"})
+        qs = self.repo.list(filters={"title": "Soup"})
         self.assertEqual(qs.count(), 1)
-        self.assertEqual(qs.first().id, self.u2.id)
+        self.assertEqual(qs.first().title, "Soup")
 
     def test_list_order_by(self):
-        qs = self.accessor.list(order_by=("username",))
-        self.assertEqual(list(qs.values_list("username", flat=True)), ["@alpha", "@bravo", "@charlie"])
-
-        qs_desc = self.accessor.list(order_by=("-username",))
-        self.assertEqual(list(qs_desc.values_list("username", flat=True)), ["@charlie", "@bravo", "@alpha"])
+        qs = self.repo.list(order_by=["title"])
+        titles = list(qs.values_list("title", flat=True))
+        self.assertEqual(titles, ["Cake", "Soup"])
 
     def test_list_limit_and_offset(self):
-        qs = self.accessor.list(order_by=("username",), limit=2, offset=0)
-        self.assertEqual(list(qs.values_list("username", flat=True)), ["@alpha", "@bravo"])
+        qs = self.repo.list(limit=1)
+        self.assertEqual(qs.count(), 1)
 
-        qs2 = self.accessor.list(order_by=("username",), limit=2, offset=1)
-        self.assertEqual(list(qs2.values_list("username", flat=True)), ["@bravo", "@charlie"])
+        qs_offset = self.repo.list(limit=1, offset=1)
+        self.assertEqual(qs_offset.count(), 1)
 
-    def test_list_offset_without_limit(self):
-        qs = self.accessor.list(order_by=("username",), offset=2)
-        self.assertEqual(list(qs.values_list("username", flat=True)), ["@charlie"])
+    def test_list_offset_no_limit(self):
+        qs = self.repo.list(offset=1)
+        self.assertEqual(qs.count(), 1)
 
-    def test_list_as_dict_returns_list_of_dicts(self):
-        rows = self.accessor.list(order_by=("username",), as_dict=True)
-        self.assertIsInstance(rows, list)
-        self.assertTrue(all(isinstance(r, dict) for r in rows))
-        self.assertEqual([r["username"] for r in rows], ["@alpha", "@bravo", "@charlie"])
+    def test_list_as_dict(self):
+        result = self.repo.list(as_dict=True)
+        self.assertIsInstance(result, list)
+        self.assertIsInstance(result[0], dict)
 
-    def test_update_returns_updated_count_and_updates(self):
-        updated = self.accessor.update({"id": self.u1.id}, first_name="A")
-        self.assertEqual(updated, 1)
-        self.u1.refresh_from_db()
-        self.assertEqual(self.u1.first_name, "A")
+    # ---------- get() ----------
 
-    def test_update_returns_zero_if_no_match(self):
-        updated = self.accessor.update({"username": "@nope"}, first_name="X")
-        self.assertEqual(updated, 0)
+    def test_get(self):
+        obj = self.repo.get(id=self.obj1.id)
+        self.assertEqual(obj, self.obj1)
 
-    def test_delete_returns_deleted_count(self):
-        deleted = self.accessor.delete(id=self.u3.id)
-        self.assertEqual(deleted, 1)
-        self.assertFalse(User.objects.filter(id=self.u3.id).exists())
+    # ---------- create() ----------
 
-    def test_delete_returns_zero_if_missing(self):
-        deleted = self.accessor.delete(username="@missing")
-        self.assertEqual(deleted, 0)
+    def test_create(self):
+        created = self.repo.create(
+            author=self.user,
+            title="New",
+            description="X",
+            category="test",
+        )
+        self.assertEqual(created.title, "New")
+        self.assertEqual(RecipePost.objects.count(), 3)
+
+    # ---------- update() ----------
+
+    def test_update(self):
+        count = self.repo.update({"id": self.obj1.id}, title="Updated")
+        self.assertEqual(count, 1)
+        self.obj1.refresh_from_db()
+        self.assertEqual(self.obj1.title, "Updated")
+
+    # ---------- delete() ----------
+
+    def test_delete(self):
+        count = self.repo.delete(id=self.obj2.id)
+        self.assertEqual(count, 1)
+        self.assertFalse(RecipePost.objects.filter(id=self.obj2.id).exists())

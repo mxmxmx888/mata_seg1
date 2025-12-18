@@ -1,7 +1,26 @@
 
 body.shop-body {
-  background: #f4f2ed;
-  color: #1c1c1c;
+  --shop-bg: #f4f2ed;
+  --shop-text: #1c1c1c;
+  --shop-card-bg: #e6e2d9;
+  --shop-card-shadow: none;
+  --shop-meta: #5f5c57;
+  --shop-chip-bg: rgba(22, 22, 22, 0.6);
+  --shop-chip-text: #f8f8f8;
+
+  background: var(--shop-bg);
+  color: var(--shop-text);
+}
+
+:root[data-theme="dark"] body.shop-body,
+body.shop-body[data-theme="dark"] {
+  --shop-bg: #0f1014;
+  --shop-text: #f5f5f5;
+  --shop-card-bg: #181920;
+  --shop-card-shadow: 0 10px 26px rgba(0, 0, 0, 0.35);
+  --shop-meta: #c7c9d4;
+  --shop-chip-bg: rgba(0, 0, 0, 0.7);
+  --shop-chip-text: #f8f8f8;
 }
 
 .shop-shell {
@@ -38,9 +57,9 @@ body.shop-body {
   position: relative;
   border-radius: 14px;
   overflow: hidden;
-  background: #e6e2d9;
+  background: var(--shop-card-bg);
   transition: box-shadow 0.18s ease;
-  box-shadow: none;
+  box-shadow: var(--shop-card-shadow);
 }
 
 .shop-item-card:hover,
@@ -72,8 +91,8 @@ body.shop-body {
   position: absolute;
   right: 12px;
   bottom: 12px;
-  background: rgba(22, 22, 22, 0.6);
-  color: #f8f8f8;
+  background: var(--shop-chip-bg);
+  color: var(--shop-chip-text);
   padding: 6px 10px;
   border-radius: 10px;
   font-size: 0.85rem;
@@ -90,7 +109,7 @@ body.shop-body {
   width: 100%;
   margin-top: 0.45rem;
   font-size: 0.9rem;
-  color: #5f5c57;
+  color: var(--shop-meta);
   padding-left: 2px;
 }
 
@@ -104,7 +123,7 @@ body.shop-body {
 
 .shop-item-recipe:hover,
 .shop-item-recipe:focus-visible {
-  color: #1c1c1c;
+  color: var(--shop-text);
 }
 
 .shop-loading {
@@ -125,30 +144,6 @@ body.shop-body {
 }
 
 
-body[data-theme="dark"].shop-body {
-  background: #0f1014;
-  color: #f5f5f5;
-}
-
-body[data-theme="dark"].shop-body .shop-item-card {
-  background: #181920;
-  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.35);
-}
-
-body[data-theme="dark"].shop-body .shop-item-meta {
-  color: #c7c9d4;
-}
-
-body[data-theme="dark"].shop-body .shop-item-chip {
-  background: rgba(0, 0, 0, 0.7);
-  color: #f8f8f8;
-}
-
-body[data-theme="dark"].shop-body .shop-item-recipe:hover,
-body[data-theme="dark"].shop-body .shop-item-recipe:focus-visible {
-  color: #ffffff;
-}
-
 body.shop-body .navbar-app {
   background-color: transparent;
 }
@@ -156,13 +151,7 @@ body.shop-body .navbar-app {
 body.shop-body .navbar-app .navbar-brand,
 body.shop-body .navbar-app .nav-link,
 body.shop-body .navbar-app .icon-button {
-  color: #1c1c1c;
-}
-
-body[data-theme="dark"].shop-body .navbar-app .navbar-brand,
-body[data-theme="dark"].shop-body .navbar-app .nav-link,
-body[data-theme="dark"].shop-body .navbar-app .icon-button {
-  color: #f5f5f5;
+  color: var(--shop-text);
 }
 
 @media (max-width: 992px) {

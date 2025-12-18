@@ -92,12 +92,12 @@
 
 
 body.public-body .navbar-recipi {
-  background-color: #ffffff;
+  background-color: var(--bg-1);
 }
 
 body.public-body .navbar-recipi .navbar-brand,
 body.public-body .navbar-recipi .nav-link {
-  color: #111827 !important;
+  color: var(--text-primary) !important;
 }
 
 body.public-body .navbar-recipi .navbar-toggler-icon {
@@ -112,7 +112,7 @@ body.auth-body .navbar-recipi .nav-link {
 
 
 .navbar-recipi.navbar-solid {
-  background-color: #ffffff;
+  background-color: var(--bg-1);
   border-bottom: none !important;
   box-shadow: none !important;
   border: 0 !important;
@@ -120,21 +120,21 @@ body.auth-body .navbar-recipi .nav-link {
 
 .navbar-recipi.navbar-solid .navbar-brand,
 .navbar-recipi.navbar-solid .nav-link {
-  color: #000;
+  color: var(--text-primary);
 }
 
 
 .navbar-recipi.navbar-solid .btn.btn-outline-dark {
-  color: #000;
-  border-color: #000;
+  color: var(--text-primary);
+  border-color: var(--text-primary);
   background-color: transparent;
 }
 
 .navbar-recipi .btn.btn-outline-dark:hover,
 .navbar-recipi .btn.btn-outline-dark:focus-visible {
-  background-color: #000000;
-  color: #ffffff;
-  border-color: #000000;
+  background-color: var(--text-primary);
+  color: var(--text-inverse);
+  border-color: var(--text-primary);
 }
 
 
@@ -169,7 +169,7 @@ body[data-theme="dark"] .navbar-recipi .navbar-toggler-icon {
     top: 100%;
     left: 0;
     right: 0;
-    background-color: #ffffff;
+    background-color: var(--bg-1);
     padding: 0.75rem 1rem;
     border-radius: 0;
     box-shadow: none;
@@ -189,20 +189,20 @@ body[data-theme="dark"] .navbar-recipi .navbar-toggler-icon {
 
 @media (max-width: 991.98px) and (prefers-color-scheme: dark) {
   .navbar-recipi:not(.navbar-solid) .navbar-collapse {
-    background-color: rgb(13, 13, 13);
+    background-color: var(--bg-1);
   }
 }
 
 
 body[data-theme="light"] .navbar-recipi .navbar-brand,
 body[data-theme="light"] .navbar-recipi .nav-link {
-  color: #000000 !important;
+  color: var(--text-primary) !important;
 }
 
 
 body[data-theme="dark"]:not(.auth-body) .navbar-recipi.navbar-solid .btn.btn-outline-dark {
-  color: #f6f6f6;
-  border-color: #f6f6f6;
+  color: var(--text-primary);
+  border-color: var(--text-primary);
   background-color: transparent;
 }
 
@@ -219,7 +219,7 @@ body[data-theme="dark"]:not(.auth-body) .navbar-recipi.navbar-solid .btn.btn-out
   }
 
   
-  body:not(.auth-body) .navbar-recipi {
+  body:not(.auth-body):not(.public-body) .navbar-recipi {
     background-color: transparent;
     box-shadow: none !important;
   }
@@ -229,8 +229,8 @@ body[data-theme="dark"]:not(.auth-body) .navbar-recipi.navbar-solid .btn.btn-out
     color: #f6f6f6;
   }
 
-  body:not(.auth-body) .navbar-recipi.navbar-solid {
-    background-color: rgb(13, 13, 13);
+  body:not(.auth-body):not(.public-body) .navbar-recipi.navbar-solid {
+    background-color: var(--bg-1);
     box-shadow: none !important;
   }
 
@@ -249,14 +249,4 @@ body:not(.auth-body):is([data-theme="dark"], .dashboard-body:not([data-theme="li
 body:not(.auth-body):is([data-theme="dark"], .dashboard-body:not([data-theme="light"]), .shop-body:not([data-theme="light"]), .app-body:not([data-theme="light"])) .navbar-recipi.navbar-solid .navbar-brand,
 body:not(.auth-body):is([data-theme="dark"], .dashboard-body:not([data-theme="light"]), .shop-body:not([data-theme="light"]), .app-body:not([data-theme="light"])) .navbar-recipi.navbar-solid .nav-link {
   color: #f8fafc !important;
-}
-
-
-body.public-body[data-theme="dark"] .navbar-recipi .navbar-brand,
-body.public-body[data-theme="dark"] .navbar-recipi .nav-link {
-  color: #111827 !important;
-}
-
-body.public-body[data-theme="dark"] .navbar-recipi .navbar-toggler-icon {
-  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba(17,24,39,0.92)' stroke-linecap='round' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
 }

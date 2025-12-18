@@ -133,6 +133,12 @@ body[data-theme="dark"] .recipi-nav-search-input {
   opacity: 0.65;
 }
 
+.recipi-nav-search-input[data-theme="light"]::placeholder,
+body[data-theme="light"] .recipi-nav-search-input::placeholder {
+  color: color-mix(in srgb, var(--text-muted) 65%, var(--text-primary) 35%);
+  opacity: 0.9;
+}
+
 .recipi-nav-search-input:focus {
   background-color: transparent !important;
   box-shadow: none !important;
