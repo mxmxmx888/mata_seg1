@@ -1,12 +1,12 @@
 
 body.shop-body {
-  --shop-bg: #f4f2ed;
-  --shop-text: #1c1c1c;
-  --shop-card-bg: #e6e2d9;
+  --shop-bg: var(--bg-1, #f4f2ed);
+  --shop-text: var(--text-primary, #1c1c1c);
+  --shop-card-bg: var(--bg-2, #e6e2d9);
   --shop-card-shadow: none;
-  --shop-meta: #5f5c57;
-  --shop-chip-bg: rgba(22, 22, 22, 0.6);
-  --shop-chip-text: #f8f8f8;
+  --shop-meta: var(--text-muted, #5f5c57);
+  --shop-chip-bg: color-mix(in srgb, #000 70%, var(--text-primary, #1c1c1c) 30%);
+  --shop-chip-text: var(--text-inverse, #f8f8f8);
 
   background: var(--shop-bg);
   color: var(--shop-text);
@@ -14,13 +14,13 @@ body.shop-body {
 
 :root[data-theme="dark"] body.shop-body,
 body.shop-body[data-theme="dark"] {
-  --shop-bg: #0f1014;
-  --shop-text: #f5f5f5;
-  --shop-card-bg: #181920;
+  --shop-bg: var(--bg-1, #0f1014);
+  --shop-text: var(--text-primary, #f5f5f5);
+  --shop-card-bg: var(--bg-2, #181920);
   --shop-card-shadow: 0 10px 26px rgba(0, 0, 0, 0.35);
-  --shop-meta: #c7c9d4;
-  --shop-chip-bg: rgba(0, 0, 0, 0.7);
-  --shop-chip-text: #f8f8f8;
+  --shop-meta: color-mix(in srgb, var(--text-muted, #a5a6b5) 70%, var(--text-primary, #f5f5f5) 30%);
+  --shop-chip-bg: color-mix(in srgb, #000 80%, var(--text-primary, #f5f5f5) 20%);
+  --shop-chip-text: var(--text-inverse, #0b1220);
 }
 
 .shop-shell {
