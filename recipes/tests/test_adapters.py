@@ -2,7 +2,7 @@ import re
 from django.test import TestCase
 from django.contrib.auth import get_user_model
 
-# UPDATE THIS IF YOUR ADAPTER LIVES IN A DIFFERENT MODULE
+
 from recipes.adapters import CustomAccountAdapter
 
 
@@ -12,9 +12,7 @@ class CustomAccountAdapterTests(TestCase):
         self.adapter = CustomAccountAdapter()
         self.User = get_user_model()
 
-    # ------------------------------------------------------------------
-    # clean_username tests
-    # ------------------------------------------------------------------
+
 
     def test_clean_username_strips_at(self):
         cleaned = self.adapter.clean_username("@john_doe")
@@ -32,9 +30,7 @@ class CustomAccountAdapterTests(TestCase):
         cleaned = self.adapter.clean_username("hello_user", shallow=True)
         self.assertEqual(cleaned, "hello_user")
 
-    # ------------------------------------------------------------------
-    # populate_username tests
-    # ------------------------------------------------------------------
+
 
     def test_populate_username_uses_existing_username_cleaned(self):
         user = self.User(username="@Invalid!!", email="ignored@example.com")

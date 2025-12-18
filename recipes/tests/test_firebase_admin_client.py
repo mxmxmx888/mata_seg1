@@ -8,9 +8,9 @@ import recipes.firebase_admin_client as client
 class FirebaseAdminClientTests(TestCase):
 
     def tearDown(self):
-        client._app = None  # reset global between tests
+        client._app = None  
 
-    # ------------------------- get_app tests -----------------------------
+
 
     @patch("firebase_admin._apps", {})
     def test_get_app_returns_none_when_missing_env(self):
@@ -37,7 +37,7 @@ class FirebaseAdminClientTests(TestCase):
                         result = client.get_app()
                         self.assertEqual(result, "APPX")
 
-                        # second call should reuse cached
+                        
                         again = client.get_app()
                         self.assertEqual(again, "APPX")
 
@@ -55,7 +55,7 @@ class FirebaseAdminClientTests(TestCase):
                 result = client.get_app()
                 self.assertEqual(result, "EXISTING")
 
-    # ------------------------- get_firestore_client tests -----------------------------
+    
 
     def test_firestore_returns_none_when_tests_running(self):
         with patch("recipes.firebase_admin_client._is_running_tests", return_value=True):
@@ -76,7 +76,7 @@ class FirebaseAdminClientTests(TestCase):
                     result = client.get_firestore_client()
                     self.assertEqual(result, mock_client)
 
-    # ------------------------- ensure_firebase_user tests -----------------------------
+   
 
     def test_ensure_none_when_no_email(self):
         self.assertIsNone(client.ensure_firebase_user(""))

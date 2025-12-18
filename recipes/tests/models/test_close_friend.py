@@ -21,7 +21,7 @@ class CloseFriendModelTestCase(TestCase):
             CloseFriend.objects.create(owner=self.owner, friend=self.friend)
 
     def test_cannot_add_self_as_close_friend(self):
-        # CheckConstraint: owner != friend
+        
         with self.assertRaises(IntegrityError):
             CloseFriend.objects.create(owner=self.owner, friend=self.owner)
 
