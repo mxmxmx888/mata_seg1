@@ -1,5 +1,27 @@
 <script>
   document.addEventListener('DOMContentLoaded', function () {
+    const searchInput = document.querySelector('.recipi-nav-search-input');
+    if (searchInput) {
+      const defaultPlaceholder = searchInput.getAttribute('placeholder') || '';
+      const activePlaceholder = 'Search Recipi...';
+
+      searchInput.addEventListener('focus', function () {
+        if (!searchInput.value) {
+          searchInput.setAttribute('placeholder', activePlaceholder);
+        }
+      });
+
+      searchInput.addEventListener('blur', function () {
+        if (!searchInput.value) {
+          searchInput.setAttribute('placeholder', defaultPlaceholder);
+        }
+      });
+    }
+  });
+</script>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
     const followForms = document.querySelectorAll('.notification-follow-form');
     if (!followForms.length) return;
 

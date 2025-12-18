@@ -117,12 +117,20 @@
   border: none;
   outline: none;
   background: transparent;
-  color: var(--text-muted);
+  color: var(--text-primary);
+  caret-color: var(--text-primary);
   font-size: 0.85rem;
 }
 
+.recipi-nav-search-input[data-theme="dark"],
+body[data-theme="dark"] .recipi-nav-search-input {
+  color: var(--text-primary);
+  -webkit-text-fill-color: var(--text-primary);
+}
+
 .recipi-nav-search-input::placeholder {
-  color: color-mix(in srgb, var(--text-muted) 65%, var(--text-primary) 35%);
+  color: var(--placeholder-muted, color-mix(in srgb, var(--text-muted) 20%, transparent 80%));
+  opacity: 0.65;
 }
 
 .recipi-nav-search-input:focus {

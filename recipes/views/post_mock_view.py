@@ -1,10 +1,33 @@
+import uuid
+from types import SimpleNamespace
+
 from django.shortcuts import render
 from django.templatetags.static import static
 
 
 def mock_post_detail(request):
+    recipe_stub = SimpleNamespace(
+        id=uuid.uuid4(),
+        author=SimpleNamespace(username="@ayan"),
+        visibility="public",
+    )
+    ingredients = [
+        "200g spaghetti",
+        "3 cloves garlic, finely sliced",
+        "40g butter",
+        "Handful of parsley, chopped",
+        "Salt & pepper",
+    ]
+
     # later this will pull a real Post from the DB
     context = {
+        "recipe": recipe_stub,
+        "comments": [],
+        "likes_count": 0,
+        "user_liked": False,
+        "user_saved": False,
+        "is_following_author": False,
+        "saves_count": 0,
         "title": "15-minute garlic butter pasta",
         "author_name": "Ayan",
         "author_handle": "@ayan",
@@ -18,13 +41,7 @@ def mock_post_detail(request):
         ],
         "video_url": "https://storage.googleapis.com/coverr-main/mp4/Footage%20Of%20Pasta.mp4",
         "summary": "Quick comfort food for busy nights. Butter, garlic and herbs coat hot pasta for a cozy dinner in minutes.",
-        "ingredients": [
-            "200g spaghetti",
-            "3 cloves garlic, finely sliced",
-            "40g butter",
-            "Handful of parsley, chopped",
-            "Salt & pepper",
-        ],
+        "ingredients": [SimpleNamespace(name=i) for i in ingredients],
         "steps": [
             "Boil the pasta in salted water until al dente.",
             "Gently fry the garlic in butter until fragrant.",

@@ -14,6 +14,7 @@
   --comment-author-color: #0f172a;
   --comment-text-color: #374151;
   --comment-meta-color: #6b7280;
+  --placeholder-muted: color-mix(in srgb, var(--text-muted) 20%, transparent 80%);
 }
 
 :root[data-theme="dark"],
@@ -34,6 +35,7 @@ body.app-body:not([data-theme="light"]) {
   --comment-author-color: var(--text-primary);
   --comment-text-color: color-mix(in srgb, var(--text-primary) 88%, var(--text-muted) 12%);
   --comment-meta-color: color-mix(in srgb, var(--text-muted) 82%, var(--text-primary) 18%);
+  --placeholder-muted: color-mix(in srgb, var(--text-muted) 12%, transparent 88%);
 }
 
 @media (prefers-color-scheme: dark) {

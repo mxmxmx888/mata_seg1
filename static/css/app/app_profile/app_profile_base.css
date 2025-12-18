@@ -34,7 +34,7 @@ body.profile-body .recipi-nav-search-input {
 }
 
 body.profile-body .recipi-nav-search-input::placeholder {
-  color: color-mix(in srgb, var(--text-muted) 65%, var(--text-primary) 35%);
+  color: var(--placeholder-muted);
 }
 
 .profile-shell {

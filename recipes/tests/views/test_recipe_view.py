@@ -6,12 +6,14 @@ from django.contrib.messages.storage.fallback import FallbackStorage
 from django.contrib.sessions.middleware import SessionMiddleware
 from django.http import Http404
 from django.test import TestCase, RequestFactory
+from django.urls import reverse
 
 from recipes.models.recipe_post import RecipePost
 from recipes.models.like import Like
 from recipes.models.comment import Comment
 from recipes.models.favourite import Favourite
 from recipes.models.favourite_item import FavouriteItem
+from recipes.views import recipe_views
 
 # Import the actual view functions
 from recipes.views.recipe_views import (
@@ -111,7 +113,7 @@ class RecipeViewsTestCase(TestCase):
         request.user = self.user
         _add_session_and_messages(request)
 
-        # Ensure privacy isn't blocking anything downstream in templates etc.
+        # Ensure privacy isn't blocking anything
         with patch("recipes.views.recipe_views.PrivacyService.can_view_post", return_value=True):
             response = recipe_create(request)
 
@@ -232,3 +234,63 @@ class RecipeViewsTestCase(TestCase):
         response = delete_comment(request, comment_id=comment.id)
         self.assertEqual(response.status_code, 302)
         self.assertFalse(Comment.objects.filter(id=comment.id).exists())
+
+    # ---------------------------
+    # saved_recipes
+    # ---------------------------
+    def test_saved_recipes_deduplicates(self):
+        fav1 = Favourite.objects.create(user=self.user, name="favourites")
+        fav2 = Favourite.objects.create(user=self.user, name="quick dinners")
+        FavouriteItem.objects.create(favourite=fav1, recipe_post=self.post)
+        FavouriteItem.objects.create(favourite=fav2, recipe_post=self.post)
+
+        self.client.login(username=self.user.username, password="Password123")
+        response = self.client.get(reverse("saved_recipes"))
+
+        self.assertEqual(response.status_code, 200)
+        posts = response.context["posts"]
+        self.assertEqual(len(posts), 1)
+        self.assertEqual(posts[0].id, self.post.id)
+
+    # ---------------------------
+    # toggle_favourite HX branch
+    # ---------------------------
+    def test_toggle_favourite_ajax_creates_and_returns_json(self):
+        self.client.login(username=self.user.username, password="Password123")
+        url = reverse("toggle_favourite", args=[self.post.id])
+
+        response = self.client.post(url, HTTP_HX_REQUEST="true")
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertTrue(payload["saved"])
+        self.assertEqual(payload["saved_count"], 1)
+        self.assertTrue(payload["collection"]["created"])
+
+        # second toggle should unsave and decrement count
+        response2 = self.client.post(url, HTTP_HX_REQUEST="true")
+        payload2 = response2.json()
+        self.assertFalse(payload2["saved"])
+        self.assertEqual(payload2["saved_count"], 0)
+
+    # ---------------------------
+    # toggle_follow
+    # ---------------------------
+    def test_toggle_follow_self_returns_204_for_hx(self):
+        self.client.login(username=self.user.username, password="Password123")
+        url = reverse("toggle_follow", args=[self.user.username])
+        response = self.client.post(url, HTTP_HX_REQUEST="true")
+        self.assertEqual(response.status_code, 204)
+
+    @patch.object(recipe_views, "follow_service_factory")
+    def test_toggle_follow_calls_service_for_normal_request(self, mock_factory):
+        self.client.login(username=self.user.username, password="Password123")
+        target = self.other
+        mock_service = MagicMock()
+        mock_factory.return_value = mock_service
+
+        url = reverse("toggle_follow", args=[target.username])
+        response = self.client.post(url)
+
+        mock_factory.assert_called_once_with(self.user)
+        mock_service.toggle_follow.assert_called_once_with(target)
+        self.assertEqual(response.status_code, 302)

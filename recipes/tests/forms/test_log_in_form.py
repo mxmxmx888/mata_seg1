@@ -77,7 +77,7 @@ class LogInFormTestCase(TestCase):
         mock_sign_in.return_value = {"uid": "abc"}
         mock_authenticate.return_value = None
 
-        form = LogInForm(data=self.form_input)
+        form = LogInForm(data={"username": "@johndoe", "password": "Password123"})
         user = form.get_user()
 
         mock_sign_in.assert_called_once_with(
@@ -95,7 +95,7 @@ class LogInFormTestCase(TestCase):
         fallback_user = User.objects.get(username="@johndoe")
         mock_authenticate.return_value = fallback_user
 
-        form = LogInForm(data=self.form_input)
+        form = LogInForm(data={"username": "@johndoe", "password": "Password123"})
         user = form.get_user()
 
         mock_sign_in.assert_called_once()
