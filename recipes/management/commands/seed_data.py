@@ -5,14 +5,26 @@ user_fixtures = [
 ]
 
 recipe_image_file_pool = [
-    "static/images/meal1.jpg",
-    "static/images/meal2.jpg",
-    "static/images/meal3.jpg",
-    "static/images/meal4.jpg",
-    "static/images/meal5.jpg",
-    "static/images/meal6.jpg",
-    "static/images/meal7.jpg",
-    "static/images/meal8.jpg",
+    "static/post_images/meal1.jpg",
+    "static/post_images/meal2.jpg",
+    "static/post_images/meal3.jpg",
+    "static/post_images/meal4.jpg",
+    "static/post_images/meal5.jpg",
+    "static/post_images/meal6.jpg",
+    "static/post_images/meal7.jpg",
+    "static/post_images/meal8.jpg",
+]
+
+shop_image_file_pool = [
+    "static/shop_images/cabbage.jpg",
+    "static/shop_images/chilli.jpg",
+    "static/shop_images/cucumber.jpg",
+    "static/shop_images/eggplant.jpg",
+    "static/shop_images/lemon.jpg",
+    "static/shop_images/pepper.jpg",
+    "static/shop_images/pepper2.jpg",
+    "static/shop_images/pumpkin.jpg",
+    "static/shop_images/tomato.jpg",
 ]
 
 categories = ["Breakfast", "Lunch", "Dinner", "Dessert", "Vegan"]
