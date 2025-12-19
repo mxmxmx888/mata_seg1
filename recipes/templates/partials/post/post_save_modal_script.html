@@ -302,7 +302,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
   saveToggleButtons.forEach(attachToggleHandler);
 
-  // Ensure clicking outside the dialog closes the modal (covers fallback + bootstrap)
   saveModal.addEventListener('click', (e) => {
     if (!saveModal.classList.contains('show')) return;
     const dialog = saveModal.querySelector('.modal-dialog');

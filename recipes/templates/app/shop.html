@@ -59,7 +59,6 @@
       const desiredCount = getColumnCount();
       if (columns.length === desiredCount) return;
 
-      // Collect existing items before rebuilding.
       const cards = Array.from(
         container.querySelectorAll('.shop-masonry-item')
       );
@@ -143,7 +142,7 @@
           setLoading(false);
         })
         .catch(function () {
-          page -= 1; // roll back page on error to retry
+          page -= 1;
           setLoading(false);
         });
     }
@@ -171,7 +170,6 @@
       });
     }
 
-    // Initialise columns on load and resize.
     buildColumns();
     window.addEventListener('resize', buildColumns);
   });

@@ -1,6 +1,6 @@
 <div class="col-xxl-4 col-xl-4 col-lg-4">
   <header class="mb-4">
-    {% with recipe.author.username|default:author_handle|cut:"@" as author_username %}
+    {% with recipe.author.username|default:author_handle as author_username %}
     <p class="post-author text-muted mb-1">
       by <a class="post-author-link" href="{% url 'profile' %}?user={{ author_username }}">{{ author_username }}</a>
     </p>
@@ -10,7 +10,7 @@
       <span><i class="bi bi-clock-history me-1"></i>{{ cook_time }}</span>
       <span><i class="bi bi-people-fill me-1"></i>Serves {{ serves }}</span>
       <span><i class="bi bi-list-ul me-1"></i>{{ ingredients|length }} ingredients</span>
-      <span class="badge bg-secondary text-uppercase" style="letter-spacing:0.05em;">
+      <span class="badge bg-secondary text-uppercase">
         {% if recipe.visibility == 'public' %}Public{% elif recipe.visibility == 'followers' %}Followers only{% else %}Close friends only{% endif %}
       </span>
     </div>

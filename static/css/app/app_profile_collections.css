@@ -253,7 +253,6 @@ body[data-theme="light"].profile-body .profile-pill:focus-visible {
   }
 }
 
-/* Collections page responsive columns */
 @media (max-width: 1400px) {
   .collections-shell .profile-collections {
     --profile-columns: 4;

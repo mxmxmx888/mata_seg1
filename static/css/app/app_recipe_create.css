@@ -255,8 +255,11 @@ body:not(.auth-body):is([data-theme="dark"], .dashboard-body:not([data-theme="li
   justify-content: center;
 }
 
-.shop-add-btn:hover {
+.shop-add-btn:hover,
+.shop-add-btn:focus,
+.shop-add-btn:active {
   background: var(--text-primary);
+  color: var(--text-inverse);
 }
 
 .shopping-links-upload {

@@ -25,3 +25,7 @@ body.app-body .navbar-recipi,
 body.app-body .navbar-app {
   background-color: inherit !important;
 }
+
+.dashboard-empty-state {
+  color: #8b8c9a;
+}

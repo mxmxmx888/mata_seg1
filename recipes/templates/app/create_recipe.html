@@ -80,7 +80,6 @@
 
   <script>
     (function() {
-      // Select form specifically inside the card to avoid navbar conflicts
       const formEl = document.querySelector('.create-recipe-card form');
       const imageInput = document.getElementById('id_images');
       const imageList = document.getElementById('image-file-list');
@@ -291,7 +290,6 @@
           try {
             sessionStorage.setItem(storageKey, JSON.stringify(cleaned));
           } catch (err) {
-            // If storage fails, silently skip keeping images.
           }
         });
       }
@@ -362,12 +360,10 @@
       });
 
       if (!isBound) {
-        // Fresh form: clear any stale cached files from older attempts.
         try {
           sessionStorage.removeItem(IMG_STORAGE_KEY);
         } catch (err) {}
       } else if (hasErrors) {
-        // Restore selected files after a failed submit so they stay visible.
         restoreFiles(imageInput, IMG_STORAGE_KEY, renderImagesList);
       }
 

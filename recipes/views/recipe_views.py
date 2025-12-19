@@ -205,7 +205,7 @@ def recipe_detail(request, post_id):
 
     ingredients_all = list(ingredients_qs)
     shop_ingredients = [ing for ing in ingredients_all if getattr(ing, "shop_url", None) and ing.shop_url.strip()]
-    ingredients = [ing for ing in ingredients_all if not (getattr(ing, "shop_url", None) and ing.shop_url.strip())]
+    ingredients = ingredients_all
     steps = [s.description for s in steps_qs]
 
     context = {

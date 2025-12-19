@@ -158,6 +158,22 @@
   color: var(--text-primary);
   border-color: var(--text-primary);
 }
+
+.navbar-app .notification-avatar-img,
+.navbar-app .notification-thumb-img {
+  width: 40px;
+  height: 40px;
+  object-fit: cover;
+  display: block;
+}
+
+.navbar-app .notification-btn-compact {
+  font-size: 0.75rem;
+}
+
+.navbar-app .notification-empty-icon {
+  font-size: 1.6rem;
+}
 .navbar-app .empty-notifications {
   color: var(--text-muted);
 }

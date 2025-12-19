@@ -130,7 +130,7 @@
             {% endfor %}
           </div>
         {% else %}
-          <div class="text-center py-5" style="color: #8b8c9a;">
+          <div class="text-center py-5 dashboard-empty-state">
             No users found for this search.
           </div>
         {% endif %}
@@ -149,7 +149,7 @@
           </div>
           <div id="shopping-sentinel" aria-hidden="true"></div>
         {% else %}
-          <div class="text-center py-5" style="color: #8b8c9a;">
+          <div class="text-center py-5 dashboard-empty-state">
             No shop items found for this search.
           </div>
         {% endif %}
@@ -157,7 +157,7 @@
         {% if popular_recipes %}
           {% include "partials/feed/feed_masonry_grid.html" with posts=popular_recipes grid_id="discover-grid" %}
         {% else %}
-          <div class="text-center py-5" style="color: #8b8c9a;">
+          <div class="text-center py-5 dashboard-empty-state">
             {% if have_ingredients %}
               No recipes found using only these ingredients.
             {% else %}
@@ -269,7 +269,7 @@
         {% if for_you_posts %}
           {% include "partials/feed/feed_masonry_grid.html" with posts=for_you_posts grid_id="forYou-grid" %}
         {% else %}
-          <div class="text-center py-5" style="color: #8b8c9a;">
+          <div class="text-center py-5 dashboard-empty-state">
             Nothing here yet — your personalised feed will appear here soon.
           </div>
         {% endif %}
@@ -279,7 +279,7 @@
         {% if following_posts %}
           {% include "partials/feed/feed_masonry_grid.html" with posts=following_posts %}
         {% else %}
-          <div class="text-center py-5" style="color: #8b8c9a;">
+          <div class="text-center py-5 dashboard-empty-state">
             Follow some cullinarians to get started!
           </div>
         {% endif %}

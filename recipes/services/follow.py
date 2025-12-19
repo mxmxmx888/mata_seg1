@@ -22,13 +22,6 @@ class FollowService:
             follow_request=follow_request,
         )
 
-    def _cleanup_follow_back_prompt(self, target):
-        Notification.objects.filter(
-            recipient=self.actor,
-            sender=target,
-            notification_type="follow",
-        ).delete()
-
     def _cleanup_request_prompt(self, target):
         Notification.objects.filter(
             recipient=target,
@@ -53,7 +46,6 @@ class FollowService:
                 requester=self.actor, target=target
             ).delete()
             self._notify(target, self.actor, "follow")
-            self._cleanup_follow_back_prompt(target)
             return {"status": "following"}
 
         # Private target → request (Scenarios C, D)
@@ -70,7 +62,6 @@ class FollowService:
             fr.created_at = timezone.now()
             fr.save(update_fields=["status", "created_at"])
         self._notify(target, self.actor, "follow_request", follow_request=fr)
-        self._cleanup_follow_back_prompt(target)
         return {"status": "requested"}
 
     @transaction.atomic
@@ -83,7 +74,6 @@ class FollowService:
             status=FollowRequest.STATUS_PENDING,
         ).delete()
         self._cleanup_request_prompt(target)
-        self._cleanup_follow_back_prompt(target)
         return True
 
     @transaction.atomic
@@ -91,7 +81,6 @@ class FollowService:
         if not self._can_act(target):
             return False
         Follower.objects.filter(follower=self.actor, author=target).delete()
-        self._cleanup_follow_back_prompt(target)
         return True
 
     @transaction.atomic

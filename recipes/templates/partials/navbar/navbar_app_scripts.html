@@ -58,7 +58,6 @@
             button.setAttribute('data-follow-state', 'not-following');
           }
         }).catch(function () {
-          // If the request fails, fall back to normal form submit
           form.submit();
         });
       });
@@ -76,7 +75,6 @@
         const url = item.dataset.postUrl;
         if (!url) return;
 
-        // Ignore clicks on interactive children (links, buttons, forms)
         if (event.target.closest('a, button, form')) {
           return;
         }
@@ -215,7 +213,6 @@
       dropdownEl.addEventListener('shown.bs.dropdown', handleOpen);
       dropdownEl.addEventListener('hidden.bs.dropdown', handleClose);
 
-      // Fallback: keep icon state in sync if Bootstrap events are unavailable
       dropdownEl.addEventListener('click', function () {
         setTimeout(syncFromState, 0);
       });
@@ -309,7 +306,6 @@
     typePlaceholder();
   }
 
-  // Full-screen mobile menu toggle
   const appMenuToggle = document.querySelector('.app-menu-toggle');
   const appFullScreenMenu = document.getElementById('appFullScreenMenu');
   if (appMenuToggle && appFullScreenMenu) {

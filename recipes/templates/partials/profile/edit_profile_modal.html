@@ -16,13 +16,12 @@
         <aside class="edit-profile-sidebar">
           <div class="edit-profile-sidebar-top">
             <div class="edit-profile-avatar-wrapper">
-              <div class="edit-profile-avatar-circle edit-profile-avatar-compact" data-avatar-preview style="width: 96px; height: 96px;">
+              <div class="edit-profile-avatar-circle edit-profile-avatar-compact" data-avatar-preview>
                 <img
                   src="{% if edit_profile_avatar_url %}{{ edit_profile_avatar_url }}{% endif %}"
                   alt="{{ user.username }} avatar"
                   data-avatar-image
                   class="{% if not edit_profile_avatar_url %}d-none{% endif %}"
-                  style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;"
                 >
                 <span
                   class="edit-profile-avatar-initial{% if edit_profile_avatar_url %} d-none{% endif %}"

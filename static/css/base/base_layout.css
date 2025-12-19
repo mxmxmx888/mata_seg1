@@ -6,6 +6,8 @@
 
 .app-toast-container {
   padding-top: 0.25rem;
+  top: 1rem;
+  z-index: 1100;
 }
 
 .app-toast {

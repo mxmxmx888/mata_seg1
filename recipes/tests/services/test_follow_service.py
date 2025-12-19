@@ -96,10 +96,10 @@ class FollowServiceTestCase(TestCase):
         self.assertEqual(out["status"], "unfollowed")
         self.assertFalse(Follower.objects.filter(follower=self.alice, author=self.bob).exists())
 
-    def test_cleanup_follow_back_prompt_on_follow(self):
-        Notification.objects.create(recipient=self.alice, sender=self.bob, notification_type="follow")
+    def test_follow_notification_remains_after_follow_back(self):
+        notif = Notification.objects.create(recipient=self.alice, sender=self.bob, notification_type="follow")
         FollowService(self.alice).follow_user(self.bob)
-        self.assertFalse(Notification.objects.filter(recipient=self.alice, sender=self.bob).exists())
+        self.assertTrue(Notification.objects.filter(id=notif.id, recipient=self.alice, sender=self.bob).exists())
 
     def test_accept_request_missing_returns_false(self):
         ok = FollowService(self.alice).accept_request(uuid.uuid4())
