@@ -6,13 +6,12 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('recipes', '0031_merge_20251213_2356 2'),
-        ('recipes', '0031_merge_20251214_1356 2'),
-        ('recipes', '0032_alter_ingredient_position 2'),
-        ('recipes', '0033_merge_20251216_0059 2'),
-        ('recipes', '0034_merge_20251216_2348 2'),
-        ('recipes', '0035_alter_user_bio_alter_user_username 2'),
         ('recipes', '0035_alter_user_bio_alter_user_username'),
+        ('recipes', '0034_merge_20251216_2348'),
+        ('recipes', '0033_merge_20251216_0059'),
+        ('recipes', '0032_alter_ingredient_position'),
+        ('recipes', '0031_merge_20251214_1356'),
+        ('recipes', '0031_merge_20251213_2356'),
     ]
 
     operations = [
