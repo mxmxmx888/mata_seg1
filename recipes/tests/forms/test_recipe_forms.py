@@ -79,6 +79,8 @@ class RecipePostFormTests(TestCase):
                 "visibility": RecipePost.VISIBILITY_PUBLIC,
                 "tags_text": "quick, ,  family ",
             }
+            ,
+            files=MultiValueDict({"images": [fake_image("cover.jpg")]}),
         )
         self.assertTrue(form.is_valid(), form.errors)
         tags = form.parse_tags()
@@ -119,6 +121,19 @@ class RecipePostFormTests(TestCase):
         self.assertEqual(len(imgs), 10)  # capped
         self.assertEqual(imgs[0].position, 0)
         self.assertEqual(imgs[9].position, 9)
+
+    def test_create_images_keeps_existing_when_no_new_files(self):
+        recipe = self.make_recipe()
+        existing = RecipeImage.objects.create(recipe_post=recipe, image=fake_image("keep.jpg"), position=0)
+
+        form = RecipePostForm(data={"category": "dinner"}, files=MultiValueDict())
+
+        form.create_images(recipe)
+
+        imgs = list(RecipeImage.objects.filter(recipe_post=recipe).order_by("position"))
+        self.assertEqual(len(imgs), 1)
+        self.assertIn("keep", imgs[0].image.name)
+        self.assertEqual(imgs[0].position, 0)
 
     def test_create_ingredients_replaces_existing_dedupes_and_parses_shop_url(self):
         recipe = self.make_recipe()
@@ -277,7 +292,10 @@ class RecipePostFormTests(TestCase):
                 "visibility": RecipePost.VISIBILITY_PUBLIC,
                 "shopping_links_text": "Milk | https://store.com/milk\nFlour | amazon.com/flour",
             },
-            files=files,
+            files=MultiValueDict({
+                "shop_images": [fake_image("milk.jpg"), fake_image("flour.jpg")],
+                "images": [fake_image("cover.jpg")],
+            }),
         )
 
         self.assertTrue(form.is_valid(), form.errors)

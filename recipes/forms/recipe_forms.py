@@ -330,6 +330,11 @@ class RecipePostForm(forms.ModelForm):
 
     def create_images(self, recipe):
         files = self.files.getlist("images")
+        if not files:
+            # No new uploads: keep whatever images are already associated
+            # with the recipe (useful when editing without changing photos).
+            return
+
         RecipeImage.objects.filter(recipe_post=recipe).delete()
 
         for idx, f in enumerate(files[:10]):

@@ -35,5 +35,8 @@ class LogInView(LoginProhibitedMixin, View):
 
                 return redirect(next_url)
 
-        messages.add_message(request, messages.ERROR, "The credentials provided were invalid!")
+        error_message = "Oh no, perhaps your username or password is incorrect!"
+        if form.is_valid():
+            form.add_error(None, error_message)
+        messages.add_message(request, messages.ERROR, error_message)
         return render(request, "auth/log_in.html", {"form": form, "next": self.next})

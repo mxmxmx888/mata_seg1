@@ -32,6 +32,14 @@ follow_service_factory = FollowService
 def _is_hx(request):
     return request.headers.get("HX-Request") or request.headers.get("x-requested-with") == "XMLHttpRequest"
 
+
+def _set_primary_image(recipe):
+    primary_image = recipe.images.first()
+    if primary_image and primary_image.image:
+        recipe.image = primary_image.image.url
+        recipe.save(update_fields=["image"])
+
+
 def _primary_image_url(recipe):
     first = recipe.images.first()
     if not first:
@@ -41,6 +49,7 @@ def _primary_image_url(recipe):
     except ValueError:
         return recipe.image or None
 
+
 def _gallery_images(images_qs):
     gallery = []
     for extra in images_qs[1:]:
@@ -49,6 +58,7 @@ def _gallery_images(images_qs):
         except ValueError:
             continue
     return gallery
+
 
 def _collections_modal_state(user, recipe):
     collections = []
@@ -87,37 +97,27 @@ def _collections_modal_state(user, recipe):
 
 @login_required
 def recipe_create(request):
-    if request.method == "POST":
-        form = RecipePostForm(request.POST, request.FILES or None)
-        if form.is_valid():
-            cleaned = form.cleaned_data
-            tags_list = form.parse_tags()
-
-            recipe = RecipePost.objects.create(
-                author=request.user,
-                title=cleaned["title"],
-                description=cleaned.get("description") or "",
-                prep_time_min=cleaned.get("prep_time_min") or 0,
-                cook_time_min=cleaned.get("cook_time_min") or 0,
-                nutrition=cleaned.get("nutrition") or "",
-                tags=tags_list,
-                category=cleaned.get("category") or "",
-                visibility=cleaned.get("visibility") or RecipePost.VISIBILITY_PUBLIC,
-                published_at=timezone.now(),
-            )
-
-            form.create_ingredients(recipe)
-            form.create_steps(recipe)
-            form.create_images(recipe)
-
-            primary_image = recipe.images.first()
-            if primary_image and primary_image.image:
-                recipe.image = primary_image.image.url
-                recipe.save(update_fields=["image"])
-
-            return redirect("recipe_detail", post_id=recipe.id)
-    else:
-        form = RecipePostForm()
+    form = RecipePostForm(request.POST or None, request.FILES or None)
+    if request.method == "POST" and form.is_valid():
+        cleaned = form.cleaned_data
+        tags_list = form.parse_tags()
+        recipe = RecipePost.objects.create(
+            author=request.user,
+            title=cleaned["title"],
+            description=cleaned.get("description") or "",
+            prep_time_min=cleaned.get("prep_time_min") or 0,
+            cook_time_min=cleaned.get("cook_time_min") or 0,
+            nutrition=cleaned.get("nutrition") or "",
+            tags=tags_list,
+            category=cleaned.get("category") or "",
+            visibility=cleaned.get("visibility") or RecipePost.VISIBILITY_PUBLIC,
+            published_at=timezone.now(),
+        )
+        form.create_ingredients(recipe)
+        form.create_steps(recipe)
+        form.create_images(recipe)
+        _set_primary_image(recipe)
+        return redirect("recipe_detail", post_id=recipe.id)
 
     return render(
         request,
@@ -131,40 +131,25 @@ def recipe_create(request):
 @login_required
 def recipe_edit(request, post_id):
     recipe = get_object_or_404(RecipePost, id=post_id, author=request.user)
-
-    if request.method == "POST":
-        form = RecipePostForm(request.POST, request.FILES or None, instance=recipe)
-        if form.is_valid():
-            cleaned = form.cleaned_data
-            tags_list = form.parse_tags()
-
-            recipe.title = cleaned["title"]
-            recipe.description = cleaned.get("description") or ""
-            recipe.prep_time_min = cleaned.get("prep_time_min") or 0
-            recipe.cook_time_min = cleaned.get("cook_time_min") or 0
-            recipe.nutrition = cleaned.get("nutrition") or ""
-            recipe.tags = tags_list
-            recipe.category = cleaned.get("category") or ""
-            recipe.visibility = cleaned.get("visibility") or RecipePost.VISIBILITY_PUBLIC
-            recipe.save()
-
-            Ingredient.objects.filter(recipe_post=recipe).delete()
-            RecipeStep.objects.filter(recipe_post=recipe).delete()
-            recipe.images.all().delete()
-
-            form.create_ingredients(recipe)
-            form.create_steps(recipe)
-            form.create_images(recipe)
-
-            primary_image = recipe.images.first()
-            if primary_image and primary_image.image:
-                recipe.image = primary_image.image.url
-                recipe.save(update_fields=["image"])
-
-            messages.success(request, "Recipe updated.")
-            return redirect("recipe_detail", post_id=recipe.id)
-    else:
-        form = RecipePostForm(instance=recipe)
+    form = RecipePostForm(request.POST or None, request.FILES or None, instance=recipe)
+    if request.method == "POST" and form.is_valid():
+        cleaned = form.cleaned_data
+        tags_list = form.parse_tags()
+        recipe.title = cleaned["title"]
+        recipe.description = cleaned.get("description") or ""
+        recipe.prep_time_min = cleaned.get("prep_time_min") or 0
+        recipe.cook_time_min = cleaned.get("cook_time_min") or 0
+        recipe.nutrition = cleaned.get("nutrition") or ""
+        recipe.tags = tags_list
+        recipe.category = cleaned.get("category") or ""
+        recipe.visibility = cleaned.get("visibility") or RecipePost.VISIBILITY_PUBLIC
+        recipe.save()
+        form.create_ingredients(recipe)
+        form.create_steps(recipe)
+        form.create_images(recipe)
+        _set_primary_image(recipe)
+        messages.success(request, "Recipe updated.")
+        return redirect("recipe_detail", post_id=recipe.id)
 
     return render(
         request,
