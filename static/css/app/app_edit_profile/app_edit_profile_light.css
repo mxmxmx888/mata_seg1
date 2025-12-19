@@ -144,3 +144,4 @@ body[data-theme="light"] .edit-profile-modal .btn.btn-light:hover,
 body[data-theme="light"] .edit-profile-modal .btn.btn-light:focus-visible {
   background-color: var(--text-primary);
   color: var(--text-inverse);
+}
