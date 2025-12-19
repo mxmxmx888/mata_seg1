@@ -84,7 +84,6 @@ def dashboard(request):
             Q(title__icontains=q)
             | Q(description__icontains=q)
             | Q(tags__icontains=q)
-            | Q(ingredients__name__icontains=q)
         ).distinct()
 
     if category and category != "all":
@@ -197,9 +196,6 @@ def dashboard(request):
         if q:
             items_qs = items_qs.filter(
                 Q(name__icontains=q)
-                | Q(recipe_post__title__icontains=q)
-                | Q(recipe_post__description__icontains=q)
-                | Q(recipe_post__tags__icontains=q)
             ).distinct()
 
         paginator = Paginator(items_qs, 24)
