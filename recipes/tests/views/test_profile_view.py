@@ -150,6 +150,28 @@ class ProfileViewTest(TestCase):
         self.assertEqual(cols[0]["title"], "List")
         self.assertEqual(cols[0]["count"], 1)
 
+    def test_collections_helper_uses_first_post_with_image(self):
+        fav = Favourite.objects.create(user=self.user, name="List")
+        no_image_post = RecipePost.objects.create(author=self.user, title="No image", description="d")
+        with_image_post = RecipePost.objects.create(author=self.user, title="With image", description="d", image="cover.png")
+        FavouriteItem.objects.create(favourite=fav, recipe_post=no_image_post)
+        FavouriteItem.objects.create(favourite=fav, recipe_post=with_image_post)
+
+        cols = _collections_for_user(self.user)
+        self.assertEqual(cols[0]["cover"], "cover.png")
+        self.assertTrue(cols[0]["has_image"])
+
+    def test_collections_helper_marks_outline_when_no_images(self):
+        fav = Favourite.objects.create(user=self.user, name="Empty images")
+        first = RecipePost.objects.create(author=self.user, title="One", description="d")
+        second = RecipePost.objects.create(author=self.user, title="Two", description="d")
+        FavouriteItem.objects.create(favourite=fav, recipe_post=first)
+        FavouriteItem.objects.create(favourite=fav, recipe_post=second)
+
+        cols = _collections_for_user(self.user)
+        self.assertIsNone(cols[0]["cover"])
+        self.assertFalse(cols[0]["has_image"])
+
     def test_collections_helper_handles_empty_collection(self):
         Favourite.objects.create(user=self.user, name="Empty")
         cols = _collections_for_user(self.user)

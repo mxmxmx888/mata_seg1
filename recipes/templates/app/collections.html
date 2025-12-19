@@ -4,7 +4,7 @@
 {% block body_class %}dashboard-body profile-body{% endblock %}
 
 {% block content %}
-<main class="profile-shell container-fluid px-4 px-xl-5 pb-5">
+<main class="profile-shell collections-shell container-fluid px-4 px-xl-5 pb-5">
   <header class="collection-header text-center">
     <h1 class="collection-title mb-1">Collections</h1>
   </header>
@@ -12,7 +12,10 @@
     <div class="profile-collections">
       {% for collection in collections %}
         <a class="collection-card" href="{% url 'collection_detail' collection.slug %}">
-          <div class="collection-thumb" style="background-image: url('{{ collection.cover }}');"></div>
+          <div
+            class="collection-thumb{% if not collection.has_image %} collection-thumb--empty{% endif %}"
+            {% if collection.cover %}style="background-image: url('{{ collection.cover }}');"{% endif %}
+          ></div>
           <div class="collection-overlay"></div>
           <div class="collection-meta">
             <p class="collection-title mb-0">{{ collection.title }}</p>

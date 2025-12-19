@@ -105,10 +105,29 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   };
 
+  const cameFromCreate = (() => {
+    const parsed = parseUrl(document.referrer);
+    if (!parsed) return false;
+    return /\/recipes\/create\/?$/i.test(parsed.pathname);
+  })();
+
+  if (cameFromCreate && window.history) {
+    if (typeof window.history.replaceState === 'function') {
+      window.history.replaceState(null, '', window.location.href);
+    }
+    if (typeof window.history.pushState === 'function') {
+      window.history.pushState({ preventReturnToCreate: true }, '', window.location.href);
+      window.addEventListener('popstate', () => {
+        const fallbackHref = backButton ? backButton.dataset.fallback || '/' : '/';
+        window.location.replace(fallbackHref);
+      }, { once: true });
+    }
+  }
+
   const resolveBackTarget = () => {
     if (!backButton) return { target: null, referrer: null, fallback: null };
     const fallbackHref = backButton.dataset.fallback || backButton.getAttribute('href') || '/';
-    const refValue = backButton.dataset.entry || document.referrer || '';
+    const refValue = cameFromCreate ? '' : (backButton.dataset.entry || document.referrer || '');
     const parsedRef = parseUrl(refValue);
     const isSameOrigin = parsedRef && parsedRef.origin === window.location.origin && parsedRef.href !== window.location.href;
     const target = isSameOrigin ? parsedRef.href : fallbackHref;
@@ -137,15 +156,19 @@ document.addEventListener('DOMContentLoaded', function () {
   }
   const lightbox = document.getElementById('lightbox');
   const triggerBack = () => {
-    if (backButton) {
-      backButton.click();
+    const fallbackHref = backButton
+      ? (backButton.dataset.fallback || backButton.getAttribute('href') || '/')
+      : '/';
+    const hasHistory = window.history.length > 1;
+    if (hasHistory) {
+      window.history.back();
       return;
     }
-    window.history.back();
+    window.location.assign(fallbackHref);
   };
 
-  document.addEventListener('keydown', (event) => {
-    if (event.key !== 'Escape' || event.defaultPrevented) return;
+  document.addEventListener('keyup', (event) => {
+    if (event.key !== 'Escape') return;
     const modalOpen = document.querySelector('.modal.show');
     const lightboxOpen = lightbox && !lightbox.classList.contains('d-none');
     if (modalOpen || lightboxOpen) return;

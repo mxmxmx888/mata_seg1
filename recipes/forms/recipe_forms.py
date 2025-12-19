@@ -1,5 +1,4 @@
 from django import forms
-import re
 
 try:
     from recipes.models import RecipePost, Ingredient, RecipeStep, RecipeImage
@@ -69,8 +68,13 @@ class RecipePostForm(forms.ModelForm):
     ingredients_text = forms.CharField(
         label="Ingredients",
         required=False,
-        widget=forms.Textarea(attrs={"rows": 5, "placeholder": "Example:\n2 cups Flour\nMatcha Powder | https://amazon.com/matcha"}),
-        help_text="One ingredient per line. To add a shop link, use '|' separator (e.g., 'Ingredient | https://link.com').",
+        widget=forms.Textarea(attrs={"rows": 5, "placeholder": "Example:\n2 cups Flour\n1 tsp Salt"}),
+        help_text="One ingredient per line.",
+    )
+    shopping_links_text = forms.CharField(
+        label="Shopping links",
+        required=False,
+        widget=forms.HiddenInput(),
     )
     steps_text = forms.CharField(
         label="Steps",
@@ -88,7 +92,7 @@ class RecipePostForm(forms.ModelForm):
         label="Shopping images",
         required=False,
         widget=MultiFileInput(attrs={"multiple": True}),
-        help_text="Optional: images for shopping links (1st image → 1st link)",
+        help_text="Add one image per shopping link (select before clicking Add).",
     )
 
 
@@ -120,40 +124,30 @@ class RecipePostForm(forms.ModelForm):
     def clean(self):
         cleaned_data = super().clean()
 
-        # Enforce an uploaded image for every ingredient line that includes a shop link
-        lines = self._split_lines("ingredients_text")
-        link_count = 0
-        for line in lines:
-            if "|" not in line:
-                continue
-            parts = line.split("|", 1)
-            raw_url = parts[1].strip() if len(parts) > 1 else ""
-            if raw_url:
-                link_count += 1
+        # Enforce an uploaded image for every shopping link
+        shopping_links = self._parse_shopping_links()
+        link_count = len(shopping_links)
+
+        existing_images = 0
+        if getattr(self, "instance", None):
+            existing_images = Ingredient.objects.filter(
+                recipe_post=self.instance,
+                shop_url__isnull=False,
+                shop_url__gt="",
+                shop_image_upload__isnull=False,
+            ).count()
 
         shop_images = self.files.getlist("shop_images")
-        if link_count and len(shop_images) < link_count:
+        missing = link_count - (existing_images + len(shop_images))
+        if link_count and missing > 0:
             self.add_error(
                 "shop_images",
                 forms.ValidationError(
-                    f"Add one shopping image for each ingredient with a link (need {link_count}, provided {len(shop_images)})."
+                    f"Add one shopping image for each shopping link (need {link_count}, provided {existing_images + len(shop_images)})."
                 ),
             )
 
         return cleaned_data
-
-
-    def clean_images(self):
-        files = self.files.getlist("images")
-        if len(files) > 10:
-            raise forms.ValidationError("You can upload up to 10 images.")
-        return files
-    
-    def clean_shop_images(self):
-        files = self.files.getlist("shop_images")
-        if len(files) > 10:
-            raise forms.ValidationError("You can upload up to 10 shopping images.")
-        return files
 
 
     def parse_tags(self):
@@ -176,13 +170,55 @@ class RecipePostForm(forms.ModelForm):
         lines = [line.strip() for line in text.splitlines()]
         return [l for l in lines if l]
 
+    def _parse_shopping_links(self):
+        text = (self.cleaned_data.get("shopping_links_text") or "").strip()
+        if not text:
+            return []
+
+        items = []
+        for line in text.splitlines():
+            if not line.strip():
+                continue
+
+            if "|" in line:
+                parts = line.split("|", 1)
+                name = (parts[0] or "").strip()
+                url = (parts[1] or "").strip()
+            else:
+                name = line.strip()
+                url = ""
+
+            if not name:
+                continue
+
+            if url:
+                if url.lower().startswith(("http://", "https://")):
+                    normalized_url = url
+                else:
+                    normalized_url = f"https://{url}"
+            else:
+                normalized_url = None
+
+            items.append({"name": name, "url": normalized_url})
+
+        return items
+
     def create_ingredients(self, recipe):
+        existing_shop_images = list(
+            Ingredient.objects.filter(
+                recipe_post=recipe,
+                shop_url__isnull=False,
+                shop_url__gt="",
+                shop_image_upload__isnull=False,
+            ).order_by("position")
+        )
         Ingredient.objects.filter(recipe_post=recipe).delete()
 
         lines = self._split_lines("ingredients_text")
-
+        shopping_links = self._parse_shopping_links()
         shop_images = list(self.cleaned_data.get("shop_images") or [])
         img_index = 0
+        existing_img_index = 0
 
         seen_names = set()
         position = 0
@@ -191,29 +227,40 @@ class RecipePostForm(forms.ModelForm):
             if not line.strip():
                 continue
 
-            name = line
-            url = None
-
-            if "|" in line:
-                parts = line.split("|", 1)
-                name = parts[0].strip()
-                raw_url = parts[1].strip()
-
-                if raw_url:
-                    if raw_url.lower().startswith(("http://", "https://")):
-                        url = raw_url
-                    else:
-                        url = f"https://{raw_url}"
-
-            key = name.strip().lower()
+            name = line.strip()
+            key = name.lower()
             if key in seen_names:
                 continue
             seen_names.add(key)
 
+            position += 1
+
+            Ingredient.objects.create(
+                recipe_post=recipe,
+                name=name,
+                shop_url=None,
+                shop_image_upload=None,
+                position=position,
+            )
+
+        for item in shopping_links:
+            name = (item.get("name") or "").strip()
+            if not name:
+                continue
+
+            key = name.lower()
+            if key in seen_names:
+                continue
+            seen_names.add(key)
+
+            url = item.get("url") or None
             img_file = None
-            if url and img_index < len(shop_images):
+            if img_index < len(shop_images):
                 img_file = shop_images[img_index]
                 img_index += 1
+            elif existing_img_index < len(existing_shop_images):
+                img_file = existing_shop_images[existing_img_index].shop_image_upload
+                existing_img_index += 1
 
             position += 1
 
@@ -226,6 +273,23 @@ class RecipePostForm(forms.ModelForm):
             )
 
 
+
+    def __init__(self, *args, **kwargs):
+        instance = kwargs.get("instance")
+        super().__init__(*args, **kwargs)
+
+        if instance:
+            ingredients_qs = Ingredient.objects.filter(recipe_post=instance).order_by("position")
+            ingredient_lines = []
+            shopping_lines = []
+            for ing in ingredients_qs:
+                if getattr(ing, "shop_url", None):
+                    shopping_lines.append(f"{ing.name} | {ing.shop_url}")
+                else:
+                    ingredient_lines.append(ing.name)
+
+            self.fields["ingredients_text"].initial = "\n".join(ingredient_lines)
+            self.fields["shopping_links_text"].initial = "\n".join(shopping_lines)
 
 
     def create_steps(self, recipe):
@@ -248,4 +312,3 @@ class RecipePostForm(forms.ModelForm):
                 image=f,
                 position=idx,
             )
-

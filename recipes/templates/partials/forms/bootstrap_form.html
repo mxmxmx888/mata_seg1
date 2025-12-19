@@ -1,27 +1,33 @@
 {% load widget_tweaks %}
 {% for field in form %}
-  <div class="mb-3">
-    {{ field.label_tag }}
-    {% if form.is_bound %}
-      {% if field.errors %}
-        {% render_field field class="form-control is-invalid" %}
+  {% if exclude_fields and field.name in exclude_fields %}
+    {# Skip fields that will be rendered manually elsewhere #}
+  {% elif field.is_hidden %}
+    {{ field }}
+  {% else %}
+    <div class="mb-3">
+      {{ field.label_tag }}
+      {% if form.is_bound %}
+        {% if field.errors %}
+          {% render_field field class="form-control is-invalid" %}
+        {% else %}
+          {% render_field field class="form-control is-valid" %}
+        {% endif %}
       {% else %}
-        {% render_field field class="form-control is-valid" %}
+        {% render_field field class="form-control" %}
       {% endif %}
-    {% else %}
-      {% render_field field class="form-control" %}
-    {% endif %}
-    {% if field.help_text %}
-      <small class="form-text text-muted">{{ field.help_text }}</small>
-    {% endif %}
-    <div class="invalid-feedback">
-      {{ field.errors }}
-    </div>
-    {% if field.name == "images" %}
-      <div id="image-file-list" class="small text-muted mt-2"></div>
-    {% elif field.name == "shop_images" %}
-      <div id="shop-image-file-list" class="small text-muted mt-2"></div>
-    {% endif %}
+      {% if field.help_text %}
+        <small class="form-text text-muted">{{ field.help_text }}</small>
+      {% endif %}
+      <div class="invalid-feedback">
+        {{ field.errors }}
+      </div>
+      {% if field.name == "images" %}
+        <div id="image-file-list" class="small text-muted mt-2"></div>
+      {% elif field.name == "shop_images" %}
+        <div id="shop-image-file-list" class="small text-muted mt-2"></div>
+      {% endif %}
 
-  </div>
+    </div>
+  {% endif %}
 {% endfor %}

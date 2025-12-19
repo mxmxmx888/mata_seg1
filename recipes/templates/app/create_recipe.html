@@ -1,6 +1,6 @@
 {# recipes/templates/app/create_recipe.html #}
 {% extends "base/base_app.html" %}
-{% load static %}
+{% load static widget_tweaks %}
 
 {% block content %}
   <main class="app-page">
@@ -12,10 +12,10 @@
           Give it a title, a short description, then list ingredients and steps.
         </p>
 
-        <form method="post" enctype="multipart/form-data" data-form-bound="{{ form.is_bound|yesno:'true,false' }}" data-form-has-errors="{% if form.errors %}true{% else %}false{% endif %}">
+        <form method="post" enctype="multipart/form-data" data-form-bound="{{ form.is_bound|yesno:'true,false' }}" data-form-has-errors="{% if form.errors %}true{% else %}false{% endif %}" novalidate>
           {% csrf_token %}
 
-          {% include "partials/forms/bootstrap_form.html" with form=form %}
+          {% include "partials/forms/bootstrap_form.html" with form=form exclude_fields="shop_images" %}
 
           <div class="shopping-links-helper mt-5 mb-4">
             <div class="d-flex justify-content-between align-items-center mb-3">
@@ -35,9 +35,26 @@
                 <label for="shop-link" class="form-label mb-1 text-muted small">Online Link</label>
                 <input type="url" id="shop-link" class="form-control form-control-dark" placeholder="https://...">
               </div>
-              <div class="col-12 col-md-2 col-lg-2 col-button">
-                <button type="button" id="add-shop-link" class="btn btn-white shop-add-btn">Add</button>
-              </div>
+            </div>
+
+            <div class="shopping-links-upload mt-3">
+              <label class="form-label mb-1 text-muted small" for="{{ form.shop_images.id_for_label }}">Shopping images</label>
+              {% if form.shop_images.errors %}
+                {% render_field form.shop_images class="form-control form-control-dark shopping-upload-input is-invalid" %}
+              {% else %}
+                {% render_field form.shop_images class="form-control form-control-dark shopping-upload-input" %}
+              {% endif %}
+              <small class="text-muted small d-block mt-1">Select one image for this item before clicking Add.</small>
+              {% if form.shop_images.errors %}
+                <div class="invalid-feedback d-block">
+                  {{ form.shop_images.errors }}
+                </div>
+              {% endif %}
+              <div id="shop-image-file-list" class="small text-muted mt-2"></div>
+            </div>
+
+            <div class="col-12 mt-3">
+              <button type="button" id="add-shop-link" class="btn btn-white shop-add-btn">Add</button>
             </div>
 
             <div class="mt-4 shopping-links-list">
@@ -69,10 +86,11 @@
       const imageList = document.getElementById('image-file-list');
       const shopImageInput = document.getElementById('id_shop_images');
       const shopImageList = document.getElementById('shop-image-file-list');
+      const shoppingField = document.getElementById('id_shopping_links_text');
       const isBound = formEl && formEl.dataset.formBound === 'true';
       const hasErrors = formEl && formEl.dataset.formHasErrors === 'true';
+      const requiredFields = formEl ? Array.from(formEl.querySelectorAll('[required]')) : [];
       const IMG_STORAGE_KEY = 'create-recipe-images';
-      const SHOP_IMG_STORAGE_KEY = 'create-recipe-shop-images';
       
       const ingredientsField = document.getElementById('id_ingredients_text');
       const itemInput = document.getElementById('shop-item');
@@ -80,8 +98,46 @@
       const addBtn = document.getElementById('add-shop-link');
       const listBox = document.getElementById('shop-list');
       const shoppingList = [];
+      const shopImageFiles = [];
 
-      if (!formEl || !ingredientsField || !itemInput || !linkInput || !addBtn || !listBox) return;
+      if (!formEl || !ingredientsField || !itemInput || !linkInput || !addBtn || !listBox || !shoppingField) return;
+
+      function clearFieldError(field) {
+        const container = field.closest('.mb-3') || field.parentElement;
+        if (!container) return;
+        container.querySelectorAll('.client-required-error').forEach((msg) => msg.remove());
+      }
+
+      function renderRequiredFieldErrors() {
+        let hasClientErrors = false;
+        formEl.querySelectorAll('.client-required-error').forEach((msg) => msg.remove());
+        requiredFields.forEach((field) => {
+          const isMissing = field.validity ? field.validity.valueMissing : !(field.value || '').trim();
+          if (!isMissing) {
+            clearFieldError(field);
+            return;
+          }
+          hasClientErrors = true;
+          const message = document.createElement('div');
+          message.className = 'client-required-error';
+          message.textContent = 'field required';
+          const container = field.closest('.mb-3') || field.parentElement;
+          const invalidFeedback = container ? container.querySelector('.invalid-feedback') : null;
+          if (invalidFeedback) {
+            invalidFeedback.insertAdjacentElement('beforebegin', message);
+          } else if (container) {
+            container.appendChild(message);
+          } else {
+            field.insertAdjacentElement('afterend', message);
+          }
+        });
+        return hasClientErrors;
+      }
+
+      requiredFields.forEach((field) => {
+        field.addEventListener('input', () => clearFieldError(field));
+        field.addEventListener('change', () => clearFieldError(field));
+      });
 
       function renderImagesList() {
         if (!imageInput || !imageList) return;
@@ -101,20 +157,27 @@
       }
 
       function renderShopImagesList() {
-        if (!shopImageInput || !shopImageList) return;
-        const files = shopImageInput.files;
-        if (!files || !files.length) {
+        if (!shopImageList) return;
+        if (!shopImageFiles.length) {
           shopImageList.textContent = "";
           return;
         }
-        const names = Array.from(files).map(f => f.name);
+        const names = shopImageFiles.filter(Boolean).map(f => f.name);
         shopImageList.textContent = names.join(", ");
       }
       if (shopImageInput) {
-        shopImageInput.addEventListener('change', () => {
-          renderShopImagesList();
-          persistFiles(shopImageInput, SHOP_IMG_STORAGE_KEY);
+        shopImageInput.multiple = false;
+        shopImageInput.addEventListener('change', renderShopImagesList);
+      }
+
+      function syncShopImagesInput() {
+        if (!shopImageInput || typeof DataTransfer === 'undefined') return;
+        const dt = new DataTransfer();
+        shopImageFiles.forEach(f => {
+          if (f) dt.items.add(f);
         });
+        shopImageInput.files = dt.files;
+        renderShopImagesList();
       }
 
       function normalizeUrl(url) {
@@ -122,14 +185,21 @@
         return /^https?:\/\//i.test(url) ? url : 'https://' + url;
       }
 
+      function syncShoppingField() {
+        if (!shoppingField) return;
+        shoppingField.value = shoppingList.map(item => item.url ? `${item.name} | ${item.url}` : item.name).join('\n');
+      }
+
       function renderList() {
         if (!shoppingList.length) {
           listBox.innerHTML = '<div class="text-secondary small fst-italic">No shopping links added yet.</div>';
+          syncShoppingField();
           return;
         }
         listBox.innerHTML = shoppingList.map((item, idx) => `
           <div class="shopping-list-item" data-idx="${idx}">
-            <div>
+            <div class="d-flex align-items-center gap-2">
+              ${item.previewUrl ? `<img src="${item.previewUrl}" alt="${item.name}" class="shopping-thumb">` : ''}
               <span class="fw-medium">${item.name}</span>
               <span class="note">${item.url ? '<i class="bi bi-link-45deg"></i> Linked' : ''}</span>
             </div>
@@ -140,34 +210,56 @@
         listBox.querySelectorAll('.remove').forEach(btn => {
           btn.addEventListener('click', () => {
             const i = parseInt(btn.dataset.idx, 10);
-            shoppingList.splice(i, 1);
+            const removed = shoppingList.splice(i, 1)[0];
+            const removedFile = shopImageFiles.splice(i, 1)[0];
+            if (removed && removed.previewUrl) {
+              URL.revokeObjectURL(removed.previewUrl);
+            }
+            syncShopImagesInput();
             renderList();
           });
         });
+
+        syncShoppingField();
       }
 
       function addLink() {
         const name = (itemInput.value || '').trim();
         const rawUrl = (linkInput.value || '').trim();
+        const files = shopImageInput && shopImageInput.files ? Array.from(shopImageInput.files) : [];
         if (!name) {
           itemInput.focus();
           return;
         }
+        if (!rawUrl) {
+          linkInput.focus();
+          return;
+        }
+        if (!files.length) {
+          if (shopImageInput) shopImageInput.focus();
+          return;
+        }
 
-        shoppingList.push({ name, url: normalizeUrl(rawUrl) });
+        const file = files[0];
+        const previewUrl = URL.createObjectURL(file);
+        shoppingList.push({ name, url: normalizeUrl(rawUrl), previewUrl });
+        shopImageFiles.push(file);
+        syncShopImagesInput();
         renderList();
 
         itemInput.value = '';
         linkInput.value = '';
+        if (shopImageInput) {
+          shopImageInput.value = '';
+          renderShopImagesList();
+        }
         itemInput.focus();
       }
 
-      function prepareIngredientsForSubmit() {
+      function cleanIngredientsField() {
         const manual = (ingredientsField.value || '').trim();
         const manualLines = manual ? manual.split(/\r?\n/).map(l => l.trim()).filter(Boolean) : [];
-        const shoppingLines = shoppingList.map(item => item.url ? `${item.name} | ${item.url}` : item.name);
-        const finalLines = [...manualLines, ...shoppingLines];
-        ingredientsField.value = finalLines.join('\n');
+        ingredientsField.value = manualLines.join('\n');
       }
 
       function persistFiles(input, storageKey) {
@@ -238,43 +330,45 @@
       }
 
       function bootstrapExisting() {
-        const raw = (ingredientsField.value || '').trim();
-        if (!raw) return;
-        const lines = raw.split(/\r?\n/);
-        const manualKeep = [];
+        cleanIngredientsField();
+        const rawShopping = (shoppingField.value || '').trim();
+        if (!rawShopping) return;
+        const lines = rawShopping.split(/\r?\n/);
         lines.forEach(line => {
-          if (line.includes('|')) {
-            const parts = line.split('|');
-            const name = (parts[0] || '').trim();
-            const url = normalizeUrl((parts[1] || '').trim());
-            if (name) shoppingList.push({ name, url });
-          } else {
-            if (line.trim()) manualKeep.push(line.trim());
+          if (!line || !line.trim()) return;
+          const parts = line.split('|');
+          const name = (parts[0] || '').trim();
+          const url = normalizeUrl((parts[1] || '').trim());
+          if (name) {
+            shoppingList.push({ name, url, previewUrl: null });
+            shopImageFiles.push(null);
           }
         });
-        ingredientsField.value = manualKeep.join('\n');
-        renderList();
       }
 
       addBtn.addEventListener('click', addLink);
       itemInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); addLink(); } });
       linkInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); addLink(); } });
-      formEl.addEventListener('submit', () => {
-        prepareIngredientsForSubmit();
+      formEl.addEventListener('submit', (event) => {
+        const hasClientErrors = renderRequiredFieldErrors();
+        if (hasClientErrors) {
+          event.preventDefault();
+          return;
+        }
+        cleanIngredientsField();
+        syncShoppingField();
+        syncShopImagesInput();
         persistFiles(imageInput, IMG_STORAGE_KEY);
-        persistFiles(shopImageInput, SHOP_IMG_STORAGE_KEY);
       });
 
       if (!isBound) {
         // Fresh form: clear any stale cached files from older attempts.
         try {
           sessionStorage.removeItem(IMG_STORAGE_KEY);
-          sessionStorage.removeItem(SHOP_IMG_STORAGE_KEY);
         } catch (err) {}
       } else if (hasErrors) {
         // Restore selected files after a failed submit so they stay visible.
         restoreFiles(imageInput, IMG_STORAGE_KEY, renderImagesList);
-        restoreFiles(shopImageInput, SHOP_IMG_STORAGE_KEY, renderShopImagesList);
       }
 
       bootstrapExisting();

@@ -120,9 +120,21 @@ body:not(.auth-body):is([data-theme="dark"], .dashboard-body:not([data-theme="li
   color: #fca5a5;
 }
 
+.app-page .create-recipe-card .client-required-error {
+  margin-top: 0.25rem;
+  font-size: 0.75rem;
+  color: #ef4444;
+}
+
 .app-page .create-recipe-card textarea.form-control {
   min-height: 140px;
   resize: vertical;
+}
+
+.shopping-links-upload #shop-image-file-list {
+  font-size: 0.85rem;
+  font-weight: 400;
+  color: color-mix(in srgb, var(--text-muted) 90%, var(--text-primary) 10%);
 }
 
 .app-page .btn-save-recipe {
@@ -247,6 +259,23 @@ body:not(.auth-body):is([data-theme="dark"], .dashboard-body:not([data-theme="li
   background: var(--text-primary);
 }
 
+.shopping-links-upload {
+  background: var(--bg-2);
+  border: 1px dashed var(--border-subtle);
+  border-radius: 12px;
+  padding: 0.85rem 1rem;
+}
+
+.shopping-links-upload .form-label {
+  font-size: 0.8rem;
+}
+
+.shopping-upload-input {
+  background: transparent;
+  border: none;
+  padding-left: 0;
+}
+
 .shopping-list-box {
   background: var(--bg-2);
   border: 1px dashed var(--border-subtle);
@@ -285,6 +314,14 @@ body:not(.auth-body):is([data-theme="dark"], .dashboard-body:not([data-theme="li
 .shopping-list-item .remove:hover {
   background: #ff6b6b;
   color: #fff;
+}
+
+.shopping-thumb {
+  width: 44px;
+  height: 44px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid var(--border-subtle);
 }
 
 .col-button {

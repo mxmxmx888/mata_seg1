@@ -203,8 +203,9 @@ def recipe_detail(request, post_id):
     source_link = request.build_absolute_uri(reverse("recipe_detail", args=[recipe.id]))
     source_label = "Recipi"
 
-    ingredients = list(ingredients_qs)
-    shop_ingredients = [ing for ing in ingredients if getattr(ing, "shop_url", None) and ing.shop_url.strip()]
+    ingredients_all = list(ingredients_qs)
+    shop_ingredients = [ing for ing in ingredients_all if getattr(ing, "shop_url", None) and ing.shop_url.strip()]
+    ingredients = [ing for ing in ingredients_all if not (getattr(ing, "shop_url", None) and ing.shop_url.strip())]
     steps = [s.description for s in steps_qs]
 
     context = {

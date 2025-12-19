@@ -50,29 +50,36 @@ def _collections_for_user(user):
         .prefetch_related("items__recipe_post")
     )
 
+    def _post_image_url(post):
+        return getattr(post, "primary_image_url", None) or getattr(post, "image", None)
+
     collections = []
     for fav in favourites:
-        items = list(fav.items.all())
+        items = list(
+            fav.items.select_related("recipe_post").order_by("added_at", "id")
+        )
         last_saved_at = fav.created_at
 
-        cover_post = getattr(fav, "cover_post", None)
+        cover_post = fav.cover_post if _post_image_url(getattr(fav, "cover_post", None)) else None
+        first_post_with_image = None
         visible_posts = []
         for item in items:
-            if item.recipe_post:
-                visible_posts.append(item.recipe_post)
+            if not item.recipe_post:
+                continue
+
+            visible_posts.append(item.recipe_post)
             if item.added_at and (last_saved_at is None or item.added_at > last_saved_at):
                 last_saved_at = item.added_at
-            if not cover_post and item.recipe_post:
-                cover_post = item.recipe_post
+            if not first_post_with_image:
+                image_url = _post_image_url(item.recipe_post)
+                if image_url:
+                    first_post_with_image = item.recipe_post
 
-        if not visible_posts:
-            count = 0
-            cover_url = "https://placehold.co/1200x800/0f0f14/ffffff?text=Collection"
-        else:
-            count = len(visible_posts)
-            cover_url = getattr(cover_post, "primary_image_url", None) or getattr(
-                cover_post, "image", None
-            ) or "https://placehold.co/1200x800/0f0f14/ffffff?text=Collection"
+        if not cover_post:
+            cover_post = first_post_with_image
+
+        cover_url = _post_image_url(cover_post) if cover_post else None
+        count = len(visible_posts)
 
         collections.append(
             {
@@ -82,6 +89,7 @@ def _collections_for_user(user):
                 "count": count,
                 "privacy": None,
                 "cover": cover_url,
+                "has_image": bool(cover_url),
                 "last_saved_at": last_saved_at,
             }
         )
