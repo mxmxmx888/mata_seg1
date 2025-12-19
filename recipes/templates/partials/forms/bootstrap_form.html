@@ -19,7 +19,7 @@
       {% if field.help_text %}
         <small class="form-text text-muted">{{ field.help_text }}</small>
       {% endif %}
-      <div class="invalid-feedback">
+      <div class="invalid-feedback{% if field.errors %} d-block{% endif %}">
         {{ field.errors }}
       </div>
       {% if field.name == "images" %}

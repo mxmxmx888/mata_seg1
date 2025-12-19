@@ -10,7 +10,7 @@
   --text-primary: #111827;
   --text-muted: #4b5563;
   --text-inverse: #f9fafb;
-  --border-subtle: #e1e1e6;
+  --border-subtle: #d6d6dd;
   --border-strong: #cbd5e1;
   --comment-author-color: #0f172a;
   --comment-text-color: #374151;
@@ -31,7 +31,7 @@ body.app-body:not([data-theme="light"]) {
   --text-primary: #f6f6f7;
   --text-muted: #a5a6b5;
   --text-inverse: #0b1220;
-  --border-subtle: #272730;
+  --border-subtle: #32323d;
   --border-strong: #3a3a46;
   --comment-author-color: var(--text-primary);
   --comment-text-color: color-mix(in srgb, var(--text-primary) 88%, var(--text-muted) 12%);
@@ -50,7 +50,7 @@ body.app-body:not([data-theme="light"]) {
     --text-primary: #f6f6f7;
     --text-muted: #a5a6b5;
     --text-inverse: #0b1220;
-    --border-subtle: #272730;
+    --border-subtle: #32323d;
     --border-strong: #3a3a46;
   }
 }

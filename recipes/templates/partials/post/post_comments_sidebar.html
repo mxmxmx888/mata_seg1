@@ -20,6 +20,11 @@
           {% if request.user.is_authenticated %}
             {% if request.user == recipe.author %}
               <li>
+                <a class="dropdown-item" href="{% url 'recipe_edit' recipe.id %}">
+                  Edit recipe
+                </a>
+              </li>
+              <li>
                 <form
                   action="{% url 'delete_my_recipe' recipe.id %}"
                   method="post"

@@ -119,7 +119,14 @@ def recipe_create(request):
     else:
         form = RecipePostForm()
 
-    return render(request, "app/create_recipe.html", {"form": form})
+    return render(
+        request,
+        "app/create_recipe.html",
+        {
+            "form": form,
+            "exclude_fields": ["shop_images"],  # render form fields except shopping images (handled manually)
+        },
+    )
 
 @login_required
 def recipe_edit(request, post_id):
@@ -159,7 +166,15 @@ def recipe_edit(request, post_id):
     else:
         form = RecipePostForm(instance=recipe)
 
-    return render(request, "app/edit_recipe.html", {"form": form, "recipe": recipe})
+    return render(
+        request,
+        "app/edit_recipe.html",
+        {
+            "form": form,
+            "recipe": recipe,
+            "exclude_fields": ["shop_images"],  # render form fields except shopping images (handled manually)
+        },
+    )
 
 @login_required
 def recipe_detail(request, post_id):

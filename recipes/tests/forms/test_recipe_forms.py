@@ -204,6 +204,44 @@ class RecipePostFormTests(TestCase):
         self.assertIn("shop_images", form.errors)
         self.assertIn("up to 10 shopping images", str(form.errors["shop_images"]))
 
+    def test_clean_images_requires_one_on_create(self):
+        form = RecipePostForm(
+            data={
+                "title": "X",
+                "description": "Y",
+                "category": "dinner",
+                "prep_time_min": 1,
+                "cook_time_min": 1,
+                "nutrition": "",
+                "visibility": RecipePost.VISIBILITY_PUBLIC,
+            },
+            files=MultiValueDict(),
+        )
+
+        self.assertFalse(form.is_valid())
+        self.assertIn("images", form.errors)
+        self.assertIn("at least one image", str(form.errors["images"]))
+
+    def test_clean_images_allows_existing_on_edit(self):
+        recipe = self.make_recipe()
+        RecipeImage.objects.create(recipe_post=recipe, image=fake_image("existing.jpg"), position=0)
+
+        form = RecipePostForm(
+            data={
+                "title": "X",
+                "description": "Y",
+                "category": "dinner",
+                "prep_time_min": 1,
+                "cook_time_min": 1,
+                "nutrition": "",
+                "visibility": RecipePost.VISIBILITY_PUBLIC,
+            },
+            instance=recipe,
+            files=MultiValueDict(),
+        )
+
+        self.assertTrue(form.is_valid(), form.errors)
+
     def test_clean_requires_shop_images_for_each_link(self):
         files = MultiValueDict({"shop_images": [fake_image("only1.jpg")]})
         form = RecipePostForm(

@@ -1,5 +1,4 @@
-
-body.shop-body {
+:root {
   --shop-bg: var(--bg-1, #f4f2ed);
   --shop-text: var(--text-primary, #1c1c1c);
   --shop-card-bg: var(--bg-2, #e6e2d9);
@@ -7,13 +6,9 @@ body.shop-body {
   --shop-meta: var(--text-muted, #5f5c57);
   --shop-chip-bg: rgba(12, 12, 12, 0.55);
   --shop-chip-text: #ffffff;
-
-  background: var(--shop-bg);
-  color: var(--shop-text);
 }
 
-:root[data-theme="dark"] body.shop-body,
-body.shop-body[data-theme="dark"] {
+:root[data-theme="dark"] {
   --shop-bg: var(--bg-1, #0f1014);
   --shop-text: var(--text-primary, #f5f5f5);
   --shop-card-bg: var(--bg-2, #181920);
@@ -21,6 +16,17 @@ body.shop-body[data-theme="dark"] {
   --shop-meta: color-mix(in srgb, var(--text-muted, #a5a6b5) 70%, var(--text-primary, #f5f5f5) 30%);
   --shop-chip-bg: rgba(12, 12, 12, 0.55);
   --shop-chip-text: #ffffff;
+}
+
+body.shop-body {
+  background: var(--shop-bg);
+  color: var(--shop-text);
+}
+
+:root[data-theme="dark"] body.shop-body,
+body.shop-body[data-theme="dark"] {
+  background: var(--shop-bg);
+  color: var(--shop-text);
 }
 
 .shop-shell {

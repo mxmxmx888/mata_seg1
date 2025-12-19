@@ -62,7 +62,7 @@
 
 .post-actions-dropdown .dropdown-item {
   font-size: 0.9rem;
-  color: #1f2937;
+  color: var(--text-primary);
   padding: 0.55rem 1rem;
 }
 

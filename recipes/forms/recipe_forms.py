@@ -113,6 +113,17 @@ class RecipePostForm(forms.ModelForm):
         files = self.files.getlist("images")
         if len(files) > 10:
             raise forms.ValidationError("You can upload up to 10 images.")
+
+        has_existing_image = False
+        if getattr(self, "instance", None) and getattr(self.instance, "pk", None):
+            # Editing: allow existing DB images or legacy cover image string.
+            has_existing_image = RecipeImage.objects.filter(recipe_post=self.instance).exists() or bool(
+                getattr(self.instance, "image", None)
+            )
+
+        if not files and not has_existing_image:
+            raise forms.ValidationError("Please upload at least one image for your recipe.")
+
         return files
     
     def clean_shop_images(self):
@@ -124,7 +135,6 @@ class RecipePostForm(forms.ModelForm):
     def clean(self):
         cleaned_data = super().clean()
 
-        # Enforce an uploaded image for every shopping link
         shopping_links = self._parse_shopping_links()
         link_count = len(shopping_links)
 

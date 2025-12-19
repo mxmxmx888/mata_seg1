@@ -15,7 +15,7 @@
         <form method="post" enctype="multipart/form-data" data-form-bound="{{ form.is_bound|yesno:'true,false' }}" data-form-has-errors="{% if form.errors %}true{% else %}false{% endif %}" novalidate>
           {% csrf_token %}
 
-          {% include "partials/forms/bootstrap_form.html" with form=form exclude_fields="shop_images" %}
+          {% include "partials/forms/bootstrap_form.html" with form=form exclude_fields=exclude_fields %}
 
           <div class="shopping-links-helper mt-5 mb-4">
             <div class="d-flex justify-content-between align-items-center mb-3">
@@ -44,7 +44,7 @@
               {% else %}
                 {% render_field form.shop_images class="form-control form-control-dark shopping-upload-input" %}
               {% endif %}
-              <small class="text-muted small d-block mt-1">Select one image for this item before clicking Add.</small>
+              <small class="text-muted small d-block mt-1"></small>
               {% if form.shop_images.errors %}
                 <div class="invalid-feedback d-block">
                   {{ form.shop_images.errors }}
@@ -222,20 +222,58 @@
         syncShoppingField();
       }
 
+      function showShoppingError(field, message) {
+        if (!field) return;
+        const container = field.closest('.shopping-links-field') || field.closest('.shopping-links-upload') || field.parentElement;
+        if (!container) return;
+        let msg = container.querySelector('.client-required-error');
+        if (!msg) {
+          msg = document.createElement('div');
+          msg.className = 'client-required-error';
+          container.appendChild(msg);
+        }
+        msg.textContent = message;
+      }
+
+      function clearShoppingError(field) {
+        if (!field) return;
+        const container = field.closest('.shopping-links-field') || field.closest('.shopping-links-upload') || field.parentElement;
+        if (!container) return;
+        container.querySelectorAll('.client-required-error').forEach((el) => el.remove());
+      }
+
+      [itemInput, linkInput, shopImageInput].forEach((el) => {
+        if (!el) return;
+        el.addEventListener('input', () => clearShoppingError(el));
+        el.addEventListener('change', () => clearShoppingError(el));
+      });
+
       function addLink() {
         const name = (itemInput.value || '').trim();
         const rawUrl = (linkInput.value || '').trim();
         const files = shopImageInput && shopImageInput.files ? Array.from(shopImageInput.files) : [];
+        let hasMissing = false;
+
+        clearShoppingError(itemInput);
+        clearShoppingError(linkInput);
+        clearShoppingError(shopImageInput);
+
         if (!name) {
-          itemInput.focus();
-          return;
+          showShoppingError(itemInput, 'Please add an item name.');
+          hasMissing = true;
         }
         if (!rawUrl) {
-          linkInput.focus();
-          return;
+          showShoppingError(linkInput, 'Please add an online link.');
+          hasMissing = true;
         }
         if (!files.length) {
-          if (shopImageInput) shopImageInput.focus();
+          showShoppingError(shopImageInput, 'Please choose an image for this item.');
+          hasMissing = true;
+        }
+        if (hasMissing) {
+          if (!name) itemInput.focus();
+          else if (!rawUrl) linkInput.focus();
+          else if (!files.length && shopImageInput) shopImageInput.focus();
           return;
         }
 
