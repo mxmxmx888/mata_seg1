@@ -26,6 +26,7 @@ from .seed_data import (
     comment_phrases,
     favourite_names,
     recipe_image_file_pool,
+    shop_image_file_pool,
     tags_pool,
     user_fixtures,
 )
@@ -274,14 +275,37 @@ class Command(BaseCommand):
         for idx, post_id in enumerate(post_ids):
             ingredient_set = SHOP_INGREDIENT_SETS[idx % set_count]
             position = 1
+            recipe_shop_images: List[str] = []
 
             for item in ingredient_set:
+                image_file = None
+                rel_path = None
+
+                if item.get("shop_url") and shop_image_file_pool:
+                    if not recipe_shop_images:
+                        recipe_shop_images = sample(
+                            shop_image_file_pool,
+                            k=min(len(shop_image_file_pool), len(ingredient_set)),
+                        )
+
+                    if recipe_shop_images:
+                        rel_path = recipe_shop_images.pop()
+                    else:
+                        rel_path = choice(shop_image_file_pool)
+
+                if rel_path:
+                    try:
+                        image_file = self._make_uploaded_image(rel_path)
+                    except FileNotFoundError:
+                        image_file = None
+
                 rows.append(
                     Ingredient(
                         recipe_post_id=post_id,
                         name=item["name"],
                         position=position,
                         shop_url=item.get("shop_url"),
+                        shop_image_upload=image_file,
                     )
                 )
                 position += 1
