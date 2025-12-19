@@ -1,24 +1,18 @@
 import random
-
 from django.contrib.auth import get_user_model
 from django.db.models import Q, F, ExpressionWrapper, IntegerField, Exists, OuterRef
 from django.utils import timezone
-
 from recipes.services import PrivacyService
 
 try:
-    from recipes.models import RecipePost, Favourite, FavouriteItem, Like, Follower, Ingredient
+    from recipes.models import RecipePost, Like, Follower, Ingredient
 except Exception:
     from recipes.models.recipe_post import RecipePost
-    from recipes.models.favourite import Favourite
-    from recipes.models.favourite_item import FavouriteItem
     from recipes.models.like import Like
     from recipes.models.followers import Follower
     from recipes.models.ingredient import Ingredient
 
-
 privacy_service = PrivacyService()
-
 
 def _normalise_tags(tags):
     if not tags:
@@ -30,19 +24,10 @@ def _normalise_tags(tags):
         return [str(t).strip().lower() for t in tags if str(t).strip()]
     return []
 
-
 def _user_preference_tags(user):
     tags = []
 
-    fav_item_qs = (
-        FavouriteItem.objects
-        .filter(favourite__user=user)
-        .select_related("recipe_post")
-    )
     like_qs = Like.objects.filter(user=user).select_related("recipe_post")
-
-    for item in fav_item_qs:
-        tags.extend(_normalise_tags(getattr(item.recipe_post, "tags", [])))
 
     for like in like_qs:
         tags.extend(_normalise_tags(getattr(like.recipe_post, "tags", [])))
@@ -55,7 +40,6 @@ def _user_preference_tags(user):
             result.append(t)
     return result
 
-
 def _base_posts_queryset():
     return (
         RecipePost.objects.filter(published_at__isnull=False)
@@ -63,7 +47,6 @@ def _base_posts_queryset():
         .prefetch_related("images")
         .order_by("-published_at", "-created_at")
     )
-
 
 def _score_post_for_user(post, preferred_tags):
     score = 0
@@ -85,9 +68,18 @@ def _score_post_for_user(post, preferred_tags):
 
     return score
 
-
 def _get_for_you_posts(user, query=None, limit=12, offset=0, seed=None, privacy=privacy_service):
     qs = privacy.filter_visible_posts(_base_posts_queryset(), user)
+
+    liked_post_ids = []
+    preferred_tags = []
+    if getattr(user, "is_authenticated", False):
+        liked_post_ids = list(
+            Like.objects.filter(user=user).values_list("recipe_post_id", flat=True)
+        )
+        if liked_post_ids:
+            preferred_tags = _user_preference_tags(user)
+            qs = qs.exclude(id__in=liked_post_ids)
 
     if query:
         qs = qs.filter(
@@ -96,7 +88,14 @@ def _get_for_you_posts(user, query=None, limit=12, offset=0, seed=None, privacy=
             | Q(tags__icontains=query)
         )
 
-    preferred_tags = _user_preference_tags(user)
+    if liked_post_ids:
+        if preferred_tags:
+            tag_filter = Q()
+            for tag in preferred_tags:
+                tag_filter |= Q(tags__icontains=tag)
+            qs = qs.filter(tag_filter)
+        else:
+            qs = qs.none()
 
     posts = list(qs[:100])
 
@@ -112,7 +111,6 @@ def _get_for_you_posts(user, query=None, limit=12, offset=0, seed=None, privacy=
     rng.shuffle(posts)
 
     return posts[offset:offset + limit]
-
 
 def _get_following_posts(user, query=None, limit=12, offset=0):
     followed_ids = list(
@@ -133,7 +131,6 @@ def _get_following_posts(user, query=None, limit=12, offset=0):
 
     return list(qs[offset:offset + limit])
 
-
 def _search_users(query, limit=18):
     User = get_user_model()
     if not query:
@@ -142,7 +139,6 @@ def _search_users(query, limit=18):
         User.objects.filter(username__icontains=query)
         .order_by("username")[:limit]
     )
-
 
 def _filter_posts_by_prep_time(posts, min_prep=None, max_prep=None):
     """

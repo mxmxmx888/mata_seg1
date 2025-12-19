@@ -1,11 +1,9 @@
 from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
-
 from recipes.models import Ingredient, Follower
 from recipes.tests.helpers import make_recipe_post, make_user
 from recipes.views import dashboard_view
-
 
 class DashboardSearchViewTests(TestCase):
     def setUp(self):
@@ -57,24 +55,24 @@ class DashboardSearchViewTests(TestCase):
     def test_score_post_without_published_date(self):
         post = make_recipe_post(author=self.user, title="No date", published=False, tags=["x"], saved_count=2)
         score = dashboard_view._score_post_for_user(post, ["x"])
-        # score includes tag bonus + saved_count
-        self.assertGreaterEqual(score, 5)
+        self.assertGreaterEqual(score, 5) #score includes tag bonus + saved_count
 
-    def test_get_for_you_posts_scores_and_orders(self):
-        # user preference tags inferred from favourites/likes
-        pref_post = make_recipe_post(author=self.user, tags=["pasta"], saved_count=5)
-        other_post = make_recipe_post(author=self.user, tags=["soup"], saved_count=0)
-        # set preference by saving the first post
-        fav = self.user.favourites.create(name="favourites")
-        fav.items.create(recipe_post=pref_post)
-        dashboard_view.Like.objects.create(user=self.user, recipe_post=pref_post)
+    def test_get_for_you_posts_filters_by_liked_tags_and_excludes_liked(self):
+        liked = make_recipe_post(author=self.user, tags=["pasta"])
+        match = make_recipe_post(author=self.user, tags=["pasta"])
+        non_match = make_recipe_post(author=self.user, tags=["soup"])
+        dashboard_view.Like.objects.create(user=self.user, recipe_post=liked)
 
         posts = dashboard_view._get_for_you_posts(self.user, seed=123)
-        self.assertEqual(set(p.id for p in posts), {pref_post.id, other_post.id})
-        self.assertGreater(
-            dashboard_view._score_post_for_user(pref_post, ["pasta"]),
-            dashboard_view._score_post_for_user(other_post, ["pasta"]),
-        )
+        self.assertEqual(set(p.id for p in posts), {match.id})
+        self.assertNotIn(non_match.id, [p.id for p in posts])
+
+    def test_get_for_you_posts_random_when_no_likes(self):
+        first = make_recipe_post(author=self.user, tags=["x"])
+        second = make_recipe_post(author=self.user, tags=["y"])
+
+        posts = dashboard_view._get_for_you_posts(self.user, seed=1)
+        self.assertEqual(set(p.id for p in posts), {first.id, second.id})
 
     def test_get_for_you_posts_filters_query(self):
         match = make_recipe_post(author=self.user, title="Garlic Bread")
@@ -114,8 +112,7 @@ class DashboardSearchViewTests(TestCase):
         payload = response.json()
         self.assertIn("html", payload)
         self.assertIn("has_more", payload)
-        # seed should have been set in session
-        self.assertIn("for_you_seed", self.client.session)
+        self.assertIn("for_you_seed", self.client.session) #seed should have been set in session
 
     def test_dashboard_user_search_scope(self):
         target = make_user(username="alice")
@@ -137,10 +134,8 @@ class DashboardSearchViewTests(TestCase):
         self.assertTrue(payload["has_next"])
 
     def test_dashboard_filters_by_ingredients_and_prep_time(self):
-        # post with allowed ingredient and low prep time
         good = make_recipe_post(author=self.user, title="Allowed", prep_time_min=5, cook_time_min=5)
         Ingredient.objects.create(recipe_post=good, name="garlic", position=1)
-        # post that should be filtered out
         bad = make_recipe_post(author=self.user, title="Filtered", prep_time_min=30, cook_time_min=5)
         Ingredient.objects.create(recipe_post=bad, name="onion", position=1)
 
