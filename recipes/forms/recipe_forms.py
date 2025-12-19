@@ -53,6 +53,22 @@ CATEGORIES = [
 
 class RecipePostForm(forms.ModelForm):
 
+    field_order = [
+        "title",
+        "images",
+        "description",
+        "category",
+        "prep_time_min",
+        "cook_time_min",
+        "nutrition",
+        "visibility",
+        "tags_text",
+        "ingredients_text",
+        "steps_text",
+        "shopping_links_text",
+        "shop_images",
+    ]
+
     category = forms.ChoiceField(
         choices=CATEGORIES,
         required=True,

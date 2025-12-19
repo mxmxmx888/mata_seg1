@@ -101,6 +101,11 @@
 
       if (!formEl || !ingredientsField || !itemInput || !linkInput || !addBtn || !listBox || !shoppingField) return;
 
+      if (imageInput) {
+        imageInput.setAttribute('required', 'required');
+        requiredFields.push(imageInput);
+      }
+
       function clearFieldError(field) {
         const container = field.closest('.mb-3') || field.parentElement;
         if (!container) return;
