@@ -2,20 +2,17 @@
   document.addEventListener('DOMContentLoaded', function () {
     const searchInput = document.querySelector('.recipi-nav-search-input');
     if (searchInput) {
-      const defaultPlaceholder = searchInput.getAttribute('placeholder') || '';
       const activePlaceholder = 'Search Recipi...';
 
-      searchInput.addEventListener('focus', function () {
+      const setActivePlaceholder = function () {
         if (!searchInput.value) {
           searchInput.setAttribute('placeholder', activePlaceholder);
         }
-      });
+      };
 
-      searchInput.addEventListener('blur', function () {
-        if (!searchInput.value) {
-          searchInput.setAttribute('placeholder', defaultPlaceholder);
-        }
-      });
+      searchInput.addEventListener('input', setActivePlaceholder);
+      searchInput.addEventListener('focus', setActivePlaceholder);
+      searchInput.addEventListener('blur', setActivePlaceholder);
     }
   });
 </script>

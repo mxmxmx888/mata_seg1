@@ -23,6 +23,17 @@
     <div class="post-shop-links d-flex flex-wrap">
       {% for ing in shop_ingredients %}
       <a href="{{ ing.shop_url }}" target="_blank" class="post-shop-link btn rounded-pill d-inline-flex align-items-center gap-2 py-2 px-3">
+        {% if ing.shop_image_upload %}
+        <span class="post-shop-link-thumb" aria-hidden="true">
+          <img
+            src="{{ ing.shop_image_upload.url }}"
+            alt=""
+            loading="lazy"
+            class="js-gallery-image"
+            data-fullsrc="{{ ing.shop_image_upload.url }}"
+          >
+        </span>
+        {% endif %}
         <span>{{ ing.name|title }}</span>
         <i class="bi bi-arrow-up-right small"></i>
       </a>

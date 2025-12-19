@@ -212,6 +212,10 @@ body[data-theme="dark"]:not(.auth-body) .post-gallery-tile {
   justify-content: center;
 }
 
+body.lightbox-open {
+  overflow: hidden;
+}
+
 .lightbox-backdrop {
   position: absolute;
   inset: 0;
@@ -231,12 +235,13 @@ body[data-theme="dark"]:not(.auth-body) .post-gallery-tile {
 }
 
 .lightbox-image {
-  max-width: 90vw;
-  max-height: 90vh;
-  width: auto;
+  --lightbox-target-width: min(70vw, 960px);
+  --lightbox-target-height: min(80vh, 720px);
+  width: var(--lightbox-target-width);
   height: auto;
+  max-width: 90vw;
+  max-height: var(--lightbox-target-height);
   object-fit: contain;
-  border-radius: 18px;
   display: block;
 }
 

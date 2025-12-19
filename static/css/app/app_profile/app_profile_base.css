@@ -38,9 +38,15 @@ body.profile-body .recipi-nav-search-input::placeholder {
 }
 
 .profile-shell {
-  max-width: min(1280px, 94vw);
+  width: min(1280px, 90vw);
+  max-width: min(1280px, 90vw);
   margin-inline: auto;
   padding-top: 2.5rem;
+}
+
+.profile-shell.container-fluid {
+  padding-left: clamp(1.5rem, 4vw, 2.75rem);
+  padding-right: clamp(1.5rem, 4vw, 2.75rem);
 }
 
 .profile-hero {

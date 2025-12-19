@@ -182,7 +182,7 @@ body[data-theme="light"].profile-body .profile-pill:focus-visible {
 
 @media (min-aspect-ratio: 16/10) {
   .profile-shell {
-    max-width: min(1520px, 92vw);
+    max-width: min(1280px, 88vw);
   }
 
   .profile-collections {
