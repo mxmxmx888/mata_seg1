@@ -14,7 +14,9 @@
 
     {% if profile.avatar_url %}
       <div class="collection-header-avatar-shell">
-        <div class="collection-header-avatar" style="background-image: url('{{ profile.avatar_url }}');"></div>
+        <div class="collection-header-avatar">
+          <img src="{{ profile.avatar_url }}" alt="{{ profile.handle }} avatar" class="collection-header-avatar-img" loading="lazy">
+        </div>
       </div>
       <div class="collection-header-menu dropdown mt-2">
         <button

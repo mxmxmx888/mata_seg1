@@ -32,9 +32,10 @@
               <div
                 class="save-modal-avatar{% if col.thumb_url %} save-modal-avatar-has-thumb{% endif %}"
                 aria-hidden="true"
-                {% if col.thumb_url %}style="background-image: url('{{ col.thumb_url }}');"{% endif %}
               >
-                {% if not col.thumb_url %}
+                {% if col.thumb_url %}
+                  <img src="{{ col.thumb_url }}" alt="" class="save-modal-avatar-img" loading="lazy">
+                {% else %}
                   {{ col.name|first|upper }}
                 {% endif %}
               </div>

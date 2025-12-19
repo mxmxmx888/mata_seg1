@@ -14,8 +14,16 @@
         <a class="collection-card" href="{% url 'collection_detail' collection.slug %}">
           <div
             class="collection-thumb{% if not collection.has_image %} collection-thumb--empty{% endif %}"
-            {% if collection.cover %}style="background-image: url('{{ collection.cover }}');"{% endif %}
-          ></div>
+          >
+            {% if collection.cover %}
+              <img
+                src="{{ collection.cover }}"
+                alt="{{ collection.title }} cover"
+                class="collection-thumb-img"
+                loading="lazy"
+              >
+            {% endif %}
+          </div>
           <div class="collection-overlay"></div>
           <div class="collection-meta">
             <p class="collection-title mb-0">{{ collection.title }}</p>

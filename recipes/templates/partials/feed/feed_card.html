@@ -5,10 +5,12 @@
 >
   {% if post.primary_image_url %}
     <div class="my-recipe-thumb" aria-hidden="true">
-      <div
+      <img
+        src="{{ post.primary_image_url }}"
+        alt="{{ post.title }}"
         class="my-recipe-thumb-img"
-        style="background-image: url('{{ post.primary_image_url }}');"
-      ></div>
+        loading="lazy"
+      />
     </div>
   {% endif %}
   <h2 class="my-recipe-title">

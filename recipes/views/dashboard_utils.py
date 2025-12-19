@@ -1,0 +1,177 @@
+import random
+
+from django.contrib.auth import get_user_model
+from django.db.models import Q, F, ExpressionWrapper, IntegerField, Exists, OuterRef
+from django.utils import timezone
+
+from recipes.services import PrivacyService
+
+try:
+    from recipes.models import RecipePost, Favourite, FavouriteItem, Like, Follower, Ingredient
+except Exception:
+    from recipes.models.recipe_post import RecipePost
+    from recipes.models.favourite import Favourite
+    from recipes.models.favourite_item import FavouriteItem
+    from recipes.models.like import Like
+    from recipes.models.followers import Follower
+    from recipes.models.ingredient import Ingredient
+
+
+privacy_service = PrivacyService()
+
+
+def _normalise_tags(tags):
+    if not tags:
+        return []
+    if isinstance(tags, str):
+        parts = [p.strip() for p in tags.split(",")]
+        return [p.lower() for p in parts if p]
+    if isinstance(tags, list):
+        return [str(t).strip().lower() for t in tags if str(t).strip()]
+    return []
+
+
+def _user_preference_tags(user):
+    tags = []
+
+    fav_item_qs = (
+        FavouriteItem.objects
+        .filter(favourite__user=user)
+        .select_related("recipe_post")
+    )
+    like_qs = Like.objects.filter(user=user).select_related("recipe_post")
+
+    for item in fav_item_qs:
+        tags.extend(_normalise_tags(getattr(item.recipe_post, "tags", [])))
+
+    for like in like_qs:
+        tags.extend(_normalise_tags(getattr(like.recipe_post, "tags", [])))
+
+    seen = set()
+    result = []
+    for t in tags:
+        if t not in seen:
+            seen.add(t)
+            result.append(t)
+    return result
+
+
+def _base_posts_queryset():
+    return (
+        RecipePost.objects.filter(published_at__isnull=False)
+        .select_related("author")
+        .prefetch_related("images")
+        .order_by("-published_at", "-created_at")
+    )
+
+
+def _score_post_for_user(post, preferred_tags):
+    score = 0
+
+    post_tags = set(_normalise_tags(getattr(post, "tags", [])))
+    pref_set = set(preferred_tags)
+
+    if post_tags & pref_set:
+        score += 3
+
+    saved_count = getattr(post, "saved_count", 0) or 0
+    score += saved_count
+
+    if getattr(post, "published_at", None):
+        age_days = (timezone.now() - post.published_at).days
+    else:
+        age_days = 999
+    score += max(0, 10 - age_days)
+
+    return score
+
+
+def _get_for_you_posts(user, query=None, limit=12, offset=0, seed=None, privacy=privacy_service):
+    qs = privacy.filter_visible_posts(_base_posts_queryset(), user)
+
+    if query:
+        qs = qs.filter(
+            Q(title__icontains=query)
+            | Q(description__icontains=query)
+            | Q(tags__icontains=query)
+        )
+
+    preferred_tags = _user_preference_tags(user)
+
+    posts = list(qs[:100])
+
+    if preferred_tags:
+        scored = [
+            (_score_post_for_user(p, preferred_tags), p)
+            for p in posts
+        ]
+        scored.sort(key=lambda x: x[0], reverse=True)
+        posts = [p for _, p in scored]
+
+    rng = random.Random(seed)
+    rng.shuffle(posts)
+
+    return posts[offset:offset + limit]
+
+
+def _get_following_posts(user, query=None, limit=12, offset=0):
+    followed_ids = list(
+        Follower.objects.filter(follower=user).values_list("author_id", flat=True)
+    )
+    if not followed_ids:
+        return []
+
+    qs = _base_posts_queryset().filter(author_id__in=followed_ids)
+    qs = privacy_service.filter_visible_posts(qs, user)
+
+    if query:
+        qs = qs.filter(
+            Q(title__icontains=query)
+            | Q(description__icontains=query)
+            | Q(tags__icontains=query)
+        )
+
+    return list(qs[offset:offset + limit])
+
+
+def _search_users(query, limit=18):
+    User = get_user_model()
+    if not query:
+        return []
+    return list(
+        User.objects.filter(username__icontains=query)
+        .order_by("username")[:limit]
+    )
+
+
+def _filter_posts_by_prep_time(posts, min_prep=None, max_prep=None):
+    """
+    Filter in-memory posts by prep time bounds.
+    Values that cannot be coerced to ints or missing prep times are ignored.
+    """
+    try:
+        min_val = int(min_prep) if min_prep is not None else None
+    except (TypeError, ValueError):
+        min_val = None
+
+    try:
+        max_val = int(max_prep) if max_prep is not None else None
+    except (TypeError, ValueError):
+        max_val = None
+
+    if min_val is None and max_val is None:
+        return list(posts)
+
+    filtered = []
+    for post in posts:
+        try:
+            prep = int(getattr(post, "prep_time_min", None))
+        except (TypeError, ValueError):
+            continue
+
+        if min_val is not None and prep < min_val:
+            continue
+        if max_val is not None and prep > max_val:
+            continue
+        filtered.append(post)
+    return filtered

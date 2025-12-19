@@ -258,8 +258,8 @@ document.addEventListener('DOMContentLoaded', function () {
             row.className = 'save-modal-row';
             row.setAttribute('data-collection-id', col.id);
             row.innerHTML = `
-              <div class="save-modal-avatar${col.thumb_url ? ' save-modal-avatar-has-thumb' : ''}" aria-hidden="true"${col.thumb_url ? ` style="background-image: url('${col.thumb_url}')"` : ''}>
-                ${col.thumb_url ? '' : (col.name || '').charAt(0).toUpperCase()}
+              <div class="save-modal-avatar${col.thumb_url ? ' save-modal-avatar-has-thumb' : ''}" aria-hidden="true">
+                ${col.thumb_url ? `<img src="${col.thumb_url}" alt="" class="save-modal-avatar-img">` : (col.name || '').charAt(0).toUpperCase()}
               </div>
               <div>
                 <p class="mb-0 fw-semibold"></p>

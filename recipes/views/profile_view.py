@@ -23,6 +23,10 @@ user_repo = UserRepo()
 privacy_service = PrivacyService()
 follow_service_factory = FollowService
 
+def _is_ajax(request):
+    header = request.headers.get("HX-Request") or request.headers.get("x-requested-with")
+    return bool(header == "XMLHttpRequest" or header)
+
 def _profile_data_for_user(user):
     fallback_handle = "@anmzn"
     handle = user.username or fallback_handle
@@ -113,41 +117,18 @@ def profile(request):
 
     followers_qs = Follower.objects.filter(author=profile_user).select_related("follower")
     following_qs = Follower.objects.filter(follower=profile_user).select_related("author")
+    followers_count = followers_qs.count()
+    following_count = following_qs.count()
+    followers_users = [relation.follower for relation in followers_qs]
+    following_users = [relation.author for relation in following_qs]
     close_friend_ids = set(
         CloseFriend.objects.filter(owner=profile_user).values_list("friend_id", flat=True)
     )
-    followers_count = followers_qs.count()
-    following_count = following_qs.count()
-    followers_users = [relation.follower for relation in followers_qs]
-    following_users = [relation.author for relation in following_qs]
-    close_friends = list(
+    close_friends = [
         relation.follower
         for relation in followers_qs
         if relation.follower_id in close_friend_ids
-    )
-
-    is_following = False
-    pending_request = None
-    if not is_own_profile:
-        is_following = Follower.objects.filter(
-            follower=request.user,
-            author=profile_user,
-        ).exists()
-        if not is_following and getattr(profile_user, "is_private", False):
-            pending_request = FollowRequest.objects.filter(
-                requester=request.user,
-                target=profile_user,
-                status=FollowRequest.STATUS_PENDING,
-            ).first()
-
-    is_own_profile = profile_user == request.user
-
-    followers_qs = Follower.objects.filter(author=profile_user).select_related("follower")
-    following_qs = Follower.objects.filter(follower=profile_user).select_related("author")
-    followers_count = followers_qs.count()
-    following_count = following_qs.count()
-    followers_users = [relation.follower for relation in followers_qs]
-    following_users = [relation.author for relation in following_qs]
+    ]
 
     is_following = False
     pending_request = None
@@ -164,8 +145,6 @@ def profile(request):
             ).first()
 
     profile_data = _profile_data_for_user(profile_user)
-    profile_data["followers"] = followers_count
-    profile_data["following"] = following_count
     profile_data["followers"] = followers_count
     profile_data["following"] = following_count
     profile_data["close_friends_count"] = len(close_friend_ids)
@@ -299,8 +278,7 @@ def delete_collection(request, slug):
     favourite = get_object_or_404(Favourite, id=slug, user=request.user)
     favourite.delete()
 
-    is_ajax = request.headers.get("HX-Request") or request.headers.get("x-requested-with") == "XMLHttpRequest"
-    if is_ajax:
+    if _is_ajax(request):
         return JsonResponse({"deleted": True})
 
     return redirect(reverse("collections"))
@@ -316,12 +294,11 @@ def update_collection(request, slug):
         favourite.name = new_title
         favourite.save(update_fields=["name"])
 
-    is_ajax = request.headers.get("HX-Request") or request.headers.get("x-requested-with") == "XMLHttpRequest"
     payload = {
         "id": str(favourite.id),
         "title": favourite.name,
     }
-    if is_ajax:
+    if _is_ajax(request):
         return JsonResponse(payload)
 
     return redirect(reverse("collection_detail", kwargs={"slug": favourite.id}))
@@ -331,14 +308,13 @@ def update_collection(request, slug):
 @require_POST
 def remove_follower(request, username):
     target = get_object_or_404(User, username=username)
-    is_ajax = request.headers.get("HX-Request") or request.headers.get("x-requested-with") == "XMLHttpRequest"
     if target == request.user:
-        if is_ajax:
+        if _is_ajax(request):
             return JsonResponse({"error": "Cannot remove yourself"}, status=400)
         return redirect(request.META.get("HTTP_REFERER") or reverse("profile"))
     Follower.objects.filter(author=request.user, follower=target).delete()
     CloseFriend.objects.filter(owner=request.user, friend=target).delete()
-    if is_ajax:
+    if _is_ajax(request):
         return JsonResponse({"status": "removed", "follower": target.username})
     return redirect(request.META.get("HTTP_REFERER") or reverse("profile"))
 
@@ -347,13 +323,12 @@ def remove_follower(request, username):
 @require_POST
 def remove_following(request, username):
     target = get_object_or_404(User, username=username)
-    is_ajax = request.headers.get("HX-Request") or request.headers.get("x-requested-with") == "XMLHttpRequest"
     if target == request.user:
-        if is_ajax:
+        if _is_ajax(request):
             return JsonResponse({"error": "Cannot unfollow yourself"}, status=400)
         return redirect(request.META.get("HTTP_REFERER") or reverse("profile"))
     Follower.objects.filter(follower=request.user, author=target).delete()
-    if is_ajax:
+    if _is_ajax(request):
         return JsonResponse({"status": "removed", "following": target.username})
     return redirect(request.META.get("HTTP_REFERER") or reverse("profile"))
 
@@ -362,17 +337,16 @@ def remove_following(request, username):
 @require_POST
 def add_close_friend(request, username):
     friend = get_object_or_404(User, username=username)
-    is_ajax = request.headers.get("HX-Request") or request.headers.get("x-requested-with") == "XMLHttpRequest"
     if friend == request.user:
-        if is_ajax:
+        if _is_ajax(request):
             return JsonResponse({"error": "Cannot add yourself"}, status=400)
         return redirect(request.META.get("HTTP_REFERER") or reverse("profile"))
     if not Follower.objects.filter(author=request.user, follower=friend).exists():
-        if is_ajax:
+        if _is_ajax(request):
             return JsonResponse({"error": "Must follow user first"}, status=400)
         return redirect(request.META.get("HTTP_REFERER") or reverse("profile"))
     CloseFriend.objects.get_or_create(owner=request.user, friend=friend)
-    if is_ajax:
+    if _is_ajax(request):
         return JsonResponse({"status": "added", "friend": friend.username})
     return redirect(request.META.get("HTTP_REFERER") or reverse("profile"))
 
@@ -381,12 +355,11 @@ def add_close_friend(request, username):
 @require_POST
 def remove_close_friend(request, username):
     friend = get_object_or_404(User, username=username)
-    is_ajax = request.headers.get("HX-Request") or request.headers.get("x-requested-with") == "XMLHttpRequest"
     if friend == request.user:
-        if is_ajax:
+        if _is_ajax(request):
             return JsonResponse({"error": "Cannot remove yourself"}, status=400)
         return redirect(request.META.get("HTTP_REFERER") or reverse("profile"))
     CloseFriend.objects.filter(owner=request.user, friend=friend).delete()
-    if is_ajax:
+    if _is_ajax(request):
         return JsonResponse({"status": "removed", "friend": friend.username})
     return redirect(request.META.get("HTTP_REFERER") or reverse("profile"))

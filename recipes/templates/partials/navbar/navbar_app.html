@@ -149,7 +149,6 @@
           href="{% url 'profile' %}"
           class="avatar-pill"
           aria-label="Profile"
-          {% if avatar_url %}style="background-image: url('{{ avatar_url }}');"{% endif %}
         >
           {% if avatar_url %}
             <img src="{{ avatar_url }}" alt="{{ user.username }} avatar">
@@ -173,7 +172,6 @@
               <a
                 href="{% url 'profile' %}"
                 class="nav-account-menu-avatar"
-                {% if avatar_url %}style="background-image: url('{{ avatar_url }}');"{% endif %}
               >
                 {% if avatar_url %}
                   <img src="{{ avatar_url }}" alt="{{ user.username }} avatar">

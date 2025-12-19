@@ -31,7 +31,6 @@ from .seed_data import (
     user_fixtures,
 )
 
-
 class Command(BaseCommand):
     USER_COUNT = 200
     DEFAULT_PASSWORD = 'Password123'
@@ -42,10 +41,7 @@ class Command(BaseCommand):
         self.faker = Faker('en_GB')
 
     def _make_uploaded_image(self, rel_path: str) -> SimpleUploadedFile:
-        """
-        Loads a real image file from disk (relative to BASE_DIR) and wraps it
-        into a Django SimpleUploadedFile so it can be assigned to ImageField.
-        """
+        """Wrap a real image file into a Django SimpleUploadedFile."""
         abs_path = os.path.join(settings.BASE_DIR, rel_path.lstrip("/"))
         with open(abs_path, "rb") as f:
             return SimpleUploadedFile(
@@ -63,7 +59,6 @@ class Command(BaseCommand):
         self.seed_ingredients()
         self.seed_likes(max_likes_per_post=20)
         self.seed_comments(max_comments_per_post=5)
-        self.users = User.objects.all()
         self.stdout.write(self.style.SUCCESS("Seeding complete"))
 
     def create_users(self):
@@ -113,7 +108,6 @@ class Command(BaseCommand):
         follower_rows = [Follower(follower_id=a, author_id=b) for (a, b) in edges]
         follows_rows = [Follows(author_id=a, followee_id=b) for (a, b) in edges]
 
-        
         with transaction.atomic():
             Follower.objects.bulk_create(follower_rows, ignore_conflicts=True, batch_size=1000)
             Follows.objects.bulk_create(follows_rows, ignore_conflicts=True, batch_size=1000)
@@ -125,10 +119,6 @@ class Command(BaseCommand):
 
         posts_to_create: List[RecipePost] = []
         images_to_create: List[RecipeImage] = []
-
-
-
-
         for author_id in user_ids:
             count = randint(1, max(1, per_user))
             for _ in range(count):
@@ -179,9 +169,10 @@ class Command(BaseCommand):
             RecipePost.objects.bulk_create(posts_to_create, ignore_conflicts=True, batch_size=500)
             RecipeImage.objects.bulk_create(images_to_create, ignore_conflicts=True, batch_size=500)
 
-        self.stdout.write(f"Recipe posts created: {len(posts_to_create)}")
-        self.stdout.write(f"Recipe images created (attempted): {len(images_to_create)}")
-    
+        self.stdout.write(
+            f"Recipe posts created: {len(posts_to_create)}; images attempted: {len(images_to_create)}"
+        )
+
     def seed_recipe_steps(self, *, min_steps: int = 4, max_steps: int = 7) -> None:
         post_ids = list(RecipePost.objects.values_list("id", flat=True))
         if not post_ids:
@@ -205,7 +196,6 @@ class Command(BaseCommand):
             RecipeStep.objects.bulk_create(rows, ignore_conflicts=True, batch_size=1000)
 
         self.stdout.write(f"recipe steps created (attempted): {len(rows)}")
-
 
     def seed_likes(self, max_likes_per_post: int = 20) -> None:
         users = list(User.objects.values_list("id", flat=True))
@@ -234,7 +224,6 @@ class Command(BaseCommand):
         self.stdout.write(f"likes created: {len(rows)}")
 
     def seed_comments(self, max_comments_per_post: int = 5) -> None:
-
         users = list(User.objects.values_list("id", flat=True))
         posts = list(RecipePost.objects.values_list("id", flat=True))
 
@@ -258,7 +247,6 @@ class Command(BaseCommand):
 
         Comment.objects.bulk_create(rows, ignore_conflicts=True, batch_size=500)
         self.stdout.write(f"Comments created: {len(rows)}")
-    
 
     def seed_ingredients(self) -> None:
         post_ids = list(RecipePost.objects.values_list("id", flat=True))
@@ -314,9 +302,7 @@ class Command(BaseCommand):
             Ingredient.objects.bulk_create(rows, ignore_conflicts=True, batch_size=1000)
 
         self.stdout.write(f"ingredients created (attempted): {len(rows)}")
-    
-    
-    
+
     def seed_favourites(self, *, per_user: int = 2) -> None:
         user_ids = list(User.objects.values_list("id", flat=True))
         if not user_ids:
@@ -327,13 +313,11 @@ class Command(BaseCommand):
             self.stdout.write("no recipe posts found, skipping favourites seeding.")
             return
 
-        
         collections_per_user = min(per_user, len(favourite_names))
 
         favourites_to_create: List[Favourite] = []
         fav_keys: Set[Tuple[str, str]] = set()  # (user_id, name)
 
-       
         for user_id in user_ids:
             chosen = sample(favourite_names, k=collections_per_user)
             for name in chosen:
@@ -388,6 +372,7 @@ class Command(BaseCommand):
         self.stdout.write(
             f"favourites seeded: {len(favourites_to_create)} collections, {len(items_to_create)} items attempted"
         )
+
     def create_user(self, data):
         User.objects.create_user(
             username=data['username'],
