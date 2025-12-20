@@ -6,6 +6,13 @@
   --shop-meta: var(--text-muted, #5f5c57);
   --shop-chip-bg: rgba(12, 12, 12, 0.55);
   --shop-chip-text: #ffffff;
+  --shop-empty-bg: var(--surface);
+  --shop-empty-border: var(--border-subtle);
+  --shop-empty-shadow: none;
+  --shop-placeholder-from: color-mix(in srgb, var(--bg-2) 88%, #ffffff 12%);
+  --shop-placeholder-to: color-mix(in srgb, var(--bg-3) 82%, #ffffff 18%);
+  --shop-placeholder-text: color-mix(in srgb, var(--text-muted) 78%, var(--text-primary) 22%);
+  --shop-loading-text: var(--text-muted);
 }
 
 :root[data-theme="dark"] {
@@ -16,6 +23,13 @@
   --shop-meta: color-mix(in srgb, var(--text-muted, #a5a6b5) 70%, var(--text-primary, #f5f5f5) 30%);
   --shop-chip-bg: rgba(12, 12, 12, 0.55);
   --shop-chip-text: #ffffff;
+  --shop-empty-bg: var(--bg-2);
+  --shop-empty-border: var(--border-subtle);
+  --shop-empty-shadow: none;
+  --shop-placeholder-from: color-mix(in srgb, var(--bg-2) 82%, var(--bg-3) 18%);
+  --shop-placeholder-to: color-mix(in srgb, var(--bg-3) 82%, var(--bg-2) 18%);
+  --shop-placeholder-text: color-mix(in srgb, var(--text-muted) 82%, var(--text-primary) 18%);
+  --shop-loading-text: var(--text-muted);
 }
 
 body.shop-body {
@@ -88,8 +102,8 @@ body.shop-body[data-theme="dark"] {
   aspect-ratio: 3 / 4;
   display: grid;
   place-items: center;
-  background: linear-gradient(135deg, #d7d2c8, #f3f0e9);
-  color: #8a857a;
+  background: linear-gradient(135deg, var(--shop-placeholder-from), var(--shop-placeholder-to));
+  color: var(--shop-placeholder-text);
   font-size: 1.5rem;
 }
 
@@ -136,17 +150,17 @@ body.shop-body[data-theme="dark"] {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  color: #6c6a64;
+  color: var(--shop-loading-text);
   margin: 1rem 0 0.5rem;
 }
 
 .shop-empty {
-  background: rgba(255, 255, 255, 0.9);
-  border: 1px solid #e0ddd6;
+  background: var(--shop-empty-bg);
+  border: 1px solid var(--shop-empty-border);
   border-radius: 14px;
   max-width: 720px;
   margin: 0 auto;
-  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--shop-empty-shadow);
 }
 
 
