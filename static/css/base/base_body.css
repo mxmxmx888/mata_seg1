@@ -27,11 +27,12 @@ body.public-body {
 
 body.auth-body {
   background-color: var(--bg-1);
-  background-image: radial-gradient(circle at 0 0, #ffffff 0, var(--bg-1) 55%);
-  background-repeat: no-repeat;
-  background-attachment: fixed;
   min-height: 100vh;
   overflow-y: auto !important; 
+  display: flex;
+  flex-direction: column;
+  padding-top: 0;
+  padding-bottom: 0;
 }
 
 

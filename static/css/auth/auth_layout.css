@@ -6,11 +6,12 @@
   --auth-card-pad-x: clamp(1.45rem, 3vw, 1.9rem);
   --auth-card-radius: clamp(1.2rem, 1.8vw, 1.55rem);
   --auth-card-scale: clamp(0.86, 0.64 + 0.03vw + 0.03vh, 0.95);
-  min-height: 100vh; 
+  min-height: 100vh;
+  flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: clamp(3rem, 6vh, 4rem) clamp(1.5rem, 4vw, 3rem);
+  padding: clamp(1.5rem, 4vh, 2.5rem) clamp(1.5rem, 4vw, 3rem);
   color: var(--text-primary);
   box-sizing: border-box;
 }
@@ -33,7 +34,7 @@
 @media (max-height: 840px) {
   .auth-page,
   .auth-page-split {
-    align-items: flex-start;
+    align-items: center;
     padding-top: 2rem;
     padding-bottom: 2rem;
   }

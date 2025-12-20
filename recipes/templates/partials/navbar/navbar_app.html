@@ -211,16 +211,22 @@
   </button>
 
   <div class="app-fullscreen-menu-inner">
-    <nav class="app-fullscreen-menu-nav">
-      <a class="app-fullscreen-menu-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}" href="{% url 'dashboard' %}">Discover</a>
-      <a class="app-fullscreen-menu-link {% if request.resolver_match.url_name == 'shop' %}active{% endif %}" href="{% url 'shop' %}">Shop</a>
-      <a class="app-fullscreen-menu-link" href="{% url 'collections' %}">Collections</a>
-      <a class="app-fullscreen-menu-link" href="{% url 'profile' %}">Profile</a>
-    </nav>
-    <div class="app-fullscreen-menu-cta">
-      <a href="{% url 'recipe_create' %}" class="btn btn-light rounded-pill px-4">
-        Create a recipe
-      </a>
+    <div class="app-fullscreen-menu-main">
+      <nav class="app-fullscreen-menu-nav">
+        <a class="app-fullscreen-menu-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}" href="{% url 'dashboard' %}">Discover</a>
+        <a class="app-fullscreen-menu-link {% if request.resolver_match.url_name == 'shop' %}active{% endif %}" href="{% url 'shop' %}">Shop</a>
+        <a class="app-fullscreen-menu-link" href="{% url 'collections' %}">Collections</a>
+        <a class="app-fullscreen-menu-link" href="{% url 'profile' %}">Profile</a>
+      </nav>
+      <div class="app-fullscreen-menu-cta">
+        <a href="{% url 'recipe_create' %}" class="btn btn-light btn-lg rounded-pill px-4">
+          Create a recipe
+        </a>
+      </div>
+    </div>
+    <div class="app-fullscreen-menu-footer">
+      <a href="mailto:recipify.reset@gmail.com">Contact us</a>
+      <a href="{% url 'log_out' %}">Log out</a>
     </div>
   </div>
 </div>

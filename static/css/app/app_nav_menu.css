@@ -16,14 +16,48 @@
 
 .app-fullscreen-menu-inner {
   margin: 0 auto;
-  padding: 0 2rem;
+  padding: 2.5rem 2rem 3rem;
   max-width: 480px;
+  min-height: 100vh;
+  max-height: 100vh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
   width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2.5rem;
+}
+
+.app-fullscreen-menu-main {
+  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 2.5rem;
+  width: 100%;
+}
+
+.app-fullscreen-menu-footer {
+  margin-top: auto;
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
+  font-size: 0.95rem;
+  color: #e5e7eb;
+  padding-bottom: 1.25rem;
+}
+
+.app-fullscreen-menu-footer a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.app-fullscreen-menu-footer a:hover,
+.app-fullscreen-menu-footer a:focus-visible {
+  color: #ffffff;
 }
 
 .app-fullscreen-menu-nav {
