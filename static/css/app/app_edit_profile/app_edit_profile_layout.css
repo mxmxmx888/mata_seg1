@@ -12,6 +12,8 @@
 
 .edit-profile-modal .modal-dialog {
   max-width: min(760px, 92vw);
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .edit-profile-layout {

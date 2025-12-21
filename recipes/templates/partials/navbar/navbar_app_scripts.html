@@ -1,24 +1,5 @@
 <script>
   document.addEventListener('DOMContentLoaded', function () {
-    const searchInput = document.querySelector('.recipi-nav-search-input');
-    if (searchInput) {
-      const activePlaceholder = 'Search Recipi...';
-
-      const setActivePlaceholder = function () {
-        if (!searchInput.value) {
-          searchInput.setAttribute('placeholder', activePlaceholder);
-        }
-      };
-
-      searchInput.addEventListener('input', setActivePlaceholder);
-      searchInput.addEventListener('focus', setActivePlaceholder);
-      searchInput.addEventListener('blur', setActivePlaceholder);
-    }
-  });
-</script>
-
-<script>
-  document.addEventListener('DOMContentLoaded', function () {
     const followForms = document.querySelectorAll('.notification-follow-form');
     if (!followForms.length) return;
 
@@ -137,14 +118,53 @@
 
     if (!toggleBtn || !popover) return;
 
+    const getPopoverOffset = () => {
+      const raw = getComputedStyle(document.documentElement).getPropertyValue('--navbar-dropdown-offset');
+      const parsed = parseFloat(raw);
+      return Number.isFinite(parsed) ? parsed : 18;
+    };
+
+    const positionPopover = () => {
+      const isMobile = window.innerWidth <= 640;
+      if (!isMobile) {
+        ['position', 'top', 'left', 'right', 'transform', 'width', 'max-width'].forEach((prop) => {
+          popover.style.removeProperty(prop);
+        });
+        return;
+      }
+
+      const margin = 12;
+      const maxWidth = Math.min(360, window.innerWidth - margin * 2);
+      const left = Math.max(margin, (window.innerWidth - maxWidth) / 2);
+      const toggleRect = toggleBtn.getBoundingClientRect();
+      const top = Math.max(margin, toggleRect.bottom + getPopoverOffset());
+
+      popover.style.setProperty('position', 'fixed', 'important');
+      popover.style.setProperty('top', `${top}px`, 'important');
+      popover.style.setProperty('left', `${left}px`, 'important');
+      popover.style.setProperty('right', 'auto', 'important');
+      popover.style.setProperty('transform', 'none', 'important');
+      popover.style.setProperty('width', `${maxWidth}px`, 'important');
+      popover.style.setProperty('max-width', `${window.innerWidth - margin * 2}px`, 'important');
+    };
+
     toggleBtn.addEventListener("click", function (e) {
       e.stopPropagation();
       popover.classList.toggle("prep-filter-open");
+      if (popover.classList.contains("prep-filter-open")) {
+        positionPopover();
+      }
     });
 
     document.addEventListener("click", function (e) {
       if (!popover.contains(e.target) && !toggleBtn.contains(e.target)) {
         popover.classList.remove("prep-filter-open");
+      }
+    });
+
+    window.addEventListener('resize', function () {
+      if (popover.classList.contains("prep-filter-open")) {
+        positionPopover();
       }
     });
   })();
@@ -155,11 +175,16 @@
   if (notifDropdowns.length) {
     let markedRead = false;
     const trackedMenus = [];
+    const getDropdownOffset = () => {
+      const raw = getComputedStyle(document.documentElement).getPropertyValue('--navbar-dropdown-offset');
+      const parsed = parseFloat(raw);
+      return Number.isFinite(parsed) ? parsed : 18;
+    };
 
     const positionNotificationMenu = (triggerEl, menuEl) => {
       if (!triggerEl || !menuEl) return;
 
-      const isMobile = window.innerWidth <= 768;
+      const isMobile = window.innerWidth <= 590;
       if (!isMobile) {
         ['position', 'top', 'left', 'right', 'transform', 'width', 'max-width'].forEach((prop) => {
           menuEl.style.removeProperty(prop);
@@ -171,7 +196,7 @@
       const maxWidth = Math.min(420, window.innerWidth - margin * 2);
       const left = Math.max(margin, (window.innerWidth - maxWidth) / 2);
       const triggerRect = triggerEl.getBoundingClientRect();
-      const top = Math.max(margin, triggerRect.bottom + 8);
+      const top = Math.max(margin, triggerRect.bottom + getDropdownOffset());
 
       menuEl.style.setProperty('position', 'fixed', 'important');
       menuEl.style.setProperty('top', `${top}px`, 'important');
@@ -277,6 +302,8 @@
 
     const prefix = "Try ‘";
     const suffix = "’";
+    const compactPlaceholder = "Search...";
+    const fullSearchPlaceholder = "Search Recipi...";
 
     let placeholderIndex = 0;
     let charIndex = 0;
@@ -284,7 +311,14 @@
     let typingTimeoutId = null;
     let animationActive = true;
 
+    const isCompact = () => searchInput.clientWidth > 0 && searchInput.clientWidth < 260;
+    const getSearchPlaceholder = () => isCompact() ? compactPlaceholder : fullSearchPlaceholder;
+
     function updatePlaceholder(textFragment) {
+      if (isCompact()) {
+        searchInput.placeholder = compactPlaceholder;
+        return;
+      }
       const middle = textFragment || "";
       const closing = middle ? suffix : "";
       searchInput.placeholder = prefix + middle + closing;
@@ -292,6 +326,12 @@
 
     function typePlaceholder() {
       if (!animationActive) return;
+
+      if (isCompact()) {
+        searchInput.placeholder = compactPlaceholder;
+        typingTimeoutId = setTimeout(typePlaceholder, 800);
+        return;
+      }
 
       if (document.activeElement === searchInput || (searchInput.value && searchInput.value.trim() !== '')) {
         typingTimeoutId = setTimeout(typePlaceholder, 500);
@@ -331,6 +371,7 @@
         clearTimeout(typingTimeoutId);
         typingTimeoutId = null;
       }
+      searchInput.placeholder = getSearchPlaceholder();
     });
 
     searchInput.addEventListener('blur', function () {
@@ -339,6 +380,23 @@
         animationActive = true;
         typePlaceholder();
       }
+    });
+
+    window.addEventListener('resize', function () {
+      if (document.activeElement === searchInput) {
+        searchInput.placeholder = getSearchPlaceholder();
+        return;
+      }
+
+      if (typingTimeoutId) {
+        clearTimeout(typingTimeoutId);
+        typingTimeoutId = null;
+      }
+      animationActive = true;
+      charIndex = 0;
+      isDeleting = false;
+      updatePlaceholder("");
+      typePlaceholder();
     });
 
     updatePlaceholder("");
