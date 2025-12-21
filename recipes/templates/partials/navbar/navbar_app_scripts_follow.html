@@ -1,0 +1,112 @@
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const followForms = document.querySelectorAll('.notification-follow-form');
+    if (!followForms.length) return;
+
+    followForms.forEach(function (form) {
+      form.addEventListener('submit', function (event) {
+        event.preventDefault();
+
+        const button = form.querySelector('button[data-follow-state]');
+        if (!button) {
+          form.submit();
+          return;
+        }
+
+        const currentState = button.getAttribute('data-follow-state') || 'not-following';
+        const formData = new FormData(form);
+        const csrfInput = form.querySelector('input[name="csrfmiddlewaretoken"]');
+        const csrfToken = csrfInput ? csrfInput.value : null;
+
+        fetch(form.action, {
+          method: 'POST',
+          body: formData,
+          headers: Object.assign(
+            { 'X-Requested-With': 'XMLHttpRequest' },
+            csrfToken ? { 'X-CSRFToken': csrfToken } : {}
+          ),
+          redirect: 'manual'
+        }).then(function () {
+          if (currentState === 'not-following') {
+            button.textContent = 'Following';
+            button.classList.remove('btn-primary');
+            button.classList.add('btn-outline-light');
+            button.setAttribute('data-follow-state', 'following');
+          } else {
+            button.textContent = 'Follow';
+            button.classList.remove('btn-outline-light');
+            button.classList.add('btn-primary');
+            button.setAttribute('data-follow-state', 'not-following');
+          }
+        }).catch(function () {
+          form.submit();
+        });
+      });
+    });
+  });
+</script>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const notifItems = document.querySelectorAll('.notification-item[data-post-url]');
+    if (!notifItems.length) return;
+
+    notifItems.forEach(function (item) {
+      item.addEventListener('click', function (event) {
+        const url = item.dataset.postUrl;
+        if (!url) return;
+
+        if (event.target.closest('a, button, form')) {
+          return;
+        }
+
+        window.location.href = url;
+      });
+    });
+  });
+</script>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const requestForms = document.querySelectorAll('.notification-follow-request-form');
+    if (!requestForms.length) return;
+
+    requestForms.forEach(function (form) {
+      form.addEventListener('submit', function (event) {
+        event.preventDefault();
+
+        const action = form.dataset.action;
+        const item = form.closest('[data-notification-id]');
+        const message = item?.querySelector('.notification-message');
+        const actionsRow = item?.querySelector('.notification-follow-request-actions');
+        const csrfInput = form.querySelector('input[name="csrfmiddlewaretoken"]');
+        const csrfToken = csrfInput ? csrfInput.value : null;
+
+        fetch(form.action, {
+          method: 'POST',
+          body: new FormData(form),
+          headers: Object.assign(
+            { 'X-Requested-With': 'XMLHttpRequest' },
+            csrfToken ? { 'X-CSRFToken': csrfToken } : {}
+          ),
+          redirect: 'manual'
+        }).then(function () {
+          if (!item) return;
+
+          if (action === 'accept') {
+            if (message) {
+              message.textContent = 'started following you.';
+            }
+            if (actionsRow) {
+              actionsRow.remove();
+            }
+          } else if (action === 'reject') {
+            item.remove();
+          }
+        }).catch(function () {
+          form.submit();
+        });
+      });
+    });
+  });
+</script>

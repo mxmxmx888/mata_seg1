@@ -155,20 +155,3 @@
     width: 100%;
   }
 }
-
-@media (max-width: 575.98px) {
-  .prep-filter-wrapper {
-    position: static;
-  }
-
-  .prep-filter-popover {
-    position: fixed !important;
-    left: 50% !important;
-    right: auto !important;
-    transform: translateX(-50%) !important;
-    top: calc(var(--navbar-height, 64px) + 10px) !important;
-    width: min(360px, calc(100vw - 1.25rem));
-    max-width: calc(100vw - 1.25rem);
-    z-index: 2050;
-  }
-}
