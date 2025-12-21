@@ -154,6 +154,39 @@
   const notifDropdowns = Array.from(document.querySelectorAll('#notificationDropdown, #notificationDropdownMobile'));
   if (notifDropdowns.length) {
     let markedRead = false;
+    const trackedMenus = [];
+
+    const positionNotificationMenu = (triggerEl, menuEl) => {
+      if (!triggerEl || !menuEl) return;
+
+      const isMobile = window.innerWidth <= 768;
+      if (!isMobile) {
+        ['position', 'top', 'left', 'right', 'transform', 'width', 'max-width'].forEach((prop) => {
+          menuEl.style.removeProperty(prop);
+        });
+        return;
+      }
+
+      const margin = 12;
+      const maxWidth = Math.min(420, window.innerWidth - margin * 2);
+      const left = Math.max(margin, (window.innerWidth - maxWidth) / 2);
+      const triggerRect = triggerEl.getBoundingClientRect();
+      const top = Math.max(margin, triggerRect.bottom + 8);
+
+      menuEl.style.setProperty('position', 'fixed', 'important');
+      menuEl.style.setProperty('top', `${top}px`, 'important');
+      menuEl.style.setProperty('left', `${left}px`, 'important');
+      menuEl.style.setProperty('right', 'auto', 'important');
+      menuEl.style.setProperty('transform', 'none', 'important');
+      menuEl.style.setProperty('width', `${maxWidth}px`, 'important');
+      menuEl.style.setProperty('max-width', `${window.innerWidth - margin * 2}px`, 'important');
+    };
+
+    const updateAllNotificationMenus = () => {
+      trackedMenus.forEach(({ trigger, menu }) => positionNotificationMenu(trigger, menu));
+    };
+
+    window.addEventListener('resize', updateAllNotificationMenus);
 
     const markRead = () => {
       if (markedRead) return;
@@ -167,6 +200,10 @@
     const attachHandlers = (dropdownEl) => {
       const icon = dropdownEl.querySelector('i');
       const dropdownMenu = dropdownEl.closest('.dropdown')?.querySelector('.dropdown-menu');
+
+      if (dropdownMenu) {
+        trackedMenus.push({ trigger: dropdownEl, menu: dropdownMenu });
+      }
 
       const fillHeart = () => {
         if (!icon) return;
@@ -191,10 +228,12 @@
         clearDot();
         fillHeart();
         markRead();
+        positionNotificationMenu(dropdownEl, dropdownMenu);
       };
 
       const handleClose = () => {
         unfillHeart();
+        positionNotificationMenu(dropdownEl, dropdownMenu);
       };
 
       const syncFromState = () => {

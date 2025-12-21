@@ -177,3 +177,20 @@
 .navbar-app .empty-notifications {
   color: var(--text-muted);
 }
+
+@media (max-width: 575.98px) {
+  .navbar-app .notification-menu {
+    position: fixed !important;
+    top: calc(var(--navbar-height, 64px) + 8px) !important;
+    left: 50% !important;
+    right: auto !important;
+    transform: translateX(-50%) !important;
+    width: min(420px, calc(100vw - 1.25rem));
+    max-width: calc(100vw - 1.25rem);
+    z-index: 2050;
+  }
+
+  .navbar-app .navbar-heart-compact .notification-menu {
+    left: 50% !important;
+  }
+}
