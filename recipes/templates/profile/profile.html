@@ -10,23 +10,31 @@
     <h1 class="profile-name">{{ profile.display_name }}</h1>
     <p class="profile-handle small mb-1">
       {{ profile.handle }} ·
-      <button
-        type="button"
-        class="profile-follow-count"
-        data-bs-toggle="modal"
-        data-bs-target="#followersModal"
-      >
-        {{ profile.followers }} Followers
-      </button>
+      {% if can_view_follow_lists %}
+        <button
+          type="button"
+          class="profile-follow-count"
+          data-bs-toggle="modal"
+          data-bs-target="#followersModal"
+        >
+          {{ profile.followers }} Followers
+        </button>
+      {% else %}
+        <span class="profile-follow-count text-muted">{{ profile.followers }} Followers</span>
+      {% endif %}
       ·
-      <button
-        type="button"
-        class="profile-follow-count"
-        data-bs-toggle="modal"
-        data-bs-target="#followingModal"
-      >
-        {{ profile.following }} Following
-      </button>
+      {% if can_view_follow_lists %}
+        <button
+          type="button"
+          class="profile-follow-count"
+          data-bs-toggle="modal"
+          data-bs-target="#followingModal"
+        >
+          {{ profile.following }} Following
+        </button>
+      {% else %}
+        <span class="profile-follow-count text-muted">{{ profile.following }} Following</span>
+      {% endif %}
       {% if is_own_profile %}
       ·
       <button
@@ -108,45 +116,49 @@
         ></button>
       </div>
       <div class="modal-body">
-        {% if followers_users %}
-          <ul class="list-unstyled mb-0">
-            {% for u in followers_users %}
-              <li class="mb-3">
-                <div class="d-flex align-items-center justify-content-between gap-3">
-                  <a
-                    href="{% url 'profile' %}?user={{ u.username }}"
-                    class="follow-user-link d-flex align-items-center text-decoration-none flex-grow-1"
-                  >
-                    <div class="me-3">
-                      <img
-                        src="{{ u.mini_avatar_url }}"
-                        alt="{{ u.username }} avatar"
-                        class="rounded-circle"
-                        width="40"
-                        height="40"
-                      >
-                    </div>
-                    <div class="text-start">
-                      <div class="fw-semibold follow-user-name">
-                        {{ u.get_full_name|default:u.username }}
+        {% if can_view_follow_lists %}
+          {% if followers_users %}
+            <ul class="list-unstyled mb-0">
+              {% for u in followers_users %}
+                <li class="mb-3">
+                  <div class="d-flex align-items-center justify-content-between gap-3">
+                    <a
+                      href="{% url 'profile' %}?user={{ u.username }}"
+                      class="follow-user-link d-flex align-items-center text-decoration-none flex-grow-1"
+                    >
+                      <div class="me-3">
+                        <img
+                          src="{{ u.mini_avatar_url }}"
+                          alt="{{ u.username }} avatar"
+                          class="rounded-circle"
+                          width="40"
+                          height="40"
+                        >
                       </div>
-                      <div class="small follow-user-handle">
-                        {{ u.username }}
+                      <div class="text-start">
+                        <div class="fw-semibold follow-user-name">
+                          {{ u.get_full_name|default:u.username }}
+                        </div>
+                        <div class="small follow-user-handle">
+                          {{ u.username }}
+                        </div>
                       </div>
-                    </div>
-                  </a>
-                  {% if is_own_profile %}
-                  <form method="post" action="{% url 'remove_follower' u.username %}">
-                    {% csrf_token %}
-                    <button type="submit" class="btn btn-sm btn-outline-light">Remove</button>
-                  </form>
-                  {% endif %}
-                </div>
-              </li>
-            {% endfor %}
-          </ul>
+                    </a>
+                    {% if is_own_profile %}
+                    <form method="post" action="{% url 'remove_follower' u.username %}">
+                      {% csrf_token %}
+                      <button type="submit" class="btn btn-sm btn-outline-light">Remove</button>
+                    </form>
+                    {% endif %}
+                  </div>
+                </li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p class="text-muted mb-0 follow-empty-text">No followers yet.</p>
+          {% endif %}
         {% else %}
-          <p class="text-muted mb-0 follow-empty-text">No followers yet.</p>
+          <p class="text-muted mb-0 follow-empty-text">Followers are hidden for this account.</p>
         {% endif %}
       </div>
     </div>
@@ -172,45 +184,49 @@
         ></button>
       </div>
       <div class="modal-body">
-        {% if following_users %}
-          <ul class="list-unstyled mb-0">
-            {% for u in following_users %}
-              <li class="mb-3">
-                <div class="d-flex align-items-center justify-content-between gap-3">
-                  <a
-                    href="{% url 'profile' %}?user={{ u.username }}"
-                    class="follow-user-link d-flex align-items-center text-decoration-none flex-grow-1"
-                  >
-                    <div class="me-3">
-                      <img
-                        src="{{ u.mini_avatar_url }}"
-                        alt="{{ u.username }} avatar"
-                        class="rounded-circle"
-                        width="40"
-                        height="40"
-                      >
-                    </div>
-                    <div class="text-start">
-                      <div class="fw-semibold follow-user-name">
-                        {{ u.get_full_name|default:u.username }}
+        {% if can_view_follow_lists %}
+          {% if following_users %}
+            <ul class="list-unstyled mb-0">
+              {% for u in following_users %}
+                <li class="mb-3">
+                  <div class="d-flex align-items-center justify-content-between gap-3">
+                    <a
+                      href="{% url 'profile' %}?user={{ u.username }}"
+                      class="follow-user-link d-flex align-items-center text-decoration-none flex-grow-1"
+                    >
+                      <div class="me-3">
+                        <img
+                          src="{{ u.mini_avatar_url }}"
+                          alt="{{ u.username }} avatar"
+                          class="rounded-circle"
+                          width="40"
+                          height="40"
+                        >
                       </div>
-                      <div class="small follow-user-handle">
-                        {{ u.username }}
+                      <div class="text-start">
+                        <div class="fw-semibold follow-user-name">
+                          {{ u.get_full_name|default:u.username }}
+                        </div>
+                        <div class="small follow-user-handle">
+                          {{ u.username }}
+                        </div>
                       </div>
-                    </div>
-                  </a>
-                  {% if is_own_profile %}
-                  <form method="post" action="{% url 'remove_following' u.username %}">
-                    {% csrf_token %}
-                    <button type="submit" class="btn btn-sm btn-outline-light">Unfollow</button>
-                  </form>
-                  {% endif %}
-                </div>
-              </li>
-            {% endfor %}
-          </ul>
+                    </a>
+                    {% if is_own_profile %}
+                    <form method="post" action="{% url 'remove_following' u.username %}">
+                      {% csrf_token %}
+                      <button type="submit" class="btn btn-sm btn-outline-light">Unfollow</button>
+                    </form>
+                    {% endif %}
+                  </div>
+                </li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p class="text-muted mb-0 follow-empty-text">Not following anyone yet.</p>
+          {% endif %}
         {% else %}
-          <p class="text-muted mb-0 follow-empty-text">Not following anyone yet.</p>
+          <p class="text-muted mb-0 follow-empty-text">Following list is hidden for this account.</p>
         {% endif %}
       </div>
     </div>

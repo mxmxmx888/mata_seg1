@@ -148,6 +148,10 @@ def profile(request):
     profile_data["followers"] = followers_count
     profile_data["following"] = following_count
     profile_data["close_friends_count"] = len(close_friend_ids)
+    can_view_follow_lists = is_own_profile or not getattr(profile_user, "is_private", False) or is_following
+    if not can_view_follow_lists:
+        followers_users = []
+        following_users = []
 
     edit_profile_form = UserForm(instance=request.user)
     password_form = PasswordForm(user=request.user)
@@ -217,6 +221,7 @@ def profile(request):
             "close_friends": close_friends,
             "posts": posts,
         "can_view_profile": can_view_profile,
+        "can_view_follow_lists": can_view_follow_lists,
         "pending_follow_request": pending_request,
         "close_friend_ids": close_friend_ids,
         "show_edit_profile_modal": show_edit_profile_modal,

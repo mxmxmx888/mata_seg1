@@ -1,4 +1,5 @@
 import re
+from django.core.exceptions import ValidationError
 from allauth.account.adapter import DefaultAccountAdapter
 
 
@@ -6,12 +7,12 @@ class CustomAccountAdapter(DefaultAccountAdapter):
     def clean_username(self, username, shallow=False):
         """
         Allow usernames without '@'. Only allow letters, digits, underscore, dot.
-        If invalid, raise ValueError to trigger form errors.
+        Raise ValidationError (not ValueError) so allauth can handle it.
         """
         if username.startswith("@"):
             username = username[1:]
         if not re.match(r"^[a-zA-Z0-9_.]+$", username):
-            raise ValueError("Username must contain only letters, numbers, underscores, or dots.")
+            raise ValidationError("Username must contain only letters, numbers, underscores, or dots.")
         return username
 
     def populate_username(self, request, user):

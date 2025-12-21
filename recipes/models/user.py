@@ -2,6 +2,7 @@ from django.core.validators import RegexValidator, MaxLengthValidator
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from libgravatar import Gravatar
+from django.templatetags.static import static
 
 class User(AbstractUser):
     """Model for user auth, and team member related info"""
@@ -46,7 +47,7 @@ class User(AbstractUser):
                 return self.avatar.url
             except ValueError:
                 pass
-        return self.gravatar(size=size)
+        return static("img/default-avatar.svg")
 
     @property
     def avatar_url(self):

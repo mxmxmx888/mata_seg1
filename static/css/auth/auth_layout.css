@@ -57,6 +57,12 @@
   opacity: 0.55;
 }
 
+body[data-theme="dark"] .auth-visual-placeholder {
+  background: var(--bg-2);
+  border-color: var(--border-subtle);
+  opacity: 1;
+}
+
 
 .auth-panel {
   flex: 1 1 420px;

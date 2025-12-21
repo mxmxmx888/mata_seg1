@@ -1,5 +1,6 @@
 import re
 from django.test import TestCase
+from django.core.exceptions import ValidationError
 from django.contrib.auth import get_user_model
 
 
@@ -23,7 +24,7 @@ class CustomAccountAdapterTests(TestCase):
         self.assertEqual(cleaned, "User.Name_123")
 
     def test_clean_username_rejects_invalid_chars(self):
-        with self.assertRaises(ValueError):
+        with self.assertRaises(ValidationError):
             self.adapter.clean_username("bad name!")
 
     def test_clean_username_shallow_still_valid(self):

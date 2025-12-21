@@ -21,6 +21,11 @@ load_dotenv(BASE_DIR / ".env")
 
 FIREBASE_API_KEY = os.getenv("FIREBASE_API_KEY")
 
+
+def env_list(name: str):
+    value = os.getenv(name, "")
+    return [item.strip() for item in value.split(",") if item.strip()]
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
@@ -30,7 +35,11 @@ SECRET_KEY = 'django-insecure-n*%ityrpt9+wxz#e%i(&7_1e=w-dv1h33&$n(mg=$0&8m0k5f-
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = env_list("ALLOWED_HOSTS")
+CSRF_TRUSTED_ORIGINS = env_list("CSRF_TRUSTED_ORIGINS")
+CSRF_COOKIE_SECURE = os.getenv("CSRF_COOKIE_SECURE", "False") == "True"
+SESSION_COOKIE_SECURE = os.getenv("SESSION_COOKIE_SECURE", "False") == "True"
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 SOCIALACCOUNT_LOGIN_ON_GET = True
 

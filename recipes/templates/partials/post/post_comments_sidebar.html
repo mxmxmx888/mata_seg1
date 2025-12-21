@@ -111,11 +111,13 @@
       {% for comment in comments %}
       <div class="post-comment">
         <div class="comment-avatar">
+          <a href="{% url 'profile' %}?user={{ comment.user.username|urlencode }}">
             <img
               src="{{ comment.user.mini_avatar_url }}"
               alt="{{ comment.user.username }} avatar"
             >
-          </div>
+          </a>
+        </div>
         <div class="comment-body">
           <div class="comment-header">
             <span class="comment-author">{{ comment.user.username }}</span>

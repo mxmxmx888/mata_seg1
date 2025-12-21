@@ -9,110 +9,106 @@ body[data-theme="dark"] .auth-card {
   background: var(--surface);
   color: var(--text-primary);
   border-color: var(--border-subtle);
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.72);
+  box-shadow: none;
 }
 
 body[data-theme="dark"] .auth-card p.auth-subtitle {
-  color: #b6b7c1;
+  color: var(--text-muted);
 }
 
 body[data-theme="dark"] .btn-auth {
   border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background-color: #111111;
-  color: #f6f6f6;
+  border: 1px solid var(--border-subtle);
+  background-color: var(--bg-2);
+  color: var(--text-primary);
 }
 
 body[data-theme="dark"] .btn-auth-apple {
-  background-color: #f6f6f6;
-  color: rgb(13, 13, 13);
+  background-color: var(--surface);
+  color: var(--text-primary);
 }
 
 body[data-theme="dark"] .btn-auth-google {
-  background-color: #111111;
-  color: #f6f6f6;
-  border-color: rgba(255, 255, 255, 0.12);
+  background-color: var(--bg-2);
+  color: var(--text-primary);
+  border-color: var(--border-subtle);
 }
 
 body[data-theme="dark"] .auth-card .form-control {
   border-radius: 999px;
-  border: 1px solid #171822;
-  background-color: #14151d;
-  color: #f6f6f6;
-}
-
-body[data-theme="dark"] .auth-card .form-control::placeholder {
-  color: #7c7d88;
+  border: 1px solid var(--border-subtle);
+  background-color: var(--bg-2);
+  color: var(--text-primary);
 }
 
 body[data-theme="dark"] .auth-card .form-control:focus {
-  background-color: #181924;
-  border-color: #f6f6f6;
-  box-shadow: 0 0 0 1px rgba(246, 246, 246, 0.35);
+  background-color: var(--bg-2);
+  border-color: var(--border-strong);
+  box-shadow: none;
 }
 
 body[data-theme="dark"] .auth-card .form-control:-webkit-autofill,
 body[data-theme="dark"] .auth-card .form-control:-webkit-autofill:hover,
 body[data-theme="dark"] .auth-card .form-control:-webkit-autofill:focus {
-  background-color: #181924;
-  -webkit-text-fill-color: #f6f6f6;
-  box-shadow: 0 0 0 1000px #181924 inset;
+  background-color: var(--bg-2);
+  -webkit-text-fill-color: var(--text-primary);
+  box-shadow: 0 0 0 1000px var(--bg-2) inset;
 }
 
 body[data-theme="dark"] .auth-card .form-control.is-valid,
 body[data-theme="dark"] .auth-card .form-control.is-valid:focus {
   background-image: none;
-  border-color: #171822;
+  border-color: var(--border-subtle);
   box-shadow: none;
   padding-right: 1rem;
 }
 
 body[data-theme="dark"] .auth-card .form-control.is-invalid {
   background-image: none;
-  background-color: #14151d;
+  background-color: var(--bg-2);
   border-color: #f87171;
-  box-shadow: 0 0 0 1px rgba(248, 113, 113, 0.3);
+  box-shadow: none;
   padding-right: 1rem;
 }
 
 body[data-theme="dark"] .auth-card .form-control.is-invalid:focus {
-  background-color: #181924;
+  background-color: var(--bg-2);
   border-color: #fca5a5;
-  box-shadow: 0 0 0 1px rgba(252, 165, 165, 0.35);
+  box-shadow: none;
 }
 
 body[data-theme="dark"] .auth-divider {
-  color: #9ca3af;
+  color: var(--text-muted);
 }
 
 body[data-theme="dark"] .auth-divider::before,
 body[data-theme="dark"] .auth-divider::after {
-  background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.2));
+  background: var(--border-subtle);
 }
 
 body[data-theme="dark"] .auth-divider::after {
-  background: linear-gradient(to left, transparent, rgba(255, 255, 255, 0.2));
+  background: var(--border-subtle);
 }
 
 body[data-theme="dark"] .auth-meta,
 body[data-theme="dark"] .auth-footer-link {
-  color: #9ca3af;
+  color: var(--text-muted);
 }
 
 body[data-theme="dark"] .auth-primary-btn {
-  background-color: #f6f6f6;
-  color: rgb(13, 13, 13);
+  background-color: var(--text-primary);
+  color: var(--text-inverse);
 }
 
 body[data-theme="dark"] .auth-primary-btn:hover,
 body[data-theme="dark"] .auth-primary-btn:focus-visible {
-  background-color: #f6f6f6;
-  color: rgb(13, 13, 13);
+  background-color: var(--text-primary);
+  color: var(--text-inverse);
   text-decoration: none;
 }
 
 body[data-theme="dark"] .auth-footer-link {
-  color: #d4d4dc;
+  color: var(--text-muted);
 }
 
 body[data-theme="dark"] .auth-footer-link a {
