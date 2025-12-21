@@ -2,11 +2,17 @@
 
 
 .app-fullscreen-menu {
+  --app-menu-bg: color-mix(in srgb, var(--surface, #0f1014) 90%, var(--bg-1, #0d0d0d) 10%);
+  --app-menu-text: var(--text-primary, #f9fafb);
+  --app-menu-link: color-mix(in srgb, var(--app-menu-text, #f9fafb) 82%, var(--text-muted, #9ca3af) 18%);
+  --app-menu-link-strong: var(--app-menu-text, #f9fafb);
   position: fixed;
   inset: 0;
   z-index: 2000;
-  background-color: rgba(0, 0, 0, 0.96);
-  color: #f9fafb;
+  background-color: var(--app-menu-bg);
+  color: var(--app-menu-text);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   display: none;
 }
 
@@ -46,7 +52,7 @@
   justify-content: center;
   gap: 1.5rem;
   font-size: 0.95rem;
-  color: #e5e7eb;
+  color: color-mix(in srgb, var(--app-menu-text, #f9fafb) 75%, transparent 25%);
   padding-bottom: 1.25rem;
 }
 
@@ -71,16 +77,16 @@
 .app-fullscreen-menu-link {
   font-size: 1.3rem;
   letter-spacing: 0.02em;
-  color: #e5e7eb;
+  color: var(--app-menu-link);
   text-decoration: none;
 }
 
 .app-fullscreen-menu-link.active {
-  color: #ffffff;
+  color: var(--app-menu-link-strong);
 }
 
 .app-fullscreen-menu-link:hover {
-  color: #ffffff;
+  color: var(--app-menu-link-strong);
 }
 
 .app-fullscreen-menu-cta {
@@ -91,6 +97,18 @@
 
 .app-fullscreen-menu-cta .btn {
   border-radius: 999px;
+  background-color: var(--text-primary);
+  color: var(--text-inverse);
+  border-color: var(--text-primary);
+  padding-left: 1.6rem;
+  padding-right: 1.6rem;
+}
+
+.app-fullscreen-menu-cta .btn:hover,
+.app-fullscreen-menu-cta .btn:focus-visible {
+  background-color: color-mix(in srgb, var(--text-primary) 90%, var(--bg-2, #e5e7eb) 10%);
+  border-color: color-mix(in srgb, var(--text-primary) 90%, var(--bg-2, #e5e7eb) 10%);
+  color: var(--text-inverse);
 }
 
 .app-fullscreen-menu-close {
@@ -102,7 +120,7 @@
   border-radius: 0;
   border: none;
   background: transparent;
-  color: #f9fafb;
+  color: var(--app-menu-text);
   font-size: 1.9rem;
   line-height: 1;
   display: flex;
@@ -112,7 +130,7 @@
 }
 
 .app-fullscreen-menu-close:focus-visible {
-  outline: 2px solid #f9fafb;
+  outline: 2px solid var(--app-menu-text);
   outline-offset: 2px;
 }
 
