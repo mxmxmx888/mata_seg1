@@ -1,6 +1,33 @@
 import re
 from django.core.exceptions import ValidationError
+from django.db import IntegrityError
+from django.urls import reverse
 from allauth.account.adapter import DefaultAccountAdapter
+from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
+from allauth.socialaccount.models import SocialAccount
+from django.contrib.auth import get_user_model
+
+
+def _unique_username(base, user_model, exclude_user_id=None):
+    """
+    Normalize a base string and make it unique for the given User model.
+    """
+    base = (base or "").strip().lstrip("@")
+    base = re.sub(r"[^a-zA-Z0-9_.]", "", base).lower() or "user"
+
+    username = base
+    counter = 1
+    qs = user_model.objects.filter(username=username)
+    if exclude_user_id:
+        qs = qs.exclude(pk=exclude_user_id)
+    while qs.exists():
+        username = f"{base}{counter}"
+        counter += 1
+        qs = user_model.objects.filter(username=username)
+        if exclude_user_id:
+            qs = qs.exclude(pk=exclude_user_id)
+
+    return username
 
 
 class CustomAccountAdapter(DefaultAccountAdapter):
@@ -34,14 +61,51 @@ class CustomAccountAdapter(DefaultAccountAdapter):
             else:
                 base = (getattr(user, "first_name", "") or "").strip() or "user"
 
-        base = base.lstrip("@")
-        base = re.sub(r"[^a-zA-Z0-9_.]", "", base).lower() or "user"
+        return _unique_username(base, UserModel, exclude_user_id=user.pk or None)
 
-        username = base
-        if UserModel.objects.filter(username=username).exists():
-            counter = 1
-            while UserModel.objects.filter(username=f"{base}{counter}").exists():
-                counter += 1
-            username = f"{base}{counter}"
+    def get_login_redirect_url(self, request):
+        return super().get_login_redirect_url(request)
 
-        return username
+
+class CustomSocialAccountAdapter(DefaultSocialAccountAdapter):
+    """
+    Ensure social signups always get a unique username before hitting the DB.
+    """
+
+    def populate_user(self, request, sociallogin, data):
+        user = super().populate_user(request, sociallogin, data)
+
+        UserModel = type(user)
+        candidate = (
+            getattr(user, "username", None)
+            or data.get("username")
+            or (data.get("email", "") or "").split("@")[0]
+            or (data.get("first_name") or "")
+            or (data.get("name") or "")
+            or "user"
+        )
+
+        user.username = _unique_username(candidate, UserModel, exclude_user_id=user.pk or None)
+        return user
+
+    def save_user(self, request, sociallogin, form=None):
+        """
+        Attempt to attach to an existing user with the same email if a uniqueness
+        conflict happens during social signup.
+        """
+        try:
+            user = super().save_user(request, sociallogin, form=form)
+        except IntegrityError:
+            email = (getattr(sociallogin.user, "email", "") or "").strip()
+            if not email:
+                raise
+
+            User = get_user_model()
+            existing = User.objects.filter(email__iexact=email).first()
+            if not existing:
+                raise
+
+            # Attach the social account to the existing user and return it.
+            sociallogin.connect(request, existing)
+            return existing
+        return user

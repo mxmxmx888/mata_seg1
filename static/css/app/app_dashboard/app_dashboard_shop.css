@@ -93,13 +93,14 @@ body.shop-body[data-theme="dark"] {
 
 .shop-item-img {
   width: 100%;
+  height: auto;
   display: block;
-  object-fit: cover;
+  object-fit: contain;
 }
 
 .shop-item-placeholder {
   width: 100%;
-  aspect-ratio: 3 / 4;
+  aspect-ratio: 4 / 5;
   display: grid;
   place-items: center;
   background: linear-gradient(135deg, var(--shop-placeholder-from), var(--shop-placeholder-to));

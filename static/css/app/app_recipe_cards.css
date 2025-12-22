@@ -17,30 +17,17 @@
 
 .my-recipe-thumb {
   border-radius: 14px;
-  overflow: hidden;
   margin: -0.15rem -0.15rem 0.75rem;
   background: var(--bg-2);
-  position: relative;
-  padding-top: 75%;
+  overflow: visible;
 }
 
 .my-recipe-thumb-img {
-  position: absolute;
-  inset: 0;
   width: 100%;
-  height: 100%;
-  object-fit: cover;
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
+  height: auto;
+  object-fit: contain;
   display: block;
-}
-
-@supports (aspect-ratio: 4 / 3) {
-  .my-recipe-thumb {
-    padding-top: 0;
-    aspect-ratio: 4 / 3;
-  }
+  border-radius: inherit;
 }
 
 .my-recipe-title {

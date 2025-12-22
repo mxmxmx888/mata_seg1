@@ -16,15 +16,19 @@ recipe_image_file_pool = [
 ]
 
 shop_image_file_pool = [
-    "static/shop_images/cabbage.jpg",
-    "static/shop_images/chilli.jpg",
-    "static/shop_images/cucumber.jpg",
-    "static/shop_images/eggplant.jpg",
-    "static/shop_images/lemon.jpg",
-    "static/shop_images/pepper.jpg",
-    "static/shop_images/pepper2.jpg",
-    "static/shop_images/pumpkin.jpg",
-    "static/shop_images/tomato.jpg",
+    "static/shop_images/Bowl.jpg",
+    "static/shop_images/Bowl2.jpg",
+    "static/shop_images/Flour.jpg",
+    "static/shop_images/Forks.jpg",
+    "static/shop_images/FormPerformanceProtein.jpg",
+    "static/shop_images/Gummies.jpg",
+    "static/shop_images/Honey.jpg",
+    "static/shop_images/Plate.jpg",
+    "static/shop_images/SagaPerformancePowder.jpg",
+    "static/shop_images/ChocSpread.jpg",
+    "static/shop_images/GarlicSpread.jpg",
+    "static/shop_images/Ginger.jpg",
+    "static/shop_images/Herbs.jpg",
 ]
 
 categories = ["Breakfast", "Lunch", "Dinner", "Dessert", "Vegan"]

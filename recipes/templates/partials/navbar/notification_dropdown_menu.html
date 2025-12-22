@@ -10,9 +10,15 @@
       data-notification-id="{{ notif.id }}"
       {% if notif.post %}data-post-url="{% url 'recipe_detail' notif.post.id %}"{% endif %}
     >
-      <a href="{% url 'profile' %}?user={{ notif.sender.username|urlencode }}" class="flex-shrink-0">
-        <img src="{{ notif.sender.mini_avatar_url }}" alt="{{ notif.sender.username }}" class="rounded-circle notification-avatar-img">
-      </a>
+      {% if notif.sender.username %}
+        <a href="{% url 'profile' %}?user={{ notif.sender.username|urlencode }}" class="flex-shrink-0">
+          <img src="{{ notif.sender.mini_avatar_url }}" alt="{{ notif.sender.username }}" class="rounded-circle notification-avatar-img">
+        </a>
+      {% else %}
+        <div class="flex-shrink-0">
+          <img src="{{ notif.sender.mini_avatar_url }}" alt="" class="rounded-circle notification-avatar-img">
+        </div>
+      {% endif %}
       
       <div class="flex-grow-1">
         <p class="mb-0 small text-wrap notification-text">
@@ -42,7 +48,7 @@
           </div>
           {% endif %}
         {% endwith %}
-      {% elif notif.notification_type == 'follow' %}
+      {% elif notif.notification_type == 'follow' and notif.sender.username %}
          {% if following_ids and notif.sender.id in following_ids %}
            <form method="post" action="{% url 'toggle_follow' notif.sender.username %}" class="ms-auto notification-follow-form" data-follow-state="following">
             {% csrf_token %}

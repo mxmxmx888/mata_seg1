@@ -47,6 +47,10 @@ def get_app():
 
 def get_firestore_client():
     """Helper to get Firestore client safely."""
+    # Allow opting out entirely (useful for local dev/seed without Firestore).
+    firebase_enabled = os.getenv("FIREBASE_ENABLE_FIRESTORE", "false").lower() in ("1", "true", "yes")
+    if not firebase_enabled:
+        return None
     # Skip Firestore entirely during test runs to avoid network calls.
     if _is_running_tests():
         return None

@@ -10,6 +10,7 @@
       class="shop-masonry"
       id="shop-items-container"
       data-page="{{ page_obj.number }}"
+      data-seed="{{ seed }}"
     >
       {% include 'partials/shop/shop_items.html' with items=items %}
     </div>
@@ -33,6 +34,7 @@
     const container = document.getElementById('shop-items-container');
     const sentinel = document.getElementById('shop-sentinel');
     const loadingEl = document.getElementById('shop-loading');
+    const seed = (container && container.dataset.seed) || '{{ seed }}';
     if (!container || !sentinel) return;
 
     const breakpoints = [
@@ -55,13 +57,11 @@
 
     let columns = [];
 
-    function buildColumns() {
+    function buildColumns(force) {
       const desiredCount = getColumnCount();
-      if (columns.length === desiredCount) return;
+      const cards = Array.from(container.querySelectorAll('.shop-masonry-item'));
+      if (!force && columns.length === desiredCount) return;
 
-      const cards = Array.from(
-        container.querySelectorAll('.shop-masonry-item')
-      );
       container.innerHTML = '';
       columns = [];
       for (let i = 0; i < desiredCount; i += 1) {
@@ -91,6 +91,29 @@
       });
     }
 
+    function waitForImages(nodes) {
+      const imgs = [];
+      nodes.forEach(function (node) {
+        imgs.push.apply(imgs, node.querySelectorAll('img'));
+      });
+      if (!imgs.length) return Promise.resolve();
+      return new Promise(function (resolve) {
+        let done = 0;
+        const finish = function () {
+          done += 1;
+          if (done >= imgs.length) resolve();
+        };
+        imgs.forEach(function (img) {
+          if (img.complete) {
+            finish();
+          } else {
+            img.addEventListener('load', finish, { once: true });
+            img.addEventListener('error', finish, { once: true });
+          }
+        });
+      });
+    }
+
     let page = Number(container.dataset.page || '1');
     let loading = false;
     let hasNext = {{ page_obj.has_next|yesno:"true,false" }};
@@ -106,11 +129,19 @@
     }
 
     function appendHtml(html) {
-      if (!html) return;
+      if (!html) return Promise.resolve();
       const temp = document.createElement('div');
       temp.innerHTML = html;
       const items = Array.from(temp.children);
-      placeItems(items);
+      return Promise.resolve().then(function () {
+        placeItems(items);
+        waitForImages(items).then(function () {
+          items.forEach(function (node) {
+            if (node.parentElement) node.remove();
+          });
+          placeItems(items);
+        });
+      });
     }
 
     function loadMoreShopItems() {
@@ -120,6 +151,7 @@
       page += 1;
       const url = new URL(window.location.href);
       url.searchParams.set('page', String(page));
+      if (seed) url.searchParams.set('seed', seed);
       url.searchParams.set('ajax', '1');
 
       fetch(url.toString(), {
@@ -134,15 +166,17 @@
           return response.json();
         })
         .then(function (data) {
-          if (data && data.html) appendHtml(data.html);
-          hasNext = Boolean(data && data.has_next);
-          if (!hasNext && observer) {
-            observer.disconnect();
-          }
-          setLoading(false);
+          return appendHtml(data && data.html).then(function () {
+            hasNext = Boolean(data && data.has_next);
+            if (!hasNext && observer) {
+              observer.disconnect();
+            }
+          });
         })
         .catch(function () {
           page -= 1;
+        })
+        .finally(function () {
           setLoading(false);
         });
     }
@@ -170,8 +204,14 @@
       });
     }
 
+    const initialItems = Array.from(container.querySelectorAll('.shop-masonry-item'));
     buildColumns();
-    window.addEventListener('resize', buildColumns);
+    waitForImages(initialItems).then(function () {
+      buildColumns(true);
+    });
+    window.addEventListener('resize', function () {
+      buildColumns(true);
+    });
   });
 </script>
 {% endblock %}

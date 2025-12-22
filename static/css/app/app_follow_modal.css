@@ -50,6 +50,14 @@ body.modal-open {
   background-color: rgb(13, 13, 13);
 }
 
+.modal-backdrop.custom-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 1050;
+}
+
 .modal-backdrop.show,
 .modal-backdrop.custom-modal-backdrop.show {
   opacity: 0.65;
@@ -63,6 +71,14 @@ body[data-theme="light"] .modal-backdrop.custom-modal-backdrop.show {
 .follow-modal .modal-content {
   border-radius: 32px;
   border: none;
+  min-height: 260px;
+  max-height: 70vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.follow-modal .modal-dialog {
+  max-width: 380px;
 }
 
 body.profile-body .follow-modal .modal-content {
@@ -71,8 +87,8 @@ body.profile-body .follow-modal .modal-content {
 }
 
 :is(:root[data-theme="dark"] body.profile-body, body[data-theme="dark"].profile-body) .follow-modal .modal-content {
-  background-color: #101010;
-  color: #f4f4f7;
+  background-color: var(--bg-1);
+  color: var(--text-primary);
 }
 
 .follow-modal .form-control {
@@ -144,8 +160,17 @@ body.profile-body .follow-modal .btn-outline-light:focus-visible {
 }
 
 :is(:root[data-theme="dark"] body.profile-body, body[data-theme="dark"].profile-body) .follow-modal .btn-outline-light {
-  color: #f4f4f7;
-  border-color: #8a8c96;
+  color: var(--text-primary);
+  background-color: var(--bg-2);
+  border-color: color-mix(in srgb, var(--text-primary) 18%, var(--bg-2) 82%);
+  box-shadow: none;
+}
+
+:is(:root[data-theme="dark"] body.profile-body, body[data-theme="dark"].profile-body) .follow-modal .btn-outline-light:hover,
+:is(:root[data-theme="dark"] body.profile-body, body[data-theme="dark"].profile-body) .follow-modal .btn-outline-light:focus-visible {
+  color: var(--text-primary);
+  background-color: color-mix(in srgb, var(--bg-2) 85%, var(--text-primary) 15%);
+  border-color: color-mix(in srgb, var(--text-primary) 26%, var(--bg-2) 74%);
 }
 
 .follow-empty-text {

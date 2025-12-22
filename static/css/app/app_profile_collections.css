@@ -6,9 +6,9 @@
 }
 
 .profile-pill {
-  border: 1px solid #2c2d35;
-  background: linear-gradient(135deg, #1c1c1c, #121212);
-  color: #f4f4f7;
+  border: 1px solid var(--border-subtle, #2c2d35);
+  background: var(--bg-2);
+  color: var(--text-primary);
   border-radius: 999px;
   padding: 0.35rem 0.9rem;
   font-size: 0.78rem;
@@ -23,8 +23,8 @@
 
 .profile-pill:hover,
 .profile-pill:focus-visible {
-  border-color: #ffffff;
-  color: #ffffff;
+  border-color: color-mix(in srgb, var(--text-primary) 30%, var(--bg-2) 70%);
+  color: var(--text-primary);
 }
 
 .profile-collections-grid {
