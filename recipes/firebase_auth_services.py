@@ -42,12 +42,14 @@ def sign_in_with_email_and_password(email: str, password: str):
     response = requests.post(url, json=payload)
 
     if response.status_code == 200:
-        print("DEBUG: Firebase sign-in OK for", email)
+        if not _is_running_tests():
+            print("DEBUG: Firebase sign-in OK for", email)
         return response.json()
 
-    print("DEBUG: Firebase sign-in FAILED")
-    print("DEBUG: Status:", response.status_code)
-    print("DEBUG: Body:", response.text)
+    if not _is_running_tests():
+        print("DEBUG: Firebase sign-in FAILED")
+        print("DEBUG: Status:", response.status_code)
+        print("DEBUG: Body:", response.text)
     return None
 
 
@@ -60,8 +62,10 @@ def generate_password_reset_link(email: str):
         link = firebase_auth.generate_password_reset_link(email)
         return link
     except firebase_auth.UserNotFoundError:
-        print(f"DEBUG: Firebase user not found for email {email}")
+        if not _is_running_tests():
+            print(f"DEBUG: Firebase user not found for email {email}")
         return None
     except Exception as e:
-        print(f"DEBUG: Error generating password reset link: {e}")
+        if not _is_running_tests():
+            print(f"DEBUG: Error generating password reset link: {e}")
         return None

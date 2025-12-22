@@ -9,10 +9,18 @@ from django.dispatch import receiver
 
 from allauth.socialaccount.signals import social_account_added, social_account_updated
 
-from recipes.firebase_admin_client import ensure_firebase_user, get_firestore_client
+from recipes.firebase_admin_client import (
+    ensure_firebase_user,
+    get_firestore_client,
+    _is_running_tests,
+    _env_truthy,
+)
 
 logger = logging.getLogger(__name__)
 User = get_user_model()
+
+def _should_log():
+    return not _is_running_tests() or _env_truthy("FIREBASE_VERBOSE_TEST_LOGS")
 
 
 @receiver(social_account_added)
@@ -40,7 +48,8 @@ def sync_google_user_to_firebase_on_social(sender, request, sociallogin, **kwarg
         ensure_firebase_user(email=email, display_name=display_name)
 
     except Exception as e:
-        logger.warning("Firebase sync (social) failed: %s", e)
+        if _should_log():
+            logger.warning("Firebase sync (social) failed: %s", e)
 
 
 @receiver(user_logged_in)
@@ -59,7 +68,8 @@ def sync_user_to_firebase_on_login(sender, request, user, **kwargs):
         ensure_firebase_user(email=email, display_name=display_name)
 
     except Exception as e:
-        logger.warning("Firebase sync (login) failed: %s", e)
+        if _should_log():
+            logger.warning("Firebase sync (login) failed: %s", e)
 
 
 @receiver(post_save, sender=User)
@@ -83,4 +93,5 @@ def sync_user_data_to_firestore(sender, instance, created, **kwargs):
         db.collection("users").document(str(instance.id)).set(user_data, merge=True)
 
     except Exception as e:
-        logger.warning("Error syncing to Firestore: %s", e)
+        if _should_log():
+            logger.warning("Error syncing to Firestore: %s", e)
