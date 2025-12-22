@@ -20,7 +20,9 @@ from recipes.models.comment import Comment
 from recipes.models.like import Like
 from recipes.models.ingredient import Ingredient
 from .seed_data import (
+    SHOP_ITEM_OVERRIDES,
     SHOP_INGREDIENT_SETS,
+    SHOP_IMAGE_MAP,
     bio_phrases,
     categories,
     comment_phrases,
@@ -263,23 +265,15 @@ class Command(BaseCommand):
         for idx, post_id in enumerate(post_ids):
             ingredient_set = SHOP_INGREDIENT_SETS[idx % set_count]
             position = 1
-            recipe_shop_images: List[str] = []
 
             for item in ingredient_set:
+                name = item["name"]
+                name_key = name.lower()
+                override = SHOP_ITEM_OVERRIDES.get(name_key, {})
+
+                shop_url = override.get("shop_url") or item.get("shop_url")
+                rel_path = override.get("shop_image") or item.get("shop_image") or SHOP_IMAGE_MAP.get(name_key)
                 image_file = None
-                rel_path = None
-
-                if item.get("shop_url") and shop_image_file_pool:
-                    if not recipe_shop_images:
-                        recipe_shop_images = sample(
-                            shop_image_file_pool,
-                            k=min(len(shop_image_file_pool), len(ingredient_set)),
-                        )
-
-                    if recipe_shop_images:
-                        rel_path = recipe_shop_images.pop()
-                    else:
-                        rel_path = choice(shop_image_file_pool)
 
                 if rel_path:
                     try:
@@ -287,12 +281,19 @@ class Command(BaseCommand):
                     except FileNotFoundError:
                         image_file = None
 
+                if not image_file and shop_image_file_pool:
+                    fallback_rel_path = choice(shop_image_file_pool)
+                    try:
+                        image_file = self._make_uploaded_image(fallback_rel_path)
+                    except FileNotFoundError:
+                        image_file = None
+
                 rows.append(
                     Ingredient(
                         recipe_post_id=post_id,
-                        name=item["name"],
+                        name=name,
                         position=position,
-                        shop_url=item.get("shop_url"),
+                        shop_url=shop_url,
                         shop_image_upload=image_file,
                     )
                 )

@@ -157,7 +157,8 @@ def recipe_edit(request, post_id):
         {
             "form": form,
             "recipe": recipe,
-            "exclude_fields": ["shop_images"],  # render form fields except shopping images (handled manually)
+            # render form fields except images (kept as-is on edit) and shopping images (handled manually)
+            "exclude_fields": ["images", "shop_images"],
         },
     )
 

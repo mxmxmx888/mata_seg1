@@ -1,6 +1,6 @@
 import random
 from django.contrib.auth import get_user_model
-from django.db.models import Q, F, ExpressionWrapper, IntegerField, Exists, OuterRef
+from django.db.models import Q, Exists, OuterRef
 from django.utils import timezone
 from recipes.services import PrivacyService
 
@@ -69,7 +69,8 @@ def _score_post_for_user(post, preferred_tags):
     return score
 
 def _get_for_you_posts(user, query=None, limit=None, offset=0, seed=None, privacy=privacy_service):
-    qs = privacy.filter_visible_posts(_base_posts_queryset(), user)
+    base_qs = privacy.filter_visible_posts(_base_posts_queryset(), user)
+    qs = base_qs
 
     liked_post_ids = []
     preferred_tags = []
@@ -79,7 +80,6 @@ def _get_for_you_posts(user, query=None, limit=None, offset=0, seed=None, privac
         )
         if liked_post_ids:
             preferred_tags = _user_preference_tags(user)
-            qs = qs.exclude(id__in=liked_post_ids)
 
     if query:
         qs = qs.filter(
@@ -87,17 +87,23 @@ def _get_for_you_posts(user, query=None, limit=None, offset=0, seed=None, privac
             | Q(description__icontains=query)
             | Q(tags__icontains=query)
         )
+        base_qs = base_qs.filter(
+            Q(title__icontains=query)
+            | Q(description__icontains=query)
+            | Q(tags__icontains=query)
+        )
 
-    if liked_post_ids:
-        if preferred_tags:
-            tag_filter = Q()
-            for tag in preferred_tags:
-                tag_filter |= Q(tags__icontains=tag)
-            qs = qs.filter(tag_filter)
-        else:
-            qs = qs.none()
+    if preferred_tags:
+        qs = qs.exclude(id__in=liked_post_ids)
+        tag_filter = Q()
+        for tag in preferred_tags:
+            tag_filter |= Q(tags__icontains=tag)
+        qs = qs.filter(tag_filter)
 
     posts = list(qs[:100])
+    if preferred_tags and not posts:
+        # Fallback to general feed if tag-based filtering produced nothing
+        posts = list(base_qs[:100])
 
     if preferred_tags:
         scored = [

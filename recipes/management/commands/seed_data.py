@@ -15,21 +15,103 @@ recipe_image_file_pool = [
     "static/post_images/meal8.jpg",
 ]
 
-shop_image_file_pool = [
-    "static/shop_images/Bowl.jpg",
-    "static/shop_images/Bowl2.jpg",
-    "static/shop_images/Flour.jpg",
-    "static/shop_images/Forks.jpg",
-    "static/shop_images/FormPerformanceProtein.jpg",
-    "static/shop_images/Gummies.jpg",
-    "static/shop_images/Honey.jpg",
-    "static/shop_images/Plate.jpg",
-    "static/shop_images/SagaPerformancePowder.jpg",
-    "static/shop_images/ChocSpread.jpg",
-    "static/shop_images/GarlicSpread.jpg",
-    "static/shop_images/Ginger.jpg",
-    "static/shop_images/Herbs.jpg",
+SHOP_PRODUCTS = [
+    {
+        "name": "Pickles",
+        "shop_url": "https://groceries.morrisons.com/products/Baxters-Whole-Gherkins/115468261",
+        "shop_image": "static/shop_images/Pickles.jpg",
+    },
+    {
+        "name": "Honey",
+        "shop_url": "https://thelondonhoneycompany.com/products/pure-honey-london-honey-jar-250g",
+        "shop_image": "static/shop_images/Honey.jpg",
+    },
+    {
+        "name": "Garlic Spread",
+        "shop_url": "https://www.bralasbest.com/product/original",
+        "shop_image": "static/shop_images/GarlicSpread.jpg",
+    },
+    {
+        "name": "Cipher Herbs",
+        "shop_url": "https://www.herbalista.in/products/lemon-green-tea-20-cotton-teabags",
+        "shop_image": "static/shop_images/Herbs.jpg",
+    },
+    {
+        "name": "Bowl",
+        "shop_url": "https://cafeauclay.com/collections/handbuilding",
+        "shop_image": "static/shop_images/Bowl.jpg",
+    },
+    {
+        "name": "Bowls",
+        "shop_url": "https://argotstudio.com/en-gb/products/acorn-bowl-grand",
+        "shop_image": "static/shop_images/Bowl2.jpg",
+    },
+    {
+        "name": "Ginger",
+        "shop_url": "https://www.tesco.com/groceries/en-GB/products/314931777",
+        "shop_image": "static/shop_images/Ginger.jpg",
+    },
+    {
+        "name": "Designer Forks",
+        "shop_url": "https://www.pamono.eu/model-7000-danube-cutlery-by-janos-megyik-for-amboss-1970s-set-of-24",
+        "shop_image": "static/shop_images/Forks.jpg",
+    },
+    {
+        "name": "Flour",
+        "shop_url": "https://www.lakeland.co.uk/43784/mcdougalls-vintage-flour-tin",
+        "shop_image": "static/shop_images/Flour.jpg",
+    },
+    {
+        "name": "Saga Performance Powder",
+        "shop_url": "https://treasonfoods.com/en-gb",
+        "shop_image": "static/shop_images/SagaPerformancePowder.jpg",
+    },
+    {
+        "name": "Form Perfomance Protein",
+        "shop_url": "https://formnutrition.com/plant-based-nutrition/form-performance-plant-based-vegan-protein-powder/",
+        "shop_image": "static/shop_images/FormPerformanceProtein.jpg",
+    },
+    {
+        "name": "Choc Protein Spread",
+        "shop_url": "https://cokokremy.heureka.cz/got7-nutrition-premium-protein-spread-nut-nougat-choco-smooth-250-g/",
+        "shop_image": "static/shop_images/ChocSpread.jpg",
+    },
+    {
+        "name": "Habits Gummies",
+        "shop_url": "https://asrar-co.com/ar/هابيتس-بيوتين-مكمل-غذائي-للشعر-والبشرة-والأظافر-60-قطعة-حلوى/p612828170",
+        "shop_image": "static/shop_images/Gummies.jpg",
+    },
+    {
+        "name": "Nerikomi plate",
+        "shop_url": "https://shopquarters.com/products/green-on-green-nerikomi-plate",
+        "shop_image": "static/shop_images/Plate.jpg",
+    },
 ]
+
+
+shop_image_file_pool = sorted({p["shop_image"] for p in SHOP_PRODUCTS})
+SHOP_IMAGE_MAP = {p["name"].lower(): p["shop_image"] for p in SHOP_PRODUCTS}
+SHOP_ITEM_OVERRIDES = {
+    p["name"].lower(): {
+        "shop_url": p["shop_url"],
+        "shop_image": p["shop_image"],
+    }
+    for p in SHOP_PRODUCTS
+}
+
+def _chunk_products(products, size=5):
+    """Split SHOP_PRODUCTS into fixed-size groups for seeding ingredients per recipe."""
+    chunk = []
+    for idx, prod in enumerate(products, start=1):
+        chunk.append({"name": prod["name"], "shop_url": prod["shop_url"]})
+        if idx % size == 0:
+            yield chunk
+            chunk = []
+    if chunk:
+        yield chunk
+
+# Auto-generated ingredient sets derived from SHOP_PRODUCTS (no duplicate config needed)
+SHOP_INGREDIENT_SETS = list(_chunk_products(SHOP_PRODUCTS, size=5))
 
 categories = ["Breakfast", "Lunch", "Dinner", "Dessert", "Vegan"]
 tags_pool = ["quick", "family", "spicy", "budget", "comfort", "healthy", "high_protein", "low_carb"]
@@ -63,95 +145,4 @@ bio_phrases = [
     "student cook learning one recipe at a time",
     "foodie who believes butter fixes everything",
     "i cook, i taste, i improvise",
-]
-
-SHOP_INGREDIENT_SETS = [
-    [
-        {
-            "name": "Spaghetti",
-            "shop_url": "https://www.amazon.com/De-Cecco-Spaghetti-Pasta/dp/B000LKX6QY/",
-        },
-        {
-            "name": "San Marzano tomatoes",
-            "shop_url": "https://www.amazon.com/Mutti-Peeled-Tomatoes-28-Ounce/dp/B074MHKZVN/",
-        },
-        {
-            "name": "Extra-virgin olive oil",
-            "shop_url": "https://www.amazon.com/Partanna-Extra-Virgin-Olive-34-Ounce/dp/B000BWY8QW/",
-        },
-        {
-            "name": "Parmigiano Reggiano",
-            "shop_url": "https://www.amazon.com/Parmigiano-Reggiano-DOP-2-2-lb/dp/B00JHHWJ08/",
-        },
-        {
-            "name": "Calabrian chilli flakes",
-            "shop_url": "https://www.amazon.com/Flatiron-Pepper-Original-Red-Chili/dp/B01LXNJUN4/",
-        },
-    ],
-    [
-        {
-            "name": "Corn tortillas",
-            "shop_url": "https://www.amazon.com/Mi-Tierra-Organic-Corn-Tortillas/dp/B07C5Q5FQN/",
-        },
-        {
-            "name": "Black beans",
-            "shop_url": "https://www.amazon.com/Whole-Foods-365-Organic-Black/dp/B074H56LNT/",
-        },
-        {
-            "name": "Chipotle peppers in adobo",
-            "shop_url": "https://www.amazon.com/La-Costena-Chipotle-Peppers-Adobo/dp/B0000G6KAM/",
-        },
-        {
-            "name": "Queso fresco",
-            "shop_url": "https://www.amazon.com/Cacique-Queso-Fresco-Round-10oz/dp/B00HZX8QIK/",
-        },
-        {
-            "name": "Avocado oil",
-            "shop_url": "https://www.amazon.com/Chosen-Foods-Avocado-High-Heat-Cooking/dp/B00P2DK8QW/",
-        },
-    ],
-    [
-        {
-            "name": "Bread flour",
-            "shop_url": "https://www.amazon.com/King-Arthur-Organic-Bread-Flour/dp/B0000BYDR1/",
-        },
-        {
-            "name": "Pure vanilla extract",
-            "shop_url": "https://www.amazon.com/Nielsen-Massey-Madagascar-Bourbon-Vanilla-Extract/dp/B0000E2PEM/",
-        },
-        {
-            "name": "Dark chocolate chips",
-            "shop_url": "https://www.amazon.com/Ghirardelli-Chocolate-Premium-Baking-Chips/dp/B006Y6DSBM/",
-        },
-        {
-            "name": "Almond flour",
-            "shop_url": "https://www.amazon.com/Bobs-Red-Mill-Super-Fine-Almond/dp/B00A2A2X02/",
-        },
-        {
-            "name": "Maldon sea salt",
-            "shop_url": "https://www.amazon.com/Maldon-Sea-Salt-Flakes-ounce/dp/B00017028M/",
-        },
-    ],
-    [
-        {
-            "name": "Rolled oats",
-            "shop_url": "https://www.amazon.com/Bobs-Red-Mill-Gluten-Whole/dp/B000EDM1SY/",
-        },
-        {
-            "name": "Maple syrup",
-            "shop_url": "https://www.amazon.com/Butternut-Mountain-Farm-Organic-Maple/dp/B004N5MBS8/",
-        },
-        {
-            "name": "Almond butter",
-            "shop_url": "https://www.amazon.com/Barney-Butter-Almond-Bare-Butter/dp/B006S5SC8E/",
-        },
-        {
-            "name": "Chia seeds",
-            "shop_url": "https://www.amazon.com/Viva-Naturals-Organic-Chia-Seeds/dp/B00HYIKCNE/",
-        },
-        {
-            "name": "Colombian coffee beans",
-            "shop_url": "https://www.amazon.com/Devocion-Colombia-Whole-Coffee-12oz/dp/B0B5G5OMTQ/",
-        },
-    ],
 ]

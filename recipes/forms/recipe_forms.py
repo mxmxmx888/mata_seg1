@@ -305,6 +305,11 @@ class RecipePostForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
 
         if instance:
+            tags = getattr(instance, "tags", None) or []
+            tag_list = [tag for tag in tags if not str(tag).lower().startswith("category:")]
+            if tag_list:
+                self.fields["tags_text"].initial = ", ".join(tag_list)
+
             ingredients_qs = Ingredient.objects.filter(recipe_post=instance).order_by("position")
             ingredient_lines = []
             shopping_lines = []
@@ -316,6 +321,9 @@ class RecipePostForm(forms.ModelForm):
 
             self.fields["ingredients_text"].initial = "\n".join(ingredient_lines)
             self.fields["shopping_links_text"].initial = "\n".join(shopping_lines)
+
+            steps_qs = RecipeStep.objects.filter(recipe_post=instance).order_by("position")
+            self.fields["steps_text"].initial = "\n".join(step.description for step in steps_qs)
 
 
     def create_steps(self, recipe):

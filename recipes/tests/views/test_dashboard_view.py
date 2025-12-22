@@ -74,6 +74,14 @@ class DashboardSearchViewTests(TestCase):
         posts = dashboard_view._get_for_you_posts(self.user, seed=1)
         self.assertEqual(set(p.id for p in posts), {first.id, second.id})
 
+    def test_get_for_you_posts_with_likes_but_no_tags_falls_back_to_all(self):
+        liked = make_recipe_post(author=self.user, tags=[])
+        other = make_recipe_post(author=self.user, tags=["something"])
+        dashboard_view.Like.objects.create(user=self.user, recipe_post=liked)
+
+        posts = dashboard_view._get_for_you_posts(self.user, seed=1)
+        self.assertEqual(set(p.id for p in posts), {liked.id, other.id})
+
     def test_get_for_you_posts_filters_query(self):
         match = make_recipe_post(author=self.user, title="Garlic Bread")
         make_recipe_post(author=self.user, title="Something else")
