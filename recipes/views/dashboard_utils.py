@@ -68,7 +68,7 @@ def _score_post_for_user(post, preferred_tags):
 
     return score
 
-def _get_for_you_posts(user, query=None, limit=12, offset=0, seed=None, privacy=privacy_service):
+def _get_for_you_posts(user, query=None, limit=None, offset=0, seed=None, privacy=privacy_service):
     qs = privacy.filter_visible_posts(_base_posts_queryset(), user)
 
     liked_post_ids = []
@@ -110,6 +110,8 @@ def _get_for_you_posts(user, query=None, limit=12, offset=0, seed=None, privacy=
     rng = random.Random(seed)
     rng.shuffle(posts)
 
+    if limit is None:
+        return posts[offset:]
     return posts[offset:offset + limit]
 
 def _get_following_posts(user, query=None, limit=12, offset=0):

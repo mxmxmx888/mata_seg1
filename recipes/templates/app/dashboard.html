@@ -156,6 +156,11 @@
       <div class="tab-pane fade show active" id="forYou" role="tabpanel" aria-labelledby="forYou-tab">
         {% if for_you_posts %}
           {% include "partials/feed/feed_masonry_grid.html" with posts=for_you_posts grid_id="forYou-grid" %}
+          <div id="forYou-loading" class="text-center py-3 d-none">
+            <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+            Loading more recipes…
+          </div>
+          <div id="forYou-sentinel" aria-hidden="true"></div>
         {% else %}
           <div class="text-center py-5 dashboard-empty-state">
             Nothing here yet — your personalised feed will appear here soon.
@@ -181,6 +186,15 @@
 </main>
 
 {% include "partials/dashboard/discover_infinite_scroll.html" %}
+{% include "partials/dashboard/for_you_infinite_scroll.html" %}
 {% include "partials/dashboard/shopping_infinite_scroll.html" %}
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    if ('scrollRestoration' in history) {
+      history.scrollRestoration = 'manual';
+    }
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+  });
+</script>
 
 {% endblock %}
