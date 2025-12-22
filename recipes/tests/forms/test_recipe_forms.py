@@ -1,3 +1,4 @@
+from django import forms
 from django.test import TestCase
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.utils.datastructures import MultiValueDict
@@ -34,6 +35,12 @@ class MultiFileFieldTests(TestCase):
         f1, f2 = fake_image("1.jpg"), fake_image("2.jpg")
         cleaned = field.clean([f1, f2])
         self.assertEqual(len(cleaned), 2)
+
+    def test_clean_skips_none_entries(self):
+        field = MultiFileField(required=False)
+        cleaned = field.clean([None, fake_image("only.jpg")])
+        self.assertEqual(len(cleaned), 1)
+        self.assertEqual(cleaned[0].name, "only.jpg")
 
     def test_clean_accepts_single_file(self):
         field = MultiFileField(required=False)
@@ -92,6 +99,11 @@ class RecipePostFormTests(TestCase):
         form = RecipePostForm(data={"category": "dinner"})
         form.cleaned_data = {"ingredients_text": "  a \n\n b \n   \n"}
         self.assertEqual(form._split_lines("ingredients_text"), ["a", "b"])
+
+    def test_split_lines_returns_empty_when_blank(self):
+        form = RecipePostForm(data={"category": "dinner"})
+        form.cleaned_data = {"ingredients_text": "   "}
+        self.assertEqual(form._split_lines("ingredients_text"), [])
 
     def test_create_steps_replaces_existing(self):
         recipe = self.make_recipe()
@@ -257,6 +269,27 @@ class RecipePostFormTests(TestCase):
 
         self.assertTrue(form.is_valid(), form.errors)
 
+    def test_clean_images_allows_existing_legacy_image(self):
+        recipe = self.make_recipe()
+        recipe.image = "legacy.jpg"
+        recipe.save()
+
+        form = RecipePostForm(
+            data={
+                "title": "X",
+                "description": "Y",
+                "category": "dinner",
+                "prep_time_min": 1,
+                "cook_time_min": 1,
+                "nutrition": "",
+                "visibility": RecipePost.VISIBILITY_PUBLIC,
+            },
+            instance=recipe,
+            files=MultiValueDict(),
+        )
+
+        self.assertTrue(form.is_valid(), form.errors)
+
     def test_clean_requires_shop_images_for_each_link(self):
         files = MultiValueDict({"shop_images": [fake_image("only1.jpg")]})
         form = RecipePostForm(
@@ -296,6 +329,32 @@ class RecipePostFormTests(TestCase):
                 "shop_images": [fake_image("milk.jpg"), fake_image("flour.jpg")],
                 "images": [fake_image("cover.jpg")],
             }),
+        )
+
+        self.assertTrue(form.is_valid(), form.errors)
+
+    def test_clean_counts_existing_shop_images(self):
+        recipe = self.make_recipe()
+        Ingredient.objects.create(
+            recipe_post=recipe,
+            name="Milk",
+            shop_url="https://store.com/milk",
+            shop_image_upload=fake_image("existing.jpg"),
+            position=1,
+        )
+        form = RecipePostForm(
+            data={
+                "title": "X",
+                "description": "Y",
+                "category": "dinner",
+                "prep_time_min": 1,
+                "cook_time_min": 1,
+                "nutrition": "",
+                "visibility": RecipePost.VISIBILITY_PUBLIC,
+                "shopping_links_text": "Milk | https://store.com/milk",
+            },
+            instance=recipe,
+            files=MultiValueDict({"images": [fake_image("cover.jpg")]}),
         )
 
         self.assertTrue(form.is_valid(), form.errors)

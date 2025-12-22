@@ -6,7 +6,7 @@ from recipes.services import PrivacyService
 
 try:
     from recipes.models import RecipePost, Like, Follower, Ingredient
-except Exception:
+except Exception:  # pragma: no cover
     from recipes.models.recipe_post import RecipePost
     from recipes.models.like import Like
     from recipes.models.followers import Follower

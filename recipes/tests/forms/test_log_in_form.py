@@ -71,6 +71,27 @@ class LogInFormTestCase(TestCase):
         user = form.get_user()
         self.assertEqual(user, None)
 
+    def test_returns_none_when_missing_credentials_after_validation(self):
+        form = LogInForm(data={"username": "", "password": ""})
+        form.cleaned_data = {"username": "", "password": ""}
+        with patch.object(form, "is_valid", return_value=True):
+            user = form.get_user()
+        self.assertIsNone(user)
+
+    @patch("recipes.forms.log_in_form._is_running_tests", return_value=False)
+    def test_logs_and_returns_none_when_user_missing_outside_tests(self, _):
+        form = LogInForm(data={"username": "@missing", "password": "Password123"})
+        with patch("builtins.print") as print_mock:
+            user = form.get_user()
+        self.assertIsNone(user)
+        print_mock.assert_called_once()
+
+    @patch("recipes.forms.log_in_form._is_running_tests", return_value=True)
+    def test_returns_none_when_user_missing_in_tests(self, _):
+        form = LogInForm(data={"username": "@missing", "password": "Password123"})
+        user = form.get_user()
+        self.assertIsNone(user)
+
     @patch("recipes.forms.log_in_form.authenticate")
     @patch("recipes.forms.log_in_form.sign_in_with_email_and_password")
     def test_get_user_prefers_firebase_result(self, mock_sign_in, mock_authenticate):
@@ -88,6 +109,22 @@ class LogInFormTestCase(TestCase):
         self.assertEqual(user.username, "@johndoe")
         self.assertEqual(user.backend, "django.contrib.auth.backends.ModelBackend")
 
+    @patch("recipes.forms.log_in_form._is_running_tests", return_value=False)
+    @patch("recipes.forms.log_in_form.authenticate")
+    @patch("recipes.forms.log_in_form.sign_in_with_email_and_password")
+    def test_get_user_logs_when_firebase_succeeds_outside_tests(self, mock_sign_in, mock_authenticate, _):
+        mock_sign_in.return_value = {"uid": "abc"}
+        mock_authenticate.return_value = None
+
+        form = LogInForm(data={"username": "@johndoe", "password": "Password123"})
+        with patch("builtins.print") as print_mock:
+            user = form.get_user()
+
+        self.assertEqual(user.username, "@johndoe")
+        self.assertEqual(user.backend, "django.contrib.auth.backends.ModelBackend")
+        self.assertEqual(print_mock.call_count, 2)
+        mock_authenticate.assert_not_called()
+
     @patch("recipes.forms.log_in_form.authenticate")
     @patch("recipes.forms.log_in_form.sign_in_with_email_and_password")
     def test_get_user_falls_back_to_authenticate(self, mock_sign_in, mock_authenticate):
@@ -104,3 +141,20 @@ class LogInFormTestCase(TestCase):
             password="Password123",
         )
         self.assertEqual(user, fallback_user)
+
+    @patch("recipes.forms.log_in_form._is_running_tests", return_value=False)
+    @patch("recipes.forms.log_in_form.authenticate")
+    @patch("recipes.forms.log_in_form.sign_in_with_email_and_password")
+    def test_get_user_logs_fallback_authenticate_outside_tests(self, mock_sign_in, mock_authenticate, _):
+        mock_sign_in.return_value = None
+        fallback_user = User.objects.get(username="@johndoe")
+        mock_authenticate.return_value = fallback_user
+
+        form = LogInForm(data={"username": "@johndoe", "password": "Password123"})
+        with patch("builtins.print") as print_mock:
+            user = form.get_user()
+
+        self.assertEqual(user, fallback_user)
+        self.assertEqual(print_mock.call_count, 2)
+        mock_sign_in.assert_called_once()
+        mock_authenticate.assert_called_once_with(username="@johndoe", password="Password123")

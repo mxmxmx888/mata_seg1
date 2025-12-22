@@ -52,6 +52,13 @@ class PrivacyServiceTestCase(TestCase):
         CloseFriend.objects.create(owner=self.author, friend=self.viewer)
         self.assertTrue(self.service.can_view_post(self.viewer, self.close_post))
 
+    def test_can_view_public_post_when_author_private_and_is_follower(self):
+        self.author.is_private = True
+        self.author.save()
+        post = RecipePost.objects.create(author=self.author, title="pub2", description="d", visibility=RecipePost.VISIBILITY_PUBLIC)
+        Follower.objects.create(follower=self.viewer, author=self.author)
+        self.assertTrue(self.service.can_view_post(self.viewer, post))
+
     def test_filter_visible_posts_limits_results(self):
         Follower.objects.create(follower=self.viewer, author=self.author)
         qs = RecipePost.objects.filter(author__in=[self.author, self.other])

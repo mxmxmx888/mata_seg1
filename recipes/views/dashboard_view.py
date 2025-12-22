@@ -20,7 +20,7 @@ from .dashboard_utils import (
 )
 try:
     from recipes.models import RecipePost, Ingredient
-except Exception:
+except Exception:  # pragma: no cover
     from recipes.models.recipe_post import RecipePost
     from recipes.models.ingredient import Ingredient
 
@@ -72,12 +72,9 @@ def dashboard(request):
     discover_qs = (
         RecipePost.objects.filter(published_at__isnull=False)
         .select_related("author")
+    ).exclude(
+        Q(tags__icontains="#private") & ~Q(author=request.user)
     )
-
-    if request.user.is_authenticated:
-        discover_qs = discover_qs.exclude(
-            Q(tags__icontains="#private") & ~Q(author=request.user)
-        )
 
     if q:
         discover_qs = discover_qs.filter(

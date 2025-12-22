@@ -1,3 +1,5 @@
+from unittest.mock import patch, MagicMock
+
 from django.test import TestCase
 from django.urls import reverse
 from django.conf import settings
@@ -97,3 +99,26 @@ class LogInViewTestCase(TestCase, LogInTester):
         self.assertTrue(isinstance(form, LogInForm))
         self.assertFalse(form.is_valid())
         self.assertFalse(self._is_logged_in())
+
+    def test_valid_form_with_no_user_adds_error_and_renders(self):
+        with patch("recipes.views.log_in_view.LogInForm") as form_cls:
+            form_instance = MagicMock()
+            form_instance.is_valid.return_value = True
+            form_instance.get_user.return_value = None
+            form_cls.return_value = form_instance
+
+            response = self.client.post(self.url, {"username": "johndoe", "password": "Password123"})
+
+            self.assertEqual(response.status_code, 200)
+            form_instance.add_error.assert_called_once()
+            self.assertTemplateUsed(response, "auth/log_in.html")
+
+    def test_next_parameter_string_none_falls_back_to_dashboard(self):
+        form_input = {'username': 'johndoe', 'email': 'johndoe@example.org', 'password': 'Password123'}
+        response = self.client.post(self.url + "?next=None", form_input, follow=True)
+        self.assertRedirects(response, reverse('dashboard'), status_code=302, target_status_code=200)
+
+    def test_successful_login_respects_next_parameter(self):
+        form_input = {'username': 'johndoe', 'email': 'johndoe@example.org', 'password': 'Password123'}
+        response = self.client.post(self.url + "?next=/profile/", form_input)
+        self.assertRedirects(response, "/profile/", status_code=302, target_status_code=200)

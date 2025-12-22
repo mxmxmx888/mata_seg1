@@ -189,3 +189,15 @@ class PostRepoTestCase(TestCase):
             self.fail(f"list_for_following raised unexpectedly: {exc}")
 
         self.assertTrue(list(feed))
+
+    def test_list_for_following_without_feed_or_list_all_uses_model(self):
+        class MinimalRepo:
+            model = RecipePost
+
+        MinimalRepo.list_for_following = PostRepo.list_for_following
+
+        repo = MinimalRepo()
+        Follows.objects.create(author=self.user, followee=self.other)
+
+        qs = repo.list_for_following(self.user.id, limit=1)
+        self.assertEqual(qs.count(), 1)

@@ -1,3 +1,4 @@
+from django.contrib.auth.models import AnonymousUser
 from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
@@ -49,6 +50,27 @@ class DashboardSearchViewTests(TestCase):
         self.assertEqual(len(dashboard_view._filter_posts_by_prep_time(posts, 6, None)), 1)
         self.assertEqual(len(dashboard_view._filter_posts_by_prep_time(posts, None, 6)), 1)
 
+    def test_filter_posts_by_prep_time_handles_missing_and_none_bounds(self):
+        class Obj:
+            def __init__(self, prep):
+                self.prep_time_min = prep
+        posts = [Obj("bad"), Obj(3)]
+        result = dashboard_view._filter_posts_by_prep_time(posts, None, None)
+        self.assertEqual(len(result), 2)
+        filtered = dashboard_view._filter_posts_by_prep_time(posts, 1, 5)
+        self.assertEqual(filtered, [posts[1]])
+
+    def test_score_post_no_tag_bonus(self):
+        post = make_recipe_post(author=self.user, tags=["x"], saved_count=2, published=False)
+        score = dashboard_view._score_post_for_user(post, ["other"])
+        self.assertGreaterEqual(score, 2)
+
+    def test_user_preference_tags_dedupes(self):
+        liked = make_recipe_post(author=self.user, tags=["pasta", "pasta"])
+        dashboard_view.Like.objects.create(user=self.user, recipe_post=liked)
+        tags = dashboard_view._user_preference_tags(self.user)
+        self.assertEqual(tags, ["pasta"])
+
     def test_normalise_tags_unknown_type_returns_empty(self):
         self.assertEqual(dashboard_view._normalise_tags(123), [])
 
@@ -73,6 +95,11 @@ class DashboardSearchViewTests(TestCase):
 
         posts = dashboard_view._get_for_you_posts(self.user, seed=1)
         self.assertEqual(set(p.id for p in posts), {first.id, second.id})
+
+    def test_get_for_you_posts_for_anonymous_user(self):
+        anon = AnonymousUser()
+        posts = dashboard_view._get_for_you_posts(anon, seed=2)
+        self.assertIsInstance(posts, list)
 
     def test_get_for_you_posts_with_likes_but_no_tags_falls_back_to_all(self):
         liked = make_recipe_post(author=self.user, tags=[])
@@ -122,6 +149,16 @@ class DashboardSearchViewTests(TestCase):
         self.assertIn("has_more", payload)
         self.assertIn("for_you_seed", self.client.session) #seed should have been set in session
 
+    def test_dashboard_for_you_ajax_reuses_existing_seed(self):
+        make_recipe_post(author=self.user, title="Seeded")
+        self.client.login(username=self.user.username, password="Password123")
+        session = self.client.session
+        session["for_you_seed"] = 0.5
+        session.save()
+        response = self.client.get(self.url, {"for_you_ajax": "1"})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(self.client.session["for_you_seed"], 0.5)
+
     def test_dashboard_user_search_scope(self):
         target = make_user(username="alice")
         self.client.login(username=self.user.username, password="Password123")
@@ -153,14 +190,46 @@ class DashboardSearchViewTests(TestCase):
             {
                 "have_ingredients": "garlic",
                 "min_prep": "abc",  # ignored
-                "max_prep": "xyz",  # ignored by except block
-                "mode": "search",
-            },
+            "max_prep": "xyz",  # ignored by except block
+            "mode": "search",
+        },
         )
         self.assertEqual(response.status_code, 200)
         posts = response.context["popular_recipes"]
         self.assertEqual(len(posts), 1)
         self.assertEqual(posts[0].title, "Allowed")
+
+    def test_dashboard_filters_by_valid_prep_time(self):
+        quick = make_recipe_post(author=self.user, title="Quick", prep_time_min=5, cook_time_min=5)
+        slow = make_recipe_post(author=self.user, title="Slow", prep_time_min=50, cook_time_min=5)
+        self.client.login(username=self.user.username, password="Password123")
+        response = self.client.get(
+            self.url,
+            {
+                "mode": "search",
+                "min_prep": "5",
+                "max_prep": "15",
+            },
+        )
+        posts = response.context["popular_recipes"]
+        self.assertIn(quick, posts)
+        self.assertNotIn(slow, posts)
+
+    def test_dashboard_max_prep_only(self):
+        ok = make_recipe_post(author=self.user, title="Ok", prep_time_min=2, cook_time_min=2)
+        make_recipe_post(author=self.user, title="Too long", prep_time_min=50, cook_time_min=0)
+        self.client.login(username=self.user.username, password="Password123")
+        resp = self.client.get(self.url, {"mode": "search", "max_prep": "5"})
+        titles = [p.title for p in resp.context["popular_recipes"]]
+        self.assertIn("Ok", titles)
+
+    def test_dashboard_min_prep_only(self):
+        make_recipe_post(author=self.user, title="Short", prep_time_min=1, cook_time_min=0)
+        long = make_recipe_post(author=self.user, title="Long", prep_time_min=10, cook_time_min=0)
+        self.client.login(username=self.user.username, password="Password123")
+        resp = self.client.get(self.url, {"mode": "search", "min_prep": "5"})
+        titles = [p.title for p in resp.context["popular_recipes"]]
+        self.assertIn(long.title, titles)
 
     def test_dashboard_handles_invalid_scope_and_page(self):
         make_recipe_post(author=self.user, title="Visible")
@@ -201,3 +270,81 @@ class DashboardSearchViewTests(TestCase):
         self.assertEqual(res_oldest.status_code, 200)
         oldest_titles = [p.title for p in res_oldest.context["popular_recipes"]]
         self.assertEqual(oldest_titles[0], "Older")
+
+    def test_dashboard_for_you_invalid_offset_uses_zero(self):
+        make_recipe_post(author=self.user, title="One")
+        self.client.login(username=self.user.username, password="Password123")
+        response = self.client.get(self.url, {"for_you_ajax": "1", "for_you_offset": "abc"})
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertGreaterEqual(payload["count"], 0)
+
+    def test_dashboard_filters_by_ingredient_query(self):
+        allowed = make_recipe_post(author=self.user, title="Allowed", prep_time_min=5, cook_time_min=5)
+        Ingredient.objects.create(recipe_post=allowed, name="garlic", position=1)
+        blocked = make_recipe_post(author=self.user, title="Blocked", prep_time_min=5, cook_time_min=5)
+        Ingredient.objects.create(recipe_post=blocked, name="pepper", position=1)
+        self.client.login(username=self.user.username, password="Password123")
+        response = self.client.get(self.url, {"ingredient": "garlic", "mode": "search"})
+        posts = response.context["popular_recipes"]
+        self.assertEqual([p.title for p in posts], ["Allowed"])
+
+    def test_dashboard_shopping_scope_ajax(self):
+        post = make_recipe_post(author=self.user, title="Shopper")
+        Ingredient.objects.create(recipe_post=post, name="Flour", shop_url="https://shop.com/flour", position=1)
+        self.client.login(username=self.user.username, password="Password123")
+        response = self.client.get(
+            self.url,
+            {"scope": "shopping", "mode": "search", "ajax": "1"},
+        )
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertIn("html", payload)
+        self.assertIn("has_next", payload)
+
+    def test_dashboard_shopping_scope_page_context(self):
+        post = make_recipe_post(author=self.user, title="Shopper two")
+        Ingredient.objects.create(recipe_post=post, name="Oil", shop_url="https://shop.com/oil", position=1)
+        self.client.login(username=self.user.username, password="Password123")
+        response = self.client.get(self.url, {"scope": "shopping", "mode": "search"})
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.context["shopping_items"])
+        self.assertIsInstance(response.context["shopping_page_number"], int)
+
+    def test_dashboard_category_filter(self):
+        breakfast = make_recipe_post(author=self.user, title="Breakfast", category="breakfast")
+        make_recipe_post(author=self.user, title="Lunch", category="lunch")
+        self.client.login(username=self.user.username, password="Password123")
+        response = self.client.get(self.url, {"category": "breakfast", "mode": "search"})
+        self.assertEqual([p.title for p in response.context["popular_recipes"]], ["Breakfast"])
+
+    def test_dashboard_shopping_scope_filters_query(self):
+        post = make_recipe_post(author=self.user, title="Shopper three")
+        Ingredient.objects.create(recipe_post=post, name="Olive Oil", shop_url="https://shop.com/oil", position=1)
+        Ingredient.objects.create(recipe_post=post, name="Salt", shop_url="https://shop.com/salt", position=2)
+        self.client.login(username=self.user.username, password="Password123")
+        response = self.client.get(
+            self.url,
+            {"scope": "shopping", "mode": "search", "q": "olive", "ajax": "1"},
+        )
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertIn("html", payload)
+
+    def test_get_for_you_posts_fallback_when_no_tag_matches(self):
+        liked = make_recipe_post(author=self.user, tags=["pasta"])
+        dashboard_view.Like.objects.create(user=self.user, recipe_post=liked)
+        posts = dashboard_view._get_for_you_posts(self.user, seed=5)
+        self.assertIn(liked, posts)
+
+    def test_get_following_posts_returns_empty_when_no_relationships(self):
+        posts = dashboard_view._get_following_posts(self.user)
+        self.assertEqual(posts, [])
+
+    def test_filter_posts_by_prep_time_handles_invalid_bounds(self):
+        class Obj:
+            def __init__(self, prep):
+                self.prep_time_min = prep
+        posts = [Obj(1)]
+        result = dashboard_view._filter_posts_by_prep_time(posts, "bad", "bad")
+        self.assertEqual(result, posts)

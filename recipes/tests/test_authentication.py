@@ -45,3 +45,11 @@ class FirebaseAuthenticationTests(TestCase):
         
         with self.assertRaises(exceptions.AuthenticationFailed):
             self.auth.authenticate(self.request)
+
+    @patch('recipes.authentication.auth.verify_id_token')
+    def test_authenticate_user_not_found(self, mock_verify):
+        self.request.META = {'HTTP_AUTHORIZATION': 'Bearer token123'}
+        mock_verify.return_value = {'uid': 'missing'}
+
+        with self.assertRaises(exceptions.AuthenticationFailed):
+            self.auth.authenticate(self.request)

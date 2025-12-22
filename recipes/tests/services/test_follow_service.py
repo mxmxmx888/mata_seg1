@@ -109,6 +109,16 @@ class FollowServiceTestCase(TestCase):
         ok = FollowService(self.alice).reject_request(uuid.uuid4())
         self.assertFalse(ok)
 
+    def test_accept_request_updates_existing_notification(self):
+        fr = FollowRequest.objects.create(requester=self.alice, target=self.bob, status=FollowRequest.STATUS_PENDING)
+        notif = Notification.objects.create(recipient=self.bob, sender=self.alice, notification_type="follow_request", follow_request=fr)
+        service = FollowService(self.bob)
+        ok = service.accept_request(fr.id)
+        self.assertTrue(ok)
+        notif.refresh_from_db()
+        self.assertEqual(notif.notification_type, "follow")
+        self.assertIsNone(notif.follow_request)
+
     def test_follow_user_updates_existing_request(self):
         fr = FollowRequest.objects.create(requester=self.alice, target=self.cara, status=FollowRequest.STATUS_REJECTED)
         result = FollowService(self.alice).follow_user(self.cara)

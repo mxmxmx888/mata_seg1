@@ -1,7 +1,8 @@
 from django.test import TestCase
 from django.urls import reverse
 from rest_framework.test import APIClient
-from recipes.models import User, RecipePost
+from django.test import Client
+from recipes.models import User, RecipePost, Notification
 
 class RecipeApiViewTestCase(TestCase):
     def setUp(self):
@@ -124,3 +125,26 @@ class RecipeApiViewTestCase(TestCase):
         response = self.client.delete(url)
         self.assertEqual(response.status_code, 204)
         self.assertFalse(RecipePost.objects.filter(pk=recipe.pk).exists())
+
+    def test_profile_api_returns_user_details(self):
+        url = reverse("profile_api")
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(data["uid"], self.user.username)
+        self.assertEqual(data["email"], self.user.email)
+
+    def test_mark_notifications_read_marks_unread(self):
+        Notification.objects.create(
+            recipient=self.user,
+            sender=self.other_user,
+            notification_type="follow",
+            is_read=False,
+        )
+        url = reverse("mark_notifications_read")
+        client = Client()
+        client.login(username=self.user.username, password="password123")
+        response = client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json().get("status"), "success")
+        self.assertFalse(Notification.objects.filter(recipient=self.user, is_read=False).exists())

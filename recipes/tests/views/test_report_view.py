@@ -38,3 +38,16 @@ class ReportViewTests(TestCase):
         data = {'reason': 'spam'}
         response = self.client.post(url, data)
         self.assertEqual(response.status_code, 302)
+
+    def test_get_report_form_renders(self):
+        url = reverse('report_content', kwargs={'content_type': 'recipe', 'object_id': self.post.id})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'content/report_content.html')
+        self.assertIn('form', response.context)
+
+    def test_invalid_report_form_renders_errors(self):
+        url = reverse('report_content', kwargs={'content_type': 'recipe', 'object_id': self.post.id})
+        response = self.client.post(url, data={"description": ""})
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'content/report_content.html')

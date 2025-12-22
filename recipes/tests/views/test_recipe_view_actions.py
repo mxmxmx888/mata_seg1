@@ -59,6 +59,7 @@ class RecipeViewActionsTests(RecipeViewTestCase):
         self.assertEqual(res2.status_code, 302)
         self.assertFalse(Like.objects.filter(user=self.user, recipe_post=self.post).exists())
 
+
     def test_toggle_like_hx_returns_204(self):
         req = self.factory.post(f"/fake/recipe/{self.post.id}/like/", HTTP_HX_REQUEST="true")
         req.user = self.user
@@ -103,6 +104,14 @@ class RecipeViewActionsTests(RecipeViewTestCase):
         self.assertEqual(response.status_code, 302)
         self.assertFalse(Comment.objects.filter(recipe_post=self.post, user=self.user).exists())
 
+    def test_add_comment_get_redirects(self):
+        request = self.factory.get(f"/fake/recipe/{self.post.id}/comment/")
+        request.user = self.user
+        add_session_and_messages(request)
+
+        response = add_comment(request, post_id=self.post.id)
+        self.assertEqual(response.status_code, 302)
+
     def test_delete_comment_blocked_for_non_owner(self):
         comment = Comment.objects.create(recipe_post=self.post, user=self.user, text="Mine")
 
@@ -124,6 +133,15 @@ class RecipeViewActionsTests(RecipeViewTestCase):
         response = delete_comment(request, comment_id=comment.id)
         self.assertEqual(response.status_code, 302)
         self.assertFalse(Comment.objects.filter(id=comment.id).exists())
+
+    def test_collections_modal_state_uses_cover_post(self):
+        self.post.image = "cover.jpg"
+        self.post.save(update_fields=["image"])
+        fav = Favourite.objects.create(user=self.user, name="favourites", cover_post=self.post)
+        FavouriteItem.objects.create(favourite=fav, recipe_post=self.post)
+        self.client.login(username=self.user.username, password="Password123")
+        state = recipe_views._collections_modal_state(self.user, self.post)
+        self.assertEqual(state[0]["thumb_url"], "cover.jpg")
 
     def test_saved_recipes_deduplicates(self):
         fav1 = Favourite.objects.create(user=self.user, name="favourites")

@@ -54,3 +54,8 @@ class FollowsModelTestCase(TestCase):
         self.assertTrue(
             Follows.objects.filter(author=self.user_a, followee=self.user_b).exists()
         )
+
+    def test_str_representation(self):
+        follow = Follows.objects.create(author=self.user_a, followee=self.user_b)
+        self.assertIn(str(self.user_a.id), str(follow))
+        self.assertIn(str(self.user_b.id), str(follow))

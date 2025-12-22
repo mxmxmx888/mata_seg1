@@ -173,20 +173,16 @@ def recipe_detail(request, post_id):
         raise Http404("Post not available.")
 
     comments = recipe.comments.select_related("user").order_by("-created_at")
-    user_liked = user_saved = is_following_author = False
-    collections_for_modal = []
-
-    if request.user.is_authenticated:
-        user_liked = Like.objects.filter(user=request.user, recipe_post=recipe).exists()
-        user_saved = FavouriteItem.objects.filter(
-            favourite__user=request.user,
-            recipe_post=recipe,
-        ).exists()
-        collections_for_modal = _collections_modal_state(request.user, recipe)
-        is_following_author = Follower.objects.filter(
-            follower=request.user,
-            author=recipe.author,
-        ).exists()
+    user_liked = Like.objects.filter(user=request.user, recipe_post=recipe).exists()
+    user_saved = FavouriteItem.objects.filter(
+        favourite__user=request.user,
+        recipe_post=recipe,
+    ).exists()
+    collections_for_modal = _collections_modal_state(request.user, recipe)
+    is_following_author = Follower.objects.filter(
+        follower=request.user,
+        author=recipe.author,
+    ).exists()
 
     likes_count = Like.objects.filter(recipe_post=recipe).count()
 

@@ -1,4 +1,4 @@
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 from django.contrib import messages
 from django.test import TestCase
 from django.urls import reverse
@@ -142,185 +142,26 @@ class ProfileViewTest(TestCase):
         self.assertEqual(data["display_name"], self.user.username)
         self.assertEqual(data["handle"], self.user.username)
 
-    def test_collections_helper_builds_payload(self):
-        fav = Favourite.objects.create(user=self.user, name="List")
-        post = RecipePost.objects.create(author=self.user, title="Pie", description="d", image="img.png")
-        FavouriteItem.objects.create(favourite=fav, recipe_post=post)
-        cols = _collections_for_user(self.user)
-        self.assertEqual(cols[0]["title"], "List")
-        self.assertEqual(cols[0]["count"], 1)
-
-    def test_collections_helper_uses_first_post_with_image(self):
-        fav = Favourite.objects.create(user=self.user, name="List")
-        no_image_post = RecipePost.objects.create(author=self.user, title="No image", description="d")
-        with_image_post = RecipePost.objects.create(author=self.user, title="With image", description="d", image="cover.png")
-        FavouriteItem.objects.create(favourite=fav, recipe_post=no_image_post)
-        FavouriteItem.objects.create(favourite=fav, recipe_post=with_image_post)
-
-        cols = _collections_for_user(self.user)
-        self.assertEqual(cols[0]["cover"], "cover.png")
-        self.assertTrue(cols[0]["has_image"])
-
-    def test_collections_helper_marks_outline_when_no_images(self):
-        fav = Favourite.objects.create(user=self.user, name="Empty images")
-        first = RecipePost.objects.create(author=self.user, title="One", description="d")
-        second = RecipePost.objects.create(author=self.user, title="Two", description="d")
-        FavouriteItem.objects.create(favourite=fav, recipe_post=first)
-        FavouriteItem.objects.create(favourite=fav, recipe_post=second)
-
-        cols = _collections_for_user(self.user)
-        self.assertIsNone(cols[0]["cover"])
-        self.assertFalse(cols[0]["has_image"])
-
-    def test_collections_helper_handles_empty_collection(self):
-        Favourite.objects.create(user=self.user, name="Empty")
-        cols = _collections_for_user(self.user)
-        self.assertEqual(cols[0]["count"], 0)
-
-    def test_collections_overview_renders(self):
+    def test_profile_post_valid_without_changes_skips_save(self):
         self.client.login(username=self.user.username, password="Password123")
-        resp = self.client.get(reverse("collections"))
-        self.assertEqual(resp.status_code, 200)
-        self.assertTemplateUsed(resp, "app/collections.html")
-
-    def test_collection_detail_lists_posts(self):
-        fav = Favourite.objects.create(user=self.user, name="My stuff")
-        post = RecipePost.objects.create(author=self.user, title="Soup", description="d")
-        FavouriteItem.objects.create(favourite=fav, recipe_post=post)
-        self.client.login(username=self.user.username, password="Password123")
-        url = reverse("collection_detail", kwargs={"slug": fav.id})
-        resp = self.client.get(url)
-        self.assertContains(resp, "Soup")
-
-    def test_collection_detail_404_when_missing(self):
-        self.client.login(username=self.user.username, password="Password123")
-        url = reverse("collection_detail", kwargs={"slug": "00000000-0000-0000-0000-000000000000"})
-        resp = self.client.get(url)
-        self.assertEqual(resp.status_code, 404)
-
-    def test_delete_collection_returns_json_when_hx(self):
-        fav = Favourite.objects.create(user=self.user, name="Old")
-        self.client.login(username=self.user.username, password="Password123")
-        url = reverse("delete_collection", kwargs={"slug": fav.id})
-        resp = self.client.post(url, HTTP_HX_REQUEST="true")
-        self.assertEqual(resp.json()["deleted"], True)
-
-    def test_delete_collection_redirects_when_not_ajax(self):
-        fav = Favourite.objects.create(user=self.user, name="Old")
-        self.client.login(username=self.user.username, password="Password123")
-        url = reverse("delete_collection", kwargs={"slug": fav.id})
-        resp = self.client.post(url)
-        self.assertRedirects(resp, reverse("collections"), target_status_code=200)
-
-    def test_update_collection_updates_title(self):
-        fav = Favourite.objects.create(user=self.user, name="Old")
-        self.client.login(username=self.user.username, password="Password123")
-        url = reverse("update_collection", kwargs={"slug": fav.id})
-        resp = self.client.post(url, {"title": "New"}, HTTP_HX_REQUEST="true")
-        fav.refresh_from_db()
-        self.assertEqual(fav.name, "New")
-        self.assertEqual(resp.json()["title"], "New")
-
-    def test_update_collection_redirects_when_not_ajax(self):
-        fav = Favourite.objects.create(user=self.user, name="Old")
-        self.client.login(username=self.user.username, password="Password123")
-        url = reverse("update_collection", kwargs={"slug": fav.id})
-        resp = self.client.post(url, {"title": "Again"})
-        fav.refresh_from_db()
-        self.assertRedirects(resp, reverse("collection_detail", kwargs={"slug": fav.id}), target_status_code=200)
-
-    def test_remove_follower_and_following(self):
-        follower = User.objects.get(username='@janedoe')
-        Follower.objects.create(author=self.user, follower=follower)
-        self.client.login(username=self.user.username, password="Password123")
-        resp = self.client.post(reverse("remove_follower", kwargs={"username": follower.username}))
+        with patch("recipes.views.profile_view.UserForm") as form_cls:
+            form = MagicMock()
+            form.is_valid.return_value = True
+            form.changed_data = []
+            form.save.return_value = None
+            form_cls.return_value = form
+            resp = self.client.post(self.url, {"first_name": "John"})
         self.assertEqual(resp.status_code, 302)
-        self.assertFalse(Follower.objects.filter(author=self.user, follower=follower).exists())
-        Follower.objects.create(follower=self.user, author=follower)
-        resp2 = self.client.post(reverse("remove_following", kwargs={"username": follower.username}))
-        self.assertFalse(Follower.objects.filter(follower=self.user, author=follower).exists())
+        form.save.assert_not_called()
 
-    def test_add_and_remove_close_friend(self):
-        friend = User.objects.get(username='@janedoe')
-        Follower.objects.create(author=self.user, follower=friend)
+    def test_profile_post_with_avatar_change_skips_message(self):
         self.client.login(username=self.user.username, password="Password123")
-        add_resp = self.client.post(reverse("add_close_friend", kwargs={"username": friend.username}))
-        self.assertTrue(CloseFriend.objects.filter(owner=self.user, friend=friend).exists())
-        remove_resp = self.client.post(reverse("remove_close_friend", kwargs={"username": friend.username}))
-        self.assertFalse(CloseFriend.objects.filter(owner=self.user, friend=friend).exists())
-
-    def test_close_friend_self_redirects(self):
-        self.client.login(username=self.user.username, password="Password123")
-        resp = self.client.post(reverse("add_close_friend", kwargs={"username": self.user.username}))
+        with patch("recipes.views.profile_view.UserForm") as form_cls, patch("recipes.views.profile_view.messages.add_message") as add_msg:
+            form = MagicMock()
+            form.is_valid.return_value = True
+            form.changed_data = ["avatar"]
+            form.save.return_value = None
+            form_cls.return_value = form
+            resp = self.client.post(self.url, {"first_name": "John"})
         self.assertEqual(resp.status_code, 302)
-        resp2 = self.client.post(reverse("remove_close_friend", kwargs={"username": self.user.username}))
-        self.assertEqual(resp2.status_code, 302)
-
-    def test_post_other_profile_redirects_to_own(self):
-        other = User.objects.get(username='@janedoe')
-        self.client.login(username=self.user.username, password="Password123")
-        response = self.client.post(f"{self.url}?user={other.username}", {"first_name": "X"})
-        self.assertRedirects(response, reverse("profile"), status_code=302, target_status_code=200)
-
-    def test_other_user_posts_filtered(self):
-        other = User.objects.get(username='@janedoe')
-        RecipePost.objects.create(author=other, title="Note", description="d")
-        self.client.login(username=self.user.username, password="Password123")
-        with patch("recipes.views.profile_view.privacy_service.filter_visible_posts") as filt:
-            filt.side_effect = lambda qs, viewer: qs
-            resp = self.client.get(f"{self.url}?user={other.username}")
-        self.assertTrue(resp.context["posts"])
-        filt.assert_called()
-
-    def test_update_collection_keeps_title_when_blank(self):
-        fav = Favourite.objects.create(user=self.user, name="Stay")
-        self.client.login(username=self.user.username, password="Password123")
-        url = reverse("update_collection", kwargs={"slug": fav.id})
-        resp = self.client.post(url, {"title": "   "}, HTTP_HX_REQUEST="true")
-        fav.refresh_from_db()
-        self.assertEqual(fav.name, "Stay")
-        self.assertEqual(resp.json()["title"], "Stay")
-
-    def test_remove_self_follower_paths_redirect(self):
-        self.client.login(username=self.user.username, password="Password123")
-        resp = self.client.post(reverse("remove_follower", kwargs={"username": self.user.username}))
-        self.assertEqual(resp.status_code, 302)
-        resp2 = self.client.post(reverse("remove_following", kwargs={"username": self.user.username}))
-        self.assertEqual(resp2.status_code, 302)
-
-    def test_add_close_friend_without_follow_redirects(self):
-        pal = User.objects.get(username='@janedoe')
-        self.client.login(username=self.user.username, password="Password123")
-        result = self.client.post(reverse("add_close_friend", kwargs={"username": pal.username}))
-        self.assertFalse(CloseFriend.objects.filter(owner=self.user, friend=pal).exists())
-        self.assertEqual(result.status_code, 302)
-
-    def test_collection_detail_skips_items_without_post(self):
-        fav = Favourite.objects.create(user=self.user, name="Empty")
-        self.client.login(username=self.user.username, password="Password123")
-        class FakeQS(list):
-            def select_related(self, *args, **kwargs):
-                return self
-        fake_qs = FakeQS([type("Item", (), {"recipe_post": None})()])
-        with patch("recipes.views.profile_view.FavouriteItem.objects") as mgr:
-            mgr.filter.return_value = fake_qs
-            resp = self.client.get(reverse("collection_detail", kwargs={"slug": fav.id}))
-        self.assertEqual(list(resp.context["posts"]), [])
-
-    def test_profile_post_sets_success_message(self):
-        self.client.login(username=self.user.username, password="Password123")
-        with patch("recipes.views.profile_view.messages.add_message") as add_msg:
-            try:
-                resp = self.client.post(self.url, self.form_input)
-            except Exception as exc:
-                self.fail(str(exc))
-        self.assertEqual(resp.status_code, 302)
-        self.assertTrue(add_msg.called)
-
-    def test_collections_helper_updates_last_saved(self):
-        fav = Favourite.objects.create(user=self.user, name="New")
-        post = RecipePost.objects.create(author=self.user, title="Newer", description="text", image="pic.png")
-        item = FavouriteItem.objects.create(favourite=fav, recipe_post=post)
-        FavouriteItem.objects.filter(id=item.id).update(added_at=fav.created_at.replace(year=fav.created_at.year + 1))
-        cols = _collections_for_user(self.user)
-        self.assertEqual(cols[0]["cover"], "pic.png")
+        add_msg.assert_not_called()

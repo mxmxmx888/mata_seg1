@@ -58,6 +58,35 @@ class FirebaseAdminClientTests(TestCase):
 
 class FirebaseAuthServicesTests(TestCase):
 
+    def test_sign_in_skips_network_when_tests_and_not_mocked(self):
+        def dummy_post(*_, **__):
+            return None
+        dummy_post.__module__ = "recipes.tests.dummy"
+
+        with patch("recipes.firebase_auth_services._is_running_tests", return_value=True):
+            with patch("recipes.firebase_auth_services.requests.post", dummy_post):
+                res = firebase_auth_services.sign_in_with_email_and_password("u", "p")
+                self.assertIsNone(res)
+
+    def test_sign_in_handles_mock_detection_exception(self):
+        def dummy_post(*_, **__):
+            return None
+        dummy_post.__module__ = "recipes.tests.dummy"
+
+        with patch("recipes.firebase_auth_services._is_running_tests", return_value=True):
+            with patch("recipes.firebase_auth_services.type", side_effect=Exception("boom")):
+                with patch("recipes.firebase_auth_services.requests.post", dummy_post):
+                    res = firebase_auth_services.sign_in_with_email_and_password("u", "p")
+                    self.assertIsNone(res)
+
+    def test_sign_in_missing_api_key_logs(self):
+        with patch("recipes.firebase_auth_services._is_running_tests", return_value=False):
+            with patch("recipes.firebase_auth_services.settings", create=True) as mock_settings:
+                mock_settings.FIREBASE_API_KEY = None
+                with patch("builtins.print") as print_mock:
+                    res = firebase_auth_services.sign_in_with_email_and_password("u", "p")
+                    self.assertIsNone(res)
+                    print_mock.assert_called_once()
 
     @patch("recipes.firebase_auth_services.requests.post")
     def test_sign_in_success(self, mock_post):
@@ -66,19 +95,43 @@ class FirebaseAuthServicesTests(TestCase):
         res = firebase_auth_services.sign_in_with_email_and_password("u", "p")
         self.assertEqual(res["token"], "abc")
 
-
     @patch("recipes.firebase_auth_services.requests.post")
     def test_sign_in_failure_returns_none(self, mock_post):
         mock_post.return_value.status_code = 400
         res = firebase_auth_services.sign_in_with_email_and_password("u", "p")
         self.assertIsNone(res)
 
+    def test_sign_in_success_logs_outside_tests(self):
+        class DummyResponse:
+            status_code = 200
+            def json(self):
+                return {"ok": True}
+        with patch("recipes.firebase_auth_services._is_running_tests", return_value=False):
+            with patch("recipes.firebase_auth_services.settings", create=True) as mock_settings:
+                mock_settings.FIREBASE_API_KEY = "key"
+                with patch("recipes.firebase_auth_services.requests.post", return_value=DummyResponse()):
+                    with patch("builtins.print") as print_mock:
+                        res = firebase_auth_services.sign_in_with_email_and_password("u", "p")
+                        self.assertEqual(res, {"ok": True})
+                        print_mock.assert_called_once()
+
+    def test_sign_in_failure_logs_outside_tests(self):
+        class DummyResponse:
+            status_code = 401
+            text = "bad"
+        with patch("recipes.firebase_auth_services._is_running_tests", return_value=False):
+            with patch("recipes.firebase_auth_services.settings", create=True) as mock_settings:
+                mock_settings.FIREBASE_API_KEY = "key"
+                with patch("recipes.firebase_auth_services.requests.post", return_value=DummyResponse()):
+                    with patch("builtins.print") as print_mock:
+                        res = firebase_auth_services.sign_in_with_email_and_password("u", "p")
+                        self.assertIsNone(res)
+                        self.assertEqual(print_mock.call_count, 3)
 
     @patch("recipes.firebase_auth_services.firebase_auth.create_user")
     def test_create_user(self, mock_create):
         firebase_auth_services.create_firebase_user("uid", "e", "p")
         mock_create.assert_called_with(uid="uid", email="e", password="p")
-
 
     @patch("recipes.firebase_auth_services.firebase_auth.generate_password_reset_link")
     def test_reset_link_success(self, mock_gen):
@@ -86,11 +139,39 @@ class FirebaseAuthServicesTests(TestCase):
         res = firebase_auth_services.generate_password_reset_link("e@test.com")
         self.assertEqual(res, "LINK")
 
-    
-   
-    
     @patch("recipes.firebase_auth_services.firebase_auth.generate_password_reset_link")
     def test_reset_link_failure_returns_none(self, mock_gen):
         mock_gen.side_effect = Exception("fail")
         res = firebase_auth_services.generate_password_reset_link("e@test.com")
         self.assertIsNone(res)
+
+    def test_reset_link_failure_logs_outside_tests(self):
+        with patch("recipes.firebase_auth_services.firebase_auth.generate_password_reset_link",
+                   side_effect=Exception("fail")):
+            with patch("recipes.firebase_auth_services._is_running_tests", return_value=False):
+                with patch("builtins.print") as print_mock:
+                    res = firebase_auth_services.generate_password_reset_link("e@test.com")
+                    self.assertIsNone(res)
+                    print_mock.assert_called_once()
+
+    def test_reset_link_user_not_found_logs_outside_tests(self):
+        class NotFound(Exception): ...
+        with patch("recipes.firebase_auth_services.firebase_auth.generate_password_reset_link",
+                   side_effect=NotFound()):
+            firebase_auth_services.firebase_auth.UserNotFoundError = NotFound
+            with patch("recipes.firebase_auth_services._is_running_tests", return_value=False):
+                with patch("builtins.print") as print_mock:
+                    res = firebase_auth_services.generate_password_reset_link("e@test.com")
+                    self.assertIsNone(res)
+                    print_mock.assert_called_once()
+
+    def test_reset_link_user_not_found_suppresses_log_in_tests(self):
+        class NotFound(Exception): ...
+        with patch("recipes.firebase_auth_services.firebase_auth.generate_password_reset_link",
+                   side_effect=NotFound()):
+            firebase_auth_services.firebase_auth.UserNotFoundError = NotFound
+            with patch("recipes.firebase_auth_services._is_running_tests", return_value=True):
+                with patch("builtins.print") as print_mock:
+                    res = firebase_auth_services.generate_password_reset_link("e@test.com")
+                    self.assertIsNone(res)
+                    print_mock.assert_not_called()

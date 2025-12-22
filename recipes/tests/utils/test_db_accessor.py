@@ -59,6 +59,10 @@ class DBAccessorTests(TestCase):
         self.assertIsInstance(result, list)
         self.assertIsInstance(result[0], dict)
 
+    def test_list_empty_slice_returns_none_queryset(self):
+        qs = self.repo.list(limit=1, offset=10)
+        self.assertEqual(qs.count(), 0)
+
     # ---------- get() ----------
 
     def test_get(self):

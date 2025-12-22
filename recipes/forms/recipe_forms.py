@@ -131,7 +131,7 @@ class RecipePostForm(forms.ModelForm):
             raise forms.ValidationError("You can upload up to 10 images.")
 
         has_existing_image = False
-        if getattr(self, "instance", None) and getattr(self.instance, "pk", None):
+        if getattr(self.instance, "pk", None) and not getattr(getattr(self.instance, "_state", None), "adding", True):
             # Editing: allow existing DB images or legacy cover image string.
             has_existing_image = RecipeImage.objects.filter(recipe_post=self.instance).exists() or bool(
                 getattr(self.instance, "image", None)
@@ -155,7 +155,7 @@ class RecipePostForm(forms.ModelForm):
         link_count = len(shopping_links)
 
         existing_images = 0
-        if getattr(self, "instance", None):
+        if getattr(self.instance, "pk", None) and not getattr(getattr(self.instance, "_state", None), "adding", True):
             existing_images = Ingredient.objects.filter(
                 recipe_post=self.instance,
                 shop_url__isnull=False,
