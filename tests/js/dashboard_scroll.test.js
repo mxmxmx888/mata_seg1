@@ -29,4 +29,24 @@ describe("dashboard_scroll", () => {
     const noHistoryWin = { document };
     expect(() => initDashboardScroll(noHistoryWin)).not.toThrow();
   });
+
+  test("handles missing scrollRestoration and window gracefully", () => {
+    const { initDashboardScroll } = loadWith({ history: {}, scrollTo: jest.fn() });
+    initDashboardScroll({ document, history: {}, scrollTo: jest.fn() });
+    expect(() => initDashboardScroll()).not.toThrow();
+  });
+
+  test("falls back to global window when no arg provided", () => {
+    const { initDashboardScroll } = loadWith();
+    delete window.__dashboardScrollInitialized;
+    initDashboardScroll();
+    expect(window.__dashboardScrollInitialized).toBe(true);
+  });
+
+  test("handles history without scrollRestoration property", () => {
+    const history = {};
+    const { initDashboardScroll } = loadWith({ history, scrollTo: jest.fn() });
+    initDashboardScroll({ document, history, scrollTo: jest.fn() });
+    expect(history.scrollRestoration).toBeUndefined();
+  });
 });

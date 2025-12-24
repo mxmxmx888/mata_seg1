@@ -216,4 +216,50 @@ describe("base_theme_nav", () => {
     // fallbacks should not toggle classes when bootstrap present
     expect(document.querySelector("#pane1").classList.contains("show")).toBe(true);
   });
+
+  test("covers fallback branches and existing placeholders", () => {
+    document.body.innerHTML = `
+      <div class="auth-card">
+        <form>
+          <label for="with-placeholder">With</label>
+          <input id="with-placeholder" type="text" placeholder="keep" />
+        </form>
+      </div>
+      <a id="lonely-tab" href="#missing" data-bs-toggle="tab">Missing</a>
+      <select class="dashboard-filter-select"><option selected>Test</option></select>
+    `;
+    window.matchMedia = jest.fn().mockReturnValue({ matches: false });
+    const originalGetComputedStyle = window.getComputedStyle;
+    window.getComputedStyle = jest.fn().mockReturnValue({});
+    setInitialTheme(null, null);
+    initBaseInteractions(window);
+    // clicking tab without tablist/tabContent should no-op
+    document.getElementById("lonely-tab").click();
+    expect(document.getElementById("with-placeholder").placeholder).toBe("keep");
+    window.getComputedStyle = originalGetComputedStyle;
+  });
+
+  test("auto init runs on DOMContentLoaded when loading", () => {
+    const originalReady = Object.getOwnPropertyDescriptor(document, "readyState");
+    Object.defineProperty(document, "readyState", { value: "loading", configurable: true });
+    const addSpy = jest.spyOn(document, "addEventListener");
+    jest.resetModules();
+    delete global.__baseThemeNavInitialized;
+    require("../../static/js/base_theme_nav");
+    expect(addSpy).toHaveBeenCalledWith("DOMContentLoaded", expect.any(Function), { once: true });
+    addSpy.mock.calls[0][1]();
+    if (originalReady) {
+      Object.defineProperty(document, "readyState", originalReady);
+    }
+    addSpy.mockRestore();
+  });
+
+  test("setInitialTheme and initBaseInteractions handle missing window/doc", () => {
+    expect(() => setInitialTheme(null, null)).not.toThrow();
+    const nav = document.createElement("nav");
+    nav.className = "navbar-recipi";
+    document.body.appendChild(nav);
+    expect(() => initBaseInteractions(null)).not.toThrow();
+    expect(() => initBaseInteractions(window)).not.toThrow();
+  });
 });

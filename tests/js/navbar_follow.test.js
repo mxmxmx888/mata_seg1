@@ -168,6 +168,14 @@ describe("navbar_follow", () => {
     expect(() => initNavbarFollow(window)).not.toThrow();
   });
 
+  test("early return when already initialized and window missing", () => {
+    const { initNavbarFollow } = loadModule();
+    global.__navbarFollowInitialized = true;
+    expect(() => initNavbarFollow(window)).not.toThrow();
+    delete global.__navbarFollowInitialized;
+    expect(() => initNavbarFollow(null)).not.toThrow();
+  });
+
   test("follow request failure falls back to submit", async () => {
     global.fetch = jest.fn(() => Promise.reject(new Error("fail")));
     document.body.innerHTML = `
@@ -182,5 +190,100 @@ describe("navbar_follow", () => {
     await new Promise((r) => setTimeout(r, 0));
     expect(submitSpy).toHaveBeenCalled();
     submitSpy.mockRestore();
+  });
+
+  test("notification item with no url or interactive target does nothing", () => {
+    document.body.innerHTML = `
+      <div class="notification-item"><button>Btn</button></div>
+    `;
+    delete global.location;
+    global.location = { href: "" };
+    const { initNavbarFollow } = loadModule();
+    initNavbarFollow(window);
+    document.querySelector(".notification-item").dispatchEvent(new Event("click", { bubbles: true }));
+    expect(global.location.href).toBe("");
+  });
+
+  test("omits csrf header when token absent", async () => {
+    document.body.innerHTML = `
+      <form class="notification-follow-form" action="/follow">
+        <button data-follow-state="not-following">Follow</button>
+      </form>
+    `;
+    const { initNavbarFollow } = loadModule();
+    initNavbarFollow(window);
+    const form = document.querySelector("form");
+    form.dispatchEvent(new Event("submit", { cancelable: true }));
+    await new Promise((r) => setTimeout(r, 0));
+    const headers = global.fetch.mock.calls[0][1].headers;
+    expect(headers["X-CSRFToken"]).toBeUndefined();
+  });
+
+  test("uses global window when argument missing", async () => {
+    document.body.innerHTML = `
+      <form class="notification-follow-form" action="/follow">
+        <button data-follow-state="not-following">Follow</button>
+      </form>
+    `;
+    const { initNavbarFollow } = loadModule();
+    initNavbarFollow();
+    document.querySelector("form").dispatchEvent(new Event("submit", { cancelable: true }));
+    await new Promise((r) => setTimeout(r, 0));
+    expect(global.fetch).toHaveBeenCalled();
+  });
+
+  test("returns early when window has no document", () => {
+    const { initNavbarFollow } = loadModule();
+    expect(() => initNavbarFollow({})).not.toThrow();
+  });
+
+  test("defaults follow state when attribute missing", async () => {
+    document.body.innerHTML = `
+      <form class="notification-follow-form" action="/follow">
+        <button class="btn btn-primary" data-follow-state="">Follow</button>
+      </form>
+    `;
+    const { initNavbarFollow } = loadModule();
+    initNavbarFollow(window);
+    const form = document.querySelector("form");
+    const btn = form.querySelector("button");
+    form.dispatchEvent(new Event("submit", { cancelable: true }));
+    await new Promise((r) => setTimeout(r, 0));
+    expect(btn.textContent).toBe("Following");
+    expect(btn.getAttribute("data-follow-state")).toBe("following");
+  });
+
+  test("ignores notification click when url missing", () => {
+    document.body.innerHTML = `<div class="notification-item" data-post-url=""></div>`;
+    delete global.location;
+    global.location = { href: "" };
+    const { initNavbarFollow } = loadModule();
+    initNavbarFollow(window);
+    document.querySelector(".notification-item").dispatchEvent(new Event("click", { bubbles: true }));
+    expect(global.location.href).toBe("");
+  });
+
+  test("follow request handles missing parent item gracefully", async () => {
+    document.body.innerHTML = `<form class="notification-follow-request-form" data-action="accept" action="/accept"></form>`;
+    const { initNavbarFollow } = loadModule();
+    initNavbarFollow(window);
+    const form = document.querySelector("form");
+    form.dispatchEvent(new Event("submit", { cancelable: true }));
+    await new Promise((r) => setTimeout(r, 0));
+    expect(global.fetch).toHaveBeenCalled();
+  });
+
+  test("accept action tolerates missing message and actions row", async () => {
+    document.body.innerHTML = `
+      <div data-notification-id="4">
+        <form class="notification-follow-request-form" data-action="accept" action="/accept"></form>
+      </div>
+    `;
+    const { initNavbarFollow } = loadModule();
+    initNavbarFollow(window);
+    const form = document.querySelector("form");
+    form.dispatchEvent(new Event("submit", { cancelable: true }));
+    await new Promise((r) => setTimeout(r, 0));
+    expect(document.querySelector("[data-notification-id]")).not.toBeNull();
   });
 });

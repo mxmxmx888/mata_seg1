@@ -161,4 +161,13 @@ describe("collection_detail", () => {
     await new Promise((resolve) => setTimeout(resolve, 0));
     expect(modal.classList.contains("show")).toBe(false);
   });
+
+  test("early exits when missing required elements or already initialized", () => {
+    document.body.innerHTML = ``;
+    const { initCollectionDetail } = loadModule();
+    expect(() => initCollectionDetail(window)).not.toThrow();
+    window.__collectionDetailInitialized = true;
+    expect(() => initCollectionDetail(window)).not.toThrow();
+    delete window.__collectionDetailInitialized;
+  });
 });

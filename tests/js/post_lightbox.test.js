@@ -61,4 +61,55 @@ describe("post_lightbox", () => {
     // still closed so img source not set
     expect(document.getElementById("lightbox-image").src).not.toContain("full1.jpg");
   });
+
+  test("advances with ArrowRight while open", () => {
+    buildLightboxDom();
+    initPostLightbox(window);
+    document.querySelector(".js-gallery-image").click();
+    const img = document.getElementById("lightbox-image");
+    document.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowRight" }));
+    expect(img.src).toContain("full2.jpg");
+  });
+
+  test("early exit when no thumbs or lightbox elements", () => {
+    document.body.innerHTML = `<div></div>`;
+    expect(() => initPostLightbox(window)).not.toThrow();
+  });
+
+  test("wraps to last image when navigating left from first", () => {
+    buildLightboxDom();
+    initPostLightbox(window);
+    document.querySelectorAll(".js-gallery-image")[0].click();
+    const img = document.getElementById("lightbox-image");
+    document.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowLeft" }));
+    expect(img.src).toContain("full2.jpg");
+  });
+
+  test("falls back to thumb src when fullsrc missing", () => {
+    document.body.innerHTML = `
+      <div id="lightbox" class="d-none">
+        <div class="lightbox-backdrop"></div>
+        <button class="lightbox-arrow lightbox-arrow--left" type="button"></button>
+        <img id="lightbox-image" class="lightbox-image" alt="Recipe image">
+        <button class="lightbox-arrow lightbox-arrow--right" type="button"></button>
+      </div>
+      <img class="js-gallery-image" src="thumb-only.jpg">
+    `;
+    initPostLightbox(window);
+    document.querySelector(".js-gallery-image").click();
+    expect(document.getElementById("lightbox-image").src).toContain("thumb-only.jpg");
+  });
+
+  test("returns early when window lacks document", () => {
+    expect(() => initPostLightbox({})).not.toThrow();
+  });
+
+  test("ignores unrelated key presses while open", () => {
+    buildLightboxDom();
+    initPostLightbox(window);
+    document.querySelector(".js-gallery-image").click();
+    const img = document.getElementById("lightbox-image");
+    document.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter" }));
+    expect(img.src).toContain("full1.jpg");
+  });
 });

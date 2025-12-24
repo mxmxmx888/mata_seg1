@@ -42,10 +42,10 @@ describe("shopping_infinite", () => {
     const observed = [];
     let instance;
     const MockObserver = function (cb) {
-      instance = { trigger: (isIntersecting = true) => cb([{ isIntersecting }]) };
       this.observe = (el) => observed.push(el);
       this.disconnect = jest.fn();
-      this.trigger = instance.trigger;
+      this.trigger = (isIntersecting = true) => cb([{ isIntersecting }]);
+      instance = this;
     };
     global.IntersectionObserver = MockObserver;
 
@@ -56,6 +56,7 @@ describe("shopping_infinite", () => {
     instance.trigger();
     await new Promise((resolve) => setTimeout(resolve, 0));
     expect(document.getElementById("newItem")).not.toBeNull();
+    expect(instance.disconnect).toHaveBeenCalled();
   });
 
   test("fallback scroll path triggers load", async () => {
@@ -118,5 +119,130 @@ describe("shopping_infinite", () => {
     document.body.innerHTML = ``;
     const { initShoppingInfinite } = loadModule();
     expect(() => initShoppingInfinite(window)).not.toThrow();
+  });
+
+  test("returns early when sentinel missing", () => {
+    document.body.innerHTML = `<div id="shopping-grid"></div>`;
+    const { initShoppingInfinite } = loadModule();
+    expect(() => initShoppingInfinite(window)).not.toThrow();
+  });
+
+  test("skips when already initialized and when window missing", () => {
+    const { initShoppingInfinite } = loadModule();
+    global.__shoppingInfiniteInitialized = true;
+    expect(() => initShoppingInfinite(window)).not.toThrow();
+    delete global.__shoppingInfiniteInitialized;
+    expect(() => initShoppingInfinite(null)).not.toThrow();
+  });
+
+  test("rebuilds columns on resize when breakpoint changes", () => {
+    document.body.innerHTML = `
+      <div id="shopping-grid" data-page="1" data-shopping-has-next="true">
+        <div class="shop-masonry-item"></div>
+      </div>
+      <div id="shopping-sentinel"></div>
+      <div id="shopping-loading" class="d-none"></div>
+    `;
+    window.innerWidth = 1700;
+    const { initShoppingInfinite } = loadModule();
+    initShoppingInfinite(window);
+    const initialCols = document.querySelectorAll(".shop-column").length;
+    window.innerWidth = 700;
+    window.dispatchEvent(new Event("resize"));
+    const resizedCols = document.querySelectorAll(".shop-column").length;
+    expect(resizedCols).not.toBe(initialCols);
+  });
+
+  test("falls back column count when innerWidth undefined", () => {
+    document.body.innerHTML = `
+      <div id="shopping-grid" data-page="1" data-shopping-has-next="true">
+        <div class="shop-masonry-item"></div>
+      </div>
+      <div id="shopping-sentinel"></div>
+      <div id="shopping-loading" class="d-none"></div>
+    `;
+    const originalInnerWidth = window.innerWidth;
+    Object.defineProperty(window, "innerWidth", { value: undefined, writable: true });
+    const { initShoppingInfinite } = loadModule();
+    initShoppingInfinite(window);
+    expect(document.querySelectorAll(".shop-column").length).toBe(2);
+    Object.defineProperty(window, "innerWidth", { value: originalInnerWidth, writable: true });
+  });
+
+  test("places new items into shortest column", async () => {
+    delete global.IntersectionObserver;
+    document.body.innerHTML = `
+      <div id="shopping-grid" data-page="1" data-shopping-has-next="true">
+        <div class="shop-masonry-item" id="existing"></div>
+      </div>
+      <div id="shopping-sentinel"></div>
+      <div id="shopping-loading" class="d-none"></div>
+    `;
+    global.fetch = jest.fn(() =>
+      Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({ html: '<div class="shop-masonry-item" id="short-target"></div>', has_next: false })
+      })
+    );
+    const { initShoppingInfinite } = loadModule();
+    initShoppingInfinite(window);
+    const cols = document.querySelectorAll(".shop-column");
+    Object.defineProperty(cols[0], "offsetHeight", { value: 10 });
+    Object.defineProperty(cols[1], "offsetHeight", { value: 1 });
+    window.innerHeight = 1000;
+    Object.defineProperty(document.body, "offsetHeight", { value: 0, configurable: true });
+    window.scrollY = 0;
+    window.dispatchEvent(new Event("scroll"));
+    await new Promise((r) => setTimeout(r, 0));
+    expect(document.querySelector("#short-target").parentElement).toBe(cols[1]);
+  });
+
+  test("returns early when window has no document", () => {
+    const { initShoppingInfinite } = loadModule();
+    expect(() => initShoppingInfinite({})).not.toThrow();
+  });
+
+  test("loading guard prevents double fetches", async () => {
+    delete global.IntersectionObserver;
+    let release;
+    global.fetch = jest.fn(
+      () =>
+        new Promise((resolve) => {
+          release = () =>
+            resolve({
+              ok: true,
+              json: () => Promise.resolve({ html: '<div class="shop-masonry-item" id="guard"></div>', has_next: false })
+            });
+        })
+    );
+    document.body.innerHTML = `
+      <div id="shopping-grid" data-page="1" data-shopping-has-next="true">
+        <div class="shop-masonry-item"></div>
+      </div>
+      <div id="shopping-sentinel"></div>
+      <div id="shopping-loading" class="d-none"></div>
+    `;
+    const { initShoppingInfinite } = loadModule();
+    initShoppingInfinite(window);
+    window.innerHeight = 1000;
+    Object.defineProperty(document.body, "offsetHeight", { value: 0, configurable: true });
+    window.scrollY = 0;
+    window.dispatchEvent(new Event("scroll"));
+    release();
+    await new Promise((r) => setTimeout(r, 0));
+    expect(document.getElementById("guard")).not.toBeNull();
+  });
+
+  test("no loading element still runs without throwing", () => {
+    delete global.IntersectionObserver;
+    document.body.innerHTML = `
+      <div id="shopping-grid" data-page="1" data-shopping-has-next="true">
+        <div class="shop-masonry-item"></div>
+      </div>
+      <div id="shopping-sentinel"></div>
+    `;
+    const { initShoppingInfinite } = loadModule();
+    expect(() => initShoppingInfinite(window)).not.toThrow();
+    window.dispatchEvent(new Event("scroll"));
   });
 });

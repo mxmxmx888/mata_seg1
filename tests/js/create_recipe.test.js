@@ -304,4 +304,55 @@ describe("create_recipe", () => {
     expect(document.querySelectorAll(".shopping-list-item").length).toBeGreaterThan(0);
   });
 
+  test("early exits safely when window/document or required nodes missing", () => {
+    expect(() => initCreateRecipe(null)).not.toThrow();
+    document.body.innerHTML = `<div class="create-recipe-card"><form></form></div>`;
+    expect(() => initCreateRecipe(window)).not.toThrow();
+  });
+
+  test("skips restore when DataTransfer unavailable", async () => {
+    const realDT = window.DataTransfer;
+    delete window.DataTransfer;
+    buildForm({ bound: true, hasErrors: true });
+    sessionStorage.setItem(
+      "create-recipe-images",
+      JSON.stringify([{ name: "x.png", data: "data:image/png;base64,AAA" }])
+    );
+    initCreateRecipe(window);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(document.getElementById("image-file-list").textContent).toBe("");
+    window.DataTransfer = realDT;
+  });
+
+  test("renderRequiredFieldErrors handles file validity with mock files", () => {
+    buildForm();
+    const form = document.querySelector("form");
+    const imageInput = document.getElementById("id_images");
+    Object.defineProperty(imageInput, "files", { value: [new File(["x"], "x.png")], configurable: true });
+    initCreateRecipe(window);
+    // no submit triggered; ensure no pre-existing errors when file present
+    expect(document.querySelectorAll(".client-required-error").length).toBe(0);
+  });
+
+  test("persistFiles handles empty files array and storage errors gracefully", async () => {
+    buildForm();
+    const imageInput = document.getElementById("id_images");
+    Object.defineProperty(imageInput, "files", { value: [], configurable: true });
+    const removeSpy = jest.spyOn(Storage.prototype, "removeItem").mockImplementation(() => {
+      throw new Error("fail");
+    });
+    initCreateRecipe(window);
+    imageInput.dispatchEvent(new Event("change"));
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    removeSpy.mockRestore();
+  });
+
+  test("bootstrapExisting handles lines without names and normalizes urls", () => {
+    buildForm();
+    const field = document.getElementById("id_shopping_links_text");
+    field.value = " | example.com\nItem | http://ok.com";
+    initCreateRecipe(window);
+    expect(document.querySelectorAll(".shopping-list-item").length).toBe(1);
+    expect(field.value).toContain("http://ok.com");
+  });
 });

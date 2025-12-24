@@ -10,9 +10,17 @@ function loadModule() {
 
 describe("for_you_infinite", () => {
   let originalFetch;
+  let addEventListenerSpy;
+  let scrollHandlers;
 
   beforeEach(() => {
     document.body.innerHTML = "";
+    scrollHandlers = [];
+    addEventListenerSpy = jest.spyOn(window, "addEventListener").mockImplementation((type, handler) => {
+      if (type === "scroll") {
+        scrollHandlers.push(handler);
+      }
+    });
     originalFetch = global.fetch;
     global.fetch = jest.fn(() =>
       Promise.resolve({
@@ -27,7 +35,12 @@ describe("for_you_infinite", () => {
     global.fetch = originalFetch;
     jest.clearAllMocks();
     delete global.IntersectionObserver;
+    addEventListenerSpy.mockRestore();
   });
+
+  function triggerScroll() {
+    scrollHandlers.forEach((handler) => handler(new Event("scroll")));
+  }
 
   test("loads more when intersection observer fires", async () => {
     const cards = Array.from({ length: 12 }).map(() => '<div class="my-recipe-card"></div>').join("");
@@ -74,7 +87,7 @@ describe("for_you_infinite", () => {
     window.innerHeight = 1000;
     Object.defineProperty(document.body, "offsetHeight", { value: 0, configurable: true });
     window.scrollY = 0;
-    window.dispatchEvent(new Event("scroll"));
+    triggerScroll();
     await new Promise((resolve) => setTimeout(resolve, 0));
     expect(document.querySelectorAll(".my-recipe-card").length).toBeGreaterThan(1);
   });
@@ -83,7 +96,7 @@ describe("for_you_infinite", () => {
     global.fetch = jest.fn(() => Promise.reject(new Error("fail")));
     document.body.innerHTML = `
       <div id="forYou-grid">
-        <div class="feed-masonry-column"><div class="my-recipe-card"></div></div>
+        <div class="feed-masonry-column">${new Array(12).fill('<div class="my-recipe-card"></div>').join("")}</div>
       </div>
       <div id="forYou-sentinel"></div>
       <div id="forYou-loading" class="d-none"></div>
@@ -91,9 +104,27 @@ describe("for_you_infinite", () => {
     const { initForYouInfinite } = loadModule();
     initForYouInfinite(window);
     // trigger
-    window.dispatchEvent(new Event("scroll"));
+    triggerScroll();
     await new Promise((resolve) => setTimeout(resolve, 0));
-    expect(document.querySelectorAll(".my-recipe-card").length).toBe(1);
+    expect(document.querySelectorAll(".my-recipe-card").length).toBe(12);
+  });
+
+  test("catch resets loading state after failure", async () => {
+    global.fetch = jest.fn(() => Promise.reject(new Error("boom")));
+    document.body.innerHTML = `
+      <div id="forYou-grid">
+        <div class="feed-masonry-column">${new Array(12).fill('<div class="my-recipe-card"></div>').join("")}</div>
+      </div>
+      <div id="forYou-sentinel"></div>
+      <div id="forYou-loading" class="d-none"></div>
+    `;
+    const { initForYouInfinite } = loadModule();
+    initForYouInfinite(window);
+    triggerScroll();
+    expect(document.getElementById("forYou-loading").classList.contains("d-none")).toBe(false);
+    await new Promise((r) => setTimeout(r, 0));
+    expect(document.getElementById("forYou-loading").classList.contains("d-none")).toBe(true);
+    expect(global.fetch).toHaveBeenCalled();
   });
 
   test("when hasMore already false, no fetch occurs", () => {
@@ -107,7 +138,7 @@ describe("for_you_infinite", () => {
     const { initForYouInfinite } = loadModule();
     initForYouInfinite(window);
     // mimic LIMIT offset unmet
-    window.dispatchEvent(new Event("scroll"));
+    triggerScroll();
     expect(global.fetch).toHaveBeenCalledTimes(0);
   });
 
@@ -129,11 +160,11 @@ describe("for_you_infinite", () => {
     `;
     const { initForYouInfinite } = loadModule();
     initForYouInfinite(window);
-    window.dispatchEvent(new Event("scroll"));
+    triggerScroll();
     await new Promise((resolve) => setTimeout(resolve, 0));
     // after has_more false, further scrolls should not refetch
     global.fetch.mockClear();
-    window.dispatchEvent(new Event("scroll"));
+    triggerScroll();
     await new Promise((resolve) => setTimeout(resolve, 0));
     expect(global.fetch).toHaveBeenCalledTimes(0);
   });
@@ -163,8 +194,82 @@ describe("for_you_infinite", () => {
     Object.defineProperty(document.getElementById("c2"), "offsetHeight", { value: 1 });
     const { initForYouInfinite } = loadModule();
     initForYouInfinite(window);
-    window.dispatchEvent(new Event("scroll"));
+    triggerScroll();
     await new Promise((resolve) => setTimeout(resolve, 0));
     expect(document.querySelector("#c2 #newCard")).not.toBeNull();
+  });
+
+  test("early exits when already initialized or missing window", () => {
+    const { initForYouInfinite } = loadModule();
+    global.__forYouInfiniteInitialized = true;
+    expect(() => initForYouInfinite(window)).not.toThrow();
+    delete global.__forYouInfiniteInitialized;
+    expect(() => initForYouInfinite(null)).not.toThrow();
+  });
+
+  test("returns when container or sentinel missing", () => {
+    document.body.innerHTML = `<div id="forYou-grid"></div>`;
+    const { initForYouInfinite } = loadModule();
+    expect(() => initForYouInfinite(window)).not.toThrow();
+  });
+
+  test("scroll fallback triggers when threshold reached", async () => {
+    delete global.IntersectionObserver;
+    const cards = Array.from({ length: 12 }).map(() => '<div class="my-recipe-card"></div>').join("");
+    document.body.innerHTML = `
+      <div id="forYou-grid">
+        <div class="feed-masonry-column">${cards}</div>
+      </div>
+      <div id="forYou-sentinel"></div>
+      <div id="forYou-loading" class="d-none"></div>
+    `;
+    const { initForYouInfinite } = loadModule();
+    initForYouInfinite(window);
+    window.innerHeight = 1000;
+    Object.defineProperty(document.body, "offsetHeight", { value: 1000, configurable: true });
+    window.scrollY = 2000;
+    triggerScroll();
+    await new Promise((r) => setTimeout(r, 0));
+    expect(global.fetch).toHaveBeenCalled();
+  });
+
+  test("setLoading toggles spinner visibility via fetch path", async () => {
+    delete global.IntersectionObserver;
+    const cards = Array.from({ length: 12 }).map(() => '<div class="my-recipe-card"></div>').join("");
+    document.body.innerHTML = `
+      <div id="forYou-grid">
+        <div class="feed-masonry-column">${cards}</div>
+      </div>
+      <div id="forYou-sentinel"></div>
+      <div id="forYou-loading" class="d-none" id="loading"></div>
+    `;
+    const { initForYouInfinite } = loadModule();
+    initForYouInfinite(window);
+    triggerScroll();
+    expect(document.getElementById("forYou-loading").classList.contains("d-none")).toBe(false);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(document.getElementById("forYou-loading").classList.contains("d-none")).toBe(true);
+  });
+
+  test("handles missing loading element gracefully", async () => {
+    delete global.IntersectionObserver;
+    const cards = Array.from({ length: 12 }).map(() => '<div class="my-recipe-card"></div>').join("");
+    document.body.innerHTML = `
+      <div id="forYou-grid">
+        <div class="feed-masonry-column">${cards}</div>
+      </div>
+      <div id="forYou-sentinel"></div>
+    `;
+    const { initForYouInfinite } = loadModule();
+    expect(() => initForYouInfinite(window)).not.toThrow();
+    triggerScroll();
+    await new Promise((r) => setTimeout(r, 0));
+    expect(global.fetch).toHaveBeenCalled();
+  });
+
+  test("uses global window when no arg and early returns without document", () => {
+    const { initForYouInfinite } = loadModule();
+    expect(() => initForYouInfinite()).not.toThrow();
+    expect(() => initForYouInfinite({})).not.toThrow();
   });
 });

@@ -205,4 +205,27 @@ describe("navbar_ui", () => {
     menu.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
     expect(menu.classList.contains("is-open")).toBe(false);
   });
+
+  test("initNavbar handles missing window/document and initializes only once", () => {
+    expect(() => initNavbar(null)).not.toThrow();
+    global.__navbarUIInitialized = true;
+    expect(() => initNavbar(window)).not.toThrow();
+    delete global.__navbarUIInitialized;
+  });
+
+  test("getDropdownOffset uses CSS var when present", () => {
+    const style = document.createElement("style");
+    style.textContent = `:root { --navbar-dropdown-offset: 42px; }`;
+    document.head.appendChild(style);
+    expect(getDropdownOffset(window)).toBe(42);
+    document.head.removeChild(style);
+  });
+
+  test("positionFloatingMenu no-ops without trigger/menu and clears styles", () => {
+    positionFloatingMenu({ trigger: null, menu: null });
+    const menu = document.createElement("div");
+    menu.style.position = "fixed";
+    positionFloatingMenu({ trigger: null, menu, breakpoint: 1, props: ["position"] });
+    expect(menu.style.position).toBe("fixed"); // unchanged since no trigger/menu
+  });
 });
