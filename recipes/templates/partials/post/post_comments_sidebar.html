@@ -111,44 +111,68 @@
     </p>
     {% endif %}
 
-    <div class="post-comments-list">
-      {% for comment in comments %}
-      <div class="post-comment">
-        <div class="comment-avatar">
-          <a href="{% url 'profile' %}?user={{ comment.user.username|urlencode }}">
-            <img
-              src="{{ comment.user.mini_avatar_url }}"
-              alt="{{ comment.user.username }} avatar"
-            >
-          </a>
-        </div>
-        <div class="comment-body">
-          <div class="comment-header">
-            <span class="comment-author">{{ comment.user.username }}</span>
-            <span class="comment-timestamp">{{ comment.created_at|timesince }} ago</span>
-          </div>
-          <p class="comment-text">{{ comment.text }}</p>
-        </div>
-        <div class="comment-actions">
-          {% if request.user == comment.user %}
-          <form action="{% url 'delete_comment' comment.id %}" method="post" onsubmit="return confirm('Delete this comment?');">
-            {% csrf_token %}
-            <button type="submit" class="comment-action-btn" title="Delete">
-              <i class="bi bi-trash"></i>
-            </button>
-          </form>
-          {% endif %}
-          
-          <a href="{% url 'report_content' 'comment' comment.id %}" class="comment-action-btn" title="Report">
-            <i class="bi bi-flag"></i>
-          </a>
-        </div>
-      </div>
-      {% empty %}
+    <div class="post-comments-list" id="post-comments-list">
+      {% include "partials/post/comment_items.html" with comments=comments %}
+      {% if not comments %}
       <div class="text-center py-4">
         <p class="text-muted small mb-0">No comments yet. Be the first!</p>
       </div>
-      {% endfor %}
+      {% endif %}
+      <div
+        id="comments-sentinel"
+        data-next-page="{{ comments_next_page }}"
+        data-comments-endpoint="{% url 'recipe_detail' recipe.id %}"
+        data-has-more="{{ comments_has_more|yesno:'true,false' }}"
+        style="height:1px;width:100%;margin:0;padding:0;"
+      ></div>
     </div>
   </div>
 </aside>
+
+<script>
+  (function() {
+    const sentinel = document.getElementById("comments-sentinel");
+    if (!sentinel) return;
+    const list = document.getElementById("post-comments-list");
+    const endpoint = sentinel.getAttribute("data-comments-endpoint");
+
+    function fetchMore() {
+      const hasMore = sentinel.getAttribute("data-has-more") === "true";
+      const next = sentinel.getAttribute("data-next-page");
+      if (!hasMore || !next) return;
+      const url = `${endpoint}?comments_page=${next}&comments_only=1`;
+      sentinel.setAttribute("data-has-more", "false");
+      fetch(url, { headers: { "HX-Request": "true" } })
+        .then((resp) => resp.text())
+        .then((html) => {
+          if (html.trim() === "") {
+            return;
+          }
+          // Insert new comments just before the sentinel so it stays at the end.
+          sentinel.insertAdjacentHTML("beforebegin", html);
+          const countReturned = (html.match(/post-comment/g) || []).length;
+          if (countReturned < 50) {
+            sentinel.setAttribute("data-has-more", "false");
+            observer.disconnect();
+          } else {
+            sentinel.setAttribute("data-has-more", "true");
+            sentinel.setAttribute("data-next-page", parseInt(next, 10) + 1);
+          }
+        })
+        .catch(() => observer.disconnect());
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            fetchMore();
+          }
+        });
+      },
+      { root: null, threshold: 0.1 }
+    );
+
+    observer.observe(sentinel);
+  })();
+</script>

@@ -75,8 +75,8 @@ body.post-body {
   --bs-btn-hover-color: var(--text-primary);
   --bs-btn-active-color: var(--text-primary);
   gap: 0.4rem;
-  background-color: color-mix(in srgb, #fff 90%, var(--text-primary) 10%);
-  border-color: color-mix(in srgb, #fff 85%, var(--text-primary) 15%);
+  background-color: var(--bg-2);
+  border-color: var(--border-subtle);
   color: var(--text-primary);
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--text-primary) 10%, transparent);
   transition: background-color 0.18s ease, border-color 0.18s ease, color 0.14s ease, transform 0.12s ease;
@@ -102,25 +102,13 @@ body.post-body {
   display: block;
 }
 
-body:not(.auth-body):is([data-theme="dark"], .dashboard-body:not([data-theme="light"]), .shop-body:not([data-theme="light"]), .app-body:not([data-theme="light"])) .post-shop-link {
-  background-color: var(--bg-2);
-  border-color: var(--border-subtle);
-  color: var(--text-primary);
-}
-
 .post-shop-link:hover,
 .post-shop-link:focus-visible {
-  background-color: color-mix(in srgb, #fff 82%, var(--text-primary) 18%);
-  border-color: color-mix(in srgb, #fff 78%, var(--text-primary) 22%);
+  background-color: color-mix(in srgb, var(--bg-2) 85%, var(--bg-3) 15%);
+  border-color: color-mix(in srgb, var(--border-subtle) 85%, transparent 15%);
   color: var(--text-primary);
   transform: translateY(-1px);
   text-decoration: none;
-}
-
-body:not(.auth-body):is([data-theme="dark"], .dashboard-body:not([data-theme="light"]), .shop-body:not([data-theme="light"]), .app-body:not([data-theme="light"])) .post-shop-link:hover,
-body:not(.auth-body):is([data-theme="dark"], .dashboard-body:not([data-theme="light"]), .shop-body:not([data-theme="light"]), .app-body:not([data-theme="light"])) .post-shop-link:focus-visible {
-  background-color: var(--bg-3);
-  border-color: var(--border-strong);
 }
 
 .post-shop-link i {

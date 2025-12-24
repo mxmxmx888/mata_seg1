@@ -1,0 +1,33 @@
+{% for comment in comments %}
+<div class="post-comment">
+  <div class="comment-avatar">
+    <a href="{% url 'profile' %}?user={{ comment.user.username|urlencode }}">
+      <img
+        src="{{ comment.user.mini_avatar_url }}"
+        alt="{{ comment.user.username }} avatar"
+      >
+    </a>
+  </div>
+  <div class="comment-body">
+    <div class="comment-header">
+      <span class="comment-author">{{ comment.user.username }}</span>
+      <span class="comment-timestamp">{{ comment.created_at|date:"d/m/Y H:i" }}</span>
+    </div>
+    <p class="comment-text">{{ comment.text }}</p>
+  </div>
+  <div class="comment-actions">
+    {% if request.user == comment.user %}
+    <form action="{% url 'delete_comment' comment.id %}" method="post" onsubmit="return confirm('Delete this comment?');">
+      {% csrf_token %}
+      <button type="submit" class="comment-action-btn" title="Delete">
+        <i class="bi bi-trash"></i>
+      </button>
+    </form>
+    {% endif %}
+    
+    <a href="{% url 'report_content' 'comment' comment.id %}" class="comment-action-btn" title="Report">
+      <i class="bi bi-flag"></i>
+    </a>
+  </div>
+</div>
+{% endfor %}

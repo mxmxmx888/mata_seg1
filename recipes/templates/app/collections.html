@@ -9,31 +9,67 @@
     <h1 class="collection-title mb-1">Collections</h1>
   </header>
   <section class="profile-collections-grid">
-    <div class="profile-collections">
-      {% for collection in collections %}
-        <a class="collection-card" href="{% url 'collection_detail' collection.slug %}">
-          <div
-            class="collection-thumb{% if not collection.has_image %} collection-thumb--empty{% endif %}"
-          >
-            {% if collection.cover %}
-              <img
-                src="{{ collection.cover }}"
-                alt="{{ collection.title }} cover"
-                class="collection-thumb-img"
-                loading="lazy"
-              >
-            {% endif %}
-          </div>
-          <div class="collection-overlay"></div>
-          <div class="collection-meta">
-            <p class="collection-title mb-0">{{ collection.title }}</p>
-            <p class="collection-sub mb-0">
-              {{ collection.count }} recipes{% if collection.privacy %} · {{ collection.privacy }}{% endif %}
-            </p>
-          </div>
-        </a>
-      {% endfor %}
+    <div class="profile-collections" id="collections-list">
+      {% include "partials/collections/collection_cards.html" with collections=collections %}
     </div>
+    <div
+      id="collections-sentinel"
+      data-next-page="{{ collections_next_page }}"
+      data-has-more="{{ collections_has_more|yesno:'true,false' }}"
+      data-endpoint="{% url 'collections' %}"
+      style="height:1px;width:100%;margin:0;padding:0;"
+    ></div>
 	  </section>
 	</main>
+<script>
+  (function() {
+    const sentinel = document.getElementById("collections-sentinel");
+    if (!sentinel) return;
+    const list = document.getElementById("collections-list");
+    const endpoint = sentinel.getAttribute("data-endpoint");
+
+    function fetchMore() {
+      const hasMore = sentinel.getAttribute("data-has-more") === "true";
+      const next = sentinel.getAttribute("data-next-page");
+      if (!hasMore || !next) return;
+      sentinel.setAttribute("data-has-more", "false");
+      const url = `${endpoint}?page=${next}`;
+      fetch(url, { headers: { "HX-Request": "true" } })
+        .then((resp) => resp.text())
+        .then((html) => {
+          if (!html.trim()) {
+            return;
+          }
+          const parser = new DOMParser();
+          const doc = parser.parseFromString(html, "text/html");
+          const items = doc.body.children;
+          Array.from(items).forEach((el) => {
+            sentinel.insertAdjacentElement("beforebegin", el);
+          });
+          // heuristic: if fewer than page size returned, stop observing
+          if ((html.match(/collection-card/g) || []).length < 20) {
+            sentinel.setAttribute("data-has-more", "false");
+            observer.disconnect();
+          } else {
+            sentinel.setAttribute("data-has-more", "true");
+            sentinel.setAttribute("data-next-page", parseInt(next, 10) + 1);
+          }
+        })
+        .catch(() => observer.disconnect());
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            fetchMore();
+          }
+        });
+      },
+      { root: null, threshold: 0.1 }
+    );
+
+    observer.observe(sentinel);
+  })();
+</script>
 {% endblock %}

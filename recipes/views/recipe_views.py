@@ -126,8 +126,28 @@ def recipe_detail(request, post_id):
     if not privacy_service.can_view_post(request.user, recipe):
         raise Http404("Post not available.")
 
-    comments = recipe.comments.select_related("user").order_by("-created_at")
-    context = build_recipe_context(recipe, request.user, comments)
+    comments_qs = recipe.comments.select_related("user").order_by("-created_at")
+    page_size = 50
+    page_number = max(1, int(request.GET.get("comments_page") or 1))
+    start = (page_number - 1) * page_size
+    end = start + page_size
+    comments_page = list(comments_qs[start:end])
+    has_more_comments = comments_qs.count() > end
+
+    if request.headers.get("HX-Request") and request.GET.get("comments_only") == "1":
+        return render(
+            request,
+            "partials/post/comment_items.html",
+            {"comments": comments_page, "request": request},
+        )
+
+    context = build_recipe_context(recipe, request.user, comments_page)
+    context.update(
+        {
+            "comments_has_more": has_more_comments,
+            "comments_next_page": page_number + 1 if has_more_comments else None,
+        }
+    )
     # Ensure source_link is absolute for sharing
     context["source_link"] = request.build_absolute_uri(context["source_link"])
     return render(request, "post/post_detail.html", context)

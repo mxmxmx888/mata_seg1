@@ -27,8 +27,27 @@ def profile_api(request):
 @login_required
 def mark_notifications_read(request):
     """Mark all unread notifications for the current user as read."""
-    Notification.objects.filter(recipient=request.user, is_read=False).update(is_read=True)
-    return JsonResponse({'status': 'success'})
+    page_size = 50
+    page_number = max(1, int(request.GET.get("page") or 1))
+    notifications_qs = (
+        Notification.objects.filter(recipient=request.user)
+        .select_related("sender", "post", "follow_request")
+        .order_by("-created_at", "-id")
+    )
+    start = (page_number - 1) * page_size
+    end = start + page_size
+    page_items = list(notifications_qs[start:end])
+    has_more = notifications_qs.count() > end
+
+    # mark fetched items as read
+    Notification.objects.filter(id__in=[n.id for n in page_items], is_read=False).update(is_read=True)
+
+    html = render_to_string(
+        "partials/navbar/notification_items.html",
+        {"notifications": page_items, "following_ids": set(), "request": request},
+        request=request,
+    )
+    return JsonResponse({"html": html, "has_more": has_more, "next_page": page_number + 1 if has_more else None})
 
 
 class RecipeListApi(generics.ListCreateAPIView):

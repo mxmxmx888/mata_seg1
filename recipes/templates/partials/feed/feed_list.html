@@ -19,7 +19,7 @@
                 {{ post.author.display_name|default:post.author.username }}
               </div>
               <div class="small text-muted">
-                {{ post.created_at|timesince }} ago · {{ post.author.handle|default:"@creator" }}
+                {{ post.created_at|date:"d/m/Y H:i" }} · {{ post.author.handle|default:"@creator" }}
               </div>
             </div>
           </div>
