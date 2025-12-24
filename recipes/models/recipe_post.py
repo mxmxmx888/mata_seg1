@@ -62,6 +62,7 @@ class RecipePost(models.Model):
     # Time fields
     prep_time_min = models.PositiveIntegerField(default=0)
     cook_time_min = models.PositiveIntegerField(default=0)
+    serves = models.PositiveIntegerField(default=0)
 
     # tags: stored as JSON (string array)
     tags = models.JSONField(default=list, blank=True)
@@ -130,4 +131,3 @@ class RecipeImage(models.Model):
 
     def __str__(self):
         return f"Image for {self.recipe_post_id}"
-

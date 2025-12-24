@@ -17,6 +17,7 @@ class RecipeSerializer(serializers.ModelSerializer):
             "tags",
             "prep_time_min",
             "cook_time_min",
+            "serves",
             "nutrition",
             "visibility",
             "saved_count",

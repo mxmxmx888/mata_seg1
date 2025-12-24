@@ -388,3 +388,4 @@ FodyWeavers.xsd
 *.sln.iml
 /venv
 firebase-service-account.json
+coverage/

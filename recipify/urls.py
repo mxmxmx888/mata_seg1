@@ -20,7 +20,6 @@ from django.contrib import admin
 from django.urls import path, include
 from recipes.views import profile_view
 from recipes import views
-from recipes.views.post_mock_view import mock_post_detail
 from recipes.views.recipe_views import (
     recipe_create,
     recipe_edit,
@@ -56,7 +55,6 @@ urlpatterns = [
     path('profile/collections/<slug:slug>/', views.collection_detail, name='collection_detail'),
     path('profile/collections/<slug:slug>/edit/', views.update_collection, name='update_collection'),
     path('profile/collections/<slug:slug>/delete/', views.delete_collection, name='delete_collection'),
-    path("post/mock/", mock_post_detail, name="post_mock"),
     path('recipes/create/', recipe_create, name='recipe_create'),
     path('recipes/<uuid:post_id>/', recipe_detail, name='recipe_detail'),
     path("recipes/<uuid:post_id>/edit/", recipe_edit, name="recipe_edit"),

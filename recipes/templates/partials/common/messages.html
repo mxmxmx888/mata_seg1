@@ -11,30 +11,6 @@
   {% endfor %}
 </div>
 
-<script>
-  document.addEventListener('DOMContentLoaded', function () {
-    var toastElList = [].slice.call(document.querySelectorAll('.toast'));
-    toastElList.forEach(function (toastEl) {
-      var duration = 2000;
-      var toast = window.bootstrap && window.bootstrap.Toast
-        ? new bootstrap.Toast(toastEl, { delay: duration, autohide: true })
-        : null;
-
-      if (toast) {
-        toast.show();
-      } else {
-        toastEl.classList.add('show');
-      }
-
-      setTimeout(function () {
-        if (toast && toast.hide) {
-          toast.hide();
-        } else {
-          toastEl.classList.remove('show');
-          toastEl.classList.add('hide');
-        }
-      }, duration);
-    });
-  });
-</script>
+{% load static %}
+<script src="{% static 'js/messages_toast.js' %}" defer></script>
 {% endif %}

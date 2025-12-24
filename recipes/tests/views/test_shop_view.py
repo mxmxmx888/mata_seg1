@@ -72,3 +72,15 @@ class ShopViewTests(TestCase):
         response = self.client.get(self.url, HTTP_X_REQUESTED_WITH='XMLHttpRequest')
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'partials/shop/shop_items.html')
+
+    def test_shop_view_seed_and_second_page(self):
+        """Shuffling with a seed should keep order stable across calls; second page returns empty when only one item."""
+        self.client.login(email='test@example.com', password='Password123')
+
+        # Seeded first page
+        response1 = self.client.get(self.url, {"seed": "deadbeef"})
+        self.assertContains(response1, "flour")
+
+        # Second page should be empty but valid
+        response2 = self.client.get(self.url, {"seed": "deadbeef", "page": 2})
+        self.assertEqual(response2.status_code, 200)

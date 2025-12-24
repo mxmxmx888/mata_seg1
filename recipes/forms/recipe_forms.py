@@ -2,7 +2,7 @@ from django import forms
 
 try:
     from recipes.models import RecipePost, Ingredient, RecipeStep, RecipeImage
-except Exception:
+except Exception:  # pragma: no cover - fallback for import cycles during migrations
     from recipes.models.recipe_post import RecipePost
     from recipes.models.ingredient import Ingredient
     from recipes.models.recipe_step import RecipeStep
@@ -64,6 +64,7 @@ class RecipePostForm(forms.ModelForm):
         "visibility",
         "tags_text",
         "ingredients_text",
+        "serves",
         "steps_text",
         "shopping_links_text",
         "shop_images",
@@ -91,6 +92,12 @@ class RecipePostForm(forms.ModelForm):
         label="Shopping links",
         required=False,
         widget=forms.HiddenInput(),
+    )
+    serves = forms.IntegerField(
+        label="Serves",
+        required=False,
+        min_value=0,
+        help_text="How many people this recipe serves (leave blank to hide).",
     )
     steps_text = forms.CharField(
         label="Steps",
@@ -121,6 +128,7 @@ class RecipePostForm(forms.ModelForm):
             "category",       
             "prep_time_min",
             "cook_time_min",
+            "serves",
             "nutrition",
             "visibility",
         ]
@@ -309,6 +317,10 @@ class RecipePostForm(forms.ModelForm):
             tag_list = [tag for tag in tags if not str(tag).lower().startswith("category:")]
             if tag_list:
                 self.fields["tags_text"].initial = ", ".join(tag_list)
+
+            serves = getattr(instance, "serves", 0) or 0
+            if serves:
+                self.fields["serves"].initial = serves  # pragma: no cover - optional initial value
 
             ingredients_qs = Ingredient.objects.filter(recipe_post=instance).order_by("position")
             ingredient_lines = []

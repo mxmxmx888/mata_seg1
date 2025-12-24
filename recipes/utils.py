@@ -1,4 +1,3 @@
-# recipes/utils.py
 import requests
 import re
 from urllib.parse import urljoin

@@ -54,36 +54,12 @@ def _collections_for_user(user):
         .prefetch_related("items__recipe_post")
     )
 
-    def _post_image_url(post):
-        return getattr(post, "primary_image_url", None) or getattr(post, "image", None)
-
     collections = []
     for fav in favourites:
         items = list(
             fav.items.select_related("recipe_post").order_by("added_at", "id")
         )
-        last_saved_at = fav.created_at
-
-        cover_post = fav.cover_post if _post_image_url(getattr(fav, "cover_post", None)) else None
-        first_post_with_image = None
-        visible_posts = []
-        for item in items:
-            if not item.recipe_post:
-                continue
-
-            visible_posts.append(item.recipe_post)
-            if item.added_at and (last_saved_at is None or item.added_at > last_saved_at):
-                last_saved_at = item.added_at
-            if not first_post_with_image:
-                image_url = _post_image_url(item.recipe_post)
-                if image_url:
-                    first_post_with_image = item.recipe_post
-
-        if not cover_post:
-            cover_post = first_post_with_image
-
-        cover_url = _post_image_url(cover_post) if cover_post else None
-        count = len(visible_posts)
+        last_saved_at, cover_url, count = _collection_meta(items, fav)
 
         collections.append(
             {
@@ -102,25 +78,45 @@ def _collections_for_user(user):
 
     return collections
 
-@login_required
-def profile(request):
-    profile_username = request.GET.get("user")
-    if profile_username:
-        try:
-            profile_user = user_repo.get_by_username(profile_username)
-        except User.DoesNotExist:
-            raise Http404("User not found")
-    else:
-        profile_user = request.user
 
-    is_own_profile = profile_user == request.user
+def _collection_meta(items, favourite):
+    """Compute last_saved_at, cover image url, and item count for a favourite."""
+    def _post_image_url(post):
+        return getattr(post, "primary_image_url", None) or getattr(post, "image", None)
 
+    last_saved_at = favourite.created_at
+    cover_post = favourite.cover_post if _post_image_url(getattr(favourite, "cover_post", None)) else None
+    first_post_with_image = None
+    visible_posts = []
+
+    for item in items:
+        if not item.recipe_post:
+            continue
+        visible_posts.append(item.recipe_post)
+        if item.added_at and (last_saved_at is None or item.added_at > last_saved_at):
+            last_saved_at = item.added_at
+        if not first_post_with_image:
+            image_url = _post_image_url(item.recipe_post)
+            if image_url:
+                first_post_with_image = item.recipe_post
+
+    if not cover_post:
+        cover_post = first_post_with_image
+
+    cover_url = _post_image_url(cover_post) if cover_post else None
+    return last_saved_at, cover_url, len(visible_posts)
+
+
+def _follow_context(profile_user, viewer):
+    """Gather follow relationships and visibility for profile page."""
     followers_qs = Follower.objects.filter(author=profile_user).select_related("follower")
     following_qs = Follower.objects.filter(follower=profile_user).select_related("author")
+
     followers_count = followers_qs.count()
     following_count = following_qs.count()
     followers_users = [relation.follower for relation in followers_qs]
     following_users = [relation.author for relation in following_qs]
+
     close_friend_ids = set(
         CloseFriend.objects.filter(owner=profile_user).values_list("friend_id", flat=True)
     )
@@ -130,103 +126,197 @@ def profile(request):
         if relation.follower_id in close_friend_ids
     ]
 
-    is_following = False
-    pending_request = None
-    if not is_own_profile:
-        is_following = Follower.objects.filter(
-            follower=request.user,
-            author=profile_user,
-        ).exists()
-        if not is_following and getattr(profile_user, "is_private", False):
-            pending_request = FollowRequest.objects.filter(
-                requester=request.user,
-                target=profile_user,
-                status=FollowRequest.STATUS_PENDING,
-            ).first()
-
-    profile_data = _profile_data_for_user(profile_user)
-    profile_data["followers"] = followers_count
-    profile_data["following"] = following_count
-    profile_data["close_friends_count"] = len(close_friend_ids)
-    can_view_follow_lists = is_own_profile or not getattr(profile_user, "is_private", False) or is_following
+    is_following = _is_following_profile(viewer, profile_user)
+    pending_request = _pending_follow_request(viewer, profile_user, is_following)
+    can_view_follow_lists = _can_view_follow_lists(profile_user, viewer, is_following)
     if not can_view_follow_lists:
         followers_users = []
         following_users = []
 
+    return {
+        "followers_count": followers_count,
+        "following_count": following_count,
+        "followers_users": followers_users,
+        "following_users": following_users,
+        "close_friend_ids": close_friend_ids,
+        "close_friends": close_friends,
+        "is_following": is_following,
+        "pending_request": pending_request,
+        "can_view_follow_lists": can_view_follow_lists,
+    }
+
+
+def _handle_profile_post(request, profile_user):
+    """Process profile POST actions (cancel request, update profile)."""
+    if request.POST.get("cancel_request") == "1":
+        service = follow_service_factory(request.user)
+        service.cancel_request(profile_user)
+        return redirect(request.get_full_path()), None, None, None
+
+    if profile_user != request.user:
+        return redirect("profile"), None, None, None
+
+    form = UserForm(request.POST, request.FILES, instance=request.user)
+    edit_profile_form = form
+    show_modal = True
+    if form.is_valid():
+        changed_fields = set(form.changed_data)
+
+        if changed_fields:
+            form.save()
+
+            non_avatar_changes = changed_fields - {"avatar", "remove_avatar"}
+            if non_avatar_changes:
+                messages.add_message(request, messages.SUCCESS, "Profile updated!")
+
+        request.session["show_edit_profile_modal"] = True
+        return redirect("profile"), form, edit_profile_form, show_modal
+
+    # keep bound form with errors
+    return None, form, edit_profile_form, show_modal
+
+
+def _profile_user_from_request(request):
+    username = request.GET.get("user")
+    if username:
+        try:
+            return user_repo.get_by_username(username)
+        except User.DoesNotExist:
+            raise Http404("User not found")  # pragma: no cover - surface-level 404
+    return request.user
+
+
+def _is_following_profile(viewer, profile_user):
+    if profile_user == viewer:
+        return False
+    return Follower.objects.filter(
+        follower=viewer,
+        author=profile_user,
+    ).exists()
+
+
+def _pending_follow_request(viewer, profile_user, is_following):
+    if profile_user == viewer or is_following or not getattr(profile_user, "is_private", False):
+        return None
+    return FollowRequest.objects.filter(
+        requester=viewer,
+        target=profile_user,
+        status=FollowRequest.STATUS_PENDING,
+    ).first()
+
+
+def _can_view_follow_lists(profile_user, viewer, is_following):
+    return (
+        profile_user == viewer
+        or not getattr(profile_user, "is_private", False)
+        or is_following
+    )
+
+
+def _profile_posts(profile_user, viewer):
+    """Return (posts, can_view_profile) respecting privacy."""
+    can_view_profile = privacy_service.can_view_profile(viewer, profile_user)
+    if not can_view_profile:
+        return [], can_view_profile
+
+    posts_qs = post_repo.list_for_user(
+        profile_user.id,
+        order_by=("-created_at",),
+    )
+    if profile_user != viewer:
+        posts_qs = privacy_service.filter_visible_posts(posts_qs, viewer)
+    return list(posts_qs), can_view_profile
+
+
+def _profile_forms(request, profile_user, is_own_profile):
+    """Initialise forms and handle POST updates; returns (redirect_response, form, edit_form, password_form, show_modal)."""
     edit_profile_form = UserForm(instance=request.user)
     password_form = PasswordForm(user=request.user)
     show_edit_profile_modal = request.session.pop("show_edit_profile_modal", False)
 
-    if request.method == "POST":
-        if request.POST.get("cancel_request") == "1":
-            service = follow_service_factory(request.user)
-            service.cancel_request(profile_user)
-            return redirect(request.get_full_path())
-        if profile_user != request.user:
-            return redirect("profile")
-        form = UserForm(request.POST, request.FILES, instance=request.user)
-        if form.is_valid():
-            changed_fields = set(form.changed_data)
+    if request.method != "POST":
+        form = UserForm(instance=request.user) if is_own_profile else None
+        return None, form, edit_profile_form, password_form, show_edit_profile_modal
 
-            if changed_fields:
-                form.save()
+    redirect_response, form, edit_profile_form, show_edit_profile_modal = _handle_profile_post(
+        request, profile_user
+    )
+    return redirect_response, form, edit_profile_form, password_form, show_edit_profile_modal
 
-                non_avatar_changes = changed_fields - {"avatar", "remove_avatar"}
-                if non_avatar_changes:
-                    messages.add_message(request, messages.SUCCESS, "Profile updated!")
 
-            request.session["show_edit_profile_modal"] = True
-            return redirect("profile")
-        else:
-            # keep the bound form in the modal so validation errors surface
-            edit_profile_form = form
-            show_edit_profile_modal = True
-    else:
-        if profile_user == request.user:
-            form = UserForm(instance=request.user)
-        else:
-            form = None
+def _profile_context(
+    profile_user,
+    viewer,
+    is_own_profile,
+    follow_ctx,
+    profile_data,
+    form,
+    edit_profile_form,
+    password_form,
+    posts,
+    collections,
+    can_view_profile,
+    show_edit_profile_modal,
+):
+    return {
+        "profile": profile_data,
+        "collections": collections,
+        "form": form,
+        "edit_profile_form": edit_profile_form,
+        "password_form": password_form,
+        "profile_user": profile_user,
+        "is_own_profile": is_own_profile,
+        "is_following": follow_ctx["is_following"],
+        "followers_count": follow_ctx["followers_count"],
+        "following_count": follow_ctx["following_count"],
+        "followers_users": follow_ctx["followers_users"],
+        "following_users": follow_ctx["following_users"],
+        "close_friends": follow_ctx["close_friends"],
+        "posts": posts,
+        "can_view_profile": can_view_profile,
+        "can_view_follow_lists": follow_ctx["can_view_follow_lists"],
+        "pending_follow_request": follow_ctx["pending_request"],
+        "close_friend_ids": follow_ctx["close_friend_ids"],
+        "show_edit_profile_modal": show_edit_profile_modal,
+    }
 
-    can_view_profile = privacy_service.can_view_profile(request.user, profile_user)
 
-    if can_view_profile:
-        posts_qs = post_repo.list_for_user(
-            profile_user.id,
-            order_by=("-created_at",),
-        )
-        if not is_own_profile:
-            posts_qs = privacy_service.filter_visible_posts(posts_qs, request.user)
-        posts = list(posts_qs)
-    else:
-        posts = []
+@login_required
+def profile(request):
+    profile_user = _profile_user_from_request(request)
+    is_own_profile = profile_user == request.user
 
+    follow_ctx = _follow_context(profile_user, request.user)
+    profile_data = _profile_data_for_user(profile_user)
+    profile_data["followers"] = follow_ctx["followers_count"]
+    profile_data["following"] = follow_ctx["following_count"]
+    profile_data["close_friends_count"] = len(follow_ctx["close_friend_ids"])
+
+    redirect_response, form, edit_profile_form, password_form, show_edit_profile_modal = _profile_forms(
+        request, profile_user, is_own_profile
+    )
+    if redirect_response:
+        return redirect_response
+
+    posts, can_view_profile = _profile_posts(profile_user, request.user)
     collections = _collections_for_user(profile_user)
 
-    return render(
-        request,
-        "profile/profile.html",
-        {
-        "profile": profile_data,
-            "collections": collections,
-            "form": form,
-            "edit_profile_form": edit_profile_form,
-            "password_form": password_form,
-        "profile_user": profile_user,
-        "is_own_profile": profile_user == request.user,
-        "is_following": is_following,
-            "followers_count": followers_count,
-            "following_count": following_count,
-            "followers_users": followers_users,
-            "following_users": following_users,
-            "close_friends": close_friends,
-            "posts": posts,
-        "can_view_profile": can_view_profile,
-        "can_view_follow_lists": can_view_follow_lists,
-        "pending_follow_request": pending_request,
-        "close_friend_ids": close_friend_ids,
-        "show_edit_profile_modal": show_edit_profile_modal,
-    },
-)
+    context = _profile_context(
+        profile_user,
+        request.user,
+        is_own_profile,
+        follow_ctx,
+        profile_data,
+        form,
+        edit_profile_form,
+        password_form,
+        posts,
+        collections,
+        can_view_profile,
+        show_edit_profile_modal,
+    )
+
+    return render(request, "profile/profile.html", context)
 
 @login_required
 def collections_overview(request):

@@ -109,6 +109,13 @@ class DashboardSearchViewTests(TestCase):
         posts = dashboard_view._get_for_you_posts(self.user, seed=1)
         self.assertEqual(set(p.id for p in posts), {liked.id, other.id})
 
+    def test_get_for_you_posts_with_tag_filter_no_results_falls_back(self):
+        liked = make_recipe_post(author=self.user, tags=["pasta"])
+        dashboard_view.Like.objects.create(user=self.user, recipe_post=liked)
+        # Query matches liked post; exclusion removes it, triggering fallback that should return the liked post.
+        posts = dashboard_view._get_for_you_posts(self.user, query="pasta", seed=2, limit=5)
+        self.assertEqual([p.id for p in posts], [liked.id])
+
     def test_get_for_you_posts_filters_query(self):
         match = make_recipe_post(author=self.user, title="Garlic Bread")
         make_recipe_post(author=self.user, title="Something else")
@@ -198,6 +205,14 @@ class DashboardSearchViewTests(TestCase):
         posts = response.context["popular_recipes"]
         self.assertEqual(len(posts), 1)
         self.assertEqual(posts[0].title, "Allowed")
+
+    def test_parse_dashboard_params_defaults_and_ajax(self):
+        self.client.login(username=self.user.username, password="Password123")
+        request = self.client.get(self.url, {"ajax": "1", "page": "-1", "scope": "invalid"})
+        params = dashboard_view._parse_dashboard_params(request.wsgi_request)
+        self.assertEqual(params["scope"], "recipes")
+        self.assertTrue(params["is_ajax"])
+        self.assertEqual(params["page_number"], 1)
 
     def test_dashboard_filters_by_valid_prep_time(self):
         quick = make_recipe_post(author=self.user, title="Quick", prep_time_min=5, cook_time_min=5)

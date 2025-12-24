@@ -129,6 +129,7 @@ class Command(BaseCommand):
                 image = choice(recipe_image_file_pool)  # your old string “cover” field
                 prep = randint(0, 60)
                 cook = randint(0, 90)
+                serves = 0 if randint(1, 4) == 1 else choice([2, 4, 6, 8])
                 tags = list(set(sample(tags_pool, randint(0, min(4, len(tags_pool))))))
                 nutrition = f"kcal={randint(250, 800)}; protein={randint(5, 40)}g"
                 category = choice(categories)
@@ -140,6 +141,7 @@ class Command(BaseCommand):
                     image=image,
                     prep_time_min=prep,
                     cook_time_min=cook,
+                    serves=serves,
                     tags=tags,
                     nutrition=nutrition,
                     category=category,

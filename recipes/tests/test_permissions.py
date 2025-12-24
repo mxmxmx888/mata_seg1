@@ -1,5 +1,3 @@
-# recipes/tests/test_permissions.py
-
 from types import SimpleNamespace
 
 from django.test import SimpleTestCase

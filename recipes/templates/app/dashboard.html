@@ -188,13 +188,6 @@
 {% include "partials/dashboard/discover_infinite_scroll.html" %}
 {% include "partials/dashboard/for_you_infinite_scroll.html" %}
 {% include "partials/dashboard/shopping_infinite_scroll.html" %}
-<script>
-  document.addEventListener('DOMContentLoaded', function () {
-    if ('scrollRestoration' in history) {
-      history.scrollRestoration = 'manual';
-    }
-    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
-  });
-</script>
+<script src="{% static 'js/dashboard_scroll.js' %}" defer></script>
 
 {% endblock %}

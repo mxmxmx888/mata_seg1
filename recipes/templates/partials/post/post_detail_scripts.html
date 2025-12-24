@@ -1,3 +1,5 @@
+{% load static %}
+
 <div id="lightbox" class="lightbox d-none">
   <div class="lightbox-backdrop"></div>
 
@@ -10,6 +12,6 @@
   </div>
 </div>
 
-{% include "partials/post/post_lightbox_script.html" %}
-{% include "partials/post/post_save_modal_script.html" %}
-{% include "partials/post/post_layout_scripts.html" %}
+<script src="{% static 'js/post_lightbox.js' %}"></script>
+<script src="{% static 'js/save_modal.js' %}"></script>
+<script src="{% static 'js/post_layout.js' %}" defer></script>

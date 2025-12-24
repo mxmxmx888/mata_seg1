@@ -1,4 +1,3 @@
-# recipes/views/sign_up_view.py
 from django.contrib.auth import login as auth_login
 from django.shortcuts import redirect, render
 from django.urls import reverse_lazy

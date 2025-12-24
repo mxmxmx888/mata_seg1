@@ -1,4 +1,12 @@
-<div class="modal fade" id="saveModal" tabindex="-1" aria-labelledby="saveModalLabel" aria-hidden="true">
+<div
+  class="modal fade"
+  id="saveModal"
+  tabindex="-1"
+  aria-labelledby="saveModalLabel"
+  aria-hidden="true"
+  data-save-endpoint="{% url 'toggle_favourite' recipe.id %}"
+  data-csrf="{{ csrf_token }}"
+>
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content save-modal">
       <div class="modal-header border-0 align-items-center">

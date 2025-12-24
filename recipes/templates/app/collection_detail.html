@@ -31,26 +31,31 @@
         </button>
         <ul class="dropdown-menu collection-header-dropdown" aria-labelledby="collection-menu-dropdown">
           <li>
-            <button
-              class="dropdown-item"
-              type="button"
-              id="edit-collection-button"
-              data-collection-action="edit"
-              data-collection-title="{{ collection.title }}"
-            >
-              Edit collection
-            </button>
-          </li>
-          <li>
-            <button
-              class="dropdown-item text-danger"
-              type="button"
-              id="delete-collection-button"
-              data-collection-action="delete"
-            >
-              Delete
-            </button>
-          </li>
+          <button
+            class="dropdown-item"
+            type="button"
+            id="edit-collection-button"
+            data-collection-action="edit"
+            data-collection-title="{{ collection.title }}"
+            data-collection-id="{{ collection.slug }}"
+            data-edit-endpoint="{% url 'update_collection' slug=collection.slug %}"
+          >
+            Edit collection
+          </button>
+        </li>
+        <li>
+          <button
+            class="dropdown-item text-danger"
+            type="button"
+            id="delete-collection-button"
+            data-collection-action="delete"
+            data-collection-id="{{ collection.slug }}"
+            data-delete-endpoint="{% url 'delete_collection' slug=collection.slug %}"
+            data-redirect-url="{% url 'collections' %}"
+          >
+            Delete
+          </button>
+        </li>
         </ul>
       </div>
     {% endif %}
@@ -82,6 +87,7 @@
       </div>
       <div class="modal-body">
         <form id="edit-collection-form">
+          {% csrf_token %}
           <div class="mb-3 edit-collection-field">
             <label for="edit-collection-title" class="form-label text-muted small">Title</label>
             <input
@@ -102,145 +108,13 @@
   </div>
 </div>
 
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-  const editBtn = document.getElementById('edit-collection-button');
-  const deleteBtn = document.getElementById('delete-collection-button');
-  const editModalEl = document.getElementById('editCollectionModal');
-  const editForm = document.getElementById('edit-collection-form');
-  const titleInput = document.getElementById('edit-collection-title');
-  const closeBtn = editModalEl ? editModalEl.querySelector('.save-modal-close') : null;
-  const hasBootstrapModal = !!(window.bootstrap && bootstrap.Modal);
-  const csrfToken = "{{ csrf_token }}";
-  const collectionId = "{{ collection.slug }}";
-  const editEndpoint = "{% url 'update_collection' slug=collection.slug %}";
-  const deleteEndpoint = "{% url 'delete_collection' slug=collection.slug %}";
-
-  let editModalInstance = null;
-  let fallbackBackdrop = null;
-
-  function showEditModal() {
-    if (!editModalEl) return;
-    if (editBtn && titleInput) {
-      const currentTitle = editBtn.getAttribute('data-collection-title') || '';
-      titleInput.value = currentTitle;
-    }
-    if (hasBootstrapModal) {
-      editModalInstance = bootstrap.Modal.getOrCreateInstance(editModalEl);
-      editModalInstance.show();
-    } else {
-      if (!fallbackBackdrop) {
-        fallbackBackdrop = document.createElement('div');
-        fallbackBackdrop.className = 'modal-backdrop custom-modal-backdrop fade show';
-        document.body.appendChild(fallbackBackdrop);
-      }
-      editModalEl.classList.add('show');
-      editModalEl.style.display = 'block';
-      editModalEl.removeAttribute('aria-hidden');
-      document.body.classList.add('modal-open');
-    }
-  }
-
-  function hideEditModal() {
-    if (!editModalEl) return;
-    if (hasBootstrapModal && editModalInstance) {
-      editModalInstance.hide();
-    } else {
-      if (fallbackBackdrop) {
-        fallbackBackdrop.remove();
-        fallbackBackdrop = null;
-      }
-      editModalEl.classList.remove('show');
-      editModalEl.style.display = 'none';
-      editModalEl.setAttribute('aria-hidden', 'true');
-      document.body.classList.remove('modal-open');
-    }
-  }
-
-  if (editBtn && editForm && titleInput) {
-    editBtn.addEventListener('click', function (e) {
-      e.preventDefault();
-      showEditModal();
-    });
-
-    editForm.addEventListener('submit', function (e) {
-      e.preventDefault();
-      const newTitle = (titleInput.value || '').trim();
-      if (!newTitle) {
-        titleInput.focus();
-        return;
-      }
-
-      const body = new URLSearchParams({ title: newTitle }).toString();
-
-      fetch(editEndpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
-          'X-CSRFToken': csrfToken,
-          'X-Requested-With': 'XMLHttpRequest',
-        },
-        body,
-      })
-        .then((resp) => resp.ok ? resp.json().catch(() => null) : null)
-        .then((data) => {
-          const updatedTitle = data && data.title ? data.title : newTitle;
-          const titleEls = document.querySelectorAll('.collection-title');
-          titleEls.forEach((el) => {
-            el.textContent = updatedTitle;
-          });
-          if (editBtn) {
-            editBtn.setAttribute('data-collection-title', updatedTitle);
-          }
-          hideEditModal();
-        })
-        .catch(() => {
-          hideEditModal();
-        });
-    });
-  }
-
-  if (closeBtn) {
-    closeBtn.addEventListener('click', function (e) {
-      e.preventDefault();
-      hideEditModal();
-    });
-  }
-
-  if (editModalEl) {
-    editModalEl.addEventListener('click', function (e) {
-      if (e.target === editModalEl) {
-        hideEditModal();
-      }
-    });
-  }
-
-  if (deleteBtn) {
-    deleteBtn.addEventListener('click', function (e) {
-      e.preventDefault();
-      const confirmed = window.confirm('Delete this collection? This cannot be undone.');
-      if (!confirmed) return;
-
-      const body = new URLSearchParams({ id: collectionId }).toString();
-
-      fetch(deleteEndpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
-          'X-CSRFToken': csrfToken,
-          'X-Requested-With': 'XMLHttpRequest',
-        },
-        body,
-      })
-        .then((resp) => resp.ok ? resp.json().catch(() => null) : null)
-        .then(() => {
-          window.location.href = "{% url 'collections' %}";
-        })
-        .catch(() => {
-          window.location.href = "{% url 'collections' %}";
-        });
-    });
-  }
-});
-</script>
+{% load static %}
+<script
+  src="{% static 'js/collection_detail.js' %}"
+  defer
+  data-collection-id="{{ collection.slug }}"
+  data-edit-endpoint="{% url 'update_collection' slug=collection.slug %}"
+  data-delete-endpoint="{% url 'delete_collection' slug=collection.slug %}"
+  data-redirect-url="{% url 'collections' %}"
+></script>
 {% endblock %}

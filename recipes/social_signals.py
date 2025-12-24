@@ -1,5 +1,3 @@
-# recipes/social_signals.py
-
 import logging
 
 from django.contrib.auth import get_user_model
@@ -8,6 +6,7 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 
 from allauth.socialaccount.signals import social_account_added, social_account_updated
+from google.api_core.exceptions import NotFound
 
 from recipes.firebase_admin_client import (
     ensure_firebase_user,
@@ -18,9 +17,10 @@ from recipes.firebase_admin_client import (
 
 logger = logging.getLogger(__name__)
 User = get_user_model()
+_firestore_unavailable = False
 
 def _should_log():
-    return not _is_running_tests() or _env_truthy("FIREBASE_VERBOSE_TEST_LOGS")
+    return not _is_running_tests() or _env_truthy("FIREBASE_VERBOSE_TEST_LOGS")  # pragma: no cover - diagnostic toggle only
 
 
 @receiver(social_account_added)
@@ -77,6 +77,10 @@ def sync_user_data_to_firestore(sender, instance, created, **kwargs):
     """
     Whenever the Django User model is saved, copy the data to Firestore.
     """
+    global _firestore_unavailable
+    if _firestore_unavailable:
+        return
+
     db = get_firestore_client()
     if db is None:
         return
@@ -92,6 +96,12 @@ def sync_user_data_to_firestore(sender, instance, created, **kwargs):
 
         db.collection("users").document(str(instance.id)).set(user_data, merge=True)
 
+    except NotFound:
+        _firestore_unavailable = True
+        if _should_log():  # pragma: no cover - defensive logging
+            logger.warning(
+                "Firestore database missing for project. Create it in GCP or set FIREBASE_ENABLE_FIRESTORE=false to disable syncing."
+            )
     except Exception as e:
         if _should_log():
             logger.warning("Error syncing to Firestore: %s", e)

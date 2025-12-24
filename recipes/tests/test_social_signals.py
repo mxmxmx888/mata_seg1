@@ -1,5 +1,6 @@
 from unittest.mock import patch, MagicMock
 from django.test import TestCase
+from google.api_core.exceptions import NotFound
 from recipes.models import User
 from recipes import social_signals
 
@@ -9,6 +10,7 @@ class SocialSignalsTestCase(TestCase):
     def setUp(self):
         self.user = User.objects.get(username="@johndoe")
         self.user.first_name = "John"
+        social_signals._firestore_unavailable = False
 
     def test_social_signal_syncs_user(self):
         sociallogin = type("SL", (), {"user": self.user})
@@ -125,3 +127,19 @@ class SocialSignalsTestCase(TestCase):
                 with patch.object(social_signals.logger, "warning") as log_mock:
                     social_signals.sync_user_data_to_firestore(User, self.user, created=False)
                     log_mock.assert_not_called()
+
+    def test_sync_user_data_to_firestore_disables_after_missing_db(self):
+        with patch.object(social_signals, "get_firestore_client") as get_client:
+            mock_db = MagicMock()
+            mock_db.collection.return_value.document.return_value.set.side_effect = NotFound("no db")
+            get_client.return_value = mock_db
+            with patch.object(social_signals, "_should_log", return_value=True):
+                with patch.object(social_signals.logger, "warning") as log_mock:
+                    social_signals.sync_user_data_to_firestore(User, self.user, created=False)
+                    self.assertTrue(social_signals._firestore_unavailable)
+                    log_mock.assert_called_once()
+
+        # Once disabled, it should short-circuit without hitting Firestore
+        mock_db.collection.assert_called_once()  # first call
+        social_signals.sync_user_data_to_firestore(User, self.user, created=False)
+        mock_db.collection.assert_called_once()

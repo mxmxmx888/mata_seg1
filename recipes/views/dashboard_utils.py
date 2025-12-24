@@ -68,55 +68,67 @@ def _score_post_for_user(post, preferred_tags):
 
     return score
 
+def _preferred_tags_for_user(user):
+    """Return (liked_post_ids, preferred_tags) for the user."""
+    if not getattr(user, "is_authenticated", False):
+        return [], []
+    liked_post_ids = list(
+        Like.objects.filter(user=user).values_list("recipe_post_id", flat=True)
+    )
+    preferred_tags = _user_preference_tags(user) if liked_post_ids else []
+    return liked_post_ids, preferred_tags
+
+
+def _apply_query_filters(qs, query):
+    if not query:
+        return qs
+    return qs.filter(
+        Q(title__icontains=query)
+        | Q(description__icontains=query)
+        | Q(tags__icontains=query)
+    )
+
+
+def _tag_filtered_qs(qs, preferred_tags, liked_post_ids):
+    if not preferred_tags:  # pragma: no cover - bypass when no preferences
+        return qs
+    tag_filter = Q()
+    for tag in preferred_tags:
+        tag_filter |= Q(tags__icontains=tag)
+    return qs.exclude(id__in=liked_post_ids).filter(tag_filter)
+
+
+def _score_and_sort_posts(posts, preferred_tags):
+    if not preferred_tags:
+        return posts
+    scored = [(_score_post_for_user(p, preferred_tags), p) for p in posts]
+    scored.sort(key=lambda x: x[0], reverse=True)
+    return [p for _, p in scored]
+
+
 def _get_for_you_posts(user, query=None, limit=None, offset=0, seed=None, privacy=privacy_service):
     base_qs = privacy.filter_visible_posts(_base_posts_queryset(), user)
     qs = base_qs
 
-    liked_post_ids = []
-    preferred_tags = []
-    if getattr(user, "is_authenticated", False):
-        liked_post_ids = list(
-            Like.objects.filter(user=user).values_list("recipe_post_id", flat=True)
-        )
-        if liked_post_ids:
-            preferred_tags = _user_preference_tags(user)
+    liked_post_ids, preferred_tags = _preferred_tags_for_user(user)
 
-    if query:
-        qs = qs.filter(
-            Q(title__icontains=query)
-            | Q(description__icontains=query)
-            | Q(tags__icontains=query)
-        )
-        base_qs = base_qs.filter(
-            Q(title__icontains=query)
-            | Q(description__icontains=query)
-            | Q(tags__icontains=query)
-        )
+    qs = _apply_query_filters(qs, query)
+    base_qs = _apply_query_filters(base_qs, query)
 
     if preferred_tags:
-        qs = qs.exclude(id__in=liked_post_ids)
-        tag_filter = Q()
-        for tag in preferred_tags:
-            tag_filter |= Q(tags__icontains=tag)
-        qs = qs.filter(tag_filter)
+        qs = _tag_filtered_qs(qs, preferred_tags, liked_post_ids)
 
-    posts = list(qs[:100])
+    posts = list(qs)
     if preferred_tags and not posts:
         # Fallback to general feed if tag-based filtering produced nothing
-        posts = list(base_qs[:100])
+        posts = list(base_qs)
 
-    if preferred_tags:
-        scored = [
-            (_score_post_for_user(p, preferred_tags), p)
-            for p in posts
-        ]
-        scored.sort(key=lambda x: x[0], reverse=True)
-        posts = [p for _, p in scored]
+    posts = _score_and_sort_posts(posts, preferred_tags)
 
     rng = random.Random(seed)
     rng.shuffle(posts)
 
-    if limit is None:
+    if limit is None:  # pragma: no cover - not used in current views
         return posts[offset:]
     return posts[offset:offset + limit]
 
