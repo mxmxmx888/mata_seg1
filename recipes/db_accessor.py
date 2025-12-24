@@ -17,25 +17,29 @@ class DB_Accessor:
         as_dict: bool = False,
     ) -> QuerySet | List[Dict[str, Any]]:
         qs: QuerySet = self.model.objects.filter(**(filters or {}))
-        if order_by:
-            qs = qs.order_by(*order_by)
-
-        # SQLite cannot UNION subqueries that include LIMIT/OFFSET.
-        # To keep union-able querysets, slice to objects first, then refetch
-        # without ORDER BY / LIMIT while preserving the cached order.
-        needs_slice = offset or limit is not None
-        if needs_slice:
-            start = max(0, int(offset))
-            end = None if limit is None else start + max(0, int(limit))
-            objects = list(qs[start:end])
-            model_cls = getattr(self, "model", None) or self.model
-            if not objects:
-                qs = model_cls.objects.none()
-            else:
-                ids = [obj.pk for obj in objects]
-                qs = model_cls.objects.filter(pk__in=ids).order_by()
-                qs._result_cache = objects  # preserve original slice ordering
+        qs = self._apply_ordering(qs, order_by)
+        qs = self._apply_slice(qs, offset=offset, limit=limit)
         return list(qs.values()) if as_dict else qs
+
+    def _apply_ordering(self, qs: QuerySet, order_by: Sequence[str]) -> QuerySet:
+        return qs.order_by(*order_by) if order_by else qs
+
+    def _apply_slice(
+        self, qs: QuerySet, *, offset: int = 0, limit: Optional[int] = None
+    ) -> QuerySet:
+
+        if not (offset or limit is not None):
+            return qs
+        start = max(0, int(offset))
+        end = None if limit is None else start + max(0, int(limit))
+        objects = list(qs[start:end])
+        model_cls = getattr(self, "model", None) or self.model
+        if not objects:
+            return model_cls.objects.none()
+        ids = [obj.pk for obj in objects]
+        qs = model_cls.objects.filter(pk__in=ids).order_by()
+        qs._result_cache = objects  # preserve original slice ordering
+        return qs
 
     def get(self, **lookup: Any) -> Model:
         return self.model.objects.get(**lookup)
