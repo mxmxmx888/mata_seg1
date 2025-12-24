@@ -2,7 +2,6 @@ import uuid
 from django.db import models
 from django.utils import timezone
 from .user import User
-from django.db import models
 from django.conf import settings
 
 """
@@ -34,6 +33,7 @@ RecipeImage:
 """
 
 class RecipePost(models.Model):
+    """Primary recipe post model with visibility, images, and metadata."""
     VISIBILITY_PUBLIC = "public"
     VISIBILITY_FOLLOWERS = "followers"
     VISIBILITY_CLOSE_FRIENDS = "close_friends"
@@ -97,6 +97,7 @@ class RecipePost(models.Model):
 
     @property
     def primary_image_url(self):
+        """Return the best available image URL for the post."""
         images_qs = getattr(self, "images", None)
         if images_qs is not None:
             first = images_qs.first()
@@ -111,12 +112,14 @@ class RecipePost(models.Model):
     
     @property
     def likes_count(self):
+        """Count likes for this recipe."""
         return self.likes.count()
 
 
 
 
 class RecipeImage(models.Model):
+    """Image associated with a RecipePost."""
     recipe_post = models.ForeignKey(
         RecipePost,
         related_name="images",

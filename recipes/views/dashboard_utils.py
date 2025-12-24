@@ -6,7 +6,7 @@ from recipes.services import PrivacyService
 
 try:
     from recipes.models import RecipePost, Like, Follower, Ingredient
-except Exception:  # pragma: no cover
+except Exception:
     from recipes.models.recipe_post import RecipePost
     from recipes.models.like import Like
     from recipes.models.followers import Follower
@@ -15,6 +15,7 @@ except Exception:  # pragma: no cover
 privacy_service = PrivacyService()
 
 def _normalise_tags(tags):
+    """Return a lowercased list of tag strings from comma- or list-based input."""
     if not tags:
         return []
     if isinstance(tags, str):
@@ -25,6 +26,7 @@ def _normalise_tags(tags):
     return []
 
 def _user_preference_tags(user):
+    """Collect unique tags from posts the user has liked."""
     tags = []
 
     like_qs = Like.objects.filter(user=user).select_related("recipe_post")
@@ -41,6 +43,7 @@ def _user_preference_tags(user):
     return result
 
 def _base_posts_queryset():
+    """Base queryset for published recipe posts with related author and images."""
     return (
         RecipePost.objects.filter(published_at__isnull=False)
         .select_related("author")
@@ -49,6 +52,7 @@ def _base_posts_queryset():
     )
 
 def _score_post_for_user(post, preferred_tags):
+    """Score a post based on preferred tags, saves, and recency."""
     score = 0
 
     post_tags = set(_normalise_tags(getattr(post, "tags", [])))
@@ -80,6 +84,7 @@ def _preferred_tags_for_user(user):
 
 
 def _apply_query_filters(qs, query):
+    """Filter posts by title/description/tags containing the query."""
     if not query:
         return qs
     return qs.filter(
@@ -90,7 +95,8 @@ def _apply_query_filters(qs, query):
 
 
 def _tag_filtered_qs(qs, preferred_tags, liked_post_ids):
-    if not preferred_tags:  # pragma: no cover - bypass when no preferences
+    """Filter posts by preferred tags excluding already liked posts."""
+    if not preferred_tags:
         return qs
     tag_filter = Q()
     for tag in preferred_tags:
@@ -99,6 +105,7 @@ def _tag_filtered_qs(qs, preferred_tags, liked_post_ids):
 
 
 def _score_and_sort_posts(posts, preferred_tags):
+    """Apply scoring and sort posts when preferences exist."""
     if not preferred_tags:
         return posts
     scored = [(_score_post_for_user(p, preferred_tags), p) for p in posts]
@@ -107,6 +114,7 @@ def _score_and_sort_posts(posts, preferred_tags):
 
 
 def _get_for_you_posts(user, query=None, limit=None, offset=0, seed=None, privacy=privacy_service):
+    """Return personalised 'for you' posts shuffled by a seed."""
     base_qs = privacy.filter_visible_posts(_base_posts_queryset(), user)
     qs = base_qs
 
@@ -128,11 +136,12 @@ def _get_for_you_posts(user, query=None, limit=None, offset=0, seed=None, privac
     rng = random.Random(seed)
     rng.shuffle(posts)
 
-    if limit is None:  # pragma: no cover - not used in current views
+    if limit is None:
         return posts[offset:]
     return posts[offset:offset + limit]
 
 def _get_following_posts(user, query=None, limit=12, offset=0):
+    """Return a list of posts from authors the user follows."""
     followed_ids = list(
         Follower.objects.filter(follower=user).values_list("author_id", flat=True)
     )
@@ -152,6 +161,7 @@ def _get_following_posts(user, query=None, limit=12, offset=0):
     return list(qs[offset:offset + limit])
 
 def _search_users(query, limit=18):
+    """Search users by username substring."""
     User = get_user_model()
     if not query:
         return []

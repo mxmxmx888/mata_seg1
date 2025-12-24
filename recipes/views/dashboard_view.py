@@ -305,6 +305,7 @@ def _build_dashboard(request, params, privacy, for_you_seed):
 
 @require_GET
 def dashboard(request):
+    """Render the main dashboard with feed, search, and filters."""
     if not request.user.is_authenticated:  # pragma: no cover - guarded by URL config
         return render(request, "auth/discover_logged_out.html")
 

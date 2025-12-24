@@ -3,6 +3,7 @@ from django.db import models
 
 
 class Recipe(models.Model):
+    """Legacy recipe model storing freeform ingredients/method."""
     owner = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -29,6 +30,7 @@ class Recipe(models.Model):
         return self.title
 
     def average_rating(self):
+        """Compute average rating from sum/count."""
         if self.rating_count == 0:
             return 0
         return self.rating_sum / self.rating_count

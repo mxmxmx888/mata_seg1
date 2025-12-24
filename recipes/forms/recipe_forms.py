@@ -2,7 +2,7 @@ from django import forms
 
 try:
     from recipes.models import RecipePost, Ingredient, RecipeStep, RecipeImage
-except Exception:  # pragma: no cover - fallback for import cycles during migrations
+except Exception:
     from recipes.models.recipe_post import RecipePost
     from recipes.models.ingredient import Ingredient
     from recipes.models.recipe_step import RecipeStep
@@ -10,9 +10,11 @@ except Exception:  # pragma: no cover - fallback for import cycles during migrat
 
 
 class MultiFileInput(forms.ClearableFileInput):
+    """File input widget that allows multiple file selection."""
     allow_multiple_selected = True
 
     def value_from_datadict(self, data, files, name):
+        """Return a list of uploaded files for this field name."""
         return files.getlist(name)
 
     def __init__(self, attrs=None):
@@ -22,9 +24,11 @@ class MultiFileInput(forms.ClearableFileInput):
 
 
 class MultiFileField(forms.FileField):
+    """Form field for multiple file uploads using MultiFileInput."""
     widget = MultiFileInput
 
     def clean(self, data, initial=None):
+        """Validate and clean multiple uploaded files."""
         files = data or []
         if not isinstance(files, (list, tuple)):
             files = [files] if files else []
@@ -56,6 +60,7 @@ MAX_IMAGE_UPLOAD_BYTES = MAX_IMAGE_UPLOAD_MB * 1024 * 1024
 
 
 class RecipePostForm(forms.ModelForm):
+    """Form for creating and editing recipe posts with ingredients/steps/images."""
 
     field_order = [
         "title",
@@ -125,11 +130,12 @@ class RecipePostForm(forms.ModelForm):
 
 
     class Meta:
+        """Model/field configuration for RecipePostForm."""
         model = RecipePost
         fields = [
             "title",
             "description",
-            "category",       
+            "category",
             "prep_time_min",
             "cook_time_min",
             "serves",
@@ -138,6 +144,7 @@ class RecipePostForm(forms.ModelForm):
         ]
 
     def clean_images(self):
+        """Validate recipe images and ensure at least one is provided."""
         files = self.files.getlist("images")
         if len(files) > 10:
             raise forms.ValidationError("You can upload up to 10 images.")
@@ -154,15 +161,19 @@ class RecipePostForm(forms.ModelForm):
             raise forms.ValidationError("Please upload at least one image for your recipe.")
 
         return files
-    
+
+        """Validate shopping images for count/size."""
     def clean_shop_images(self):
+        """Validate shopping images for count/size."""
         files = self.files.getlist("shop_images")
         if len(files) > 10:
             raise forms.ValidationError("You can upload up to 10 shopping images.")
         self._validate_file_sizes(files, "shopping image")
         return files
+        """Validate shopping image counts against shopping links."""
 
     def clean(self):
+        """Validate shopping image counts against shopping links."""
         cleaned_data = super().clean()
 
         shopping_links = self._parse_shopping_links()
@@ -191,6 +202,7 @@ class RecipePostForm(forms.ModelForm):
 
 
     def parse_tags(self):
+        """Parse tags_text into a list and include category marker."""
         raw = (self.cleaned_data.get("tags_text") or "").strip()
         tags = []
         if raw:
@@ -244,6 +256,7 @@ class RecipePostForm(forms.ModelForm):
         return items
 
     def create_ingredients(self, recipe):
+        """Create Ingredient rows from ingredient/shopping link inputs."""
         existing_shop_images = list(
             Ingredient.objects.filter(
                 recipe_post=recipe,
@@ -343,8 +356,8 @@ class RecipePostForm(forms.ModelForm):
             steps_qs = RecipeStep.objects.filter(recipe_post=instance).order_by("position")
             self.fields["steps_text"].initial = "\n".join(step.description for step in steps_qs)
 
-
     def create_steps(self, recipe):
+        """Create RecipeStep rows from parsed steps_text."""
         RecipeStep.objects.filter(recipe_post=recipe).delete()
         lines = self._split_lines("steps_text")
         for idx, line in enumerate(lines, start=1):
@@ -355,6 +368,7 @@ class RecipePostForm(forms.ModelForm):
             )
 
     def create_images(self, recipe):
+        """Create RecipeImage rows and set legacy cover image when needed."""
         files = self.files.getlist("images")
         if not files:
             # No new uploads: keep whatever images are already associated

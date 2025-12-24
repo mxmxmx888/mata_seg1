@@ -20,7 +20,8 @@ User = get_user_model()
 _firestore_unavailable = False
 
 def _should_log():
-    return not _is_running_tests() or _env_truthy("FIREBASE_VERBOSE_TEST_LOGS")  # pragma: no cover - diagnostic toggle only
+    """Decide whether to emit Firebase diagnostic logs."""
+    return not _is_running_tests() or _env_truthy("FIREBASE_VERBOSE_TEST_LOGS")
 
 
 @receiver(social_account_added)
@@ -29,6 +30,8 @@ def sync_google_user_to_firebase_on_social(sender, request, sociallogin, **kwarg
     """
     allauth social signal handler signature MUST be:
     (sender, request, sociallogin, **kwargs)
+
+    Sync a user's social account details to Firebase on add/update.
     """
     try:
         user = getattr(sociallogin, "user", None)
@@ -54,6 +57,7 @@ def sync_google_user_to_firebase_on_social(sender, request, sociallogin, **kwarg
 
 @receiver(user_logged_in)
 def sync_user_to_firebase_on_login(sender, request, user, **kwargs):
+    """Ensure a Firebase user exists on standard login."""
     try:
         email = getattr(user, "email", None)
         if not email:
@@ -76,6 +80,8 @@ def sync_user_to_firebase_on_login(sender, request, user, **kwargs):
 def sync_user_data_to_firestore(sender, instance, created, **kwargs):
     """
     Whenever the Django User model is saved, copy the data to Firestore.
+
+    Skips when Firestore is unavailable; logs in verbose mode only when requested.
     """
     global _firestore_unavailable
     if _firestore_unavailable:

@@ -13,6 +13,7 @@ from recipes.views.view_utils import is_ajax_request
 
 @login_required
 def collections_overview(request):
+    """Render the current user's collections list page."""
     context = {
         "profile": profile_data_for_user(request.user),
         "collections": collections_for_user(request.user),
@@ -22,6 +23,7 @@ def collections_overview(request):
 
 @login_required
 def collection_detail(request, slug):
+    """Render a single collection with its saved posts."""
     try:
         favourite = Favourite.objects.get(id=slug, user=request.user)
     except Favourite.DoesNotExist:
@@ -60,6 +62,7 @@ def collection_detail(request, slug):
 @login_required
 @require_POST
 def delete_collection(request, slug):
+    """Delete a collection; return JSON for HX or redirect otherwise."""
     favourite = get_object_or_404(Favourite, id=slug, user=request.user)
     favourite.delete()
 
@@ -72,6 +75,7 @@ def delete_collection(request, slug):
 @login_required
 @require_POST
 def update_collection(request, slug):
+    """Update a collection title; supports HX JSON and regular redirect paths."""
     favourite = get_object_or_404(Favourite, id=slug, user=request.user)
     data = request.POST.copy()
     name_val = (data.get("name") or data.get("title") or "").strip()

@@ -3,6 +3,7 @@ from django.utils import timezone
 from recipes.models import Follower, Notification, FollowRequest
 
 class FollowService:
+    """Domain service to manage follow relationships and requests."""
     def __init__(self, actor):
         self.actor = actor
 
@@ -31,6 +32,7 @@ class FollowService:
 
     @transaction.atomic
     def follow_user(self, target):
+        """Follow a target user or create a follow request if target is private."""
         if not self._can_act(target):
             return {"status": "noop"}
 
@@ -66,6 +68,7 @@ class FollowService:
 
     @transaction.atomic
     def cancel_request(self, target):
+        """Cancel a pending follow request for the actor."""
         if not self._can_act(target):
             return False
         FollowRequest.objects.filter(
@@ -78,6 +81,7 @@ class FollowService:
 
     @transaction.atomic
     def unfollow(self, target):
+        """Unfollow a target user if currently following."""
         if not self._can_act(target):
             return False
         Follower.objects.filter(follower=self.actor, author=target).delete()
@@ -85,6 +89,7 @@ class FollowService:
 
     @transaction.atomic
     def toggle_follow(self, target):
+        """Toggle follow/request state for a target user."""
         if not self._can_act(target):
             return {"status": "noop"}
 
@@ -104,6 +109,7 @@ class FollowService:
 
     @transaction.atomic
     def accept_request(self, request_id):
+        """Accept a follow request by id when the actor is the target."""
         try:
             fr = FollowRequest.objects.select_for_update().get(
                 id=request_id,
@@ -133,6 +139,7 @@ class FollowService:
 
     @transaction.atomic
     def reject_request(self, request_id):
+        """Reject a follow request by id when the actor is the target."""
         try:
             fr = FollowRequest.objects.select_for_update().get(
                 id=request_id,

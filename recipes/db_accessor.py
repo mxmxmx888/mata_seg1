@@ -3,6 +3,7 @@ from django.db.models import Model, QuerySet
 
 
 class DB_Accessor:
+    """Generic data accessor to wrap basic queryset operations."""
 
     def __init__(self, model: Type[Model]) -> None:
         self.model = model
@@ -16,6 +17,7 @@ class DB_Accessor:
         offset: int = 0,
         as_dict: bool = False,
     ) -> QuerySet | List[Dict[str, Any]]:
+        """Return a filtered/sliced queryset (or list of dicts)."""
         qs: QuerySet = self.model.objects.filter(**(filters or {}))
         qs = self._apply_ordering(qs, order_by)
         qs = self._apply_slice(qs, offset=offset, limit=limit)
@@ -42,14 +44,18 @@ class DB_Accessor:
         return qs
 
     def get(self, **lookup: Any) -> Model:
+        """Fetch a single object matching the lookup."""
         return self.model.objects.get(**lookup)
 
     def create(self, **data: Any) -> Model:
+        """Create and return a new object."""
         return self.model.objects.create(**data)
 
     def update(self, lookup: Mapping[str, Any], **data: Any) -> int:
+        """Update objects matching lookup; return count updated."""
         return self.model.objects.filter(**lookup).update(**data)
 
     def delete(self, **lookup: Any) -> int:
+        """Delete objects matching lookup; return count deleted."""
         count, _ = self.model.objects.filter(**lookup).delete()
         return count

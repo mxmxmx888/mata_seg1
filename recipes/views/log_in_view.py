@@ -7,19 +7,22 @@ from recipes.forms.log_in_form import LogInForm
 from recipes.views.decorators import LoginProhibitedMixin
 
 class LogInView(LoginProhibitedMixin, View):
-    # If an authenticated user tries to access the login page (e.g. via browser
-    # back), send them through the logout flow instead of erroring.
+    """Display and process the login form for unauthenticated users."""
+    
     redirect_when_logged_in_url = 'log_out'
 
     def dispatch(self, request, *args, **kwargs):
+        """Capture ?next param before handling request."""
         self.next = request.POST.get("next") or request.GET.get("next") or None
         return super().dispatch(request, *args, **kwargs)
 
     def get(self, request):
+        """Render the login form."""
         form = LogInForm()
         return render(request, "auth/log_in.html", {"form": form, "next": self.next})
 
     def post(self, request):
+        """Process login form submission."""
         form = LogInForm(request.POST)
 
         if form.is_valid():

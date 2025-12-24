@@ -27,6 +27,7 @@ The `__str__` method is for readable debugging/admin output.
 """
 
 class FollowRequest(models.Model):
+    """Represents a pending follow request between two users."""
     STATUS_PENDING = "pending"
     STATUS_ACCEPTED = "accepted"
     STATUS_REJECTED = "rejected"

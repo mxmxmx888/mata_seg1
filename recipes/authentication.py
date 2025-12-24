@@ -9,7 +9,10 @@ from .firebase_admin_client import get_app
 User = get_user_model()
 
 class FirebaseAuthentication(authentication.BaseAuthentication):
+    """DRF authentication backend validating Firebase ID tokens."""
+
     def authenticate(self, request):
+        """Validate Authorization header token and return (user, auth)."""
         auth_header = request.META.get('HTTP_AUTHORIZATION')
         if not auth_header:
             return None

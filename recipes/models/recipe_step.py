@@ -16,6 +16,7 @@ This table stores the step-by-step instructions for a recipe.
 """
 
 class RecipeStep(models.Model):
+    """Ordered instruction step for a recipe post."""
     recipe_post = models.ForeignKey(
         RecipePost,
         on_delete=models.CASCADE,

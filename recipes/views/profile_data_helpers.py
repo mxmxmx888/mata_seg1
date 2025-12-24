@@ -3,6 +3,7 @@ from recipes.models.favourite_item import FavouriteItem
 
 
 def profile_data_for_user(user):
+    """Return profile metadata dict for display components."""
     fallback_handle = "@anmzn"
     handle = user.username or fallback_handle
     display_name = user.get_full_name() or user.username or "cook"

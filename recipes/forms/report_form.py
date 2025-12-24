@@ -2,7 +2,9 @@ from django import forms
 from recipes.models import Report
 
 class ReportForm(forms.ModelForm):
+    """Form to submit a report about a recipe or comment."""
     class Meta:
+        """Model/field config for reports."""
         model = Report
         fields = ['reason', 'description']
         widgets = {

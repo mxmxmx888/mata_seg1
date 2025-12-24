@@ -30,6 +30,7 @@ Notes:
 """
 
 class Notification(models.Model):
+    """Notification entry for user actions (follow, like, comment, etc.)."""
     TYPES = [
         ('like', 'Like'),
         ('comment', 'Comment'),

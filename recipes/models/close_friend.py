@@ -20,6 +20,7 @@ The `created_at` timestamp records when the relationship was created.
 """
 
 class CloseFriend(models.Model):
+    """Link a user to a close-friend relationship."""
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     owner = models.ForeignKey(
         settings.AUTH_USER_MODEL,

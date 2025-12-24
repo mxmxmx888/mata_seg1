@@ -43,6 +43,7 @@ def _uuid7_or_4() -> uuid.UUID:
     return getattr(uuid, "uuid7", uuid.uuid4)()
 
 class Follower(models.Model):
+    """Follower relationship where follower subscribes to author."""
     id = models.UUIDField(primary_key=True, default=_uuid7_or_4, editable=False)
 
     follower = models.ForeignKey(

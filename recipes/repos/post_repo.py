@@ -6,10 +6,12 @@ from recipes.models import Follows
 
 
 class PostRepo(DB_Accessor):
+    """Repository for RecipePost queries (feed, user-specific, following)."""
     def __init__(self) -> None:
         super().__init__(RecipePost)
 
     def list_ids(self) -> List[str]:
+        """Return all recipe post IDs."""
         return list(self.model.objects.values_list("id", flat=True))
 
     def list_for_feed(
@@ -21,6 +23,7 @@ class PostRepo(DB_Accessor):
         limit: Optional[int] = None,
         offset: int = 0,
     ) -> QuerySet:
+        """Return posts for feed with optional filters and paging."""
         filters: Dict[str, Any] = {}
 
         if category and category.lower() != "all":
@@ -46,6 +49,7 @@ class PostRepo(DB_Accessor):
         limit: Optional[int] = None,
         offset: int = 0,
     ) -> QuerySet:
+        """Return posts authored by a given user."""
         return self.list_for_feed(
             author_id=user_id,
             order_by=order_by,
@@ -54,6 +58,7 @@ class PostRepo(DB_Accessor):
         )
     
     def list_for_following(self, user_id, limit=50):
+        """Return recent posts from authors the user follows."""
         followee_ids = (
             Follows.objects
             .filter(author_id=user_id)

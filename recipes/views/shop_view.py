@@ -56,6 +56,7 @@ def _paginated_shuffled_items(user, seed, page_number):
 
 @login_required
 def shop(request):
+    """Display shoppable ingredients with deterministic shuffle/pagination."""
     seed = request.GET.get("seed") or secrets.token_hex(8)
     page_number = request.GET.get("page") or 1
     page_obj = _paginated_shuffled_items(request.user, seed, page_number)

@@ -14,10 +14,12 @@ from recipes.models.followers import Follower
 
 
 def is_hx(request):
+    """Return True when the request was made via HTMX/XMLHttpRequest."""
     return request.headers.get("HX-Request") or request.headers.get("x-requested-with") == "XMLHttpRequest"
 
 
 def set_primary_image(recipe):
+    """Persist the first RecipeImage URL onto the legacy image field for display."""
     primary_image = recipe.images.first()
     if primary_image and primary_image.image:
         recipe.image = primary_image.image.url
@@ -45,6 +47,7 @@ def _gallery_images(images_qs):
 
 
 def collection_thumb(cover_post, fallback_post):
+    """Choose a thumbnail URL for a collection using cover or fallback posts."""
     thumb_url = getattr(cover_post, "primary_image_url", None) or getattr(cover_post, "image", None)
     if not thumb_url and fallback_post:
         thumb_url = getattr(fallback_post, "primary_image_url", None) or getattr(fallback_post, "image", None)
@@ -52,14 +55,17 @@ def collection_thumb(cover_post, fallback_post):
 
 
 def primary_image_url(recipe):
+    """Return the best primary image URL for a recipe."""
     return _primary_image_url(recipe)
 
 
 def gallery_images(images_qs):
+    """Return gallery image URLs beyond the primary image."""
     return _gallery_images(images_qs)
 
 
 def collections_modal_state(user, recipe):
+    """Build modal-friendly collection metadata for a user and target recipe."""
     collections = []
     favourites_qs = Favourite.objects.filter(user=user).prefetch_related("items__recipe_post", "cover_post")
     for fav in favourites_qs:
@@ -241,6 +247,7 @@ def toggle_save(favourite, recipe):
 
 
 def hx_response_or_redirect(request, target_url):
+    """Return 204 for HX requests or redirect for normal requests."""
     if is_hx(request):
         return HttpResponse(status=204)
     return redirect(target_url)

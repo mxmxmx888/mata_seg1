@@ -40,6 +40,7 @@ def _uuid7_or_4() -> uuid.UUID:
     return getattr(uuid, "uuid7", uuid.uuid4)()
 
 class Follows(models.Model):
+    """Legacy follows relationship between two users."""
     id = models.UUIDField(primary_key=True, default=_uuid7_or_4, editable=False)
 
     author = models.ForeignKey(

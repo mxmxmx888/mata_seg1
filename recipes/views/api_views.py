@@ -26,11 +26,13 @@ def profile_api(request):
 
 @login_required
 def mark_notifications_read(request):
+    """Mark all unread notifications for the current user as read."""
     Notification.objects.filter(recipient=request.user, is_read=False).update(is_read=True)
     return JsonResponse({'status': 'success'})
 
 
 class RecipeListApi(generics.ListCreateAPIView):
+    """List recipes for the user and allow creation."""
     serializer_class = RecipeSerializer
     permission_classes = [permissions.IsAuthenticated]
 
@@ -55,10 +57,12 @@ class RecipeListApi(generics.ListCreateAPIView):
         return queryset
 
     def perform_create(self, serializer):
+        """Assign current user as author on create."""
         serializer.save(author=self.request.user)
 
 
 class RecipeDetailApi(generics.RetrieveUpdateDestroyAPIView):
+    """Retrieve, update, or delete a recipe, respecting ownership permissions."""
     queryset = RecipePost.objects.all()
     serializer_class = RecipeSerializer
     permission_classes = [IsOwnerOrReadOnly]

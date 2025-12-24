@@ -24,6 +24,7 @@ def login_prohibited(view_function):
     """
     
     def modified_view_function(request):
+        """Redirect authenticated users; allow unauthenticated through."""
         if request.user.is_authenticated:
             return redirect(settings.REDIRECT_URL_WHEN_LOGGED_IN)
         else:

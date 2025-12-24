@@ -5,10 +5,11 @@ from recipes.models import User
 from recipes.firebase_auth_services import create_firebase_user
 
 class AvatarFileInput(forms.FileInput):
+    """Custom widget for avatar uploads."""
     template_name = "widgets/avatar_file_input.html"
 
 class UserForm(forms.ModelForm):
-    # Form to update user profile info
+    """Form to update user profile information."""
     avatar = forms.ImageField(required=False, widget=AvatarFileInput())
     remove_avatar = forms.BooleanField(required=False, widget=forms.HiddenInput())
     bio = forms.CharField(
@@ -19,6 +20,7 @@ class UserForm(forms.ModelForm):
     )
 
     class Meta:
+        """Model/field config for user profile form."""
         model = User
         fields = ['first_name', 'last_name', 'username', 'bio', 'email', 'is_private', 'avatar']
         labels = {
@@ -26,6 +28,7 @@ class UserForm(forms.ModelForm):
         }
 
     def save(self, commit=True):
+        """Save user profile updates, handling avatar removal/replacement."""
         existing_avatar = self.instance.avatar if self.instance and self.instance.pk else None
         user = super().save(commit=False)
         remove_avatar = self.cleaned_data.get('remove_avatar')
@@ -53,7 +56,7 @@ class UserForm(forms.ModelForm):
         return user
 
 class NewPasswordMixin(forms.Form):
-    #form mixin providing password and password confirmation fields.
+    """Mixin providing password and password confirmation fields."""
     new_password = forms.CharField(
         label='Password',
         widget=forms.PasswordInput(),
@@ -70,6 +73,7 @@ class NewPasswordMixin(forms.Form):
     password_confirmation = forms.CharField(label='Password confirmation', widget=forms.PasswordInput())
 
     def clean(self):
+        """Validate new password and confirmation match."""
         super().clean()
         new_password = self.cleaned_data.get('new_password')
         password_confirmation = self.cleaned_data.get('password_confirmation')
@@ -80,6 +84,7 @@ class NewPasswordMixin(forms.Form):
             )
 
 class PasswordForm(NewPasswordMixin):
+    """Form to validate current password and set a new one for a user."""
     password = forms.CharField(label='Current password', widget=forms.PasswordInput())
 
     def __init__(self, user=None, **kwargs):  
@@ -87,8 +92,7 @@ class PasswordForm(NewPasswordMixin):
         self.user = user
 
     def clean(self):
-
-        #validating the current and new password fields
+        """Validate current password and new password confirmation."""
         super().clean()
         password = self.cleaned_data.get('password')
         if self.user is not None:
@@ -99,7 +103,7 @@ class PasswordForm(NewPasswordMixin):
             self.add_error('password', "Password is invalid")
 
     def save(self):
-        #Update the user's password with the new validated password
+        """Update the user's password with the validated new password."""
         new_password = self.cleaned_data['new_password']
         if self.user is not None:
             self.user.set_password(new_password)
@@ -107,12 +111,14 @@ class PasswordForm(NewPasswordMixin):
         return self.user
 
 class SignUpForm(NewPasswordMixin, forms.ModelForm):
+    """Form to register a new user with Django and Firebase."""
     class Meta:
+        """Model/field config for signup form."""
         model = User
         fields = ['first_name', 'last_name', 'username', 'email']
 
     def save(self):
-        #Create and return a new User 
+        """Create and return a new User in Django and Firebase."""
         super().save(commit=False)
 
         username = self.cleaned_data.get('username')

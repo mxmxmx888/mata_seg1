@@ -15,6 +15,7 @@ User = get_user_model()
 @login_required
 @require_POST
 def remove_follower(request, username):
+    """Remove a follower from the current user; supports AJAX and redirect responses."""
     target = get_object_or_404(User, username=username)
     if target == request.user:
         if is_ajax_request(request):
@@ -30,6 +31,7 @@ def remove_follower(request, username):
 @login_required
 @require_POST
 def remove_following(request, username):
+    """Unfollow a user; supports AJAX and redirect responses."""
     target = get_object_or_404(User, username=username)
     if target == request.user:
         if is_ajax_request(request):
@@ -44,6 +46,7 @@ def remove_following(request, username):
 @login_required
 @require_POST
 def add_close_friend(request, username):
+    """Add a followed user to the current user's close friends."""
     friend = get_object_or_404(User, username=username)
     if friend == request.user:
         if is_ajax_request(request):
@@ -62,6 +65,7 @@ def add_close_friend(request, username):
 @login_required
 @require_POST
 def remove_close_friend(request, username):
+    """Remove a user from the current user's close friends."""
     friend = get_object_or_404(User, username=username)
     if friend == request.user:
         if is_ajax_request(request):

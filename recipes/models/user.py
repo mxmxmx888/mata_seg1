@@ -31,17 +31,21 @@ class User(AbstractUser):
         ordering = ['last_name', 'first_name']
 
     def full_name(self):
+        """Return full name string."""
         return f'{self.first_name} {self.last_name}'
 
     def gravatar(self, size=120):
+        """Return gravatar URL for the user's email."""
         gravatar_object = Gravatar(self.email)
         gravatar_url = gravatar_object.get_image(size=size, default='mp')
         return gravatar_url
 
     def mini_gravatar(self):
+        """Return smaller gravatar URL."""
         return self.avatar_or_gravatar(size=60)
 
     def avatar_or_gravatar(self, size=120):
+        """Return uploaded avatar URL or a default gravatar fallback."""
         if self.avatar:
             try:
                 return self.avatar.url
@@ -51,10 +55,12 @@ class User(AbstractUser):
 
     @property
     def avatar_url(self):
+        """Preferred avatar URL for profile display."""
         return self.avatar_or_gravatar(size=200)
 
     @property
     def mini_avatar_url(self):
+        """Preferred small avatar URL for compact UI."""
         return self.avatar_or_gravatar(size=60)
 
     def save(self, *args, **kwargs):

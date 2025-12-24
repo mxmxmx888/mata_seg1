@@ -199,6 +199,7 @@ def _profile_context(
 
 @login_required
 def profile(request):
+    """Render the profile page for the requested user (or self)."""
     profile_user = _profile_user_from_request(request)
     is_own_profile = profile_user == request.user
 

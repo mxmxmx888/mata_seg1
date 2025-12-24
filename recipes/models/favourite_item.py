@@ -19,6 +19,7 @@ Key points:
 The `__str__` method is just for readable debugging/admin display.
 """
 class FavouriteItem(models.Model):
+    """Join table linking a Favourite to a RecipePost with timestamps."""
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
     favourite = models.ForeignKey(

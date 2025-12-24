@@ -3,12 +3,14 @@ import re
 
 
 def _parse_have_ingredients(request):
+    """Parse have_ingredients GET param into raw string and cleaned list."""
     raw = (request.GET.get("have_ingredients") or "").strip()
     tokens = re.split(r"[,\n]+", raw) if raw else []
     return raw, [t.strip().lower() for t in tokens if t.strip()]
 
 
 def _is_ajax(request):
+    """Detect HTMX/explicit ajax GET flag."""
     return (
         request.headers.get("x-requested-with") == "XMLHttpRequest"
         or request.GET.get("ajax") == "1"
@@ -16,6 +18,7 @@ def _is_ajax(request):
 
 
 def _has_search(mode, q, ingredient_q, have_list, min_prep, max_prep, category):
+    """Return True when any search filter is active."""
     return mode == "search" or bool(
         q
         or ingredient_q
@@ -27,19 +30,22 @@ def _has_search(mode, q, ingredient_q, have_list, min_prep, max_prep, category):
 
 
 def _normalise_scope(scope):
+    """Normalise scope to recipes/users/shopping."""
     scope = (scope or "recipes").strip().lower()
     return scope if scope in ("recipes", "users", "shopping") else "recipes"
 
 
 def _safe_int(value, default=1):
+    """Parse a positive int with default fallback."""
     try:
         num = int(value)
-    except (TypeError, ValueError):  # pragma: no cover - fallback only
+    except (TypeError, ValueError):
         return default
     return num if num > 0 else default
 
 
 def _safe_offset(raw_offset):
+    """Parse a non-negative offset value."""
     try:
         offset = int(raw_offset or 0)
     except (TypeError, ValueError):
@@ -48,6 +54,7 @@ def _safe_offset(raw_offset):
 
 
 def _ensure_for_you_seed(request, seed):
+    """Ensure a persistent per-session seed exists."""
     if seed is None:
         seed = random.random()
         request.session["for_you_seed"] = seed

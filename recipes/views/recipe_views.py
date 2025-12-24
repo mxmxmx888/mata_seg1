@@ -13,14 +13,14 @@ from recipes.services import FollowService
 try:
     from recipes.models import RecipePost, Like, Comment
     from recipes.models.favourite_item import FavouriteItem
-except Exception:  # pragma: no cover - fallback imports for alternate module paths
+except Exception:
     from recipes.models.recipe_post import RecipePost
     from recipes.models.like import Like
     from recipes.models.comment import Comment
     from recipes.models.favourite_item import FavouriteItem
 try:
     from recipes.models.followers import Follower
-except Exception:  # pragma: no cover - fallback imports for alternate module paths
+except Exception:
     from recipes.models import Follower
 
 from recipes.views.recipe_view_helpers import (
@@ -49,6 +49,7 @@ follow_service_factory = FollowService
 
 @login_required
 def recipe_create(request):
+    """Create a new recipe post from a submitted RecipePostForm."""
     form = RecipePostForm(request.POST or None, request.FILES or None)
     if request.method == "POST" and form.is_valid():
         cleaned = form.cleaned_data
@@ -83,6 +84,7 @@ def recipe_create(request):
 
 @login_required
 def recipe_edit(request, post_id):
+    """Edit an existing recipe post owned by the current user."""
     recipe = get_object_or_404(RecipePost, id=post_id, author=request.user)
     form = RecipePostForm(request.POST or None, request.FILES or None, instance=recipe)
     if request.method == "POST" and form.is_valid():
@@ -118,6 +120,7 @@ def recipe_edit(request, post_id):
 
 @login_required
 def recipe_detail(request, post_id):
+    """Display a single recipe post if the viewer is allowed."""
     recipe = get_object_or_404(RecipePost, id=post_id)
 
     if not privacy_service.can_view_post(request.user, recipe):
@@ -131,6 +134,7 @@ def recipe_detail(request, post_id):
 
 @login_required
 def saved_recipes(request):
+    """List all unique recipes saved by the current user."""
     favourite_items = (
         FavouriteItem.objects.filter(favourite__user=request.user)
         .select_related("recipe_post")
@@ -150,6 +154,7 @@ def saved_recipes(request):
 
 @login_required
 def delete_my_recipe(request, post_id):
+    """Delete a recipe post owned by the current user."""
     recipe = get_object_or_404(RecipePost, id=post_id, author=request.user)
 
     if request.method == "POST":
@@ -161,6 +166,7 @@ def delete_my_recipe(request, post_id):
 
 @login_required
 def toggle_favourite(request, post_id):
+    """Toggle save/unsave for a recipe and return HX JSON or redirect."""
     recipe = get_object_or_404(RecipePost, id=post_id)
     favourite, created_collection = resolve_collection(request, recipe)
     is_saved_now, new_count = toggle_save(favourite, recipe)
@@ -184,6 +190,7 @@ def toggle_favourite(request, post_id):
 
 @login_required
 def toggle_like(request, post_id):
+    """Toggle like/unlike for a recipe and return HX or redirect."""
     recipe = get_object_or_404(RecipePost, id=post_id)
     existing = Like.objects.filter(user=request.user, recipe_post=recipe)
 
@@ -199,6 +206,7 @@ def toggle_like(request, post_id):
 
 @login_required
 def toggle_follow(request, username):
+    """Follow/unfollow another user, ignoring self-follow attempts."""
     target_user = get_object_or_404(User, username=username)
 
     if target_user == request.user:
@@ -216,6 +224,7 @@ def toggle_follow(request, username):
 
 @login_required
 def add_comment(request, post_id):
+    """Create a new comment on a recipe for the current user."""
     recipe = get_object_or_404(RecipePost, id=post_id)
     if request.method == "POST":
         form = CommentForm(request.POST)
@@ -232,6 +241,7 @@ def add_comment(request, post_id):
 
 @login_required
 def delete_comment(request, comment_id):
+    """Delete the current user's comment by id."""
     comment = get_object_or_404(Comment, id=comment_id)
     if comment.user != request.user:
         messages.error(request, "You are not allowed to delete this comment.")

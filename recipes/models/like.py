@@ -25,6 +25,7 @@ Notes:
 """
 
 class Like(models.Model):
+    """User like on a recipe post."""
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,

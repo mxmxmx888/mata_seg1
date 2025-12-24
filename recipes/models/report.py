@@ -27,6 +27,7 @@ Meta:
 """
 
 class Report(models.Model):
+    """User-submitted report against a recipe or comment."""
     REPORT_REASONS = [
         ('spam', 'Spam'),
         ('inappropriate', 'Inappropriate Content'),

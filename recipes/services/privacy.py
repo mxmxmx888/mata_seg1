@@ -4,14 +4,17 @@ from recipes.models.close_friend import CloseFriend
 from recipes.models.recipe_post import RecipePost
 
 class PrivacyService:
+    """Privacy helper to evaluate who can view profiles and posts."""
     def __init__(self, follower_model=Follower, close_friend_model=CloseFriend):
         self.follower_model = follower_model
         self.close_friend_model = close_friend_model
 
     def is_private(self, user):
+        """Return True if the user has a private profile flag set."""
         return bool(getattr(user, "is_private", False))
 
     def is_follower(self, viewer, author):
+        """Return True if viewer follows author (or is the author)."""
         if not viewer or not getattr(viewer, "is_authenticated", False):
             return False
         if viewer == author:
@@ -21,6 +24,7 @@ class PrivacyService:
         ).exists()
 
     def is_close_friend(self, viewer, author):
+        """Return True if viewer is in author's close friends list."""
         if not viewer or not getattr(viewer, "is_authenticated", False):
             return False
         if viewer == author:
@@ -30,11 +34,13 @@ class PrivacyService:
         ).exists()
 
     def can_view_profile(self, viewer, author):
+        """Check if viewer can see author's profile."""
         if not self.is_private(author):
             return True
         return self.is_follower(viewer, author)
 
     def can_view_post(self, viewer, post):
+        """Check if viewer can see a given post based on visibility rules."""
         if viewer == post.author:
             return True
 
@@ -52,6 +58,7 @@ class PrivacyService:
         return False
 
     def filter_visible_posts(self, queryset, viewer):
+        """Filter a queryset down to posts visible to the viewer."""
         if viewer and getattr(viewer, "is_authenticated", False):
             allowed = (
                 Q(visibility=RecipePost.VISIBILITY_PUBLIC)

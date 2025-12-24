@@ -34,6 +34,7 @@ The `__str__` output is meant to be human-friendly in admin/debug logs.
 
 
 class Ingredient(models.Model):
+    """Ingredient for a recipe, including optional shop metadata."""
     # Composite key part 1: recipe_post_id
     recipe_post = models.ForeignKey(
         RecipePost,
@@ -81,7 +82,7 @@ class Ingredient(models.Model):
         ]
 
     def save(self, *args, **kwargs):
-        # normalize name: case-insensitive
+        """Normalise name to lowercase before saving."""
         if self.name:
             self.name = self.name.strip().lower()
         super().save(*args, **kwargs)

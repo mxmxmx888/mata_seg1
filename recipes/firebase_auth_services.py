@@ -18,6 +18,7 @@ def create_firebase_user(uid: str, email: str, password: str):
 
 
 def sign_in_with_email_and_password(email: str, password: str):
+    """Sign in against Firebase REST API; return response JSON or None."""
     # Avoid real network calls during most test runs unless the HTTP client is mocked.
     if _is_running_tests():
         try:

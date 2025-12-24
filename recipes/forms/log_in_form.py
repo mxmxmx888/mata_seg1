@@ -6,10 +6,12 @@ from recipes.firebase_admin_client import _is_running_tests
 
 
 class LogInForm(forms.Form):
+    """Authenticate a user by username/password against Firebase/Django backends."""
     username = forms.CharField(label="Username")
     password = forms.CharField(label="Password", widget=forms.PasswordInput())
 
     def get_user(self):
+        """Return the authenticated user or None after validating credentials."""
         user = None
         if self.is_valid():
             username = self.cleaned_data.get('username')

@@ -6,6 +6,7 @@ from recipes.models import Notification, Follower
 from recipes.services import ProfileDisplayService
 
 def edit_profile_form(request: HttpRequest) -> Dict[str, object]:
+  """Inject profile edit and password forms plus avatar URLs into templates."""
   user = getattr(request, "user", None)
   if not user or not user.is_authenticated:
     return {}
@@ -18,6 +19,7 @@ def edit_profile_form(request: HttpRequest) -> Dict[str, object]:
   }
 
 def notifications(request):
+    """Provide notifications list/count and following IDs to templates."""
     if request.user.is_authenticated:
         notifs_qs = Notification.objects.filter(recipient=request.user).exclude(
             notification_type="follow_request",

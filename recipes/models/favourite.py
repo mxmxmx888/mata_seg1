@@ -26,6 +26,7 @@ The `__str__` method just gives a readable representation for debugging/admin.
 """
 
 class Favourite(models.Model):
+    """A collection of saved recipe posts for a user."""
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
     user = models.ForeignKey(

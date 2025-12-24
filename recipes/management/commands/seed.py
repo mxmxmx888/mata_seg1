@@ -26,6 +26,7 @@ from recipes.models.favourite_item import FavouriteItem
 from recipes.models.ingredient import Ingredient
 
 class Command(SeedHelpers, BaseCommand):
+    """Management command to seed the database with sample users/posts/data."""
     USER_COUNT = 200
     DEFAULT_PASSWORD = 'Password123'
     help = 'Seeds the database with sample data'
@@ -35,6 +36,7 @@ class Command(SeedHelpers, BaseCommand):
         self.faker = Faker('en_GB')
 
     def handle(self, *args, **options):
+        """Run the full seeding sequence."""
         self.create_users()
         self.seed_followers_and_follows(follow_k=5)
         self.seed_recipe_posts(per_user=2)
@@ -46,14 +48,17 @@ class Command(SeedHelpers, BaseCommand):
         self.stdout.write(self.style.SUCCESS("Seeding complete"))
 
     def create_users(self):
+        """Generate fixture and random users."""
         self.generate_user_fixtures()
         self.generate_random_users()
 
     def generate_user_fixtures(self):
+        """Create users from predefined fixture data."""
         for data in user_fixtures:
             self.try_create_user(data)
 
     def generate_random_users(self):
+        """Create random users until USER_COUNT is reached."""
         user_count = User.objects.count()
         while  user_count < self.USER_COUNT:
             print(f"Seeding user {user_count}/{self.USER_COUNT}", end='\r')
@@ -62,6 +67,7 @@ class Command(SeedHelpers, BaseCommand):
         print("User seeding complete.      ")
 
     def generate_user(self):
+        """Create a single random user."""
         first_name = self.faker.first_name()
         last_name = self.faker.last_name()
         email = create_email(first_name, last_name)
@@ -69,12 +75,14 @@ class Command(SeedHelpers, BaseCommand):
         self.try_create_user({'username': username, 'email': email, 'first_name': first_name, 'last_name': last_name})
        
     def try_create_user(self, data):
+        """Try to create a user and ignore duplicates/errors."""
         try:
             self.create_user(data)
         except:
             pass
 
     def seed_followers_and_follows(self, follow_k: int = 5) -> None:
+        """Create follower/followee edges for sample users."""
         ids = list(User.objects.values_list("id", flat=True))
         n = len(ids)
         if n < 2:
@@ -97,6 +105,7 @@ class Command(SeedHelpers, BaseCommand):
             Follows.objects.bulk_create(follows_rows, ignore_conflicts=True, batch_size=1000)
 
     def seed_recipe_posts(self, *, per_user: int = 3) -> None:
+        """Generate recipe posts and images for all users."""
         user_ids = list(User.objects.values_list("id", flat=True))
         if not user_ids:
             return
@@ -117,6 +126,7 @@ class Command(SeedHelpers, BaseCommand):
         )
 
     def seed_recipe_steps(self, *, min_steps: int = 4, max_steps: int = 7) -> None:
+        """Attach random steps to each recipe post."""
         post_ids = list(RecipePost.objects.values_list("id", flat=True))
         if not post_ids:
             return
@@ -141,6 +151,7 @@ class Command(SeedHelpers, BaseCommand):
         self.stdout.write(f"recipe steps created (attempted): {len(rows)}")
 
     def seed_likes(self, max_likes_per_post: int = 20) -> None:
+        """Create random likes for posts up to a max per post."""
         users = list(User.objects.values_list("id", flat=True))
         posts = list(RecipePost.objects.values_list("id", flat=True))
 
@@ -167,6 +178,7 @@ class Command(SeedHelpers, BaseCommand):
         self.stdout.write(f"likes created: {len(rows)}")
 
     def seed_comments(self, max_comments_per_post: int = 5) -> None:
+        """Generate random comments for each post."""
         users = list(User.objects.values_list("id", flat=True))
         posts = list(RecipePost.objects.values_list("id", flat=True))
 
@@ -192,6 +204,7 @@ class Command(SeedHelpers, BaseCommand):
         self.stdout.write(f"Comments created: {len(rows)}")
 
     def seed_ingredients(self) -> None:
+        """Attach example ingredients to each recipe post."""
         post_ids = list(RecipePost.objects.values_list("id", flat=True))
         if not post_ids:
             return
@@ -212,6 +225,7 @@ class Command(SeedHelpers, BaseCommand):
         self.stdout.write(f"ingredients created (attempted): {len(rows)}")
 
     def seed_favourites(self, *, per_user: int = 2) -> None:
+        """Create favourites and saved items for users."""
         user_ids = list(User.objects.values_list("id", flat=True))
         if not user_ids:
             return
@@ -252,6 +266,7 @@ class Command(SeedHelpers, BaseCommand):
             )
 
     def create_user(self, data):
+        """Helper to create a user with default password."""
         User.objects.create_user(
             username=data['username'],
             email=data['email'],

@@ -19,6 +19,7 @@ The `__str__` method is just for readable debugging/admin display.
 """
 
 class Comment(models.Model):
+    """User-authored comment on a recipe post."""
     # PK: uuid 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 

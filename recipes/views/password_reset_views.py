@@ -9,6 +9,7 @@ from recipes.firebase_auth_services import generate_password_reset_link
 
 
 class PasswordResetRequestView(LoginProhibitedMixin, FormView):
+    """Handle password reset link requests for unauthenticated users."""
     template_name = 'auth/password_reset_request.html'
     form_class = PasswordResetRequestForm
     success_url = reverse_lazy('password_reset_done')
@@ -18,6 +19,7 @@ class PasswordResetRequestView(LoginProhibitedMixin, FormView):
     reset_link_generator = staticmethod(generate_password_reset_link)
 
     def form_valid(self, form):
+        """Send reset email if user exists, then redirect with neutral response."""
         email = form.cleaned_data['email']
         user = User.objects.filter(email=email).first()
 
@@ -38,17 +40,20 @@ class PasswordResetRequestView(LoginProhibitedMixin, FormView):
 
 
 class PasswordResetDoneView(LoginProhibitedMixin, TemplateView):
+    """Display confirmation after password reset email is sent."""
     template_name = 'auth/password_reset_done.html'
     redirect_when_logged_in_url = settings.REDIRECT_URL_WHEN_LOGGED_IN
 
 
 class UsernameResetRequestView(LoginProhibitedMixin, FormView):
+    """Handle username recovery requests for unauthenticated users."""
     template_name = 'auth/username_reset_request.html'
     form_class = UsernameResetRequestForm
     success_url = reverse_lazy('username_reset_done')
     redirect_when_logged_in_url = settings.REDIRECT_URL_WHEN_LOGGED_IN
 
     def form_valid(self, form):
+        """Send username reminder if user exists, then redirect."""
         email = form.cleaned_data['email']
         user = User.objects.filter(email=email).first()
 
@@ -65,5 +70,6 @@ class UsernameResetRequestView(LoginProhibitedMixin, FormView):
 
 
 class UsernameResetDoneView(LoginProhibitedMixin, TemplateView):
+    """Display confirmation after username recovery email is sent."""
     template_name = 'auth/username_reset_done.html'
     redirect_when_logged_in_url = settings.REDIRECT_URL_WHEN_LOGGED_IN

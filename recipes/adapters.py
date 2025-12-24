@@ -31,6 +31,8 @@ def _unique_username(base, user_model, exclude_user_id=None):
 
 
 class CustomAccountAdapter(DefaultAccountAdapter):
+    """Customise account behaviour for username generation and redirects."""
+
     def clean_username(self, username, shallow=False):
         """
         Allow usernames without '@'. Only allow letters, digits, underscore, dot.
@@ -64,6 +66,7 @@ class CustomAccountAdapter(DefaultAccountAdapter):
         return _unique_username(base, UserModel, exclude_user_id=user.pk or None)
 
     def get_login_redirect_url(self, request):
+        """Send users to ?next when provided, otherwise to the dashboard."""
         return super().get_login_redirect_url(request)
 
 
@@ -73,6 +76,7 @@ class CustomSocialAccountAdapter(DefaultSocialAccountAdapter):
     """
 
     def populate_user(self, request, sociallogin, data):
+        """Populate user fields when authenticating via a third-party provider."""
         user = super().populate_user(request, sociallogin, data)
 
         UserModel = type(user)

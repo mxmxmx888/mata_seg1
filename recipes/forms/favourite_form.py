@@ -3,6 +3,7 @@ from recipes.models.favourite import Favourite
 
 
 class FavouriteForm(forms.ModelForm):
+    """Form for creating/updating a Favourite collection name."""
     name = forms.CharField(
         required=False,
         error_messages={"required": "Title is required."},
@@ -16,10 +17,12 @@ class FavouriteForm(forms.ModelForm):
     )
 
     class Meta:
+        """Model and field config for favourite collections."""
         model = Favourite
         fields = ["name"]
 
     def clean_name(self):
+        """Normalise and validate the collection title."""
         name = (self.cleaned_data.get("name") or "").strip()
         if not name:
             raise forms.ValidationError("Title is required.")

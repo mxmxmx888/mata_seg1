@@ -8,6 +8,7 @@ User = get_user_model()
 
 @receiver(post_save, sender=Like)
 def notify_on_like(sender, instance, created, **kwargs):
+    """Create a notification when a post is liked by someone else."""
     if created and instance.user != instance.recipe_post.author:
         Notification.objects.create(
             recipient=instance.recipe_post.author,
@@ -18,6 +19,7 @@ def notify_on_like(sender, instance, created, **kwargs):
 
 @receiver(post_save, sender=Follower)
 def notify_on_follow(sender, instance, created, **kwargs):
+    """Create a notification when a user starts following an author."""
     if created:
         Notification.objects.create(
             recipient=instance.author,
@@ -27,6 +29,7 @@ def notify_on_follow(sender, instance, created, **kwargs):
 
 @receiver(post_save, sender=Comment)
 def notify_on_comment(sender, instance, created, **kwargs):
+    """Create notifications for comments and @mentions."""
     if created:
         if instance.user != instance.recipe_post.author:
             Notification.objects.create(

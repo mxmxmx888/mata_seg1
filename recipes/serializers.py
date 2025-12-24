@@ -1,9 +1,9 @@
 from rest_framework import serializers
-
 from recipes.models import RecipePost
 
 
 class RecipeSerializer(serializers.ModelSerializer):
+    """Serializer for RecipePost with common fields."""
     primary_image_url = serializers.CharField(read_only=True)
 
     class Meta:

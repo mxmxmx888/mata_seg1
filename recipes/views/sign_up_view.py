@@ -19,10 +19,12 @@ class SignUpView(LoginProhibitedMixin, FormView):
     redirect_when_logged_in_url = reverse_lazy("dashboard")
 
     def get(self, request, *args, **kwargs):
+        """Render the signup form."""
         form = self.form_class()
         return render(request, self.template_name, {"form": form})
 
     def form_valid(self, form):
+        """Create user, ensure Firebase account, log in, and redirect."""
         # 1) Create the Django user in the local DB
         user = form.save()
 
@@ -43,4 +45,5 @@ class SignUpView(LoginProhibitedMixin, FormView):
         return redirect(self.get_success_url())
 
     def form_invalid(self, form):
+        """Re-render the signup form with errors."""
         return render(self.request, self.template_name, {"form": form})

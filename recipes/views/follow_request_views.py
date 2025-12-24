@@ -6,6 +6,7 @@ from recipes.services import FollowService
 
 @login_required
 def accept_follow_request(request, request_id):
+    """Accept a pending follow request via POST."""
     if request.method != "POST":
         return HttpResponseForbidden()
     service = FollowService(request.user)
@@ -15,6 +16,7 @@ def accept_follow_request(request, request_id):
 
 @login_required
 def reject_follow_request(request, request_id):
+    """Reject a pending follow request via POST."""
     if request.method != "POST":
         return HttpResponseForbidden()
     service = FollowService(request.user)
