@@ -1,1 +1,0 @@
-### Helper function and classes go here.

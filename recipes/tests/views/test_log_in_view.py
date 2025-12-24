@@ -7,7 +7,7 @@ from recipes.forms import LogInForm
 from recipes.models import User
 from allauth.socialaccount.models import SocialApp
 from django.contrib.sites.models import Site
-from recipes.tests.helpers import LogInTester, reverse_with_next
+from recipes.tests.test_utils import LogInTester, reverse_with_next
 
 class LogInViewTestCase(TestCase, LogInTester):
     def setUp(self):

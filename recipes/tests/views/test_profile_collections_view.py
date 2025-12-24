@@ -12,7 +12,7 @@ from recipes.models import (
     FollowRequest,
 )
 from recipes.views.profile_view import _collections_for_user
-from recipes.tests.helpers import reverse_with_next
+from recipes.tests.test_utils import reverse_with_next
 
 
 class ProfileCollectionViewTests(TestCase):

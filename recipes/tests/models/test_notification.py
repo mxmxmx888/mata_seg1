@@ -3,7 +3,7 @@ from django.test import TestCase
 from django.utils import timezone
 from django.db import models
 
-from recipes.tests.helpers import make_user, make_recipe_post
+from recipes.tests.test_utils import make_user, make_recipe_post
 from recipes.models.notification import Notification
 
 

@@ -5,6 +5,7 @@ from unittest.mock import MagicMock, patch
 from django.contrib.auth.models import AnonymousUser
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.http import Http404
+from django.test import RequestFactory
 
 from recipes.models.favourite import Favourite
 from recipes.models.favourite_item import FavouriteItem
@@ -12,9 +13,14 @@ from recipes.models.recipe_post import RecipePost, RecipeImage
 from recipes.tests.views.base import RecipeViewTestCase, add_session_and_messages
 from recipes.views import recipe_views
 from recipes.views.recipe_views import recipe_create, recipe_detail, recipe_edit
+from recipes.views.recipe_view_helpers import hx_response_or_redirect
 
 
 class RecipeViewsCreateEditTests(RecipeViewTestCase):
+    def setUp(self):
+        super().setUp()
+        self.factory = RequestFactory()
+
     def test_recipe_create_requires_login(self):
         request = self.factory.get("/fake/recipe/create/")
         request.user = AnonymousUser()
@@ -222,6 +228,16 @@ class RecipeViewsCreateEditTests(RecipeViewTestCase):
         bad = SimpleNamespace(image=BadUrl())
         gallery = recipe_views._gallery_images([first, second, bad])
         self.assertEqual(gallery, ["second.jpg"])
+
+    def test_hx_response_or_redirect_covers_both_branches(self):
+        hx_request = self.factory.get("/hx", HTTP_HX_REQUEST="true")
+        resp = hx_response_or_redirect(hx_request, "/target")
+        self.assertEqual(resp.status_code, 204)
+
+        normal_request = self.factory.get("/hx")
+        resp2 = hx_response_or_redirect(normal_request, "/target")
+        self.assertEqual(resp2.status_code, 302)
+        self.assertEqual(resp2.url, "/target")
 
     def test_collections_modal_state_sorts_saved_first(self):
         self.post.image = "cover.jpg"

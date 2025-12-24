@@ -4,7 +4,7 @@ from django.urls import reverse
 
 from recipes.models import User
 from recipes.models.recipe_post import RecipePost
-from recipes.tests import helpers
+from recipes.tests import test_utils as helpers
 
 
 class ReverseWithNextTests(SimpleTestCase):

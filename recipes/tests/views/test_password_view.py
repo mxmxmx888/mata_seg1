@@ -3,7 +3,7 @@ from django.urls import reverse
 from recipes.models import User
 from allauth.socialaccount.models import SocialApp
 from django.contrib.sites.models import Site
-from recipes.tests.helpers import reverse_with_next
+from recipes.tests.test_utils import reverse_with_next
 
 class PasswordViewTest(TestCase):
     def setUp(self):

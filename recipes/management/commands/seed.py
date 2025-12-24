@@ -1,39 +1,31 @@
-import os
-from typing import Any, Dict, List, Set, Tuple
 from random import sample, randint, choice
+from typing import List
 
 from faker import Faker
 from django.core.management.base import BaseCommand
 from django.db import transaction
-from django.utils import timezone
-from django.conf import settings
-from django.core.files.uploadedfile import SimpleUploadedFile
 
 from recipes.models import User
 from recipes.models.followers import Follower
 from recipes.models.follows import Follows
+from recipes.models.comment import Comment
+from recipes.models.like import Like
+from .seed_data import (
+    SHOP_INGREDIENT_SETS,
+    bio_phrases,
+    comment_phrases,
+    favourite_names,
+    recipe_image_file_pool,
+    user_fixtures,
+)
+from .seed_utils import SeedHelpers, create_username, create_email
 from recipes.models.recipe_post import RecipePost, RecipeImage
 from recipes.models.recipe_step import RecipeStep
 from recipes.models.favourite import Favourite
 from recipes.models.favourite_item import FavouriteItem
-from recipes.models.comment import Comment
-from recipes.models.like import Like
 from recipes.models.ingredient import Ingredient
-from .seed_data import (
-    SHOP_ITEM_OVERRIDES,
-    SHOP_INGREDIENT_SETS,
-    SHOP_IMAGE_MAP,
-    bio_phrases,
-    categories,
-    comment_phrases,
-    favourite_names,
-    recipe_image_file_pool,
-    shop_image_file_pool,
-    tags_pool,
-    user_fixtures,
-)
 
-class Command(BaseCommand):
+class Command(SeedHelpers, BaseCommand):
     USER_COUNT = 200
     DEFAULT_PASSWORD = 'Password123'
     help = 'Seeds the database with sample data'
@@ -41,16 +33,6 @@ class Command(BaseCommand):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.faker = Faker('en_GB')
-
-    def _make_uploaded_image(self, rel_path: str) -> SimpleUploadedFile:
-        """Wrap a real image file into a Django SimpleUploadedFile."""
-        abs_path = os.path.join(settings.BASE_DIR, rel_path.lstrip("/"))
-        with open(abs_path, "rb") as f:
-            return SimpleUploadedFile(
-                name=os.path.basename(abs_path),
-                content=f.read(),
-                content_type="image/jpeg",
-            )
 
     def handle(self, *args, **options):
         self.create_users()
@@ -122,7 +104,7 @@ class Command(BaseCommand):
         posts_to_create: List[RecipePost] = []
         images_to_create: List[RecipeImage] = []
         for author_id in user_ids:
-            new_posts, new_images = self._build_posts_for_author(author_id, per_user)
+            new_posts, new_images = self._build_posts_for_author(author_id, per_user, recipe_image_file_pool)
             posts_to_create.extend(new_posts)
             images_to_create.extend(new_images)
 
@@ -133,60 +115,6 @@ class Command(BaseCommand):
         self.stdout.write(
             f"Recipe posts created: {len(posts_to_create)}; images attempted: {len(images_to_create)}"
         )
-
-    def _build_posts_for_author(
-        self, author_id: str, per_user: int
-    ) -> Tuple[List[RecipePost], List[RecipeImage]]:
-        posts: List[RecipePost] = []
-        images: List[RecipeImage] = []
-        count = randint(1, max(1, per_user))
-        for _ in range(count):
-            post = self._build_recipe_post(author_id)
-            posts.append(post)
-            images.extend(self._build_recipe_images(post))
-        return posts, images
-
-    def _build_recipe_post(self, author_id: str) -> RecipePost:
-        title = self.faker.sentence(nb_words=5).rstrip(".")[:255]
-        description = self.faker.paragraph(nb_sentences=3)[:4000]
-        tags = list(set(sample(tags_pool, randint(0, min(4, len(tags_pool))))))
-        return RecipePost(
-            author_id=author_id,
-            title=title,
-            description=description,
-            image=choice(recipe_image_file_pool),
-            prep_time_min=randint(0, 60),
-            cook_time_min=randint(0, 90),
-            serves=0 if randint(1, 4) == 1 else choice([2, 4, 6, 8]),
-            tags=tags,
-            nutrition=f"kcal={randint(250, 800)}; protein={randint(5, 40)}g",
-            category=choice(categories),
-            saved_count=0,
-            published_at=timezone.now(),
-        )
-
-    def _build_recipe_images(self, post: RecipePost) -> List[RecipeImage]:
-        images: List[RecipeImage] = []
-        img_count = randint(2, 4)
-        chosen = sample(recipe_image_file_pool, k=min(img_count, len(recipe_image_file_pool)))
-        for position, rel_path in enumerate(chosen):
-            uploaded = self._safe_uploaded_image(rel_path)
-            if not uploaded:
-                continue
-            images.append(
-                RecipeImage(
-                    recipe_post_id=post.id,
-                    image=uploaded,
-                    position=position,
-                )
-            )
-        return images
-
-    def _safe_uploaded_image(self, rel_path: str) -> SimpleUploadedFile | None:
-        try:
-            return self._make_uploaded_image(rel_path)
-        except FileNotFoundError:
-            return None
 
     def seed_recipe_steps(self, *, min_steps: int = 4, max_steps: int = 7) -> None:
         post_ids = list(RecipePost.objects.values_list("id", flat=True))
@@ -283,37 +211,6 @@ class Command(BaseCommand):
 
         self.stdout.write(f"ingredients created (attempted): {len(rows)}")
 
-    def _build_ingredients_for_post(
-        self, post_id: str, ingredient_set: List[Dict[str, Any]]
-    ) -> List[Ingredient]:
-        rows: List[Ingredient] = []
-        position = 1
-        for item in ingredient_set:
-            name = item["name"]
-            image_file, shop_url = self._resolve_ingredient_assets(item, name.lower())
-            rows.append(
-                Ingredient(
-                    recipe_post_id=post_id,
-                    name=name,
-                    position=position,
-                    shop_url=shop_url,
-                    shop_image_upload=image_file,
-                )
-            )
-            position += 1
-        return rows
-
-    def _resolve_ingredient_assets(
-        self, item: Dict[str, Any], name_key: str
-    ) -> Tuple[SimpleUploadedFile | None, str | None]:
-        override = SHOP_ITEM_OVERRIDES.get(name_key, {})
-        shop_url = override.get("shop_url") or item.get("shop_url")
-        rel_path = override.get("shop_image") or item.get("shop_image") or SHOP_IMAGE_MAP.get(name_key)
-        image_file = self._safe_uploaded_image(rel_path) if rel_path else None
-        if not image_file and shop_image_file_pool:
-            image_file = self._safe_uploaded_image(choice(shop_image_file_pool))
-        return image_file, shop_url
-
     def seed_favourites(self, *, per_user: int = 2) -> None:
         user_ids = list(User.objects.values_list("id", flat=True))
         if not user_ids:
@@ -323,7 +220,7 @@ class Command(BaseCommand):
         if not posts:
             return
 
-        favourites_to_create = self._build_favourites(user_ids, per_user)
+        favourites_to_create = self._build_favourites(user_ids, per_user, favourite_names)
         self._bulk_create_favourites(favourites_to_create)
         favs_by_user = self._fetch_favourites_by_user(user_ids)
         items_to_create = self._build_favourite_items(user_ids, posts, favs_by_user)
@@ -354,47 +251,6 @@ class Command(BaseCommand):
                 batch_size=1000
             )
 
-    def _build_favourites(self, user_ids: List[str], per_user: int) -> List[Favourite]:
-        collections_per_user = min(per_user, len(favourite_names))
-        favourites: List[Favourite] = []
-        fav_keys: Set[Tuple[str, str]] = set()
-        for user_id in user_ids:
-            chosen = sample(favourite_names, k=collections_per_user)
-            for name in chosen:
-                key = (str(user_id), name)
-                if key in fav_keys:
-                    continue
-                fav_keys.add(key)
-                favourites.append(Favourite(user_id=user_id, name=name))
-        return favourites
-
-    def _fetch_favourites_by_user(self, user_ids: List[str]) -> Dict[str, List[str]]:
-        favourites = list(
-            Favourite.objects.filter(user_id__in=user_ids).values_list("id", "user_id")
-        )
-        favs_by_user: Dict[str, List[str]] = {}
-        for fav_id, u_id in favourites:
-            favs_by_user.setdefault(str(u_id), []).append(str(fav_id))
-        return favs_by_user
-
-    def _build_favourite_items(
-        self,
-        user_ids: List[str],
-        posts: List[str],
-        favs_by_user: Dict[str, List[str]],
-    ) -> List[FavouriteItem]:
-        items: List[FavouriteItem] = []
-        for user_id in user_ids:
-            user_fav_ids = favs_by_user.get(str(user_id), [])
-            if not user_fav_ids:
-                continue
-            for fav_id in user_fav_ids:
-                k = randint(3, 8)
-                chosen_posts = sample(posts, k=min(k, len(posts)))
-                for post_id in chosen_posts:
-                    items.append(FavouriteItem(favourite_id=fav_id, recipe_post_id=post_id))
-        return items
-
     def create_user(self, data):
         User.objects.create_user(
             username=data['username'],
@@ -404,9 +260,3 @@ class Command(BaseCommand):
             last_name=data['last_name'],
             bio = choice(bio_phrases)
         )
-
-def create_username(first_name, last_name):
-    return '@' + first_name.lower() + last_name.lower()
-
-def create_email(first_name, last_name):
-    return first_name + '.' + last_name + '@example.org'

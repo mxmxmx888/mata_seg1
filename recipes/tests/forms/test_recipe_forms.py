@@ -1,57 +1,14 @@
-from django import forms
 from django.test import TestCase
-from django.core.files.uploadedfile import SimpleUploadedFile
 from django.utils.datastructures import MultiValueDict
 
 from recipes.forms.recipe_forms import (
-    MultiFileInput,
-    MultiFileField,
     RecipePostForm,
 )
 from recipes.models import User
 from recipes.models.recipe_post import RecipePost, RecipeImage
 from recipes.models.recipe_step import RecipeStep
 from recipes.models.ingredient import Ingredient
-
-
-def fake_image(name="img.jpg"):
-    # Minimal bytes; enough for SimpleUploadedFile usage in tests
-    return SimpleUploadedFile(name, b"fake-image-bytes", content_type="image/jpeg")
-
-
-class MultiFileInputTests(TestCase):
-    def test_value_from_datadict_returns_getlist(self):
-        w = MultiFileInput()
-        files = MultiValueDict({"images": [fake_image("a.jpg"), fake_image("b.jpg")]})
-        out = w.value_from_datadict(data={}, files=files, name="images")
-        self.assertEqual(len(out), 2)
-        self.assertEqual(out[0].name, "a.jpg")
-        self.assertEqual(out[1].name, "b.jpg")
-
-
-class MultiFileFieldTests(TestCase):
-    def test_clean_accepts_list(self):
-        field = MultiFileField(required=False)
-        f1, f2 = fake_image("1.jpg"), fake_image("2.jpg")
-        cleaned = field.clean([f1, f2])
-        self.assertEqual(len(cleaned), 2)
-
-    def test_clean_skips_none_entries(self):
-        field = MultiFileField(required=False)
-        cleaned = field.clean([None, fake_image("only.jpg")])
-        self.assertEqual(len(cleaned), 1)
-        self.assertEqual(cleaned[0].name, "only.jpg")
-
-    def test_clean_accepts_single_file(self):
-        field = MultiFileField(required=False)
-        cleaned = field.clean(fake_image("one.jpg"))
-        self.assertEqual(len(cleaned), 1)
-        self.assertEqual(cleaned[0].name, "one.jpg")
-
-    def test_required_raises_if_no_files(self):
-        field = MultiFileField(required=True)
-        with self.assertRaisesMessage(Exception, "This field is required."):
-            field.clean([])
+from recipes.tests.forms.form_file_helpers import fake_image, oversized_image
 
 
 class RecipePostFormTests(TestCase):
@@ -213,6 +170,24 @@ class RecipePostFormTests(TestCase):
         self.assertIn("images", form.errors)
         self.assertIn("up to 10 images", str(form.errors["images"]))
 
+    def test_clean_images_rejects_files_over_size_limit(self):
+        form = RecipePostForm(
+            data={
+                "title": "X",
+                "description": "Y",
+                "category": "dinner",
+                "prep_time_min": 1,
+                "cook_time_min": 1,
+                "nutrition": "",
+                "visibility": RecipePost.VISIBILITY_PUBLIC,
+            },
+            files=MultiValueDict({"images": [oversized_image()]}),
+        )
+        self.assertFalse(form.is_valid())
+        self.assertIn("images", form.errors)
+        self.assertIn("MB or smaller", str(form.errors["images"]))
+        self.assertIn("big.jpg", str(form.errors["images"]))
+
     def test_clean_shop_images_limits_to_10(self):
         files = [fake_image(f"{i}.jpg") for i in range(11)]
         form = RecipePostForm(
@@ -230,6 +205,29 @@ class RecipePostFormTests(TestCase):
         self.assertFalse(form.is_valid())
         self.assertIn("shop_images", form.errors)
         self.assertIn("up to 10 shopping images", str(form.errors["shop_images"]))
+
+    def test_clean_shop_images_rejects_files_over_size_limit(self):
+        form = RecipePostForm(
+            data={
+                "title": "X",
+                "description": "Y",
+                "category": "dinner",
+                "prep_time_min": 1,
+                "cook_time_min": 1,
+                "nutrition": "",
+                "visibility": RecipePost.VISIBILITY_PUBLIC,
+            },
+            files=MultiValueDict(
+                {
+                    "images": [fake_image("cover.jpg")],
+                    "shop_images": [oversized_image("too-big.jpg")],
+                }
+            ),
+        )
+        self.assertFalse(form.is_valid())
+        self.assertIn("shop_images", form.errors)
+        self.assertIn("MB or smaller", str(form.errors["shop_images"]))
+        self.assertIn("too-big.jpg", str(form.errors["shop_images"]))
 
     def test_clean_images_requires_one_on_create(self):
         form = RecipePostForm(

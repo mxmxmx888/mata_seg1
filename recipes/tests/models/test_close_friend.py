@@ -2,7 +2,7 @@ from django.db import IntegrityError
 from django.test import TestCase
 
 from recipes.models.close_friend import CloseFriend
-from recipes.tests.helpers import make_user
+from recipes.tests.test_utils import make_user
 
 
 class CloseFriendModelTestCase(TestCase):

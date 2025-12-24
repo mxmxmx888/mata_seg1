@@ -51,6 +51,10 @@ CATEGORIES = [
     ("vegan", "Vegan"),
 ]
 
+MAX_IMAGE_UPLOAD_MB = 10
+MAX_IMAGE_UPLOAD_BYTES = MAX_IMAGE_UPLOAD_MB * 1024 * 1024
+
+
 class RecipePostForm(forms.ModelForm):
 
     field_order = [
@@ -137,6 +141,7 @@ class RecipePostForm(forms.ModelForm):
         files = self.files.getlist("images")
         if len(files) > 10:
             raise forms.ValidationError("You can upload up to 10 images.")
+        self._validate_file_sizes(files, "image")
 
         has_existing_image = False
         if getattr(self.instance, "pk", None) and not getattr(getattr(self.instance, "_state", None), "adding", True):
@@ -154,6 +159,7 @@ class RecipePostForm(forms.ModelForm):
         files = self.files.getlist("shop_images")
         if len(files) > 10:
             raise forms.ValidationError("You can upload up to 10 shopping images.")
+        self._validate_file_sizes(files, "shopping image")
         return files
 
     def clean(self):
@@ -363,3 +369,12 @@ class RecipePostForm(forms.ModelForm):
                 image=f,
                 position=idx,
             )
+
+    def _validate_file_sizes(self, files, label):
+        too_large = [f.name for f in files if getattr(f, "size", 0) > MAX_IMAGE_UPLOAD_BYTES]
+        if not too_large:
+            return
+        names = ", ".join(too_large)
+        raise forms.ValidationError(
+            f"Each {label} must be {MAX_IMAGE_UPLOAD_MB}MB or smaller. Remove: {names}."
+        )

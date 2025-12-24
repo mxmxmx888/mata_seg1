@@ -5,7 +5,7 @@ from django.utils import timezone
 
 from recipes.models.comment import Comment
 from recipes.models.report import Report
-from recipes.tests.helpers import make_user, make_recipe_post
+from recipes.tests.test_utils import make_user, make_recipe_post
 
 
 class ReportModelTests(TestCase):

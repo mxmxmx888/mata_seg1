@@ -5,7 +5,7 @@ from django.urls import reverse
 from recipes.forms import UserForm
 from recipes.models import User, Favourite, FavouriteItem, RecipePost, Follower, CloseFriend, FollowRequest
 from recipes.views.profile_view import _profile_data_for_user, _collections_for_user
-from recipes.tests.helpers import reverse_with_next
+from recipes.tests.test_utils import reverse_with_next
 
 class ProfileViewTest(TestCase):
 

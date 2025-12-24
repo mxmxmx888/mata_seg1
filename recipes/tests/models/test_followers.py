@@ -2,7 +2,7 @@ from django.test import TestCase
 from django.db import IntegrityError, transaction
 
 from recipes.models.followers import Follower
-from recipes.tests.helpers import make_user
+from recipes.tests.test_utils import make_user
 
 
 class FollowerModelTestCase(TestCase):

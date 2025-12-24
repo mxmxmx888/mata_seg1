@@ -310,6 +310,35 @@ describe("create_recipe", () => {
     expect(() => initCreateRecipe(window)).not.toThrow();
   });
 
+  test("handles missing image input branch gracefully", () => {
+    document.body.innerHTML = `
+      <div class="create-recipe-card">
+        <form data-form-bound="false" data-form-has-errors="false">
+          <textarea id="id_ingredients_text"></textarea>
+          <input id="shop-item" />
+          <input id="shop-link" />
+          <button id="add-shop-link" type="button"></button>
+          <div id="shop-list"></div>
+          <textarea id="id_shopping_links_text"></textarea>
+        </form>
+      </div>
+    `;
+    expect(() => initCreateRecipe(window)).not.toThrow();
+  });
+
+  test("global init uses DOMContentLoaded when document still loading", () => {
+    jest.resetModules();
+    const readyDescriptor = Object.getOwnPropertyDescriptor(document, "readyState");
+    Object.defineProperty(document, "readyState", { value: "loading", configurable: true });
+    const addSpy = jest.spyOn(document, "addEventListener");
+    require("../../static/js/create_recipe");
+    expect(addSpy).toHaveBeenCalledWith("DOMContentLoaded", expect.any(Function), { once: true });
+    addSpy.mockRestore();
+    if (readyDescriptor) {
+      Object.defineProperty(document, "readyState", readyDescriptor);
+    }
+  });
+
   test("skips restore when DataTransfer unavailable", async () => {
     const realDT = window.DataTransfer;
     delete window.DataTransfer;

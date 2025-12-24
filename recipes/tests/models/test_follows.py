@@ -2,7 +2,7 @@ from django.test import TestCase
 from django.db import IntegrityError
 
 from recipes.models.follows import Follows
-from recipes.tests.helpers import make_user
+from recipes.tests.test_utils import make_user
 
 
 class FollowsModelTestCase(TestCase):

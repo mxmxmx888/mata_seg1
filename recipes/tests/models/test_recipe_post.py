@@ -7,7 +7,7 @@ from django.utils import timezone
 
 from recipes.models import User, Like
 from recipes.models.recipe_post import RecipePost, RecipeImage
-from recipes.tests.helpers import make_user, make_recipe_post
+from recipes.tests.test_utils import make_user, make_recipe_post
 
 
 class RecipePostModelTests(TestCase):

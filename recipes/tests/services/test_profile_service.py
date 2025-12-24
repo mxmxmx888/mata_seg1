@@ -1,7 +1,7 @@
 from django.test import TestCase
 
 from recipes.services.profile import ProfileDisplayService
-from recipes.tests.helpers import make_user
+from recipes.tests.test_utils import make_user
 
 
 class ProfileDisplayServiceTests(TestCase):

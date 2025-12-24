@@ -1,7 +1,7 @@
 from django.test import TestCase
 
 from recipes.repos.user_repo import UserRepo
-from recipes.tests.helpers import make_user
+from recipes.tests.test_utils import make_user
 
 
 class UserRepoTests(TestCase):

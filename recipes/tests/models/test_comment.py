@@ -2,7 +2,7 @@ from django.core.exceptions import ValidationError
 from django.test import TestCase
 
 from recipes.models.comment import Comment
-from recipes.tests.helpers import make_user, make_recipe_post
+from recipes.tests.test_utils import make_user, make_recipe_post
 
 
 class CommentModelTestCase(TestCase):

@@ -1,0 +1,77 @@
+from recipes.models import Favourite
+from recipes.models.favourite_item import FavouriteItem
+
+
+def profile_data_for_user(user):
+    fallback_handle = "@anmzn"
+    handle = user.username or fallback_handle
+    display_name = user.get_full_name() or user.username or "cook"
+    bio = getattr(user, "bio", "") or ""
+    return {
+        "display_name": display_name,
+        "handle": handle,
+        "tagline": bio,
+        "following": 2,
+        "followers": 0,
+        "avatar_url": user.avatar_url,
+        "is_private": getattr(user, "is_private", False),
+    }
+
+
+def _collection_meta(items, favourite):
+    """Compute last_saved_at, cover image url, and item count for a favourite."""
+
+    def _post_image_url(post):
+        return getattr(post, "primary_image_url", None) or getattr(post, "image", None)
+
+    last_saved_at = favourite.created_at
+    cover_post = favourite.cover_post if _post_image_url(getattr(favourite, "cover_post", None)) else None
+    first_post_with_image = None
+    visible_posts = []
+
+    for item in items:
+        if not item.recipe_post:
+            continue
+        visible_posts.append(item.recipe_post)
+        if item.added_at and (last_saved_at is None or item.added_at > last_saved_at):
+            last_saved_at = item.added_at
+        if not first_post_with_image:
+            image_url = _post_image_url(item.recipe_post)
+            if image_url:
+                first_post_with_image = item.recipe_post
+
+    if not cover_post:
+        cover_post = first_post_with_image
+
+    cover_url = _post_image_url(cover_post) if cover_post else None
+    return last_saved_at, cover_url, len(visible_posts)
+
+
+def collections_for_user(user):
+    """
+    Build collection cards for the given user from Favourite/FavouriteItem.
+    Each Favourite becomes a collection backed by the user's saved posts.
+    """
+    favourites = Favourite.objects.filter(user=user).prefetch_related("items__recipe_post")
+
+    collections = []
+    for fav in favourites:
+        items = list(fav.items.select_related("recipe_post").order_by("added_at", "id"))
+        last_saved_at, cover_url, count = _collection_meta(items, fav)
+
+        collections.append(
+            {
+                "id": str(fav.id),
+                "slug": str(fav.id),
+                "title": fav.name,
+                "count": count,
+                "privacy": None,
+                "cover": cover_url,
+                "has_image": bool(cover_url),
+                "last_saved_at": last_saved_at,
+            }
+        )
+
+    collections.sort(key=lambda c: c.get("last_saved_at"), reverse=True)
+
+    return collections

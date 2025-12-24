@@ -31,10 +31,8 @@ from recipes.views.recipe_views import (
     toggle_follow,
 )
 from recipes.views.follow_request_views import accept_follow_request, reject_follow_request
-from recipes.views.profile_view import collections_overview
-from recipes.views.profile_view import remove_follower
-from recipes.views.profile_view import remove_following
-from recipes.views.profile_view import add_close_friend, remove_close_friend
+from recipes.views.collection_views import collections_overview, collection_detail, update_collection, delete_collection
+from recipes.views.social_views import remove_follower, remove_following, add_close_friend, remove_close_friend
 from recipes.views.api_views import RecipeListApi, RecipeDetailApi
 
 urlpatterns = [
@@ -52,9 +50,9 @@ urlpatterns = [
     path('password/', views.PasswordView.as_view(), name='password'),
     path('profile/', views.profile, name='profile'),
     path('collections/', collections_overview, name='collections'),
-    path('profile/collections/<slug:slug>/', views.collection_detail, name='collection_detail'),
-    path('profile/collections/<slug:slug>/edit/', views.update_collection, name='update_collection'),
-    path('profile/collections/<slug:slug>/delete/', views.delete_collection, name='delete_collection'),
+    path('profile/collections/<slug:slug>/', collection_detail, name='collection_detail'),
+    path('profile/collections/<slug:slug>/edit/', update_collection, name='update_collection'),
+    path('profile/collections/<slug:slug>/delete/', delete_collection, name='delete_collection'),
     path('recipes/create/', recipe_create, name='recipe_create'),
     path('recipes/<uuid:post_id>/', recipe_detail, name='recipe_detail'),
     path("recipes/<uuid:post_id>/edit/", recipe_edit, name="recipe_edit"),

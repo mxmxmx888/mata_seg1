@@ -5,7 +5,7 @@ from django.test import RequestFactory, TestCase
 
 from recipes.context_processors import edit_profile_form, notifications
 from recipes.models import Notification, Follower, FollowRequest
-from recipes.tests.helpers import make_user
+from recipes.tests.test_utils import make_user
 
 
 class EditProfileFormContextTests(TestCase):

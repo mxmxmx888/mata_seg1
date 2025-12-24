@@ -3,7 +3,7 @@ from django.test import TestCase
 
 from recipes.models.favourite import Favourite
 from recipes.models.favourite_item import FavouriteItem
-from recipes.tests.helpers import make_user, make_recipe_post
+from recipes.tests.test_utils import make_user, make_recipe_post
 
 
 class FavouriteItemModelTestCase(TestCase):

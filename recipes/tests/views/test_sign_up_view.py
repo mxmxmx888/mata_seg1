@@ -6,7 +6,7 @@ from allauth.socialaccount.models import SocialApp
 
 from recipes.forms import SignUpForm
 from recipes.models import User
-from recipes.tests.helpers import LogInTester
+from recipes.tests.test_utils import LogInTester
 
 
 class SignUpViewTestCase(TestCase, LogInTester):

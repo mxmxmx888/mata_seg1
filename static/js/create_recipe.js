@@ -1,30 +1,18 @@
 (function (global) {
-  function normalizeUrl(url) {
-    if (!url) return "";
-    return /^https?:\/\//i.test(url) ? url : "https://" + url;
-  }
-
-  function setInputFiles(input, files) {
-    /* istanbul ignore next */
-    if (!input || !files) return;
-    input.__mockFiles = files;
-    try {
-      Object.defineProperty(input, "files", {
-        configurable: true,
-        get: () => files
-      });
-    } catch (err) {
-      // Silent fallback: if defining files fails, ignore.
+  /* istanbul ignore next */
+  const helpers = (() => {
+    if (typeof module !== "undefined" && module.exports) {
+      return require("./create_recipe_helpers");
     }
-  }
-
-  function getFiles(input) {
-    /* istanbul ignore next */
-    if (!input) return null;
-    const real = input.files;
-    if (real && real.length) return real;
-    return input.__mockFiles || real;
-  }
+    return global && global.createRecipeHelpers ? global.createRecipeHelpers : {};
+  })();
+  const normalizeUrl =
+    helpers.normalizeUrl ||
+    /* istanbul ignore next */ ((url) => (/^https?:\/\//i.test(url || "") ? url : url ? "https://" + url : ""));
+  const setInputFiles = helpers.setInputFiles || /* istanbul ignore next */ (() => {});
+  const getFiles = helpers.getFiles || /* istanbul ignore next */ (() => null);
+  const persistFiles = helpers.persistFiles || /* istanbul ignore next */ (() => {});
+  const restoreFiles = helpers.restoreFiles || /* istanbul ignore next */ (() => Promise.resolve());
 
   function initCreateRecipe(win) {
     const w = win || (typeof window !== "undefined" ? window : undefined);
@@ -119,7 +107,7 @@
     if (imageInput) {
       imageInput.addEventListener("change", () => {
         renderImagesList();
-        persistFiles(imageInput, IMG_STORAGE_KEY);
+        persistFiles(w, imageInput, IMG_STORAGE_KEY);
       });
     }
 
@@ -276,88 +264,6 @@
       ingredientsField.value = manualLines.join("\n");
     }
 
-    function persistFiles(input, storageKey) {
-      /* istanbul ignore next */
-      if (!input || !storageKey) return;
-      const files = getFiles(input);
-      if (!files || !files.length) {
-        try {
-          w.sessionStorage.removeItem(storageKey);
-        } catch (err) {}
-        return;
-      }
-
-      const entries = Array.from(files)
-        .slice(0, 10)
-        .map(
-          (file) =>
-            new Promise((resolve) => {
-              const reader = new w.FileReader();
-              reader.onload = () =>
-                resolve({
-                  name: file.name,
-                  type: file.type,
-                  lastModified: file.lastModified,
-                  data: reader.result
-                });
-              reader.onerror = () => resolve(null);
-              reader.readAsDataURL(file);
-            })
-        );
-
-      Promise.all(entries).then((results) => {
-        const cleaned = results.filter(Boolean);
-        if (!cleaned.length) {
-          try {
-            w.sessionStorage.removeItem(storageKey);
-          } catch (err) {}
-          return;
-        }
-        try {
-          w.sessionStorage.setItem(storageKey, JSON.stringify(cleaned));
-        } catch (err) {}
-      });
-    }
-
-    async function restoreFiles(input, storageKey, onAfterRestore) {
-      /* istanbul ignore next */
-      if (!input || !storageKey) return;
-      /* istanbul ignore next */
-      if (typeof w.DataTransfer === "undefined") return;
-      let stored = [];
-      try {
-        stored = JSON.parse(w.sessionStorage.getItem(storageKey) || "[]");
-      } catch (err) {
-        /* istanbul ignore next */
-        return;
-      }
-      /* istanbul ignore next */
-      if (!Array.isArray(stored) || !stored.length) return;
-
-      const dataTransfer = new w.DataTransfer();
-      for (const item of stored) {
-        /* istanbul ignore next */
-        if (!item || !item.data) continue;
-        try {
-          const response = await w.fetch(item.data);
-          const blob = await response.blob();
-          const file = new w.File([blob], item.name || "upload", {
-            type: item.type || blob.type || "application/octet-stream",
-            lastModified: item.lastModified || Date.now()
-          });
-          dataTransfer.items.add(file);
-        } catch (err) {
-          /* istanbul ignore next */
-          continue;
-        }
-      }
-
-      if (dataTransfer.files.length) {
-        setInputFiles(input, dataTransfer.files);
-        if (typeof onAfterRestore === "function") onAfterRestore();
-      }
-    }
-
     function bootstrapExisting() {
       cleanIngredientsField();
       const rawShopping = (shoppingField.value || "").trim();
@@ -398,7 +304,7 @@
       cleanIngredientsField();
       syncShoppingField();
       syncShopImagesInput();
-      persistFiles(imageInput, IMG_STORAGE_KEY);
+      persistFiles(w, imageInput, IMG_STORAGE_KEY);
     });
 
     if (!isBound) {
@@ -406,7 +312,7 @@
         w.sessionStorage.removeItem(IMG_STORAGE_KEY);
       } catch (err) {}
     } else if (hasErrors) {
-      restoreFiles(imageInput, IMG_STORAGE_KEY, renderImagesList);
+      restoreFiles(w, imageInput, IMG_STORAGE_KEY, renderImagesList);
     }
 
     bootstrapExisting();

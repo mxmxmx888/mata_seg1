@@ -9,6 +9,8 @@ from .log_in_view import *
 from .log_out_view import *
 from .password_view import *
 from .profile_view import *
+from .collection_views import *
+from .social_views import *
 from .sign_up_view import *
 from .password_reset_views import *
 from .api_views import *

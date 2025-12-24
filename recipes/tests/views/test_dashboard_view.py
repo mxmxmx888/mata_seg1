@@ -3,7 +3,7 @@ from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 from recipes.models import Ingredient, Follower
-from recipes.tests.helpers import make_recipe_post, make_user
+from recipes.tests.test_utils import make_recipe_post, make_user
 from recipes.views import dashboard_view
 
 class DashboardSearchViewTests(TestCase):

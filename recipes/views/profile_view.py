@@ -1,9 +1,8 @@
 from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
-from django.http import Http404, JsonResponse
+from django.http import Http404
 from django.shortcuts import redirect, render
-from django.urls import reverse
 from recipes.forms import PasswordForm, UserForm
 from recipes.repos.post_repo import PostRepo
 from recipes.repos.user_repo import UserRepo
@@ -11,100 +10,17 @@ from recipes.models.follow_request import FollowRequest
 from recipes.models.close_friend import CloseFriend
 from recipes.services import PrivacyService
 from recipes.services import FollowService
-from django.views.decorators.http import require_POST
-from django.shortcuts import get_object_or_404
 from recipes.models import Follower, Favourite
 from recipes.models.favourite_item import FavouriteItem
-from recipes.models.recipe_post import RecipePost
+from recipes.views.profile_data_helpers import profile_data_for_user, collections_for_user
 
 User = get_user_model()
 post_repo = PostRepo()
 user_repo = UserRepo()
 privacy_service = PrivacyService()
 follow_service_factory = FollowService
-
-def _is_ajax(request):
-    header = request.headers.get("HX-Request") or request.headers.get("x-requested-with")
-    return bool(header == "XMLHttpRequest" or header)
-
-def _profile_data_for_user(user):
-    fallback_handle = "@anmzn"
-    handle = user.username or fallback_handle
-    display_name = user.get_full_name() or user.username or "cook"
-    bio = getattr(user, "bio", "") or ""
-    return {
-        "display_name": display_name,
-        "handle": handle,
-        "tagline": bio,
-        "following": 2,
-        "followers": 0,
-        "avatar_url": user.avatar_url,
-        "is_private": getattr(user, "is_private", False),
-
-    }
-
-
-def _collections_for_user(user):
-    """
-    Build collection cards for the given user from Favourite/FavouriteItem.
-    Each Favourite becomes a collection backed by the user's saved posts.
-    """
-    favourites = (
-        Favourite.objects.filter(user=user)
-        .prefetch_related("items__recipe_post")
-    )
-
-    collections = []
-    for fav in favourites:
-        items = list(
-            fav.items.select_related("recipe_post").order_by("added_at", "id")
-        )
-        last_saved_at, cover_url, count = _collection_meta(items, fav)
-
-        collections.append(
-            {
-                "id": str(fav.id),
-                "slug": str(fav.id),
-                "title": fav.name,
-                "count": count,
-                "privacy": None,
-                "cover": cover_url,
-                "has_image": bool(cover_url),
-                "last_saved_at": last_saved_at,
-            }
-        )
-
-    collections.sort(key=lambda c: c.get("last_saved_at"), reverse=True)
-
-    return collections
-
-
-def _collection_meta(items, favourite):
-    """Compute last_saved_at, cover image url, and item count for a favourite."""
-    def _post_image_url(post):
-        return getattr(post, "primary_image_url", None) or getattr(post, "image", None)
-
-    last_saved_at = favourite.created_at
-    cover_post = favourite.cover_post if _post_image_url(getattr(favourite, "cover_post", None)) else None
-    first_post_with_image = None
-    visible_posts = []
-
-    for item in items:
-        if not item.recipe_post:
-            continue
-        visible_posts.append(item.recipe_post)
-        if item.added_at and (last_saved_at is None or item.added_at > last_saved_at):
-            last_saved_at = item.added_at
-        if not first_post_with_image:
-            image_url = _post_image_url(item.recipe_post)
-            if image_url:
-                first_post_with_image = item.recipe_post
-
-    if not cover_post:
-        cover_post = first_post_with_image
-
-    cover_url = _post_image_url(cover_post) if cover_post else None
-    return last_saved_at, cover_url, len(visible_posts)
+_profile_data_for_user = profile_data_for_user
+_collections_for_user = collections_for_user
 
 
 def _follow_context(profile_user, viewer):
@@ -287,7 +203,7 @@ def profile(request):
     is_own_profile = profile_user == request.user
 
     follow_ctx = _follow_context(profile_user, request.user)
-    profile_data = _profile_data_for_user(profile_user)
+    profile_data = profile_data_for_user(profile_user)
     profile_data["followers"] = follow_ctx["followers_count"]
     profile_data["following"] = follow_ctx["following_count"]
     profile_data["close_friends_count"] = len(follow_ctx["close_friend_ids"])
@@ -299,7 +215,7 @@ def profile(request):
         return redirect_response
 
     posts, can_view_profile = _profile_posts(profile_user, request.user)
-    collections = _collections_for_user(profile_user)
+    collections = collections_for_user(profile_user)
 
     context = _profile_context(
         profile_user,
@@ -317,144 +233,3 @@ def profile(request):
     )
 
     return render(request, "profile/profile.html", context)
-
-@login_required
-def collections_overview(request):
-    context = {
-        "profile": _profile_data_for_user(request.user),
-        "collections": _collections_for_user(request.user),
-    }
-    return render(request, "app/collections.html", context)
-
-@login_required
-def collection_detail(request, slug):
-    try:
-        favourite = Favourite.objects.get(id=slug, user=request.user)
-    except Favourite.DoesNotExist:
-        raise Http404()
-
-    items_qs = FavouriteItem.objects.filter(favourite=favourite).select_related(
-        "recipe_post"
-    )
-    posts = []
-    for item in items_qs:
-        post = item.recipe_post
-        if not post:
-            continue
-        posts.append(post)
-
-    collection = {
-        "id": str(favourite.id),
-        "slug": str(favourite.id),
-        "title": favourite.name,
-        "description": "",
-        "followers": 0,
-        "items": posts,
-    }
-
-    # Distribute posts into 5 masonry columns (row-wise across the page)
-    num_columns = 5
-    collection_columns = [[] for _ in range(num_columns)]
-    for idx, post in enumerate(posts):
-        collection_columns[idx % num_columns].append(post)
-
-    context = {
-        "profile": _profile_data_for_user(request.user),
-        "collection": collection,
-        "posts": posts,
-        "collection_columns": collection_columns,
-    }
-    return render(request, "app/collection_detail.html", context)
-
-
-@login_required
-@require_POST
-def delete_collection(request, slug):
-    favourite = get_object_or_404(Favourite, id=slug, user=request.user)
-    favourite.delete()
-
-    if _is_ajax(request):
-        return JsonResponse({"deleted": True})
-
-    return redirect(reverse("collections"))
-
-
-@login_required
-@require_POST
-def update_collection(request, slug):
-    favourite = get_object_or_404(Favourite, id=slug, user=request.user)
-    new_title = (request.POST.get("title") or request.POST.get("name") or "").strip()
-
-    if new_title:
-        favourite.name = new_title
-        favourite.save(update_fields=["name"])
-
-    payload = {
-        "id": str(favourite.id),
-        "title": favourite.name,
-    }
-    if _is_ajax(request):
-        return JsonResponse(payload)
-
-    return redirect(reverse("collection_detail", kwargs={"slug": favourite.id}))
-
-
-@login_required
-@require_POST
-def remove_follower(request, username):
-    target = get_object_or_404(User, username=username)
-    if target == request.user:
-        if _is_ajax(request):
-            return JsonResponse({"error": "Cannot remove yourself"}, status=400)
-        return redirect(request.META.get("HTTP_REFERER") or reverse("profile"))
-    Follower.objects.filter(author=request.user, follower=target).delete()
-    CloseFriend.objects.filter(owner=request.user, friend=target).delete()
-    if _is_ajax(request):
-        return JsonResponse({"status": "removed", "follower": target.username})
-    return redirect(request.META.get("HTTP_REFERER") or reverse("profile"))
-
-
-@login_required
-@require_POST
-def remove_following(request, username):
-    target = get_object_or_404(User, username=username)
-    if target == request.user:
-        if _is_ajax(request):
-            return JsonResponse({"error": "Cannot unfollow yourself"}, status=400)
-        return redirect(request.META.get("HTTP_REFERER") or reverse("profile"))
-    Follower.objects.filter(follower=request.user, author=target).delete()
-    if _is_ajax(request):
-        return JsonResponse({"status": "removed", "following": target.username})
-    return redirect(request.META.get("HTTP_REFERER") or reverse("profile"))
-
-
-@login_required
-@require_POST
-def add_close_friend(request, username):
-    friend = get_object_or_404(User, username=username)
-    if friend == request.user:
-        if _is_ajax(request):
-            return JsonResponse({"error": "Cannot add yourself"}, status=400)
-        return redirect(request.META.get("HTTP_REFERER") or reverse("profile"))
-    if not Follower.objects.filter(author=request.user, follower=friend).exists():
-        if _is_ajax(request):
-            return JsonResponse({"error": "Must follow user first"}, status=400)
-        return redirect(request.META.get("HTTP_REFERER") or reverse("profile"))
-    CloseFriend.objects.get_or_create(owner=request.user, friend=friend)
-    if _is_ajax(request):
-        return JsonResponse({"status": "added", "friend": friend.username})
-    return redirect(request.META.get("HTTP_REFERER") or reverse("profile"))
-
-
-@login_required
-@require_POST
-def remove_close_friend(request, username):
-    friend = get_object_or_404(User, username=username)
-    if friend == request.user:
-        if _is_ajax(request):
-            return JsonResponse({"error": "Cannot remove yourself"}, status=400)
-        return redirect(request.META.get("HTTP_REFERER") or reverse("profile"))
-    CloseFriend.objects.filter(owner=request.user, friend=friend).delete()
-    if _is_ajax(request):
-        return JsonResponse({"status": "removed", "friend": friend.username})
-    return redirect(request.META.get("HTTP_REFERER") or reverse("profile"))
