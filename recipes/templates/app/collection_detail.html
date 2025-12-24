@@ -1,4 +1,5 @@
 {% extends "base/base_app.html" %}
+{% load static widget_tweaks %}
 
 {% block body_class %}dashboard-body profile-body{% endblock %}
 
@@ -86,18 +87,18 @@
         <button type="button" class="btn-close save-modal-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
-        <form id="edit-collection-form">
+        <form id="edit-collection-form" method="post" action="{% url 'update_collection' slug=collection.slug %}">
           {% csrf_token %}
           <div class="mb-3 edit-collection-field">
-            <label for="edit-collection-title" class="form-label text-muted small">Title</label>
-            <input
-              type="text"
-              class="form-control save-modal-input"
-              id="edit-collection-title"
-              name="title"
-              value="{{ collection.title }}"
-              required
-            >
+            <label for="{{ collection_form.name.id_for_label }}" class="form-label text-muted small">Title</label>
+            {% if collection_form.name.errors %}
+              {{ collection_form.name.as_widget|add_class:"is-invalid" }}
+              <div class="invalid-feedback d-block">
+                {{ collection_form.name.errors|join:", " }}
+              </div>
+            {% else %}
+              {{ collection_form.name }}
+            {% endif %}
           </div>
           <div class="d-flex justify-content-end mt-3">
             <button type="submit" class="btn btn-light edit-collection-done-btn">Done</button>
@@ -108,7 +109,6 @@
   </div>
 </div>
 
-{% load static %}
 <script
   src="{% static 'js/collection_detail.js' %}"
   defer

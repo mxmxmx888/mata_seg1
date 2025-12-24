@@ -75,7 +75,7 @@
           return;
         }
 
-        const body = new w.URLSearchParams({ title: newTitle }).toString();
+        const body = new w.URLSearchParams({ name: newTitle, title: newTitle }).toString();
 
         w
           .fetch(editEndpoint, {

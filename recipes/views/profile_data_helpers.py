@@ -56,7 +56,7 @@ def collections_for_user(user):
 
     collections = []
     for fav in favourites:
-        items = list(fav.items.select_related("recipe_post").order_by("added_at", "id"))
+        items = list(fav.items.select_related("recipe_post").order_by("-added_at", "-id"))
         last_saved_at, cover_url, count = _collection_meta(items, fav)
 
         collections.append(

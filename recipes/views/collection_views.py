@@ -4,6 +4,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_POST
 
+from recipes.forms.favourite_form import FavouriteForm
 from recipes.models import Favourite
 from recipes.models.favourite_item import FavouriteItem
 from recipes.views.profile_data_helpers import collections_for_user, profile_data_for_user
@@ -27,6 +28,8 @@ def collection_detail(request, slug):
         raise Http404()
 
     items_qs = FavouriteItem.objects.filter(favourite=favourite).select_related("recipe_post")
+    if hasattr(items_qs, "order_by"):
+        items_qs = items_qs.order_by("-added_at", "-id")
     posts = [item.recipe_post for item in items_qs if item.recipe_post]
 
     collection = {
@@ -47,6 +50,7 @@ def collection_detail(request, slug):
     context = {
         "profile": profile_data_for_user(request.user),
         "collection": collection,
+        "collection_form": FavouriteForm(initial={"name": favourite.name}),
         "posts": posts,
         "collection_columns": collection_columns,
     }
@@ -69,17 +73,33 @@ def delete_collection(request, slug):
 @require_POST
 def update_collection(request, slug):
     favourite = get_object_or_404(Favourite, id=slug, user=request.user)
-    new_title = (request.POST.get("title") or request.POST.get("name") or "").strip()
+    data = request.POST.copy()
+    name_val = (data.get("name") or data.get("title") or "").strip()
 
-    if new_title:
-        favourite.name = new_title
-        favourite.save(update_fields=["name"])
+    # If no new name provided, keep existing title and return current payload.
+    if not name_val:
+        payload = {
+            "id": str(favourite.id),
+            "title": favourite.name,
+        }
+        if is_ajax_request(request):
+            return JsonResponse(payload)
+        return redirect(reverse("collection_detail", kwargs={"slug": favourite.id}))
 
-    payload = {
-        "id": str(favourite.id),
-        "title": favourite.name,
-    }
+    # Normal update path via Django form validation.
+    data["name"] = name_val
+    form = FavouriteForm(data or None, instance=favourite)
+
+    if form.is_valid():
+        form.save()
+        payload = {
+            "id": str(favourite.id),
+            "title": favourite.name,
+        }
+        if is_ajax_request(request):
+            return JsonResponse(payload)
+        return redirect(reverse("collection_detail", kwargs={"slug": favourite.id}))
+
     if is_ajax_request(request):
-        return JsonResponse(payload)
-
+        return JsonResponse({"errors": form.errors}, status=400)
     return redirect(reverse("collection_detail", kwargs={"slug": favourite.id}))

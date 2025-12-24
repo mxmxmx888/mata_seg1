@@ -125,6 +125,36 @@ class ProfileCollectionViewTests(TestCase):
         fav.refresh_from_db()
         self.assertRedirects(resp, reverse("collection_detail", kwargs={"slug": fav.id}), target_status_code=200)
 
+    def test_update_collection_blank_non_ajax_redirects_without_change(self):
+        fav = Favourite.objects.create(user=self.user, name="Keep")
+        self.client.login(username=self.user.username, password="Password123")
+        url = reverse("update_collection", kwargs={"slug": fav.id})
+        resp = self.client.post(url, {"title": "   "})
+        fav.refresh_from_db()
+        self.assertEqual(fav.name, "Keep")
+        self.assertRedirects(resp, reverse("collection_detail", kwargs={"slug": fav.id}), target_status_code=200)
+
+    def test_update_collection_invalid_name_returns_400_ajax(self):
+        fav = Favourite.objects.create(user=self.user, name="Old")
+        self.client.login(username=self.user.username, password="Password123")
+        url = reverse("update_collection", kwargs={"slug": fav.id})
+        too_long = "x" * 300
+        resp = self.client.post(url, {"title": too_long}, HTTP_HX_REQUEST="true")
+        fav.refresh_from_db()
+        self.assertEqual(fav.name, "Old")
+        self.assertEqual(resp.status_code, 400)
+        self.assertIn("errors", resp.json())
+
+    def test_update_collection_invalid_name_redirects_when_not_ajax(self):
+        fav = Favourite.objects.create(user=self.user, name="Old")
+        self.client.login(username=self.user.username, password="Password123")
+        url = reverse("update_collection", kwargs={"slug": fav.id})
+        too_long = "x" * 300
+        resp = self.client.post(url, {"title": too_long})
+        fav.refresh_from_db()
+        self.assertEqual(fav.name, "Old")
+        self.assertRedirects(resp, reverse("collection_detail", kwargs={"slug": fav.id}), target_status_code=200)
+
     def test_remove_follower_and_following(self):
         follower = User.objects.get(username="@janedoe")
         Follower.objects.create(author=self.user, follower=follower)

@@ -1,3 +1,4 @@
+{% load widget_tweaks %}
 <aside class="col-xxl-4 col-xl-4 col-lg-4">
   <div class="post-comments-panel">
     <header class="post-comments-topbar mb-3">
@@ -84,23 +85,26 @@
     <p class="text-muted small mb-3">Comments · {{ comments|length }}</p>
 
     {% if request.user.is_authenticated %}
-    <form action="{% url 'add_comment' recipe.id %}" method="post" class="mb-3">
-      {% csrf_token %}
-      <div class="mb-2">
-        <textarea
-          class="form-control"
-          name="text"
-          rows="2"
-          placeholder="Share your thoughts..."
-          required
-        ></textarea>
-      </div>
-      <div class="d-flex justify-content-end">
-        <button type="submit" class="btn btn-sm btn-dark rounded-pill px-3">
-          Comment
-        </button>
-      </div>
-    </form>
+      <form action="{% url 'add_comment' recipe.id %}" method="post" class="mb-3">
+        {% csrf_token %}
+        <div class="mb-2">
+          {% if comment_form.text.errors %}
+            {% render_field comment_form.text class="form-control is-invalid" %}
+          {% else %}
+            {% render_field comment_form.text class="form-control" %}
+          {% endif %}
+          {% if comment_form.text.errors %}
+            <div class="invalid-feedback d-block">
+              {{ comment_form.text.errors|join:", " }}
+            </div>
+          {% endif %}
+        </div>
+        <div class="d-flex justify-content-end">
+          <button type="submit" class="btn btn-sm btn-dark rounded-pill px-3">
+            Comment
+          </button>
+        </div>
+      </form>
     {% else %}
     <p class="text-muted small mb-3">
       <a href="{% url 'log_in' %}">Log in</a> to add a comment.
