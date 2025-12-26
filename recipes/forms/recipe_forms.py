@@ -1,5 +1,7 @@
 from django import forms
 
+from .fields import MultiFileField, MultiFileInput
+
 try:
     from recipes.models import RecipePost, Ingredient, RecipeStep, RecipeImage
 except Exception:
@@ -7,46 +9,6 @@ except Exception:
     from recipes.models.ingredient import Ingredient
     from recipes.models.recipe_step import RecipeStep
     from recipes.models.recipe_post import RecipeImage
-
-
-class MultiFileInput(forms.ClearableFileInput):
-    """File input widget that allows multiple file selection."""
-    allow_multiple_selected = True
-
-    def value_from_datadict(self, data, files, name):
-        """Return a list of uploaded files for this field name."""
-        return files.getlist(name)
-
-    def __init__(self, attrs=None):
-        """Ensure the widget allows selecting multiple files."""
-        attrs = attrs or {}
-        attrs.setdefault("multiple", True)
-        super().__init__(attrs)
-
-
-class MultiFileField(forms.FileField):
-    """Form field for multiple file uploads using MultiFileInput."""
-    widget = MultiFileInput
-
-    def clean(self, data, initial=None):
-        """Validate and clean multiple uploaded files."""
-        files = data or []
-        if not isinstance(files, (list, tuple)):
-            files = [files] if files else []
-
-        cleaned = []
-        for f in files:
-            file_obj = super().to_python(f)
-            if file_obj is None:
-                continue
-            super().validate(file_obj)
-            super().run_validators(file_obj)
-            cleaned.append(file_obj)
-
-        if self.required and not cleaned and not initial:
-            raise forms.ValidationError(self.error_messages["required"], code="required")
-
-        return cleaned
 
 CATEGORIES = [
     ("breakfast", "Breakfast"),
@@ -58,6 +20,7 @@ CATEGORIES = [
 
 MAX_IMAGE_UPLOAD_MB = 10
 MAX_IMAGE_UPLOAD_BYTES = MAX_IMAGE_UPLOAD_MB * 1024 * 1024
+MAX_SHOPPING_LINKS = 10
 
 
 class RecipePostForm(forms.ModelForm):
@@ -178,6 +141,14 @@ class RecipePostForm(forms.ModelForm):
 
         shopping_links = self._parse_shopping_links()
         link_count = len(shopping_links)
+
+        if link_count > MAX_SHOPPING_LINKS:
+            self.add_error(
+                "shopping_links_text",
+                forms.ValidationError(
+                    f"Add up to {MAX_SHOPPING_LINKS} shopping links (you entered {link_count})."
+                ),
+            )
 
         existing_images = 0
         if getattr(self.instance, "pk", None) and not getattr(getattr(self.instance, "_state", None), "adding", True):

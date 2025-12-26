@@ -132,6 +132,29 @@ describe("create_recipe_shopping", () => {
     expect(params.shopImageList.innerHTML).toBe("");
   });
 
+  test("limits shopping links to 10 and clears limit error after removal", () => {
+    const params = buildParams({
+      getFiles: jest.fn(() => [{ name: "pic.png" }])
+    });
+    const manager = createShoppingManager(params);
+
+    for (let i = 0; i < 10; i += 1) {
+      params.itemInput.value = `Item ${i}`;
+      params.linkInput.value = `item${i}.com`;
+      manager.addLink();
+    }
+    expect(params.listBox.querySelectorAll(".shopping-list-item").length).toBe(10);
+
+    params.itemInput.value = "Extra";
+    params.linkInput.value = "extra.com";
+    manager.addLink();
+    expect(params.listBox.querySelectorAll(".shopping-list-item").length).toBe(10);
+    expect(params.itemWrapper.querySelector(".client-required-error").textContent).toMatch(/up to 10/i);
+
+    params.listBox.querySelector(".remove").click();
+    expect(params.itemWrapper.querySelector(".client-required-error")).toBeNull();
+  });
+
   test("bootstrapExisting parses textarea lines and existing items", () => {
     const params = buildParams({
       shoppingField: document.createElement("textarea"),

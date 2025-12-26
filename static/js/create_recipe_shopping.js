@@ -1,4 +1,6 @@
 (function (global) {
+  const MAX_SHOPPING_LINKS = 10;
+
   function createState(params) {
     return {
       ...params,
@@ -134,6 +136,7 @@
     const removedFile = state.shopImageFiles.splice(idx, 1)[0];
     if (removed && removed.previewUrl) revokeUrl(state, removed.previewUrl);
     if (removedFile && removedFile.previewUrl) revokeUrl(state, removedFile.previewUrl);
+    clearShoppingError(state.itemInput);
     syncShopImagesInput(state);
     renderList(state);
   }
@@ -222,6 +225,12 @@
   }
 
   function addLink(state) {
+    clearShoppingError(state.itemInput);
+    if (state.shoppingList.length >= MAX_SHOPPING_LINKS) {
+      showShoppingError(state.doc, state.itemInput, `You can add up to ${MAX_SHOPPING_LINKS} shopping links.`);
+      state.itemInput.focus();
+      return;
+    }
     const name = (state.itemInput.value || "").trim();
     const rawUrl = (state.linkInput.value || "").trim();
     const files = parseFiles(state);
@@ -273,6 +282,7 @@
       const key = `${item.name.toLowerCase()}|${(item.rawUrl || url || "").trim().toLowerCase()}`;
       const existing = existingByKey[key] || {};
       const previewUrl = existing.image_url || null;
+      if (state.shoppingList.length >= MAX_SHOPPING_LINKS) return;
       state.shoppingList.push({ name: item.name, url, previewUrl });
       state.shopImageFiles.push(null);
     });

@@ -5,25 +5,21 @@
     ['[data-bs-target="#closeFriendsModal"]', "closeFriendsModal"],
     ['[data-bs-target="#editProfileModal"]', "editProfileModal"],
   ];
-
   function resolveWindow(win) {
     const w = win || (typeof window !== "undefined" ? window : undefined);
     return w && w.document ? w : null;
   }
-
   function markInitialized(w, flag) {
     if (w[flag]) return false;
     w[flag] = true;
     return true;
   }
-
   function buildBackdrop(doc) {
     const el = doc.createElement("div");
     el.className = "modal-backdrop fade custom-modal-backdrop";
     doc.body.appendChild(el);
     return el;
   }
-
   function createFallbackModalController(w, doc) {
     let backdrop = null;
     let current = null;
@@ -368,7 +364,6 @@
       observerOptions: { root: modalBody, threshold: 0.1 },
     });
   }
-
   function initProfileScripts(win) {
     const w = resolveWindow(win);
     if (!w) return;
@@ -388,7 +383,6 @@
     initFollowListLoader(w, doc, "closeFriendsModal", "close_friends", attachAjaxModalForms, modalSuccessHandlers, applyCloseFriendsFilter);
     initProfilePostsInfinite(w, doc);
   }
-
   if (typeof module !== "undefined" && module.exports) {
     module.exports = { initProfileScripts };
   }

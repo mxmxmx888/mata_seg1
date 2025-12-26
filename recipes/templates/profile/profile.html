@@ -145,7 +145,7 @@
         ></button>
       </div>
       <div
-        class="modal-body follow-list-body"
+        class="modal-body follow-list-body px-4"
         data-list-type="followers"
         data-endpoint="{% url 'profile_follow_list' %}?user={{ profile_user.username|urlencode }}&list=followers"
         data-next-page="{{ followers_next_page|default:'' }}"
@@ -187,7 +187,7 @@
         ></button>
       </div>
       <div
-        class="modal-body follow-list-body"
+        class="modal-body follow-list-body px-4"
         data-list-type="following"
         data-endpoint="{% url 'profile_follow_list' %}?user={{ profile_user.username|urlencode }}&list=following"
         data-next-page="{{ following_next_page|default:'' }}"
@@ -230,7 +230,7 @@
         ></button>
       </div>
       <div
-        class="modal-body follow-list-body"
+        class="modal-body follow-list-body px-4"
         data-list-type="close_friends"
         data-endpoint="{% url 'profile_follow_list' %}?user={{ profile_user.username|urlencode }}&list=close_friends"
         data-next-page="{{ close_friends_next_page|default:'' }}"
