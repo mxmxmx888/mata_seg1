@@ -1,9 +1,12 @@
 """Management command to seed the database with sample users, posts, and related data."""
 
+import shutil
+from pathlib import Path
 from random import sample, randint, choice
 from typing import List
 
 from faker import Faker
+from django.conf import settings
 from django.core.management.base import BaseCommand
 from django.db import transaction
 
@@ -33,6 +36,14 @@ class Command(SeedHelpers, BaseCommand):
     DEFAULT_PASSWORD = 'Password123'
     help = 'Seeds the database with sample data'
 
+    def add_arguments(self, parser):
+        """Add optional flags for safe seeding."""
+        parser.add_argument(
+            "--reset-media",
+            action="store_true",
+            help="Delete media/recipes, media/shop_items, and media/avatars before seeding (dev safeguard).",
+        )
+
     def __init__(self, *args, **kwargs):
         """Set up faker instance for generating seed content."""
         super().__init__(*args, **kwargs)
@@ -40,6 +51,8 @@ class Command(SeedHelpers, BaseCommand):
 
     def handle(self, *args, **options):
         """Run the full seeding sequence."""
+        if options.get("reset_media"):
+            self.reset_media_dirs()
         self.create_users()
         self.seed_followers_and_follows(follow_k=5)
         self.seed_recipe_posts(per_user=2)
@@ -270,6 +283,28 @@ class Command(SeedHelpers, BaseCommand):
                 ignore_conflicts=True,
                 batch_size=1000
             )
+
+    def reset_media_dirs(self) -> None:
+        """Safely clear recipe/shop media folders before seeding."""
+        media_root = Path(settings.MEDIA_ROOT)
+        targets = [
+            media_root / "recipes",
+            media_root / "shop_items",
+            media_root / "avatars",
+        ]
+        for path in targets:
+            if not path.exists():
+                path.mkdir(parents=True, exist_ok=True)
+                continue
+            for child in path.iterdir():
+                if child.is_dir():
+                    shutil.rmtree(child, ignore_errors=True)
+                else:
+                    try:
+                        child.unlink()
+                    except FileNotFoundError:
+                        pass
+        self.stdout.write(self.style.WARNING("Media directories reset (recipes, shop_items, avatars)."))
 
     def create_user(self, data):
         """Helper to create a user with default password."""
