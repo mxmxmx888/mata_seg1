@@ -121,7 +121,34 @@
       return /\/recipes\/create\/?$/i.test(parsed.pathname);
     })();
 
-    if (cameFromCreate && w.history) {
+    const cameFromEdit = (() => {
+      const parsed = parseUrl(doc.referrer);
+      const fromQuery = new URL(w.location.href).searchParams.has("from_edit");
+      const fromPath = parsed && /\/recipes\/\d+\/edit\/?$/i.test(parsed.pathname);
+      return fromQuery || fromPath;
+    })();
+
+    const storeEntry = (postId, entry) => {
+      if (!postId || !entry) return;
+      try {
+        w.sessionStorage.setItem(`post-entry-${postId}`, entry);
+      } catch (err) {
+        /* ignore */
+      }
+    };
+
+    const getStoredEntry = (postId) => {
+      if (!postId) return null;
+      try {
+        return w.sessionStorage.getItem(`post-entry-${postId}`);
+      } catch (err) {
+        return null;
+      }
+    };
+
+    const preventReturn = cameFromCreate || cameFromEdit;
+
+    if (preventReturn && w.history) {
       if (typeof w.history.replaceState === "function") {
         w.history.replaceState(null, "", w.location.href);
       }
@@ -137,7 +164,13 @@
     const resolveBackTarget = () => {
       if (!backButton) return { target: null, referrer: null, fallback: null };
       const fallbackHref = backButton.dataset.fallback || backButton.getAttribute("href") || "/";
-      const refValue = cameFromCreate ? "" : (backButton.dataset.entry || doc.referrer || "");
+      const postId = backButton.dataset.postId || "";
+      const entryCandidate = backButton.dataset.entry || doc.referrer || "";
+      if (!preventReturn && entryCandidate) {
+        storeEntry(postId, entryCandidate);
+      }
+      const storedEntry = getStoredEntry(postId);
+      const refValue = preventReturn ? storedEntry || "" : entryCandidate;
       const parsedRef = parseUrl(refValue);
       const isSameOrigin = parsedRef && parsedRef.origin === w.location.origin && parsedRef.href !== w.location.href;
       const target = isSameOrigin ? parsedRef.href : fallbackHref;
@@ -149,40 +182,44 @@
       };
     };
 
-    const backState = resolveBackTarget();
-    if (backButton) {
-      backButton.addEventListener("click", (event) => {
-        const hasHistory = w.history.length > 1 && backState.referrer;
-        if (hasHistory) {
-          event.preventDefault();
-          w.history.back();
-          return;
-        }
-        if (backState.referrer && backState.target === backState.referrer) {
-          event.preventDefault();
-          w.location.assign(backState.referrer);
-        }
-      });
-    }
+    resolveBackTarget();
 
-    const lightbox = doc.getElementById("lightbox");
-    const triggerBack = () => {
-      const fallbackHref = backButton
-        ? (backButton.dataset.fallback || backButton.getAttribute("href") || "/")
-        : "/";
-      const hasHistory = w.history.length > 1;
+    const triggerBack = (event) => {
+      if (event && typeof event.preventDefault === "function") {
+        event.preventDefault();
+      }
+
+      const backState = resolveBackTarget();
+      const fallbackHref = backState.fallback || backState.target || "/";
+      const postId = backButton ? backButton.dataset.postId || "" : "";
+      const storedEntry = getStoredEntry(postId);
+
+      if (preventReturn) {
+        w.location.assign(storedEntry || backState.target || fallbackHref);
+        return;
+      }
+
+      const hasHistory = w.history && w.history.length > 1;
       if (hasHistory) {
         w.history.back();
         return;
       }
-      w.location.assign(fallbackHref);
+
+      const destination = storedEntry || backState.target || fallbackHref;
+      w.location.assign(destination);
     };
 
+    if (backButton) {
+      backButton.addEventListener("click", triggerBack);
+    }
+
+    const lightbox = doc.getElementById("lightbox");
     doc.addEventListener("keyup", (event) => {
       if (event.key !== "Escape") return;
       const modalOpen = doc.querySelector(".modal.show");
       const lightboxOpen = lightbox && !lightbox.classList.contains("d-none");
-      if (modalOpen || lightboxOpen) return;
+      const photoswipeOpen = doc.querySelector(".pswp--open");
+      if (modalOpen || lightboxOpen || photoswipeOpen) return;
       triggerBack();
     });
 

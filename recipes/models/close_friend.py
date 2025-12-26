@@ -1,23 +1,9 @@
+"""Model that records a user's close-friend relationships."""
+
 import uuid
 from django.conf import settings
 from django.db import models
 from django.db.models import Q, F
-
-
-"""
-CloseFriend model
-
-This table stores a “close friends” relationship between two users.
-
-Each row means: owner -> friend
-i.e. the `owner` user has added the `friend` user to their close-friends list.
-
-Rules enforced at the database level:
-- An owner cannot add the same friend more than once (unique owner+friend pair).
-- A user cannot add themselves as a close friend (owner != friend).
-
-The `created_at` timestamp records when the relationship was created.
-"""
 
 class CloseFriend(models.Model):
     """Link a user to a close-friend relationship."""
@@ -35,6 +21,7 @@ class CloseFriend(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
+        """Constraints and table name for CloseFriend."""
         db_table = "close_friend"
         constraints = [
             models.UniqueConstraint(
@@ -46,4 +33,5 @@ class CloseFriend(models.Model):
         ]
 
     def __str__(self):
+        """Readable identifier for a close-friend link."""
         return f"CloseFriend(owner={self.owner_id}, friend={self.friend_id})"

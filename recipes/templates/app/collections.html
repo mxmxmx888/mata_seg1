@@ -11,14 +11,14 @@
   <section class="profile-collections-grid">
     <div class="profile-collections" id="collections-list">
       {% include "partials/collections/collection_cards.html" with collections=collections %}
+      <div
+        id="collections-sentinel"
+        class="infinite-sentinel"
+        data-next-page="{{ collections_next_page }}"
+        data-has-more="{{ collections_has_more|yesno:'true,false' }}"
+        data-endpoint="{% url 'collections' %}"
+      ></div>
     </div>
-    <div
-      id="collections-sentinel"
-      data-next-page="{{ collections_next_page }}"
-      data-has-more="{{ collections_has_more|yesno:'true,false' }}"
-      data-endpoint="{% url 'collections' %}"
-      style="height:1px;width:100%;margin:0;padding:0;"
-    ></div>
 	  </section>
 	</main>
 <script>
@@ -27,6 +27,7 @@
     if (!sentinel) return;
     const list = document.getElementById("collections-list");
     const endpoint = sentinel.getAttribute("data-endpoint");
+    const pageSize = 35;
 
     function fetchMore() {
       const hasMore = sentinel.getAttribute("data-has-more") === "true";
@@ -44,10 +45,10 @@
           const doc = parser.parseFromString(html, "text/html");
           const items = doc.body.children;
           Array.from(items).forEach((el) => {
-            sentinel.insertAdjacentElement("beforebegin", el);
+            list.insertBefore(el, sentinel);
           });
           // heuristic: if fewer than page size returned, stop observing
-          if ((html.match(/collection-card/g) || []).length < 20) {
+          if ((html.match(/collection-card/g) || []).length < pageSize) {
             sentinel.setAttribute("data-has-more", "false");
             observer.disconnect();
           } else {
@@ -71,5 +72,10 @@
 
     observer.observe(sentinel);
   })();
+</script>
+<script>
+  // Ensure page reload starts at the top (match behavior on profile/infinite pages)
+  window.history.scrollRestoration = "manual";
+  window.scrollTo(0, 0);
 </script>
 {% endblock %}

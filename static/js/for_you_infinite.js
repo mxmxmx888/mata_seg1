@@ -1,5 +1,6 @@
 (function (global) {
   function initForYouInfinite(win) {
+    // Sets up infinite scroll for the For You grid (#forYou-grid + .feed-masonry-column items).
     const w = win || (typeof window !== "undefined" ? window : undefined);
     if (!w || !w.document) return;
     if (w.__forYouInfiniteInitialized) return;
@@ -16,21 +17,20 @@
 
     const LIMIT = 12;
     let offset = container.querySelectorAll(".my-recipe-card").length;
-    let loading = false;
-    let hasMore = offset >= LIMIT;
+    const initialHasMore = offset >= LIMIT;
+    const infinite = w.InfiniteList || {};
 
     function setLoading(state) {
-      loading = state;
       if (!loadingEl) return;
       loadingEl.classList.toggle("d-none", !state);
     }
 
-    function appendHtmlToColumns(html) {
-      if (!html) return;
-      const temp = doc.createElement("div");
-      temp.innerHTML = html;
-      const cards = Array.from(temp.querySelectorAll(".my-recipe-card"));
-
+    const placeCards = (cards) => {
+      if (!cards || !cards.length) return;
+      if (typeof infinite.placeInColumns === "function") {
+        infinite.placeInColumns(cards, columns);
+        return;
+      }
       cards.forEach((card) => {
         let target = columns[0];
         for (let i = 1; i < columns.length; i += 1) {
@@ -40,17 +40,26 @@
         }
         target.appendChild(card);
       });
+    };
+
+    function appendHtmlToColumns(html) {
+      if (!html) return;
+      const temp = doc.createElement("div");
+      temp.innerHTML = html;
+      const cards = Array.from(temp.querySelectorAll(".my-recipe-card"));
+
+      placeCards(cards);
     }
 
-    function loadMoreForYou() {
-      if (loading || !hasMore) return;
-      setLoading(true);
+    if (!infinite.create) return;
 
+    const fetchPage = ({ page }) => {
+      setLoading(true);
       const url = new URL(w.location.href);
       url.searchParams.set("for_you_ajax", "1");
-      url.searchParams.set("for_you_offset", String(offset));
+      url.searchParams.set("for_you_offset", String(page));
 
-      w
+      return w
         .fetch(url.toString(), {
           headers: { "X-Requested-With": "XMLHttpRequest" }
         })
@@ -59,42 +68,27 @@
           return response.json();
         })
         .then((data) => {
-          if (data && data.html) {
-            appendHtmlToColumns(data.html);
-            offset += data.count || 0;
-            hasMore = Boolean(data.has_more);
-          } else {
-            hasMore = false;
-          }
-          setLoading(false);
+          const count = (data && data.count) || 0;
+          offset = page + count;
+          return {
+            html: (data && data.html) || "",
+            hasMore: Boolean(data && data.has_more),
+            nextPage: count ? page + count : null,
+          };
         })
-        .catch(() => {
-          setLoading(false);
-        });
-    }
+        .finally(() => setLoading(false));
+    };
 
-    const observer = "IntersectionObserver" in w
-      ? new w.IntersectionObserver((entries) => {
-          entries.forEach((entry) => {
-            if (entry.isIntersecting) {
-              loadMoreForYou();
-            }
-          });
-        }, { rootMargin: "600px 0px" })
-      : null;
-
-    if (observer) {
-      observer.observe(sentinel);
-    } else {
-      w.addEventListener("scroll", () => {
-        if (loading || !hasMore) return;
-        const scrollPosition = w.innerHeight + w.scrollY;
-        const threshold = doc.body.offsetHeight - 300;
-        if (scrollPosition >= threshold) {
-          loadMoreForYou();
-        }
-      });
-    }
+    infinite.create({
+      sentinel,
+      hasMore: initialHasMore,
+      nextPage: initialHasMore ? offset : null,
+      fetchPage,
+      append: appendHtmlToColumns,
+      observerOptions: { rootMargin: "600px 0px" },
+      fallbackScroll: true,
+      fallbackMargin: 300,
+    });
   }
 
   if (typeof module !== "undefined" && module.exports) {

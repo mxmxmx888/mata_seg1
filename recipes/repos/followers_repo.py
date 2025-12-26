@@ -1,3 +1,5 @@
+"""Repository helpers for follower relationships."""
+
 from typing import Any, Dict, List, Optional
 from recipes.db_accessor import DB_Accessor
 from recipes.models.followers import Follower  # adjust import to your app
@@ -6,6 +8,7 @@ from recipes.models.followers import Follower  # adjust import to your app
 class FollowersRepo(DB_Accessor):
     """Repository wrapper for follower relationships."""
     def __init__(self) -> None:
+        """Initialise with the Follower model."""
         super().__init__(Follower)
 
     def list_followers(self, *, author_id: str, limit: int = 20, offset: int = 0, as_dict: bool = True) -> List[Dict[str, Any]]:

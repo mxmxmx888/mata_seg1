@@ -1,3 +1,5 @@
+"""Service functions to evaluate profile/post visibility rules."""
+
 from django.db.models import Q
 from recipes.models.followers import Follower
 from recipes.models.close_friend import CloseFriend
@@ -6,6 +8,7 @@ from recipes.models.recipe_post import RecipePost
 class PrivacyService:
     """Privacy helper to evaluate who can view profiles and posts."""
     def __init__(self, follower_model=Follower, close_friend_model=CloseFriend):
+        """Inject follower/close friend models for testing flexibility."""
         self.follower_model = follower_model
         self.close_friend_model = close_friend_model
 

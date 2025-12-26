@@ -18,6 +18,7 @@ class MultiFileInput(forms.ClearableFileInput):
         return files.getlist(name)
 
     def __init__(self, attrs=None):
+        """Ensure the widget allows selecting multiple files."""
         attrs = attrs or {}
         attrs.setdefault("multiple", True)
         super().__init__(attrs)
@@ -106,6 +107,7 @@ class RecipePostForm(forms.ModelForm):
         label="Serves",
         required=False,
         min_value=0,
+        widget=forms.TextInput(attrs={"inputmode": "numeric", "pattern": "[0-9]*"}),
         help_text="How many people this recipe serves (leave blank to hide).",
     )
     steps_text = forms.CharField(
@@ -162,7 +164,6 @@ class RecipePostForm(forms.ModelForm):
 
         return files
 
-        """Validate shopping images for count/size."""
     def clean_shop_images(self):
         """Validate shopping images for count/size."""
         files = self.files.getlist("shop_images")
@@ -170,7 +171,6 @@ class RecipePostForm(forms.ModelForm):
             raise forms.ValidationError("You can upload up to 10 shopping images.")
         self._validate_file_sizes(files, "shopping image")
         return files
-        """Validate shopping image counts against shopping links."""
 
     def clean(self):
         """Validate shopping image counts against shopping links."""
@@ -216,6 +216,7 @@ class RecipePostForm(forms.ModelForm):
         return tags
 
     def _split_lines(self, key):
+        """Split cleaned textarea content into stripped, non-empty lines."""
         text = (self.cleaned_data.get(key) or "").strip()
         if not text:
             return []
@@ -223,6 +224,7 @@ class RecipePostForm(forms.ModelForm):
         return [l for l in lines if l]
 
     def _parse_shopping_links(self):
+        """Parse shopping_links_text into [{'name', 'url'}] records."""
         text = (self.cleaned_data.get("shopping_links_text") or "").strip()
         if not text:
             return []
@@ -328,8 +330,16 @@ class RecipePostForm(forms.ModelForm):
 
 
     def __init__(self, *args, **kwargs):
+        """Populate initial fields when editing an existing recipe."""
         instance = kwargs.get("instance")
         super().__init__(*args, **kwargs)
+
+        nutrition_field = self.fields.get("nutrition")
+        if nutrition_field:
+            nutrition_field.widget.attrs.setdefault(
+                "placeholder",
+                "Example: 320 kcal; Protein 20g; Carbs 30g; Fat 10g",
+            )
 
         if instance:
             tags = getattr(instance, "tags", None) or []
@@ -371,8 +381,6 @@ class RecipePostForm(forms.ModelForm):
         """Create RecipeImage rows and set legacy cover image when needed."""
         files = self.files.getlist("images")
         if not files:
-            # No new uploads: keep whatever images are already associated
-            # with the recipe (useful when editing without changing photos).
             return
 
         RecipeImage.objects.filter(recipe_post=recipe).delete()
@@ -385,6 +393,7 @@ class RecipePostForm(forms.ModelForm):
             )
 
     def _validate_file_sizes(self, files, label):
+        """Raise validation error when any file exceeds the configured limit."""
         too_large = [f.name for f in files if getattr(f, "size", 0) > MAX_IMAGE_UPLOAD_BYTES]
         if not too_large:
             return

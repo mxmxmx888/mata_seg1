@@ -1,6 +1,11 @@
+"""Scraper helpers used for shopping images and related metadata."""
+
+import logging
 import requests
 import re
 from urllib.parse import urljoin
+
+logger = logging.getLogger(__name__)
 
 
 def _normalize_img_url(page_url: str, img_url: str) -> str:
@@ -46,7 +51,7 @@ def scrape_product_image(url: str | None) -> str | None:
         }
         resp = requests.get(url, headers=headers, timeout=8)
         if resp.status_code != 200:
-            print(f"[scraper] Non-200 for {url}: {resp.status_code}")
+            logger.warning("[scraper] Non-200 for %s: %s", url, resp.status_code)
             return None
 
         html = resp.text or ""
@@ -81,6 +86,6 @@ def scrape_product_image(url: str | None) -> str | None:
             return img_url
 
     except Exception as e:
-        print(f"[scraper] Error while scraping {url}: {e}")
+        logger.warning("[scraper] Error while scraping %s: %s", url, e)
 
     return None

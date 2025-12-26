@@ -1,3 +1,5 @@
+"""Forms for user profile editing, signup, and password changes."""
+
 from django import forms
 from django.contrib.auth import authenticate
 from django.core.validators import RegexValidator
@@ -88,6 +90,7 @@ class PasswordForm(NewPasswordMixin):
     password = forms.CharField(label='Current password', widget=forms.PasswordInput())
 
     def __init__(self, user=None, **kwargs):  
+        """Store the target user for password validation."""
         super().__init__(**kwargs)
         self.user = user
 

@@ -55,9 +55,10 @@ def _safe_offset(raw_offset):
 
 def _ensure_for_you_seed(request, seed):
     """Ensure a persistent per-session seed exists."""
-    if seed is None:
-        seed = random.random()
-        request.session["for_you_seed"] = seed
+    if seed is not None:
+        return seed
+    seed = random.random()
+    request.session["for_you_seed"] = seed
     return seed
 
 

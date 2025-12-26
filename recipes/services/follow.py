@@ -1,3 +1,5 @@
+"""Service helpers for managing follow relationships and requests."""
+
 from django.db import transaction
 from django.utils import timezone
 from recipes.models import Follower, Notification, FollowRequest
@@ -5,9 +7,11 @@ from recipes.models import Follower, Notification, FollowRequest
 class FollowService:
     """Domain service to manage follow relationships and requests."""
     def __init__(self, actor):
+        """Create a FollowService bound to the acting user."""
         self.actor = actor
 
     def _can_act(self, target):
+        """Return True when the actor is authenticated and different to the target."""
         return (
             self.actor
             and getattr(self.actor, "is_authenticated", False)
@@ -16,6 +20,7 @@ class FollowService:
         )
 
     def _notify(self, recipient, sender, notif_type, follow_request=None):
+        """Create a notification for a follow/follow-request event."""
         Notification.objects.create(
             recipient=recipient,
             sender=sender,
@@ -24,6 +29,7 @@ class FollowService:
         )
 
     def _cleanup_request_prompt(self, target):
+        """Remove pending follow-request notifications created by this actor."""
         Notification.objects.filter(
             recipient=target,
             sender=self.actor,

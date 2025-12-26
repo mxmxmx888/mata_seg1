@@ -1,7 +1,12 @@
+"""Firebase Admin client helpers with test-safe behaviors."""
+
+import logging
 import os
 import sys
 import firebase_admin
 from firebase_admin import credentials, auth, firestore
+
+logger = logging.getLogger(__name__)
 
 def _is_mock(obj) -> bool:
     """Return True when obj is a unittest.mock sentinel."""
@@ -11,6 +16,7 @@ def _is_mock(obj) -> bool:
         return False
 
 def _env_truthy(name: str, default: str = "false") -> bool:
+    """Return True when env var is set to a truthy value."""
     return os.getenv(name, default).lower() in ("1", "true", "yes")
 
 def _should_log() -> bool:
@@ -53,7 +59,9 @@ def get_app():
     if not cred_path or not os.path.exists(cred_path):
         # Log warning instead of raising RuntimeError to keep Django alive
         if _should_log():
-            print("WARNING: FIREBASE_SERVICE_ACCOUNT_FILE not found. Firebase features disabled.")
+            message = "FIREBASE_SERVICE_ACCOUNT_FILE not found. Firebase features disabled."
+            print(message)
+            logger.warning(message)
         return None
 
     try:
@@ -62,7 +70,9 @@ def get_app():
         return _app
     except Exception as e:
         if _should_log():
-            print(f"ERROR: Failed to initialize Firebase: {e}")
+            message = f"Failed to initialize Firebase: {e}"
+            print(message)
+            logger.error(message)
         return None
 
 def get_firestore_client():
@@ -106,9 +116,13 @@ def ensure_firebase_user(email: str, display_name: str | None = None):
             return auth.create_user(email=email, display_name=display_name)
         except Exception as e:
             if _should_log():
-                print(f"Error creating Firebase user: {e}")
+                message = f"Error creating Firebase user: {e}"
+                print(message)
+                logger.error(message)
             return None
     except Exception as e:
         if _should_log():
-            print(f"Firebase connection error: {e}")
+            message = f"Firebase connection error: {e}"
+            print(message)
+            logger.error(message)
         return None

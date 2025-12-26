@@ -5,30 +5,76 @@
   {% elif field.is_hidden %}
     {{ field }}
   {% else %}
-    <div class="mb-3">
-      {{ field.label_tag }}
-      {% if form.is_bound %}
-        {% if field.errors %}
-          {% render_field field class="form-control is-invalid" %}
+    {% if field.name == "images" %}
+      <div class="mb-3 image-upload-field">
+        <label for="{{ field.id_for_label }}">
+          {% if field.field.required %}
+            <span class="text-danger me-1">*</span>
+          {% endif %}
+          {{ field.label }}{% if form.label_suffix %}{{ form.label_suffix }}{% endif %}
+        </label>
+        {% if form.is_bound and field.errors %}
+          {% render_field field class="file-pill-input is-invalid" %}
         {% else %}
-          {% render_field field class="form-control is-valid" %}
+          {% render_field field class="file-pill-input" %}
         {% endif %}
-      {% else %}
-        {% render_field field class="form-control" %}
-      {% endif %}
-      {% if field.help_text %}
-        <small class="form-text text-muted">{{ field.help_text }}</small>
-      {% endif %}
-      <div class="invalid-feedback{% if field.errors %} d-block{% endif %}">
-        {{ field.errors }}
-      </div>
-      {% if field.name == "images" %}
+        <label for="{{ field.id_for_label }}" class="file-pill-btn">Choose files</label>
+        {% if field.help_text %}
+          <small class="form-text text-muted d-block mt-2">{{ field.help_text }}</small>
+        {% endif %}
+        <div class="invalid-feedback{% if field.errors %} d-block{% endif %}">
+          {{ field.errors }}
+        </div>
         <div id="image-file-list" class="small text-muted mt-2"></div>
-      {% elif field.name == "shop_images" %}
+      </div>
+    {% elif field.name == "shop_images" %}
+      <div class="mb-3 image-upload-field">
+        <label for="{{ field.id_for_label }}">
+          {% if field.field.required %}
+            <span class="text-danger me-1">*</span>
+          {% endif %}
+          {{ field.label }}{% if form.label_suffix %}{{ form.label_suffix }}{% endif %}
+        </label>
+        {% if form.is_bound and field.errors %}
+          {% render_field field class="file-pill-input is-invalid" %}
+        {% else %}
+          {% render_field field class="file-pill-input" %}
+        {% endif %}
+        <label for="{{ field.id_for_label }}" class="file-pill-btn">Choose file</label>
+        {% if field.help_text %}
+          <small class="form-text text-muted d-block mt-2">{{ field.help_text }}</small>
+        {% endif %}
+        <div class="invalid-feedback{% if field.errors %} d-block{% endif %}">
+          {{ field.errors }}
+        </div>
         <div id="shop-image-file-list" class="small text-muted mt-2"></div>
-      {% endif %}
+      </div>
+    {% else %}
+      <div class="mb-3">
+        <label for="{{ field.id_for_label }}">
+          {% if field.field.required %}
+            <span class="text-danger me-1">*</span>
+          {% endif %}
+          {{ field.label }}{% if form.label_suffix %}{{ form.label_suffix }}{% endif %}
+        </label>
+        {% if form.is_bound %}
+          {% if field.errors %}
+            {% render_field field class="form-control is-invalid" %}
+          {% else %}
+            {% render_field field class="form-control" %}
+          {% endif %}
+        {% else %}
+          {% render_field field class="form-control" %}
+        {% endif %}
+        {% if field.help_text %}
+          <small class="form-text text-muted">{{ field.help_text }}</small>
+        {% endif %}
+        <div class="invalid-feedback{% if field.errors %} d-block{% endif %}">
+          {{ field.errors }}
+        </div>
 
-    </div>
+      </div>
+    {% endif %}
   {% endif %}
 {% endfor %}
 {% if form.non_field_errors %}

@@ -1,71 +1,8 @@
 const { initCreateRecipe, normalizeUrl } = require("../../static/js/create_recipe");
-
-function buildForm({ bound = false, hasErrors = false } = {}) {
-  document.body.innerHTML = `
-    <div class="create-recipe-card">
-      <form data-form-bound="${bound ? "true" : "false"}" data-form-has-errors="${hasErrors ? "true" : "false"}">
-        <div class="mb-3">
-          <input id="title" required />
-        </div>
-        <div class="mb-3">
-          <input id="id_images" type="file" />
-          <div class="invalid-feedback">invalid</div>
-          <div id="image-file-list"></div>
-        </div>
-        <div class="mb-3 shopping-links-field">
-          <input id="shop-item" />
-        </div>
-        <div class="mb-3 shopping-links-upload">
-          <input id="id_shop_images" type="file" />
-          <div id="shop-image-file-list"></div>
-        </div>
-        <div class="mb-3 shopping-links-field">
-          <input id="shop-link" />
-        </div>
-        <textarea id="id_ingredients_text"></textarea>
-        <textarea id="id_shopping_links_text"></textarea>
-        <button id="add-shop-link" type="button"></button>
-        <div id="shop-list"></div>
-      </form>
-    </div>
-  `;
-}
+const { buildForm, mockFiles, registerDomHooks } = require("./support/createRecipeTestUtils");
 
 describe("create_recipe", () => {
-  let originalCreateObjectURL;
-  let originalRevokeObjectURL;
-  let originalFetch;
-  let originalFileReader;
-
-  beforeEach(() => {
-    document.body.innerHTML = "";
-    sessionStorage.clear();
-    originalCreateObjectURL = URL.createObjectURL;
-    originalRevokeObjectURL = URL.revokeObjectURL;
-    originalFetch = global.fetch;
-    const defaultFileReader = class {
-      constructor() {
-        this.onload = null;
-        this.onerror = null;
-        this.result = null;
-      }
-      readAsDataURL() {
-        if (this.onerror) this.onerror(new Error("noop"));
-      }
-    };
-    originalFileReader = defaultFileReader;
-    window.FileReader = defaultFileReader;
-    URL.createObjectURL = jest.fn(() => "blob:preview");
-    URL.revokeObjectURL = jest.fn();
-  });
-
-  afterEach(() => {
-    URL.createObjectURL = originalCreateObjectURL;
-    URL.revokeObjectURL = originalRevokeObjectURL;
-    global.fetch = originalFetch;
-    window.FileReader = originalFileReader;
-    jest.resetAllMocks();
-  });
+  registerDomHooks();
 
   test("normalizeUrl prefixes https when missing", () => {
     expect(normalizeUrl("example.com")).toBe("https://example.com");
@@ -77,7 +14,7 @@ describe("create_recipe", () => {
     buildForm();
     const file = new File(["data"], "pic.jpg", { type: "image/jpeg" });
     const shopImageInput = document.getElementById("id_shop_images");
-    Object.defineProperty(shopImageInput, "files", { value: [file], configurable: true });
+    mockFiles(shopImageInput, [file]);
 
     document.getElementById("shop-item").value = "Banana";
     document.getElementById("shop-link").value = "banana.com";
@@ -103,7 +40,7 @@ describe("create_recipe", () => {
     buildForm();
     const file = new File(["data"], "pic.jpg", { type: "image/jpeg" });
     const shopImageInput = document.getElementById("id_shop_images");
-    Object.defineProperty(shopImageInput, "files", { value: [file], configurable: true });
+    mockFiles(shopImageInput, [file]);
     document.getElementById("shop-item").value = "Banana";
     document.getElementById("shop-link").value = "banana.com";
 
@@ -139,74 +76,11 @@ describe("create_recipe", () => {
     expect(document.querySelectorAll(".client-required-error").length).toBeGreaterThan(0);
   });
 
-  test("persists selected image files to sessionStorage on change", async () => {
-    buildForm({ bound: true });
-    const imageInput = document.getElementById("id_images");
-    const file = new File(["abc"], "photo.png", { type: "image/png", lastModified: 123 });
-    Object.defineProperty(imageInput, "files", { value: [file], configurable: true });
-
-    class MockReader {
-      readAsDataURL(f) {
-        this.result = "data:image/png;base64,AAA";
-        if (this.onload) this.onload();
-      }
-    }
-    const originalReader = window.FileReader;
-    window.FileReader = jest.fn(() => new MockReader());
-
-    initCreateRecipe(window);
-    imageInput.dispatchEvent(new Event("change"));
-    await new Promise((resolve) => setTimeout(resolve, 0));
-    await new Promise((resolve) => setTimeout(resolve, 0));
-
-    expect(sessionStorage.getItem("create-recipe-images")).toContain("photo.png");
-    window.FileReader = originalReader;
-  });
-
-  test("restores files from sessionStorage when bound with errors", async () => {
-    buildForm({ bound: true, hasErrors: true });
-    const imageInput = document.getElementById("id_images");
-    const imageList = document.getElementById("image-file-list");
-    const stored = [
-      {
-        name: "saved.png",
-        type: "image/png",
-        lastModified: 123,
-        data: "data:image/png;base64,ABC"
-      }
-    ];
-    sessionStorage.setItem("create-recipe-images", JSON.stringify(stored));
-
-    const mockBlob = new Blob(["data"], { type: "image/png" });
-    global.fetch = jest.fn().mockResolvedValue({
-      blob: () => Promise.resolve(mockBlob)
-    });
-
-    initCreateRecipe(window);
-    await new Promise((resolve) => setTimeout(resolve, 0));
-    await new Promise((resolve) => setTimeout(resolve, 0));
-
-    expect(imageList.textContent).toContain("saved.png");
-  });
-
-  test("clears image list when change event has no files and removes persisted entry", () => {
-    buildForm({ bound: true });
-    const imageInput = document.getElementById("id_images");
-    const removeSpy = jest.spyOn(Storage.prototype, "removeItem");
-
-    initCreateRecipe(window);
-    imageInput.dispatchEvent(new Event("change"));
-
-    expect(document.getElementById("image-file-list").textContent).toBe("");
-    expect(removeSpy).toHaveBeenCalledWith("create-recipe-images");
-    removeSpy.mockRestore();
-  });
-
   test("focuses missing url then missing image", () => {
     buildForm();
     const shopImageInput = document.getElementById("id_shop_images");
     const file = new File(["data"], "pic.jpg", { type: "image/jpeg" });
-    Object.defineProperty(shopImageInput, "files", { value: [file], configurable: true });
+    mockFiles(shopImageInput, [file]);
 
     initCreateRecipe(window);
     document.getElementById("shop-item").value = "Item";
@@ -214,7 +88,7 @@ describe("create_recipe", () => {
     expect(document.activeElement).toBe(document.getElementById("shop-link"));
 
     document.getElementById("shop-link").value = "https://ok.com";
-    Object.defineProperty(shopImageInput, "files", { value: [], configurable: true });
+    mockFiles(shopImageInput, []);
     document.getElementById("add-shop-link").click();
     expect(document.activeElement).toBe(shopImageInput);
   });
@@ -224,7 +98,7 @@ describe("create_recipe", () => {
     const form = document.querySelector("form");
     const imageInput = document.getElementById("id_images");
     const file = new File(["abc"], "photo.png", { type: "image/png" });
-    Object.defineProperty(imageInput, "files", { value: [file], configurable: true });
+    mockFiles(imageInput, [file]);
     document.getElementById("title").value = "Title";
     document.getElementById("id_ingredients_text").value = " apple \n banana ";
 
@@ -235,62 +109,11 @@ describe("create_recipe", () => {
     expect(document.getElementById("id_ingredients_text").value).toBe("apple\nbanana");
   });
 
-  test("handles FileReader errors by clearing persisted data", async () => {
-    buildForm({ bound: true });
-    const imageInput = document.getElementById("id_images");
-    const file = new File(["abc"], "bad.png", { type: "image/png" });
-    Object.defineProperty(imageInput, "files", { value: [file], configurable: true });
-
-    class ErrorReader {
-      readAsDataURL() {
-        if (this.onerror) this.onerror(new Error("boom"));
-      }
-    }
-    const originalReader = window.FileReader;
-    window.FileReader = jest.fn(() => new ErrorReader());
-    sessionStorage.setItem("create-recipe-images", "keep");
-
-    initCreateRecipe(window);
-    imageInput.dispatchEvent(new Event("change"));
-    await new Promise((resolve) => setTimeout(resolve, 0));
-
-    expect(sessionStorage.getItem("create-recipe-images")).toBeNull();
-    window.FileReader = originalReader;
-  });
-
-  test("ignores bad stored JSON gracefully", () => {
-    buildForm({ bound: true, hasErrors: true });
-    sessionStorage.setItem("create-recipe-images", "{bad json");
-    initCreateRecipe(window);
-    expect(document.getElementById("image-file-list").textContent).toBe("");
-  });
-
-  test("continues restore loop on fetch error", async () => {
-    buildForm({ bound: true, hasErrors: true });
-    const stored = [
-      { name: "good.png", data: "data:image/png;base64,ABC" },
-      { name: "bad.png", data: "data:image/png;base64,DEF" }
-    ];
-    sessionStorage.setItem("create-recipe-images", JSON.stringify(stored));
-
-    global.fetch = jest
-      .fn()
-      .mockRejectedValueOnce(new Error("fail"))
-      .mockResolvedValueOnce({
-        blob: () => Promise.resolve(new Blob(["x"], { type: "image/png" }))
-      });
-
-    initCreateRecipe(window);
-    await new Promise((resolve) => setTimeout(resolve, 0));
-
-    expect(document.getElementById("image-file-list").textContent).toContain("bad.png");
-  });
-
   test("enter key triggers addLink for item and link inputs", () => {
     buildForm();
     const file = new File(["data"], "pic.jpg", { type: "image/jpeg" });
     const shopImageInput = document.getElementById("id_shop_images");
-    Object.defineProperty(shopImageInput, "files", { value: [file], configurable: true });
+    mockFiles(shopImageInput, [file]);
     document.getElementById("shop-item").value = "Kiwi";
     document.getElementById("shop-link").value = "kiwi.com";
 
@@ -337,43 +160,6 @@ describe("create_recipe", () => {
     if (readyDescriptor) {
       Object.defineProperty(document, "readyState", readyDescriptor);
     }
-  });
-
-  test("skips restore when DataTransfer unavailable", async () => {
-    const realDT = window.DataTransfer;
-    delete window.DataTransfer;
-    buildForm({ bound: true, hasErrors: true });
-    sessionStorage.setItem(
-      "create-recipe-images",
-      JSON.stringify([{ name: "x.png", data: "data:image/png;base64,AAA" }])
-    );
-    initCreateRecipe(window);
-    await new Promise((resolve) => setTimeout(resolve, 0));
-    expect(document.getElementById("image-file-list").textContent).toBe("");
-    window.DataTransfer = realDT;
-  });
-
-  test("renderRequiredFieldErrors handles file validity with mock files", () => {
-    buildForm();
-    const form = document.querySelector("form");
-    const imageInput = document.getElementById("id_images");
-    Object.defineProperty(imageInput, "files", { value: [new File(["x"], "x.png")], configurable: true });
-    initCreateRecipe(window);
-    // no submit triggered; ensure no pre-existing errors when file present
-    expect(document.querySelectorAll(".client-required-error").length).toBe(0);
-  });
-
-  test("persistFiles handles empty files array and storage errors gracefully", async () => {
-    buildForm();
-    const imageInput = document.getElementById("id_images");
-    Object.defineProperty(imageInput, "files", { value: [], configurable: true });
-    const removeSpy = jest.spyOn(Storage.prototype, "removeItem").mockImplementation(() => {
-      throw new Error("fail");
-    });
-    initCreateRecipe(window);
-    imageInput.dispatchEvent(new Event("change"));
-    await new Promise((resolve) => setTimeout(resolve, 0));
-    removeSpy.mockRestore();
   });
 
   test("bootstrapExisting handles lines without names and normalizes urls", () => {

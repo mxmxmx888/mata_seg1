@@ -43,7 +43,7 @@
         data-bs-toggle="modal"
         data-bs-target="#closeFriendsModal"
       >
-        {{ close_friends|length|default:0 }} Close friends
+        {{ profile.close_friends_count|default:0 }} Close friends
       </button>
       {% endif %}
     </p>
@@ -83,7 +83,36 @@
   <section class="mt-4">
     {% if can_view_profile %}
       {% if posts %}
-        {% include "partials/feed/feed_masonry_grid.html" with posts=posts grid_id="profile-grid" %}
+        <div class="feed-masonry-grid" id="profile-posts-grid">
+          <div class="feed-masonry-column" id="profile-posts-col-1">
+            {% for post in posts %}
+              {% if forloop.counter0|divisibleby:3 %}
+                {% include "partials/feed/feed_card.html" %}
+              {% endif %}
+            {% endfor %}
+          </div>
+          <div class="feed-masonry-column" id="profile-posts-col-2">
+            {% for post in posts %}
+              {% if forloop.counter0|add:"2"|divisibleby:3 %}
+                {% include "partials/feed/feed_card.html" %}
+              {% endif %}
+            {% endfor %}
+          </div>
+          <div class="feed-masonry-column" id="profile-posts-col-3">
+            {% for post in posts %}
+              {% if forloop.counter0|add:"1"|divisibleby:3 %}
+                {% include "partials/feed/feed_card.html" %}
+              {% endif %}
+            {% endfor %}
+          </div>
+        </div>
+        <div
+          id="profile-posts-sentinel"
+          class="infinite-sentinel"
+          data-next-page="{{ posts_next_page }}"
+          data-has-more="{{ posts_has_more|yesno:'true,false' }}"
+          data-endpoint="{% url 'profile' %}{% if profile_user.username %}?user={{ profile_user.username|urlencode }}{% endif %}"
+        ></div>
       {% else %}
         {% if is_own_profile %}
           <p class="text-muted mt-4">You haven't created any recipes yet.</p>
@@ -115,45 +144,19 @@
           aria-label="Close"
         ></button>
       </div>
-      <div class="modal-body">
+      <div
+        class="modal-body follow-list-body"
+        data-list-type="followers"
+        data-endpoint="{% url 'profile_follow_list' %}?user={{ profile_user.username|urlencode }}&list=followers"
+        data-next-page="{{ followers_next_page|default:'' }}"
+        data-has-more="{{ followers_has_more|yesno:'true,false' }}"
+      >
         {% if can_view_follow_lists %}
           {% if followers_users %}
-            <ul class="list-unstyled mb-0">
-              {% for u in followers_users %}
-                <li class="mb-3">
-                  <div class="d-flex align-items-center justify-content-between gap-3">
-                    <a
-                      href="{% url 'profile' %}?user={{ u.username }}"
-                      class="follow-user-link d-flex align-items-center text-decoration-none flex-grow-1"
-                    >
-                      <div class="me-3">
-                        <img
-                          src="{{ u.mini_avatar_url }}"
-                          alt="{{ u.username }} avatar"
-                          class="rounded-circle"
-                          width="40"
-                          height="40"
-                        >
-                      </div>
-                      <div class="text-start">
-                        <div class="fw-semibold follow-user-name">
-                          {{ u.get_full_name|default:u.username }}
-                        </div>
-                        <div class="small follow-user-handle">
-                          {{ u.username }}
-                        </div>
-                      </div>
-                    </a>
-                    {% if is_own_profile %}
-                    <form method="post" action="{% url 'remove_follower' u.username %}">
-                      {% csrf_token %}
-                      <button type="submit" class="btn btn-sm btn-outline-light">Remove</button>
-                    </form>
-                    {% endif %}
-                  </div>
-                </li>
-              {% endfor %}
+            <ul class="list-unstyled mb-0 follow-list-items" id="followersList">
+              {% include "partials/profile/follow_list_items.html" with users=followers_users list_type="followers" is_own_profile=is_own_profile %}
             </ul>
+            <div class="follow-list-sentinel infinite-sentinel" data-target-list="followers" aria-hidden="true"></div>
           {% else %}
             <p class="text-muted mb-0 follow-empty-text">No followers yet.</p>
           {% endif %}
@@ -183,45 +186,19 @@
           aria-label="Close"
         ></button>
       </div>
-      <div class="modal-body">
+      <div
+        class="modal-body follow-list-body"
+        data-list-type="following"
+        data-endpoint="{% url 'profile_follow_list' %}?user={{ profile_user.username|urlencode }}&list=following"
+        data-next-page="{{ following_next_page|default:'' }}"
+        data-has-more="{{ following_has_more|yesno:'true,false' }}"
+      >
         {% if can_view_follow_lists %}
           {% if following_users %}
-            <ul class="list-unstyled mb-0">
-              {% for u in following_users %}
-                <li class="mb-3">
-                  <div class="d-flex align-items-center justify-content-between gap-3">
-                    <a
-                      href="{% url 'profile' %}?user={{ u.username }}"
-                      class="follow-user-link d-flex align-items-center text-decoration-none flex-grow-1"
-                    >
-                      <div class="me-3">
-                        <img
-                          src="{{ u.mini_avatar_url }}"
-                          alt="{{ u.username }} avatar"
-                          class="rounded-circle"
-                          width="40"
-                          height="40"
-                        >
-                      </div>
-                      <div class="text-start">
-                        <div class="fw-semibold follow-user-name">
-                          {{ u.get_full_name|default:u.username }}
-                        </div>
-                        <div class="small follow-user-handle">
-                          {{ u.username }}
-                        </div>
-                      </div>
-                    </a>
-                    {% if is_own_profile %}
-                    <form method="post" action="{% url 'remove_following' u.username %}">
-                      {% csrf_token %}
-                      <button type="submit" class="btn btn-sm btn-outline-light">Unfollow</button>
-                    </form>
-                    {% endif %}
-                  </div>
-                </li>
-              {% endfor %}
+            <ul class="list-unstyled mb-0 follow-list-items" id="followingList">
+              {% include "partials/profile/follow_list_items.html" with users=following_users list_type="following" is_own_profile=is_own_profile %}
             </ul>
+            <div class="follow-list-sentinel infinite-sentinel" data-target-list="following" aria-hidden="true"></div>
           {% else %}
             <p class="text-muted mb-0 follow-empty-text">Not following anyone yet.</p>
           {% endif %}
@@ -252,7 +229,13 @@
           aria-label="Close"
         ></button>
       </div>
-      <div class="modal-body">
+      <div
+        class="modal-body follow-list-body"
+        data-list-type="close_friends"
+        data-endpoint="{% url 'profile_follow_list' %}?user={{ profile_user.username|urlencode }}&list=close_friends"
+        data-next-page="{{ close_friends_next_page|default:'' }}"
+        data-has-more="{{ close_friends_has_more|yesno:'true,false' }}"
+      >
         <div class="mb-3">
           <input
             type="text"
@@ -262,44 +245,10 @@
           >
         </div>
         {% if followers_users %}
-          <ul class="list-unstyled mb-0" id="closeFriendsList">
-            {% for u in followers_users %}
-              <li class="mb-3 close-friend-item" data-name="{{ u.username|lower }}">
-                <div class="d-flex align-items-center justify-content-between gap-3">
-                  <div class="d-flex align-items-center text-decoration-none flex-grow-1">
-                    <div class="me-3">
-                      <img
-                        src="{{ u.mini_avatar_url }}"
-                        alt="{{ u.username }} avatar"
-                        class="rounded-circle"
-                        width="40"
-                        height="40"
-                      >
-                    </div>
-                    <div class="text-start">
-                      <div class="fw-semibold follow-user-name">
-                        {{ u.get_full_name|default:u.username }}
-                      </div>
-                      <div class="small follow-user-handle">
-                        {{ u.username }}
-                      </div>
-                    </div>
-                  </div>
-                  {% if u.id in close_friend_ids %}
-                  <form method="post" action="{% url 'remove_close_friend' u.username %}">
-                    {% csrf_token %}
-                    <button type="submit" class="btn btn-sm btn-outline-light">Remove</button>
-                  </form>
-                  {% else %}
-                  <form method="post" action="{% url 'add_close_friend' u.username %}">
-                    {% csrf_token %}
-                    <button type="submit" class="btn btn-sm btn-outline-light">Add</button>
-                  </form>
-                  {% endif %}
-                </div>
-              </li>
-            {% endfor %}
+          <ul class="list-unstyled mb-0 follow-list-items" id="closeFriendsList">
+            {% include "partials/profile/close_friend_items.html" with users=followers_users close_friend_ids=close_friend_ids %}
           </ul>
+          <div class="follow-list-sentinel infinite-sentinel" data-target-list="close_friends" aria-hidden="true"></div>
         {% else %}
           <p class="text-muted mb-0 follow-empty-text">No followers to add.</p>
         {% endif %}

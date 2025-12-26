@@ -120,10 +120,10 @@
       {% endif %}
       <div
         id="comments-sentinel"
+        class="infinite-sentinel"
         data-next-page="{{ comments_next_page }}"
         data-comments-endpoint="{% url 'recipe_detail' recipe.id %}"
         data-has-more="{{ comments_has_more|yesno:'true,false' }}"
-        style="height:1px;width:100%;margin:0;padding:0;"
       ></div>
     </div>
   </div>

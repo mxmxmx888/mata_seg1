@@ -1,4 +1,5 @@
 const modulePath = "../../static/js/for_you_infinite";
+const { attachGlobal } = require("../../static/js/infinite_list");
 
 function loadModule() {
   jest.resetModules();
@@ -21,6 +22,7 @@ describe("for_you_infinite", () => {
         scrollHandlers.push(handler);
       }
     });
+    attachGlobal(window);
     originalFetch = global.fetch;
     global.fetch = jest.fn(() =>
       Promise.resolve({

@@ -1,5 +1,6 @@
 (function (global) {
   function initShoppingInfinite(win) {
+    // Sets up responsive infinite scroll for the Shop grid (#shopping-grid + .shop-masonry-item cards).
     const w = win || (typeof window !== "undefined" ? window : undefined);
     if (!w || !w.document) return;
     if (w.__shoppingInfiniteInitialized) return;
@@ -61,33 +62,43 @@
     }
 
     let page = Number(container.dataset.page || "1");
-    let loading = false;
     let hasNext = (container.dataset.shoppingHasNext || "true") === "true";
+    const infinite = w.InfiniteList || {};
 
     function setLoading(state) {
-      loading = state;
       if (!loadingEl) return;
       loadingEl.classList.toggle("d-none", !state);
     }
+
+    const placeNodes = (nodes) => {
+      if (!nodes || !nodes.length) return;
+      if (typeof infinite.placeInColumns === "function") {
+        infinite.placeInColumns(nodes, columns);
+        return;
+      }
+      placeItems(nodes);
+    };
 
     function appendHtml(html) {
       if (!html) return;
       const temp = doc.createElement("div");
       temp.innerHTML = html;
       const items = Array.from(temp.children);
-      placeItems(items);
+      placeNodes(items);
     }
 
-    function loadMoreShopping() {
-      if (loading || !hasNext) return;
-      setLoading(true);
+    if (!infinite.create) {
+      buildColumns();
+      return;
+    }
 
-      page += 1;
+    const fetchPage = ({ page: targetPage }) => {
+      setLoading(true);
       const url = new URL(w.location.href);
-      url.searchParams.set("page", String(page));
+      url.searchParams.set("page", String(targetPage));
       url.searchParams.set("ajax", "1");
 
-      w
+      return w
         .fetch(url.toString(), {
           headers: { "X-Requested-With": "XMLHttpRequest" }
         })
@@ -97,38 +108,29 @@
         })
         .then((data) => {
           if (data && data.html) appendHtml(data.html);
-          hasNext = Boolean(data && data.has_next);
-          if (!hasNext && observer) observer.disconnect();
-          setLoading(false);
+          const more = Boolean(data && data.has_next);
+          if (more) {
+            page = targetPage;
+          }
+          return {
+            html: "",
+            hasMore: more,
+            nextPage: more ? targetPage + 1 : null,
+          };
         })
-        .catch(() => {
-          page -= 1;
-          setLoading(false);
-        });
-    }
+        .finally(() => setLoading(false));
+    };
 
-    const observer = "IntersectionObserver" in w
-      ? new w.IntersectionObserver((entries) => {
-          entries.forEach((entry) => {
-            if (entry.isIntersecting) {
-              loadMoreShopping();
-            }
-          });
-        }, { rootMargin: "600px 0px" })
-      : null;
-
-    if (observer) {
-      observer.observe(sentinel);
-    } else {
-      w.addEventListener("scroll", () => {
-        if (loading || !hasNext) return;
-        const scrollPosition = w.innerHeight + w.scrollY;
-        const threshold = doc.body.offsetHeight - 300;
-        if (scrollPosition >= threshold) {
-          loadMoreShopping();
-        }
-      });
-    }
+    infinite.create({
+      sentinel,
+      hasMore: hasNext,
+      nextPage: hasNext ? page + 1 : null,
+      fetchPage,
+      append: () => {},
+      observerOptions: { rootMargin: "600px 0px" },
+      fallbackScroll: true,
+      fallbackMargin: 300,
+    });
 
     buildColumns();
     w.addEventListener("resize", buildColumns);

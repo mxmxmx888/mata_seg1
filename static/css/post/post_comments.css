@@ -21,6 +21,13 @@
   }
 }
 
+.infinite-sentinel {
+  height: 1px;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
 .post-comments-topbar {
   display: flex;
   align-items: center;

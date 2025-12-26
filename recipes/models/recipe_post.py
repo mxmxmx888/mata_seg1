@@ -1,36 +1,10 @@
+"""Models for recipe posts and their associated images."""
+
 import uuid
 from django.db import models
 from django.utils import timezone
 from .user import User
 from django.conf import settings
-
-"""
-RecipePost + RecipeImage models
-
-These two tables represent recipes and their images.
-
-RecipePost:
-- Stores the main “post” a user publishes: title, description, timings, tags, etc.
-- `author` links the post to the user who created it.
-- `visibility` controls who can see the post (public / followers / close friends).
-- `image` is an optional “legacy/cover” image URL/path stored as a string.
-- `saved_count` is a cached counter for how many times the post was saved.
-- `published_at/created_at/updated_at` track lifecycle times.
-- `is_hidden` lets admins hide content without deleting it.
-
-RecipeImage:
-- Stores extra images for a RecipePost using a proper ImageField.
-- A post can have multiple images via `related_name="images"`.
-- `position` allows ordering (0,1,2,...) so you can control image sequence.
-- The Meta ordering sorts by position first, then created time, then id.
-
-`RecipePost.primary_image_url`:
-- Convenience property that chooses the “best” image to show:
-  1) if the post has any RecipeImage objects, return the first image’s URL
-  2) otherwise fall back to the string `image` field
-  3) otherwise return None
-- The try/except handles cases where an ImageField exists but has no usable URL.
-"""
 
 class RecipePost(models.Model):
     """Primary recipe post model with visibility, images, and metadata."""
@@ -90,9 +64,11 @@ class RecipePost(models.Model):
     is_hidden = models.BooleanField(default = False, help_text = "Hidden by admin due to reports")
 
     class Meta:
+        """Meta options for RecipePost."""
         db_table = 'recipe_post'
 
     def __str__(self):
+        """Return a readable label for admin and logs."""
         return self.title
 
     @property
@@ -130,7 +106,9 @@ class RecipeImage(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
+        """Ordering for recipe images to keep galleries consistent."""
         ordering = ["position", "created_at", "id"]
 
     def __str__(self):
+        """Human-readable representation of the image row."""
         return f"Image for {self.recipe_post_id}"

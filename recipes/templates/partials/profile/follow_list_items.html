@@ -1,0 +1,41 @@
+{% for u in users %}
+  <li class="mb-3 follow-list-item">
+    <div class="d-flex align-items-center justify-content-between gap-3">
+      <a
+        href="{% url 'profile' %}?user={{ u.username }}"
+        class="follow-user-link d-flex align-items-center text-decoration-none flex-grow-1"
+      >
+        <div class="me-3">
+          <img
+            src="{{ u.mini_avatar_url }}"
+            alt="{{ u.username }} avatar"
+            class="rounded-circle"
+            width="40"
+            height="40"
+          >
+        </div>
+        <div class="text-start">
+          <div class="fw-semibold follow-user-name">
+            {{ u.get_full_name|default:u.username }}
+          </div>
+          <div class="small follow-user-handle">
+            {{ u.username }}
+          </div>
+        </div>
+      </a>
+      {% if is_own_profile %}
+        {% if list_type == "followers" %}
+          <form method="post" action="{% url 'remove_follower' u.username %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-sm btn-outline-light">Remove</button>
+          </form>
+        {% elif list_type == "following" %}
+          <form method="post" action="{% url 'remove_following' u.username %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-sm btn-outline-light">Unfollow</button>
+          </form>
+        {% endif %}
+      {% endif %}
+    </div>
+  </li>
+{% endfor %}

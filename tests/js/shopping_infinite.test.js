@@ -1,4 +1,5 @@
 const modulePath = "../../static/js/shopping_infinite";
+const { attachGlobal } = require("../../static/js/infinite_list");
 
 function loadModule() {
   jest.resetModules();
@@ -13,6 +14,7 @@ describe("shopping_infinite", () => {
 
   beforeEach(() => {
     document.body.innerHTML = "";
+    attachGlobal(window);
     originalFetch = global.fetch;
     global.fetch = jest.fn(() =>
       Promise.resolve({

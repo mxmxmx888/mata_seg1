@@ -9,19 +9,9 @@ from recipes.forms.recipe_forms import RecipePostForm
 from recipes.forms.comment_form import CommentForm
 from recipes.services import PrivacyService
 from recipes.services import FollowService
-
-try:
-    from recipes.models import RecipePost, Like, Comment
-    from recipes.models.favourite_item import FavouriteItem
-except Exception:
-    from recipes.models.recipe_post import RecipePost
-    from recipes.models.like import Like
-    from recipes.models.comment import Comment
-    from recipes.models.favourite_item import FavouriteItem
-try:
-    from recipes.models.followers import Follower
-except Exception:
-    from recipes.models import Follower
+from recipes.models import RecipePost, Like, Comment, Follower, Ingredient
+import json
+from recipes.models.favourite_item import FavouriteItem
 
 from recipes.views.recipe_view_helpers import (
     build_recipe_context,
@@ -73,7 +63,7 @@ def recipe_create(request):
         set_primary_image(recipe)
         return redirect("recipe_detail", post_id=recipe.id)
 
-    return render(
+    response = render(
         request,
         "app/create_recipe.html",
         {
@@ -81,6 +71,10 @@ def recipe_create(request):
             "exclude_fields": ["shop_images"],  # render form fields except shopping images (handled manually)
         },
     )
+    response["Cache-Control"] = "no-store, must-revalidate"
+    response["Pragma"] = "no-cache"
+    response["Expires"] = "0"
+    return response
 
 @login_required
 def recipe_edit(request, post_id):
@@ -105,8 +99,17 @@ def recipe_edit(request, post_id):
         form.create_images(recipe)
         set_primary_image(recipe)
         messages.success(request, "Recipe updated.")
-        return redirect("recipe_detail", post_id=recipe.id)
+        detail_url = reverse("recipe_detail", kwargs={"post_id": recipe.id})
+        return redirect(f"{detail_url}?from_edit=1")
 
+    shopping_items = [
+        {
+            "name": ing.name,
+            "url": ing.shop_url or "",
+            "image_url": ing.shop_image_upload.url if ing.shop_image_upload else "",
+        }
+        for ing in Ingredient.objects.filter(recipe_post=recipe, shop_url__isnull=False).order_by("position")
+    ]
     return render(
         request,
         "app/edit_recipe.html",
@@ -115,6 +118,8 @@ def recipe_edit(request, post_id):
             "recipe": recipe,
             # render form fields except images (kept as-is on edit) and shopping images (handled manually)
             "exclude_fields": ["images", "shop_images"],
+            "shopping_items_data": shopping_items,
+            "shopping_items_json": json.dumps(shopping_items),
         },
     )
 

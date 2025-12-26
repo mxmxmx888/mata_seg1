@@ -1,3 +1,5 @@
+"""Dashboard view helpers for discovery feed, search scopes, and AJAX fragments."""
+
 from django.core.paginator import Paginator
 from django.db.models import Exists, ExpressionWrapper, F, IntegerField, OuterRef, Q
 from django.http import JsonResponse
@@ -10,7 +12,6 @@ from recipes.views.dashboard_params import (
     _ensure_for_you_seed,
     _safe_offset,
 )
-_parse_dashboard_params = parse_dashboard_params
 
 from .dashboard_utils import (
     Like,
@@ -33,6 +34,7 @@ except Exception:  # pragma: no cover
 
 
 def _base_discover_queryset(user):
+    """Base queryset of published posts, excluding private tags from other authors."""
     return (
         RecipePost.objects.filter(published_at__isnull=False)
         .select_related("author")
@@ -42,6 +44,7 @@ def _base_discover_queryset(user):
 
 
 def _apply_text_filters(qs, q):
+    """Filter posts by title/description/tag text when a search query is present."""
     if not q:
         return qs
     return qs.filter(
@@ -52,18 +55,21 @@ def _apply_text_filters(qs, q):
 
 
 def _apply_category_filter(qs, category):
+    """Filter by category when provided."""
     if category and category != "all":
         return qs.filter(category__iexact=category)
     return qs
 
 
 def _apply_ingredient_filter(qs, ingredient_q):
+    """Filter posts that contain an ingredient matching the query text."""
     if ingredient_q:
         return qs.filter(ingredients__name__icontains=ingredient_q.lower()).distinct()
     return qs
 
 
 def _apply_time_filters(qs, min_prep, max_prep):
+    """Filter posts by total prep+cook time bounds."""
     if not (min_prep or max_prep):
         return qs
 
@@ -89,6 +95,7 @@ def _apply_time_filters(qs, min_prep, max_prep):
 
 
 def _apply_have_ingredients_filter(qs, have_ingredients_list):
+    """Filter posts that include at least one provided ingredient and no others."""
     if not have_ingredients_list:
         return qs
 
@@ -110,6 +117,7 @@ def _apply_have_ingredients_filter(qs, have_ingredients_list):
 
 
 def _sort_discover(discover_qs, sort):
+    """Apply sort mode to the discover queryset."""
     if sort == "popular":
         return discover_qs.order_by("-saved_count", "-published_at", "-created_at")
     if sort == "oldest":
@@ -164,6 +172,7 @@ def _shopping_search(request, params, privacy):
 
 
 def _shopping_items_queryset(user, params, privacy):
+    """Return a filtered queryset of shopping items visible to the user."""
     qs = (
         Ingredient.objects.filter(
             Q(shop_url__isnull=False) & ~Q(shop_url__regex=r"^\s*$")
@@ -205,18 +214,22 @@ def _recipe_search(request, params, discover_qs):
 
 
 def _scope_users_results(params):
+    """Return user search results for the dashboard scope=users."""
     return _search_users(params["q"], limit=18)
 
 
 def _scope_shopping_results(request, params, privacy):
+    """Return shopping scope results or AJAX payload."""
     return _shopping_search(request, params, privacy)
 
 
 def _scope_recipes_results(request, params, discover_qs):
+    """Return recipe scope results or AJAX payload."""
     return _recipe_search(request, params, discover_qs)
 
 
 def _default_feed(discover_qs, request, for_you_seed, privacy):
+    """Build default feed bundles when no search filters are applied."""
     popular_recipes = list(discover_qs[:18])
     for_you_posts = _get_for_you_posts(request.user, seed=for_you_seed, privacy=privacy)
     following_posts = _get_following_posts(request.user)
@@ -224,6 +237,7 @@ def _default_feed(discover_qs, request, for_you_seed, privacy):
 
 
 def _shopping_context(shopping_items, shopping_has_next, shopping_page):
+    """Shape context for shopping search results."""
     return {
         "shopping_items": shopping_items,
         "shopping_has_next": shopping_has_next,
@@ -232,6 +246,7 @@ def _shopping_context(shopping_items, shopping_has_next, shopping_page):
 
 
 def _feed_context(pops, for_you_posts, following_posts, popular_has_next):
+    """Shape feed-related context (popular, for-you, following, users)."""
     popular_recipes, users_results = pops
     return {
         "popular_recipes": popular_recipes,
@@ -243,6 +258,7 @@ def _feed_context(pops, for_you_posts, following_posts, popular_has_next):
 
 
 def _handle_dashboard_scope(request, params, privacy, discover_qs, for_you_seed):
+    """Branch dashboard rendering based on scope (default, users, shopping, recipes)."""
     if not params["has_search"]:
         popular_recipes, for_you_posts, following_posts = _default_feed(discover_qs, request, for_you_seed, privacy)
         return None, (popular_recipes, False, [], [], False, params["page_number"], for_you_posts, following_posts)
@@ -265,6 +281,7 @@ def _handle_dashboard_scope(request, params, privacy, discover_qs, for_you_seed)
 
 
 def _dashboard_context(params, request, data, popular_has_next):
+    """Assemble the full dashboard template context."""
     popular_recipes, users_results, shopping_items, shopping_has_next, shopping_page, for_you_posts, following_posts = data
     return {
         "current_user": request.user,
@@ -281,6 +298,7 @@ def _dashboard_context(params, request, data, popular_has_next):
 
 
 def _build_dashboard(request, params, privacy, for_you_seed):
+    """Compute dashboard context or AJAX responses based on parsed params."""
     discover_qs = _discover_queryset(params, request.user, privacy)
     response, data = _handle_dashboard_scope(request, params, privacy, discover_qs, for_you_seed)
     if response:

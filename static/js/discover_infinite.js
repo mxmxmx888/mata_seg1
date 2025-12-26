@@ -1,5 +1,6 @@
 (function (global) {
   function initDiscoverInfinite(win) {
+    // Sets up infinite scroll for the Discover grid (#discover-grid + .feed-masonry-column items).
     const w = win || (typeof window !== "undefined" ? window : undefined);
     if (!w || !w.document) return;
     if (w.__discoverInfiniteInitialized) return;
@@ -12,16 +13,30 @@
     const columns = Array.from(container.querySelectorAll(".feed-masonry-column"));
     if (!columns.length) return;
 
+    const existingSentinel = doc.getElementById("discover-sentinel");
+    const sentinel = existingSentinel || (() => {
+      const s = doc.createElement("div");
+      s.id = "discover-sentinel";
+      s.className = "infinite-sentinel";
+      const parent = container.parentNode;
+      if (parent) {
+        parent.appendChild(s);
+      } else {
+        doc.body.appendChild(s);
+      }
+      return s;
+    })();
+
     let page = Number(container.dataset.page || "1");
-    let loading = false;
-    let hasNext = (container.dataset.popularHasNext || "true") === "true";
+    const hasNext = (container.dataset.popularHasNext || "true") === "true";
+    const infinite = w.InfiniteList || {};
 
-    function appendHtmlToColumns(html) {
-      if (!html) return;
-      const temp = doc.createElement("div");
-      temp.innerHTML = html;
-      const cards = Array.from(temp.querySelectorAll(".my-recipe-card"));
-
+    const placeCards = (cards) => {
+      if (!cards || !cards.length) return;
+      if (typeof infinite.placeInColumns === "function") {
+        infinite.placeInColumns(cards, columns);
+        return;
+      }
       cards.forEach((card) => {
         let target = columns[0];
         for (let i = 1; i < columns.length; i += 1) {
@@ -31,18 +46,24 @@
         }
         target.appendChild(card);
       });
+    };
+
+    function appendHtmlToColumns(html) {
+      if (!html) return;
+      const temp = doc.createElement("div");
+      temp.innerHTML = html;
+      const cards = Array.from(temp.querySelectorAll(".my-recipe-card"));
+      placeCards(cards);
     }
 
-    function loadMoreDiscover() {
-      if (loading || !hasNext) return;
-      loading = true;
+    if (!infinite.create) return;
 
-      page += 1;
+    const fetchPage = ({ page: targetPage }) => {
       const url = new URL(w.location.href);
-      url.searchParams.set("page", String(page));
+      url.searchParams.set("page", String(targetPage));
       url.searchParams.set("ajax", "1");
 
-      w
+      return w
         .fetch(url.toString(), {
           headers: { "X-Requested-With": "XMLHttpRequest" }
         })
@@ -51,25 +72,27 @@
           return response.json();
         })
         .then((data) => {
-          if (data && data.html) appendHtmlToColumns(data.html);
-          hasNext = Boolean(data && data.has_next);
-          loading = false;
+          page = targetPage;
+          const more = Boolean(data && data.has_next);
+          return {
+            html: (data && data.html) || "",
+            hasMore: more,
+            nextPage: more ? targetPage + 1 : null,
+          };
         })
-        .catch(() => {
-          loading = false;
-        });
-    }
-
-    const onScroll = () => {
-      if (loading || !hasNext) return;
-      const scrollPosition = w.innerHeight + w.scrollY;
-      const threshold = doc.body.offsetHeight - 300;
-      if (scrollPosition >= threshold) {
-        loadMoreDiscover();
-      }
+        .catch(() => ({ html: "", hasMore: true, nextPage: targetPage }));
     };
 
-    w.addEventListener("scroll", onScroll);
+    infinite.create({
+      sentinel,
+      hasMore: hasNext,
+      nextPage: hasNext ? page + 1 : null,
+      fetchPage,
+      append: appendHtmlToColumns,
+      fallbackScroll: true,
+      fallbackMargin: 300,
+      fallbackMode: "document",
+    });
   }
 
   if (typeof module !== "undefined" && module.exports) {

@@ -3,7 +3,7 @@
     <span>Activity</span>
   </div>
 
-  <div class="notification-list" id="notification-list">
+  <div class="notification-list">
     {% include "partials/navbar/notification_items.html" with notifications=notifications %}
     {% if not notifications %}
     <div class="text-center py-5 empty-notifications">
@@ -11,63 +11,5 @@
       <p class="small mb-0">No notifications yet.</p>
     </div>
     {% endif %}
-    <div
-      id="notifications-sentinel"
-      data-next-page="{{ notifications_next_page }}"
-      data-has-more="{{ notifications_has_more|yesno:'true,false' }}"
-      data-endpoint="{% url 'mark_notifications_read' %}"
-      style="height:1px;width:100%;margin:0;padding:0;"
-    ></div>
   </div>
 </div>
-
-<script>
-  (function() {
-    const sentinel = document.getElementById("notifications-sentinel");
-    if (!sentinel) return;
-    const list = document.getElementById("notification-list");
-    const endpoint = sentinel.getAttribute("data-endpoint");
-
-    function fetchMore() {
-      const hasMore = sentinel.getAttribute("data-has-more") === "true";
-      const next = sentinel.getAttribute("data-next-page");
-      if (!hasMore || !next) return;
-      sentinel.setAttribute("data-has-more", "false");
-      const url = `${endpoint}?page=${next}`;
-      fetch(url, { headers: { "HX-Request": "true" } })
-        .then((resp) => resp.json())
-        .then((data) => {
-          if (!data || !data.html) {
-            return;
-          }
-          const parser = new DOMParser();
-          const doc = parser.parseFromString(data.html, "text/html");
-          const items = doc.body.children;
-          Array.from(items).forEach((el) => {
-            sentinel.insertAdjacentElement("beforebegin", el);
-          });
-          if (data.has_more) {
-            sentinel.setAttribute("data-has-more", "true");
-            sentinel.setAttribute("data-next-page", data.next_page);
-          } else {
-            sentinel.setAttribute("data-has-more", "false");
-            observer.disconnect();
-          }
-        })
-        .catch(() => observer.disconnect());
-    }
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            fetchMore();
-          }
-        });
-      },
-      { root: null, threshold: 0.1 }
-    );
-
-    observer.observe(sentinel);
-  })();
-</script>

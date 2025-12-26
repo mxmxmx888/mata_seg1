@@ -21,10 +21,16 @@ def edit_profile_form(request: HttpRequest) -> Dict[str, object]:
 def notifications(request):
     """Provide notifications list/count and following IDs to templates."""
     if request.user.is_authenticated:
-        notifs_qs = Notification.objects.filter(recipient=request.user).exclude(
-            notification_type="follow_request",
-            follow_request__status__in=["accepted", "rejected"],
-        ).select_related("sender", "post", "follow_request").prefetch_related("post__images").order_by("-created_at")
+        notifs_qs = (
+            Notification.objects.filter(recipient=request.user)
+            .exclude(
+                notification_type="follow_request",
+                follow_request__status__in=["accepted", "rejected"],
+            )
+            .select_related("sender", "post", "follow_request")
+            .prefetch_related("post__images")
+            .order_by("-created_at", "-id")
+        )
         notifs = list(notifs_qs)
         following_ids = set(
             Follower.objects.filter(follower=request.user).values_list("author_id", flat=True)
@@ -46,8 +52,8 @@ def notifications(request):
                     continue
                 seen_follow_senders.add(n.sender_id)
             filtered.append(n)
-        notifs = filtered
-        unread_count = sum(1 for n in notifs if not n.is_read)
+        unread_count = sum(1 for n in filtered if not n.is_read)
+        notifs = filtered[:50]
         return {
             'notifications': notifs,
             'unread_notifications_count': unread_count,

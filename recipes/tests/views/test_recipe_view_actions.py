@@ -44,6 +44,34 @@ class RecipeViewActionsTests(RecipeViewTestCase):
         with self.assertRaises(Http404):
             recipe_detail(request, post_id=self.post.id)
 
+    def test_recipe_detail_hx_comments_only_renders_partial(self):
+        Comment.objects.create(recipe_post=self.post, user=self.user, text="HX comment")
+        self.client.login(username=self.user.username, password="Password123")
+        url = reverse("recipe_detail", args=[self.post.id])
+
+        response = self.client.get(url, {"comments_only": "1"}, HTTP_HX_REQUEST="true")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("partials/post/comment_items.html", [t.name for t in response.templates])
+        self.assertContains(response, "HX comment")
+
+    def test_recipe_detail_paginates_comments_and_sets_next_page(self):
+        comments = [
+            Comment(recipe_post=self.post, user=self.user, text=f"Comment {i}")
+            for i in range(55)
+        ]
+        Comment.objects.bulk_create(comments)
+
+        self.client.login(username=self.user.username, password="Password123")
+        url = reverse("recipe_detail", args=[self.post.id])
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.context["comments"]), 50)
+        self.assertTrue(response.context["comments_has_more"])
+        self.assertEqual(response.context["comments_next_page"], 2)
+        self.assertTrue(response.context["source_link"].startswith("http://testserver/"))
+
     def test_toggle_like_creates_then_deletes_like(self):
         req1 = self.factory.post(f"/fake/recipe/{self.post.id}/like/")
         req1.user = self.user

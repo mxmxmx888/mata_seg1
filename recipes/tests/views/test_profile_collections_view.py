@@ -79,6 +79,29 @@ class ProfileCollectionViewTests(TestCase):
         self.assertEqual(resp.status_code, 200)
         self.assertTemplateUsed(resp, "app/collections.html")
 
+    def test_collections_overview_ajax_paginates(self):
+        self.client.login(username=self.user.username, password="Password123")
+        for i in range(40):
+            Favourite.objects.create(user=self.user, name=f"Fav {i}")
+
+        resp = self.client.get(reverse("collections"), {"page": "2"}, HTTP_HX_REQUEST="true")
+
+        self.assertEqual(resp.status_code, 200)
+        self.assertIn("partials/collections/collection_cards.html", [t.name for t in resp.templates])
+        total = Favourite.objects.filter(user=self.user).count()
+        expected_len = min(35, max(0, total - 35))
+        self.assertEqual(len(resp.context["collections"]), expected_len)
+
+    def test_collections_overview_sets_pagination_flags(self):
+        self.client.login(username=self.user.username, password="Password123")
+        for i in range(36):
+            Favourite.objects.create(user=self.user, name=f"Fav {i}")
+
+        resp = self.client.get(reverse("collections"))
+
+        self.assertTrue(resp.context["collections_has_more"])
+        self.assertEqual(resp.context["collections_next_page"], 2)
+
     def test_collection_detail_lists_posts(self):
         fav = Favourite.objects.create(user=self.user, name="My stuff")
         post = RecipePost.objects.create(author=self.user, title="Soup", description="d")
@@ -239,6 +262,22 @@ class ProfileCollectionViewTests(TestCase):
             mgr.filter.return_value = fake_qs
             resp = self.client.get(reverse("collection_detail", kwargs={"slug": fav.id}))
         self.assertEqual(list(resp.context["posts"]), [])
+
+    def test_collection_detail_handles_qs_without_order_by(self):
+        fav = Favourite.objects.create(user=self.user, name="No order")
+        self.client.login(username=self.user.username, password="Password123")
+
+        class FakeQS(list):
+            def select_related(self, *args, **kwargs):
+                return self
+
+        fake_items = FakeQS([type("Item", (), {"recipe_post": None})()])
+        with patch("recipes.views.collection_views.FavouriteItem.objects") as mgr:
+            mgr.filter.return_value = fake_items
+            resp = self.client.get(reverse("collection_detail", kwargs={"slug": fav.id}))
+
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.context["posts"], [])
 
     def test_profile_post_sets_success_message(self):
         self.client.login(username=self.user.username, password="Password123")

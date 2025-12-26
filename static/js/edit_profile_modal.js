@@ -1,256 +1,260 @@
 (function (global) {
-  function initEditProfileModal(win) {
+  function resolveWindow(win) {
     const w = win || (typeof window !== "undefined" ? window : undefined);
-    if (!w || !w.document) return;
-    if (w.__editProfileModalInitialized) return;
-    w.__editProfileModalInitialized = true;
+    return w && w.document ? w : null;
+  }
 
+  function buildEditProfileState(w) {
     const doc = w.document;
     const modal = doc.getElementById("editProfileModal");
-    if (!modal) return;
-
-    const shouldShowOnLoad = modal.getAttribute("data-show-on-load") === "1";
-    const navItems = modal.querySelectorAll(".edit-profile-nav-item");
-    const sections = modal.querySelectorAll(".edit-profile-section");
-    const profileForm = modal.querySelector("#editProfileForm");
-    const passwordForm = modal.querySelector("#passwordForm");
-    const profileSubmit = modal.querySelector(".edit-profile-submit-profile");
-    const passwordSubmit = modal.querySelector(".edit-profile-submit-password");
-    const modalTitle = modal.querySelector("#editProfileModalLabel");
-    const avatarInputs = modal.querySelectorAll("[data-avatar-input]");
-    const avatarEditButtons = modal.querySelectorAll("[data-avatar-edit]");
+    if (!modal) return null;
+    const avatarInputs = Array.from(modal.querySelectorAll("[data-avatar-input]"));
+    const avatarImages = Array.from(modal.querySelectorAll("[data-avatar-image]"));
+    const avatarInitials = Array.from(modal.querySelectorAll("[data-avatar-initial]"));
     const primaryAvatarInput = avatarInputs.length ? avatarInputs[0] : null;
-    const removeAvatarInput = modal.querySelector("[data-remove-avatar-input]");
-    const removeAvatarBtn = modal.querySelector("[data-remove-avatar]");
-    const avatarImages = modal.querySelectorAll("[data-avatar-image]");
-    const avatarInitials = modal.querySelectorAll("[data-avatar-initial]");
-    const privacyButton = modal.querySelector("[data-privacy-button]");
-    const privacyStatus = modal.querySelector("[data-privacy-status]");
-    const privacyInput = modal.querySelector("input[name='is_private']");
     let initialAvatarUrl = "";
-
+    avatarImages.forEach((img) => {
+      if (!initialAvatarUrl && img.getAttribute("src")) initialAvatarUrl = img.getAttribute("src");
+    });
+    const removeAvatarInput = modal.querySelector("[data-remove-avatar-input]");
     if (removeAvatarInput && !removeAvatarInput.defaultValue) {
       removeAvatarInput.defaultValue = removeAvatarInput.value || "false";
     }
-    avatarImages.forEach((img) => {
-      if (!initialAvatarUrl && img.getAttribute("src")) {
-        initialAvatarUrl = img.getAttribute("src");
-      }
+    return {
+      w,
+      doc,
+      modal,
+      shouldShowOnLoad: modal.getAttribute("data-show-on-load") === "1",
+      navItems: Array.from(modal.querySelectorAll(".edit-profile-nav-item")),
+      sections: Array.from(modal.querySelectorAll(".edit-profile-section")),
+      profileForm: modal.querySelector("#editProfileForm"),
+      passwordForm: modal.querySelector("#passwordForm"),
+      profileSubmit: modal.querySelector(".edit-profile-submit-profile"),
+      passwordSubmit: modal.querySelector(".edit-profile-submit-password"),
+      modalTitle: modal.querySelector("#editProfileModalLabel"),
+      avatarInputs,
+      avatarImages,
+      avatarInitials,
+      primaryAvatarInput,
+      removeAvatarInput,
+      removeAvatarBtn: modal.querySelector("[data-remove-avatar]"),
+      privacyButton: modal.querySelector("[data-privacy-button]"),
+      privacyStatus: modal.querySelector("[data-privacy-status]"),
+      privacyInput: modal.querySelector("input[name='is_private']"),
+      initialAvatarUrl,
+      currentSection: "profile",
+      profileDirty: false,
+      passwordDirty: false,
+    };
+  }
+
+  function showAvatarInitial(state) {
+    state.avatarImages.forEach((img) => {
+      img.classList.add("d-none");
+      img.removeAttribute("src");
     });
+    state.avatarInitials.forEach((span) => span.classList.remove("d-none"));
+    if (state.removeAvatarBtn) state.removeAvatarBtn.classList.add("d-none");
+  }
 
-    let currentSection = "profile";
-    let profileDirty = false;
-    let passwordDirty = false;
+  function showAvatarImage(state, url) {
+    if (!url) return;
+    state.avatarImages.forEach((img) => {
+      img.src = url;
+      img.classList.remove("d-none");
+    });
+    state.avatarInitials.forEach((span) => span.classList.add("d-none"));
+    if (state.removeAvatarBtn) state.removeAvatarBtn.classList.remove("d-none");
+  }
 
-    function showAvatarInitial() {
-      avatarImages.forEach((img) => {
-        img.classList.add("d-none");
-        img.removeAttribute("src");
-      });
-      avatarInitials.forEach((span) => span.classList.remove("d-none"));
-      if (removeAvatarBtn) removeAvatarBtn.classList.add("d-none");
+  function inspectFormDirty(form) {
+    let dirty = false;
+    if (!form) return dirty;
+    form.querySelectorAll("input, textarea, select").forEach((el) => {
+      const isCheckbox = el.type === "checkbox" || el.type === "radio";
+      const changed = isCheckbox ? el.checked !== el.defaultChecked : el.value !== el.defaultValue;
+      if (changed) dirty = true;
+    });
+    return dirty;
+  }
+
+  function recomputeDirty(state) {
+    state.profileDirty = inspectFormDirty(state.profileForm);
+    state.passwordDirty = inspectFormDirty(state.passwordForm);
+  }
+
+  function updateButtons(state) {
+    if (state.currentSection === "password") {
+      if (state.profileSubmit) state.profileSubmit.classList.add("d-none");
+      if (state.passwordSubmit) state.passwordSubmit.classList.toggle("d-none", !state.passwordDirty);
+    } else {
+      if (state.passwordSubmit) state.passwordSubmit.classList.add("d-none");
+      if (state.profileSubmit) state.profileSubmit.classList.toggle("d-none", !state.profileDirty);
     }
+  }
 
-    function showAvatarImage(url) {
-      if (!url) return;
-      avatarImages.forEach((img) => {
-        img.src = url;
-        img.classList.remove("d-none");
-      });
-      avatarInitials.forEach((span) => span.classList.add("d-none"));
-      if (removeAvatarBtn) removeAvatarBtn.classList.remove("d-none");
+  function activateSection(state, sectionName) {
+    state.currentSection = sectionName;
+    state.navItems.forEach((btn) => {
+      btn.classList.toggle("active", btn.getAttribute("data-section") === sectionName);
+    });
+    state.sections.forEach((section) => {
+      section.classList.toggle("d-none", section.getAttribute("data-section") !== sectionName);
+    });
+    if (state.modalTitle) {
+      const activeBtn = state.modal.querySelector(`.edit-profile-nav-item[data-section="${sectionName}"]`);
+      if (activeBtn) state.modalTitle.textContent = activeBtn.textContent.trim();
     }
-
-    function recomputeDirty() {
-      profileDirty = false;
-      passwordDirty = false;
-
-      const inspectForm = (form, setter) => {
-        if (!form) return;
-        form.querySelectorAll("input, textarea, select").forEach((el) => {
-          const isCheckbox = el.type === "checkbox" || el.type === "radio";
-          const changed = isCheckbox ? el.checked !== el.defaultChecked : el.value !== el.defaultValue;
-          if (changed) setter(true);
-        });
-      };
-
-      inspectForm(profileForm, (val) => {
-        profileDirty = profileDirty || val;
-      });
-      inspectForm(passwordForm, (val) => {
-        passwordDirty = passwordDirty || val;
-      });
+    if (sectionName === "password") {
+      if (state.profileForm) state.profileForm.classList.add("d-none");
+      if (state.passwordForm) state.passwordForm.classList.remove("d-none");
+    } else {
+      if (state.profileForm) state.profileForm.classList.remove("d-none");
+      if (state.passwordForm) state.passwordForm.classList.add("d-none");
     }
+    updateButtons(state);
+  }
 
-    function syncPrivacyUI() {
-      if (!privacyInput || !privacyButton || !privacyStatus) return;
-      const isPrivate = privacyInput.checked;
-      privacyStatus.textContent = isPrivate ? "Private" : "Public";
-      privacyButton.textContent = isPrivate ? "Make public" : "Make private";
-    }
-
-    if (privacyButton && privacyInput) {
-      privacyButton.addEventListener("click", () => {
-        privacyInput.checked = !privacyInput.checked;
-        syncPrivacyUI();
-        recomputeDirty();
-        updateButtons();
-      });
-      syncPrivacyUI();
-    }
-
-    function updateButtons() {
-      if (currentSection === "password") {
-        if (profileSubmit) profileSubmit.classList.add("d-none");
-        if (passwordSubmit) passwordSubmit.classList.toggle("d-none", !passwordDirty);
-      } else {
-        if (passwordSubmit) passwordSubmit.classList.add("d-none");
-        if (profileSubmit) profileSubmit.classList.toggle("d-none", !profileDirty);
-      }
-    }
-
-    function activateSection(sectionName) {
-      currentSection = sectionName;
-
-      navItems.forEach((btn) => {
-        const target = btn.getAttribute("data-section");
-        btn.classList.toggle("active", target === sectionName);
-      });
-
-      sections.forEach((section) => {
-        const target = section.getAttribute("data-section");
-        section.classList.toggle("d-none", target !== sectionName);
-      });
-
-      if (modalTitle) {
-        const activeBtn = modal.querySelector(`.edit-profile-nav-item[data-section="${sectionName}"]`);
-        if (activeBtn) {
-          modalTitle.textContent = activeBtn.textContent.trim();
-        }
-      }
-
-      if (sectionName === "password") {
-        if (profileForm) profileForm.classList.add("d-none");
-        if (passwordForm) passwordForm.classList.remove("d-none");
-      } else {
-        if (profileForm) profileForm.classList.remove("d-none");
-        if (passwordForm) passwordForm.classList.add("d-none");
-      }
-
-      updateButtons();
-    }
-
-    navItems.forEach((btn) => {
+  function bindNavItems(state) {
+    state.navItems.forEach((btn) => {
       btn.addEventListener("click", () => {
         const sectionName = btn.getAttribute("data-section");
         if (!sectionName) return;
-        activateSection(sectionName);
+        activateSection(state, sectionName);
       });
     });
+  }
 
-    avatarInputs.forEach((input) => {
+  function bindAvatarInputs(state) {
+    state.avatarInputs.forEach((input) => {
       input.addEventListener("change", () => {
         const file = input.files && input.files[0];
         if (file) {
-          if (removeAvatarInput) {
-            removeAvatarInput.value = removeAvatarInput.defaultValue || "";
-          }
-          const reader = new w.FileReader();
+          if (state.removeAvatarInput) state.removeAvatarInput.value = state.removeAvatarInput.defaultValue || "";
+          const reader = new state.w.FileReader();
           reader.onload = (e) => {
-            showAvatarImage((e && e.target && e.target.result) || initialAvatarUrl);
-            if (removeAvatarBtn) removeAvatarBtn.classList.remove("d-none");
-            recomputeDirty();
-            updateButtons();
+            showAvatarImage(state, (e && e.target && e.target.result) || state.initialAvatarUrl);
+            if (state.removeAvatarBtn) state.removeAvatarBtn.classList.remove("d-none");
+            recomputeDirty(state);
+            updateButtons(state);
           };
           reader.readAsDataURL(file);
-        } else {
-          if (removeAvatarInput && removeAvatarInput.value !== removeAvatarInput.defaultValue) {
-            removeAvatarInput.value = removeAvatarInput.defaultValue;
-          }
-          recomputeDirty();
-          updateButtons();
+          return;
         }
+        if (state.removeAvatarInput && state.removeAvatarInput.value !== state.removeAvatarInput.defaultValue) {
+          state.removeAvatarInput.value = state.removeAvatarInput.defaultValue;
+        }
+        recomputeDirty(state);
+        updateButtons(state);
       });
     });
+  }
 
-    avatarEditButtons.forEach((btn) => {
+  function bindAvatarButtons(state) {
+    state.modal.querySelectorAll("[data-avatar-edit]").forEach((btn) => {
       btn.addEventListener("click", (event) => {
         event.preventDefault();
-        if (primaryAvatarInput) {
-          primaryAvatarInput.click();
-        }
+        if (state.primaryAvatarInput) state.primaryAvatarInput.click();
       });
     });
+  }
 
-    if (removeAvatarBtn) {
-      removeAvatarBtn.addEventListener("click", (event) => {
-        event.preventDefault();
-        avatarInputs.forEach((input) => {
-          input.value = "";
-        });
-        if (removeAvatarInput) {
-          removeAvatarInput.value = "true";
-          removeAvatarInput.defaultValue = removeAvatarInput.defaultValue || "false";
-        }
-        showAvatarInitial();
-        profileDirty = true;
-        recomputeDirty();
-        updateButtons();
-        if (profileSubmit) profileSubmit.classList.remove("d-none");
+  function bindRemoveAvatar(state) {
+    if (!state.removeAvatarBtn) return;
+    state.removeAvatarBtn.addEventListener("click", (event) => {
+      event.preventDefault();
+      state.avatarInputs.forEach((input) => {
+        input.value = "";
       });
-    }
-
-    function wireDirtyTracking(form) {
-      if (!form) return;
-      form.querySelectorAll("input, textarea, select").forEach((el) => {
-        el.addEventListener("input", () => {
-          recomputeDirty();
-          updateButtons();
-        });
-        el.addEventListener("change", () => {
-          recomputeDirty();
-          updateButtons();
-        });
-      });
-    }
-
-    wireDirtyTracking(profileForm);
-    wireDirtyTracking(passwordForm);
-
-    recomputeDirty();
-    updateButtons();
-
-    function openEditProfileModal() {
-      const bootstrapModal = w.bootstrap && w.bootstrap.Modal;
-      if (bootstrapModal) {
-        bootstrapModal.getOrCreateInstance(modal).show();
-        return;
+      if (state.removeAvatarInput) {
+        state.removeAvatarInput.value = "true";
+        state.removeAvatarInput.defaultValue = state.removeAvatarInput.defaultValue || "false";
       }
+      showAvatarInitial(state);
+      state.profileDirty = true;
+      recomputeDirty(state);
+      updateButtons(state);
+      if (state.profileSubmit) state.profileSubmit.classList.remove("d-none");
+    });
+  }
 
-      const trigger = doc.querySelector('[data-bs-target="#editProfileModal"]');
-      if (trigger) {
-        trigger.dispatchEvent(new w.Event("click", { bubbles: true, cancelable: true }));
-        return;
-      }
+  function bindPrivacy(state) {
+    if (!state.privacyButton || !state.privacyInput || !state.privacyStatus) return;
+    const syncPrivacyUI = () => {
+      const isPrivate = state.privacyInput.checked;
+      state.privacyStatus.textContent = isPrivate ? "Private" : "Public";
+      state.privacyButton.textContent = isPrivate ? "Make public" : "Make private";
+    };
+    state.privacyButton.addEventListener("click", () => {
+      state.privacyInput.checked = !state.privacyInput.checked;
+      syncPrivacyUI();
+      recomputeDirty(state);
+      updateButtons(state);
+    });
+    syncPrivacyUI();
+  }
 
-      modal.classList.add("show");
-      modal.style.display = "block";
-      modal.removeAttribute("aria-hidden");
-      doc.body.classList.add("modal-open");
-      doc.body.style.overflow = "hidden";
-    }
-
-    if (shouldShowOnLoad) {
-      const runShow = () => {
-        w.setTimeout(openEditProfileModal, 0);
+  function bindDirtyTracking(state, form) {
+    if (!form) return;
+    form.querySelectorAll("input, textarea, select").forEach((el) => {
+      const handle = () => {
+        recomputeDirty(state);
+        updateButtons(state);
       };
+      el.addEventListener("input", handle);
+      el.addEventListener("change", handle);
+    });
+  }
 
-      if (doc.readyState === "complete") {
-        runShow();
-      } else {
-        w.addEventListener("load", runShow, { once: true });
-      }
+  function bindDirtyHandlers(state) {
+    bindDirtyTracking(state, state.profileForm);
+    bindDirtyTracking(state, state.passwordForm);
+  }
+
+  function openEditProfileModal(state) {
+    const bootstrapModal = state.w.bootstrap && state.w.bootstrap.Modal;
+    if (bootstrapModal) {
+      bootstrapModal.getOrCreateInstance(state.modal).show();
+      return;
     }
+    const trigger = state.doc.querySelector('[data-bs-target="#editProfileModal"]');
+    if (trigger) {
+      trigger.dispatchEvent(new state.w.Event("click", { bubbles: true, cancelable: true }));
+      return;
+    }
+    state.modal.classList.add("show");
+    state.modal.style.display = "block";
+    state.modal.removeAttribute("aria-hidden");
+    state.doc.body.classList.add("modal-open");
+    state.doc.body.style.overflow = "hidden";
+  }
+
+  function maybeShowOnLoad(state) {
+    if (!state.shouldShowOnLoad) return;
+    const runShow = () => state.w.setTimeout(() => openEditProfileModal(state), 0);
+    if (state.doc.readyState === "complete") {
+      runShow();
+    } else {
+      state.w.addEventListener("load", runShow, { once: true });
+    }
+  }
+
+  function initEditProfileModal(win) {
+    const w = resolveWindow(win);
+    if (!w) return;
+    if (w.__editProfileModalInitialized) return;
+    w.__editProfileModalInitialized = true;
+    const state = buildEditProfileState(w);
+    if (!state) return;
+    bindPrivacy(state);
+    bindNavItems(state);
+    bindAvatarInputs(state);
+    bindAvatarButtons(state);
+    bindRemoveAvatar(state);
+    bindDirtyHandlers(state);
+    recomputeDirty(state);
+    updateButtons(state);
+    maybeShowOnLoad(state);
   }
 
   if (typeof module !== "undefined" && module.exports) {

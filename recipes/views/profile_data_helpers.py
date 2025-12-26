@@ -1,3 +1,5 @@
+"""Helpers for assembling profile and collection metadata."""
+
 from recipes.models import Favourite
 from recipes.models.favourite_item import FavouriteItem
 
@@ -23,6 +25,7 @@ def _collection_meta(items, favourite):
     """Compute last_saved_at, cover image url, and item count for a favourite."""
 
     def _post_image_url(post):
+        """Return the best image URL for a post if available."""
         return getattr(post, "primary_image_url", None) or getattr(post, "image", None)
 
     last_saved_at = favourite.created_at

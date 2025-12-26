@@ -5,9 +5,14 @@
       href="{% url 'dashboard' %}"
       data-fallback="{% url 'dashboard' %}"
       data-entry="{{ request.META.HTTP_REFERER|default_if_none:'' }}"
+      data-post-id="{{ recipe.id|default:post.id }}"
       aria-label="Go back"
     >
       <i class="bi bi-chevron-left"></i>
+      <span class="post-back-hint" aria-hidden="true">
+        <span class="post-back-hint-label">Back</span>
+        <span class="post-back-hint-key">ESC</span>
+      </span>
     </a>
     <div class="recipe-gallery">
       {% if image_url %}

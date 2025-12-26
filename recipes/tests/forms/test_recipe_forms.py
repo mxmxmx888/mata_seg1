@@ -52,6 +52,24 @@ class RecipePostFormTests(TestCase):
         self.assertIn("family", tags)
         self.assertIn("category:dinner", tags)
 
+    def test_serves_rejects_non_numeric_input(self):
+        form = RecipePostForm(
+            data={
+                "title": "X",
+                "description": "Y",
+                "category": "dinner",
+                "prep_time_min": 1,
+                "cook_time_min": 1,
+                "serves": "abc",
+                "nutrition": "",
+                "visibility": RecipePost.VISIBILITY_PUBLIC,
+            },
+            files=MultiValueDict({"images": [fake_image("cover.jpg")]}),
+        )
+
+        self.assertFalse(form.is_valid())
+        self.assertIn("whole number", str(form.errors["serves"]))
+
     def test_split_lines_strips_and_ignores_blanks(self):
         form = RecipePostForm(data={"category": "dinner"})
         form.cleaned_data = {"ingredients_text": "  a \n\n b \n   \n"}

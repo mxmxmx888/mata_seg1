@@ -1,3 +1,5 @@
+"""Legacy recipe model with basic text fields."""
+
 from django.conf import settings
 from django.db import models
 
@@ -24,9 +26,11 @@ class Recipe(models.Model):
     favourites_count = models.PositiveIntegerField(default=0)
 
     class Meta:
+        """Default ordering for legacy recipes."""
         ordering = ["-created_at"]
 
     def __str__(self):
+        """Readable representation for admin/debugging."""
         return self.title
 
     def average_rating(self):

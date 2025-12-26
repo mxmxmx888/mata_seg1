@@ -1,30 +1,9 @@
+"""Model capturing follow requests for private accounts."""
+
 import uuid
 from django.conf import settings
 from django.db import models
 from django.db.models import Q, F
-
-
-"""
-FollowRequest model
-
-This table represents a “private account follow request”.
-
-When a user tries to follow a private profile:
-- we create a FollowRequest from `requester` -> `target`
-- it starts as `pending`
-- later it can become `accepted` or `rejected`
-
-Key points:
-- `requester` is the user sending the request.
-- `target` is the user receiving the request.
-- Only ONE request can exist per (requester, target) pair (UniqueConstraint),
-  so you can’t spam duplicates.
-- Users cannot send a request to themselves (CheckConstraint).
-- `status` is restricted to the allowed choices (pending/accepted/rejected).
-- `created_at` stores when the request was made.
-
-The `__str__` method is for readable debugging/admin output.
-"""
 
 class FollowRequest(models.Model):
     """Represents a pending follow request between two users."""
@@ -53,6 +32,7 @@ class FollowRequest(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
+        """Constraints for unique, non-self follow requests."""
         db_table = "follow_request"
         constraints = [
             models.UniqueConstraint(
@@ -66,4 +46,5 @@ class FollowRequest(models.Model):
         ]
 
     def __str__(self) -> str:
+        """Readable summary of the follow request and status."""
         return f"FollowRequest({self.requester_id} -> {self.target_id}, {self.status})"

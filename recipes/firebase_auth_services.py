@@ -1,7 +1,12 @@
+"""Firebase Auth helper functions used by server-side flows."""
+
+import logging
 import requests
 from django.conf import settings
 from firebase_admin import auth as firebase_auth
 from .firebase_admin_client import get_app, _is_running_tests
+
+logger = logging.getLogger(__name__)
 
 
 def create_firebase_user(uid: str, email: str, password: str):
@@ -20,7 +25,8 @@ def create_firebase_user(uid: str, email: str, password: str):
 def sign_in_with_email_and_password(email: str, password: str):
     """Sign in against Firebase REST API; return response JSON or None."""
     # Avoid real network calls during most test runs unless the HTTP client is mocked.
-    if _is_running_tests():
+    is_test_run = _is_running_tests()
+    if is_test_run:
         try:
             is_mocked = "unittest.mock" in type(requests.post).__module__
         except Exception:
@@ -30,7 +36,10 @@ def sign_in_with_email_and_password(email: str, password: str):
 
     api_key = getattr(settings, "FIREBASE_API_KEY", None)
     if not api_key:
-        print("DEBUG: No FIREBASE_API_KEY configured in settings")
+        if not is_test_run:
+            message = "Firebase sign-in skipped: FIREBASE_API_KEY not configured"
+            print(message)
+            logger.warning(message)
         return None
 
     url = f"https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key={api_key}"
@@ -43,14 +52,23 @@ def sign_in_with_email_and_password(email: str, password: str):
     response = requests.post(url, json=payload)
 
     if response.status_code == 200:
-        if not _is_running_tests():
-            print("DEBUG: Firebase sign-in OK for", email)
+        if not is_test_run:
+            message = f"Firebase sign-in OK for {email}"
+            print(message)
+            logger.debug(message)
         return response.json()
 
-    if not _is_running_tests():
-        print("DEBUG: Firebase sign-in FAILED")
-        print("DEBUG: Status:", response.status_code)
-        print("DEBUG: Body:", response.text)
+    if not is_test_run:
+        body = getattr(response, "text", "")
+        print("Firebase sign-in failed")
+        print(f"status={response.status_code}")
+        print(f"body={body}")
+        logger.warning(
+            "Firebase sign-in failed for %s (status=%s, body=%s)",
+            email,
+            response.status_code,
+            body,
+        )
     return None
 
 
@@ -58,15 +76,20 @@ def generate_password_reset_link(email: str):
     """
     Generate a password reset link for the given email using Firebase Admin SDK.
     """
+    is_test_run = _is_running_tests()
     get_app()
     try:
         link = firebase_auth.generate_password_reset_link(email)
         return link
     except firebase_auth.UserNotFoundError:
-        if not _is_running_tests():
-            print(f"DEBUG: Firebase user not found for email {email}")
+        if not is_test_run:
+            message = f"Firebase user not found for password reset: {email}"
+            print(message)
+            logger.info(message)
         return None
     except Exception as e:
-        if not _is_running_tests():
-            print(f"DEBUG: Error generating password reset link: {e}")
+        if not is_test_run:
+            message = f"Error generating Firebase password reset link: {e}"
+            print(message)
+            logger.warning(message)
         return None

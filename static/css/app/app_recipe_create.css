@@ -59,43 +59,71 @@
   box-shadow: none;
 }
 
-.app-page .create-recipe-card input[type="file"] {
-  display: block;
-  width: 100%;
-  background-color: transparent;
-  color: var(--text-primary);
+.file-pill-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+
+.file-pill-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.55rem 1.2rem;
+  border-radius: 999px;
   border: 1px solid var(--border-subtle);
-  border-radius: 999px;
-  padding: 0.6rem 0.75rem;
-  box-shadow: none;
-  white-space: normal;
-  word-break: break-word;
-  overflow: visible;
-  text-overflow: clip;
-  line-height: 1.25;
+  background-color: var(--bg-2, #f9fafb);
+  color: var(--text-primary);
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 600;
+  transition: background-color 0.15s ease, color 0.12s ease, box-shadow 0.12s ease;
 }
 
-.app-page .create-recipe-card input[type="file"]::file-selector-button,
-.app-page .create-recipe-card input[type="file"]::-webkit-file-upload-button {
-  background-color: transparent;
-  color: var(--text-primary);
+.file-pill-btn:hover {
+  background-color: color-mix(in srgb, var(--bg-2, #f9fafb) 85%, var(--text-primary) 15%);
+}
+
+.file-pill-btn:focus-visible {
+  outline: 2px solid var(--text-primary);
+  outline-offset: 2px;
+}
+
+.image-preview-item {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin-right: 0;
+  margin-bottom: 0.4rem;
+}
+
+.image-thumb {
+  width: 48px;
+  height: 48px;
+  object-fit: cover;
+  border-radius: 12px;
+  border: 1px solid var(--border-subtle);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+}
+
+.image-remove {
   border: none;
-  border-right: 1px solid var(--border-subtle);
-  border-radius: 999px;
-  padding: 0.35rem 0.9rem;
-  margin-right: 0.65rem;
-  transition: background-color 0.15s ease, color 0.12s ease;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 1.2rem;
+  line-height: 1;
+  padding: 0 0.25rem 0 0.1rem;
+  margin-left: auto;
 }
 
-.app-page .create-recipe-card input[type="file"]:hover::file-selector-button,
-.app-page .create-recipe-card input[type="file"]:hover::-webkit-file-upload-button {
-  background-color: color-mix(in srgb, #fff 88%, var(--text-primary) 12%);
+.image-remove:hover {
   color: var(--text-primary);
-}
-
-body:not(.auth-body):is([data-theme="dark"], .dashboard-body:not([data-theme="light"]), .shop-body:not([data-theme="light"]), .app-body:not([data-theme="light"])) .app-page .create-recipe-card input[type="file"]:hover::file-selector-button,
-body:not(.auth-body):is([data-theme="dark"], .dashboard-body:not([data-theme="light"]), .shop-body:not([data-theme="light"]), .app-body:not([data-theme="light"])) .app-page .create-recipe-card input[type="file"]:hover::-webkit-file-upload-button {
-  color: var(--text-inverse);
 }
 
 .app-page .create-recipe-card .form-control::placeholder {

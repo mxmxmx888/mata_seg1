@@ -1,3 +1,5 @@
+"""Helper utilities used by recipe view functions and templates."""
+
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
@@ -27,6 +29,7 @@ def set_primary_image(recipe):
 
 
 def _primary_image_url(recipe):
+    """Return best primary image URL (first gallery image fallback to legacy)."""
     first = recipe.images.first()
     if not first:
         return recipe.image or None
@@ -37,6 +40,7 @@ def _primary_image_url(recipe):
 
 
 def _gallery_images(images_qs):
+    """Return URLs for gallery images beyond the first."""
     gallery = []
     for extra in images_qs[1:]:
         try:
@@ -155,12 +159,13 @@ def recipe_metadata(recipe):
 
 
 def ingredient_lists(recipe):
-    """Split ingredients into all vs shop-linked sets."""
+    """Split ingredients into non-shop list and shop-linked list."""
     ingredients_all = list(Ingredient.objects.filter(recipe_post=recipe).order_by("position"))
     shop_ingredients = [
         ing for ing in ingredients_all if getattr(ing, "shop_url", None) and ing.shop_url.strip()
     ]
-    return ingredients_all, shop_ingredients
+    non_shop_ingredients = [ing for ing in ingredients_all if ing not in shop_ingredients]
+    return non_shop_ingredients, shop_ingredients
 
 
 def recipe_steps(recipe):

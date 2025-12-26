@@ -40,6 +40,7 @@ describe("post_layout interactions", () => {
     window.location = originalLocation;
     window.history = originalHistory;
     HTMLFormElement.prototype.submit = originalFormSubmit;
+    window.sessionStorage.clear();
     jest.clearAllMocks();
   });
 
@@ -58,6 +59,28 @@ describe("post_layout interactions", () => {
     expect(backSpy.mock.calls.length + assignSpy.mock.calls.length).toBeGreaterThan(0);
     backSpy.mockRestore();
     assignSpy.mockRestore();
+  });
+
+  test("back button and escape reuse stored entry when returning from edit", () => {
+    Object.defineProperty(document, "referrer", { value: "http://localhost/recipes/12/edit", configurable: true });
+    window.sessionStorage.setItem("post-entry-12", "http://localhost/from");
+    document.body.innerHTML = `
+      <div id="post-primary"></div>
+      <div class="post-view-similar"></div>
+      <a class="post-back-button" data-post-id="12" data-fallback="/fb"></a>
+    `;
+    window.history.length = 5;
+    const backSpy = jest.spyOn(window.history, "back");
+    const { initPostLayout } = loadModule();
+    initPostLayout(window);
+    const btn = document.querySelector(".post-back-button");
+    btn.dispatchEvent(new Event("click", { bubbles: true, cancelable: true }));
+    expect(backSpy).not.toHaveBeenCalled();
+    expect(window.location.assign).toHaveBeenLastCalledWith("http://localhost/from");
+    backSpy.mockRestore();
+    window.location.assign.mockClear();
+    document.dispatchEvent(new KeyboardEvent("keyup", { key: "Escape" }));
+    expect(window.location.assign).toHaveBeenLastCalledWith("http://localhost/from");
   });
 
   test("parseUrl returns null for invalid ref and backButton absent", () => {

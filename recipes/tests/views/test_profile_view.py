@@ -4,6 +4,7 @@ from django.test import TestCase
 from django.urls import reverse
 from recipes.forms import UserForm
 from recipes.models import User, Favourite, FavouriteItem, RecipePost, Follower, CloseFriend, FollowRequest
+from recipes.views import profile_view
 from recipes.views.profile_view import _profile_data_for_user, _collections_for_user
 from recipes.tests.test_utils import reverse_with_next
 
@@ -165,3 +166,182 @@ class ProfileViewTest(TestCase):
             resp = self.client.post(self.url, {"first_name": "John"})
         self.assertEqual(resp.status_code, 302)
         add_msg.assert_not_called()
+
+    def test_profile_post_with_non_avatar_changes_adds_message(self):
+        self.client.login(username=self.user.username, password="Password123")
+        with patch("recipes.views.profile_view.UserForm") as form_cls, patch("recipes.views.profile_view.messages.add_message") as add_msg:
+            form = MagicMock()
+            form.is_valid.return_value = True
+            form.changed_data = ["first_name"]
+            form.save.return_value = None
+            form_cls.return_value = form
+            resp = self.client.post(self.url, {"first_name": "John"})
+        self.assertEqual(resp.status_code, 302)
+        add_msg.assert_called_once()
+
+    def test_profile_posts_only_hx_returns_partial(self):
+        self.client.login(username=self.user.username, password="Password123")
+        RecipePost.objects.create(author=self.user, title="P1", description="d")
+        response = self.client.get(f"{self.url}?posts_only=1", HTTP_HX_REQUEST="true")
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("partials/feed/feed_cards.html", [t.name for t in response.templates])
+        self.assertIn(b"P1", response.content)
+
+    def test_profile_pagination_sets_flags(self):
+        self.client.login(username=self.user.username, password="Password123")
+        for i in range(13):
+            RecipePost.objects.create(author=self.user, title=f"Post {i}", description="d")
+
+        response = self.client.get(self.url)
+
+        self.assertEqual(len(response.context["posts"]), 12)
+        self.assertTrue(response.context["posts_has_more"])
+        self.assertEqual(response.context["posts_next_page"], 2)
+
+    def test_follow_context_hides_lists_for_private_when_not_following(self):
+        private_user = User.objects.get(username='@janedoe')
+        private_user.is_private = True
+        private_user.save()
+        extra_follower = User.objects.create_user(username="@viewerx", email="v@example.org", password="Password123")
+        Follower.objects.create(author=private_user, follower=extra_follower)
+
+        ctx = profile_view._follow_context(private_user, self.user)
+
+        self.assertEqual(ctx["followers_count"], 1)
+        self.assertFalse(ctx["can_view_follow_lists"])
+        self.assertEqual(ctx["followers_users"], [])
+        self.assertEqual(ctx["following_users"], [])
+
+    def test_profile_posts_hidden_when_privacy_denies(self):
+        self.client.login(username=self.user.username, password="Password123")
+        with patch.object(profile_view.privacy_service, "can_view_profile", return_value=False):
+            response = self.client.get(self.url)
+
+        self.assertEqual(response.context["posts"], [])
+        self.assertFalse(response.context["can_view_profile"])
+
+    def test_follow_context_paginates_follow_lists(self):
+        self.client.login(username=self.user.username, password="Password123")
+        for i in range(profile_view.FOLLOW_LIST_PAGE_SIZE + 2):
+            follower = User.objects.create_user(
+                username=f"follower{i}",
+                email=f"f{i}@example.org",
+                password="Password123",
+            )
+            Follower.objects.create(author=self.user, follower=follower)
+
+        ctx = profile_view._follow_context(self.user, self.user)
+
+        self.assertEqual(len(ctx["followers_users"]), profile_view.FOLLOW_LIST_PAGE_SIZE)
+        self.assertTrue(ctx["followers_has_more"])
+        self.assertEqual(ctx["followers_next_page"], 2)
+
+    def test_profile_follow_list_endpoint_returns_paginated_followers(self):
+        self.client.login(username=self.user.username, password="Password123")
+        for i in range(profile_view.FOLLOW_LIST_PAGE_SIZE * 2 + 1):
+            follower = User.objects.create_user(
+                username=f"fol{i}",
+                email=f"fol{i}@example.org",
+                password="Password123",
+            )
+            Follower.objects.create(author=self.user, follower=follower)
+
+        url = f"{reverse('profile_follow_list')}?user={self.user.username}&list=followers&page=2"
+
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertIn("html", payload)
+        self.assertTrue(payload["has_more"])
+        self.assertEqual(payload["next_page"], 3)
+        self.assertIn("fol25", payload["html"])
+
+    def test_profile_follow_list_endpoint_returns_following(self):
+        self.client.login(username=self.user.username, password="Password123")
+        for i in range(3):
+            author = User.objects.create_user(
+                username=f"auth{i}",
+                email=f"a{i}@example.org",
+                password="Password123",
+            )
+            Follower.objects.create(follower=self.user, author=author)
+
+        url = f"{reverse('profile_follow_list')}?user={self.user.username}&list=following"
+
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertIn("html", payload)
+        self.assertIn("auth1", payload["html"])
+        self.assertFalse(payload["has_more"])
+        self.assertIsNone(payload["next_page"])
+
+    def test_profile_follow_list_endpoint_respects_privacy(self):
+        private_user = User.objects.get(username='@janedoe')
+        private_user.is_private = True
+        private_user.save()
+        viewer = User.objects.create_user(username="@viewerz", email="vz@example.org", password="Password123")
+        self.client.login(username=viewer.username, password="Password123")
+
+        url = f"{reverse('profile_follow_list')}?user={private_user.username}&list=followers"
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, 403)
+
+    def test_profile_follow_list_unknown_list_returns_400(self):
+        self.client.login(username=self.user.username, password="Password123")
+        url = f"{reverse('profile_follow_list')}?user={self.user.username}&list=bogus"
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 400)
+
+    def test_profile_follow_list_close_friends_requires_owner(self):
+        other = User.objects.get(username='@janedoe')
+        self.client.login(username=self.user.username, password="Password123")
+        url = f"{reverse('profile_follow_list')}?user={other.username}&list=close_friends"
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 403)
+
+    def test_profile_follow_list_close_friends_returns_items_for_owner(self):
+        self.client.login(username=self.user.username, password="Password123")
+        follower = User.objects.create_user(username="@cf", email="cf@example.org", password="Password123")
+        Follower.objects.create(author=self.user, follower=follower)
+        url = f"{reverse('profile_follow_list')}?user={self.user.username}&list=close_friends"
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertIn("html", payload)
+        self.assertIn("@cf", payload["html"])
+
+    def test_profile_get_for_other_user_has_no_form(self):
+        other = User.objects.get(username='@janedoe')
+        self.client.login(username=self.user.username, password="Password123")
+        response = self.client.get(f"{self.url}?user={other.username}")
+        self.assertIsNone(response.context["form"])
+
+    def test_profile_cancel_request_post_calls_service_and_redirects(self):
+        other = User.objects.get(username='@janedoe')
+        self.client.login(username=self.user.username, password="Password123")
+        with patch.object(profile_view, "follow_service_factory") as factory:
+            service = MagicMock()
+            factory.return_value = service
+            resp = self.client.post(f"{self.url}?user={other.username}", {"cancel_request": "1"})
+        self.assertEqual(resp.status_code, 302)
+        service.cancel_request.assert_called_once_with(other)
+
+    def test_profile_posts_for_other_user_are_filtered_by_privacy(self):
+        other = User.objects.get(username='@janedoe')
+        RecipePost.objects.create(author=other, title="Hidden", description="d")
+        self.client.login(username=self.user.username, password="Password123")
+        with patch.object(profile_view.privacy_service, "filter_visible_posts", wraps=profile_view.privacy_service.filter_visible_posts) as filter_posts:
+            resp = self.client.get(f"{self.url}?user={other.username}")
+        self.assertEqual(resp.status_code, 200)
+        filter_posts.assert_called()
+
+    def test_profile_post_for_other_user_redirects_to_profile(self):
+        other = User.objects.get(username='@janedoe')
+        self.client.login(username=self.user.username, password="Password123")
+        resp = self.client.post(f"{self.url}?user={other.username}", {"first_name": "X"})
+        self.assertEqual(resp.status_code, 302)
+        self.assertTrue(resp.url.endswith(reverse("profile")))

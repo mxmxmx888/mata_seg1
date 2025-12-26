@@ -14,7 +14,8 @@ from recipes.views.view_utils import is_ajax_request
 @login_required
 def collections_overview(request):
     """Render the current user's collections list page."""
-    page_size = 20
+    # Show roughly 7 rows of collection cards per load (5 cards per row)
+    page_size = 35
     page_number = max(1, int(request.GET.get("page") or 1))
     collections_all = collections_for_user(request.user)
     start = (page_number - 1) * page_size
@@ -47,6 +48,7 @@ def collection_detail(request, slug):
         raise Http404()
 
     items_qs = FavouriteItem.objects.filter(favourite=favourite).select_related("recipe_post")
+    # Some tests use a FakeQS without order_by; guard to keep compatibility.
     if hasattr(items_qs, "order_by"):
         items_qs = items_qs.order_by("-added_at", "-id")
     posts = [item.recipe_post for item in items_qs if item.recipe_post]

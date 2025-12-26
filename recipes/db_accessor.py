@@ -1,3 +1,5 @@
+"""Utility helpers to wrap common queryset CRUD patterns."""
+
 from typing import Any, Dict, List, Mapping, Optional, Sequence, Type
 from django.db.models import Model, QuerySet
 
@@ -6,6 +8,7 @@ class DB_Accessor:
     """Generic data accessor to wrap basic queryset operations."""
 
     def __init__(self, model: Type[Model]) -> None:
+        """Store the model type this accessor will operate on."""
         self.model = model
 
     def list(
@@ -24,12 +27,13 @@ class DB_Accessor:
         return list(qs.values()) if as_dict else qs
 
     def _apply_ordering(self, qs: QuerySet, order_by: Sequence[str]) -> QuerySet:
+        """Apply ordering when requested."""
         return qs.order_by(*order_by) if order_by else qs
 
     def _apply_slice(
         self, qs: QuerySet, *, offset: int = 0, limit: Optional[int] = None
     ) -> QuerySet:
-
+        """Return a sliced queryset that preserves the original ordering."""
         if not (offset or limit is not None):
             return qs
         start = max(0, int(offset))

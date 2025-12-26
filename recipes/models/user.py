@@ -1,3 +1,5 @@
+"""Custom user model with profile metadata and avatar helpers."""
+
 from django.core.validators import RegexValidator, MaxLengthValidator
 from django.contrib.auth.models import AbstractUser
 from django.db import models
@@ -28,6 +30,7 @@ class User(AbstractUser):
     is_private = models.BooleanField(default=False)
 
     class Meta:
+        """Default ordering for users."""
         ordering = ['last_name', 'first_name']
 
     def full_name(self):

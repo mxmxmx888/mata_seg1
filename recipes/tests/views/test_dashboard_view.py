@@ -2,7 +2,7 @@ from django.contrib.auth.models import AnonymousUser
 from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
-from recipes.models import Ingredient, Follower
+from recipes.models import Ingredient, Follower, Like
 from recipes.tests.test_utils import make_recipe_post, make_user
 from recipes.views import dashboard_view
 
@@ -206,14 +206,6 @@ class DashboardSearchViewTests(TestCase):
         self.assertEqual(len(posts), 1)
         self.assertEqual(posts[0].title, "Allowed")
 
-    def test_parse_dashboard_params_defaults_and_ajax(self):
-        self.client.login(username=self.user.username, password="Password123")
-        request = self.client.get(self.url, {"ajax": "1", "page": "-1", "scope": "invalid"})
-        params = dashboard_view._parse_dashboard_params(request.wsgi_request)
-        self.assertEqual(params["scope"], "recipes")
-        self.assertTrue(params["is_ajax"])
-        self.assertEqual(params["page_number"], 1)
-
     def test_dashboard_filters_by_valid_prep_time(self):
         quick = make_recipe_post(author=self.user, title="Quick", prep_time_min=5, cook_time_min=5)
         slow = make_recipe_post(author=self.user, title="Slow", prep_time_min=50, cook_time_min=5)
@@ -355,11 +347,3 @@ class DashboardSearchViewTests(TestCase):
     def test_get_following_posts_returns_empty_when_no_relationships(self):
         posts = dashboard_view._get_following_posts(self.user)
         self.assertEqual(posts, [])
-
-    def test_filter_posts_by_prep_time_handles_invalid_bounds(self):
-        class Obj:
-            def __init__(self, prep):
-                self.prep_time_min = prep
-        posts = [Obj(1)]
-        result = dashboard_view._filter_posts_by_prep_time(posts, "bad", "bad")
-        self.assertEqual(result, posts)

@@ -1,332 +1,335 @@
 (function (global) {
-  function initSaveModal(win) {
+  const VIEWS = { list: "list", create: "create" };
+
+  function resolveWindow(win) {
     const w = win || (typeof window !== "undefined" ? window : undefined);
-    /* istanbul ignore next */
-    if (!w || !w.document) return;
+    return w && w.document ? w : null;
+  }
 
-    const doc = w.document;
-    const saveModal = doc.getElementById("saveModal");
-    /* istanbul ignore next */
-    if (!saveModal) return;
+  function buildBackdrop(doc) {
+    const el = doc.createElement("div");
+    el.className = "modal-backdrop fade custom-modal-backdrop";
+    doc.body.appendChild(el);
+    return el;
+  }
 
-    const saveModalViews = Array.from(saveModal.querySelectorAll(".save-modal-view"));
-    const saveModalList = saveModal.querySelector(".save-modal-list");
-    const saveSearchInput = saveModal.querySelector(".save-modal-search input");
-    const saveOpenCreate = saveModal.querySelector("[data-save-open-create]");
-    const saveBackBtn = saveModal.querySelector("[data-save-back]");
-    const saveCreateForm = doc.getElementById("save-modal-create-form");
-    const saveNameInput = doc.getElementById("new-collection-name");
-    const hasBootstrapModal = typeof w.bootstrap !== "undefined" && w.bootstrap.Modal;
-    let fallbackBackdrop = null;
-    let saveNoResultsRow = null;
-    const saveToggleButtons = Array.from(saveModal.querySelectorAll("[data-save-toggle]"));
-    const csrfInput = doc.querySelector("input[name=csrfmiddlewaretoken]");
-    const csrfToken = saveModal.dataset.csrf || (csrfInput ? csrfInput.value : "");
-    const saveEndpoint = saveModal.dataset.saveEndpoint || "";
-
-    function getSaveRows() {
-      /* istanbul ignore next */
-      if (!saveModalList) return [];
-      return Array.from(saveModalList.querySelectorAll(".save-modal-row"));
-    }
-
-    function ensureSaveNoResultsRow() {
-      /* istanbul ignore next */
-      if (saveNoResultsRow || !saveModalList) return saveNoResultsRow;
-      saveNoResultsRow = saveModalList.querySelector(".save-modal-no-results");
-      if (saveNoResultsRow) return saveNoResultsRow;
-      saveNoResultsRow = doc.createElement("li");
-      saveNoResultsRow.className = "text-muted small px-1 py-2 save-modal-no-results d-none";
-      saveNoResultsRow.textContent = "No collections found";
-      saveModalList.appendChild(saveNoResultsRow);
-      return saveNoResultsRow;
-    }
-
-    function setRowSearchValue(row, name) {
-      /* istanbul ignore next */
-      if (!row) return;
-      row.setAttribute("data-collection-name", (name || "").toLowerCase());
-    }
-
-    function filterSaveModalList() {
-      /* istanbul ignore next */
-      if (!saveModalList || !saveSearchInput) return;
-      const rows = getSaveRows();
-      /* istanbul ignore next */
-      if (!rows.length) return;
-      const term = saveSearchInput.value.trim().toLowerCase();
-      let visibleCount = 0;
-      rows.forEach((row) => {
-        const name = row.getAttribute("data-collection-name") || "";
-        const match = !term || name.indexOf(term) !== -1;
-        row.classList.toggle("d-none", !match);
-        if (match) visibleCount += 1;
-      });
-      const noResults = ensureSaveNoResultsRow();
-      if (noResults) {
-        noResults.classList.toggle("d-none", visibleCount !== 0);
+  function createFallbackModalDisplay(w, doc) {
+    let backdrop = null;
+    const lockBody = (locked) => {
+      doc.body.classList.toggle("modal-open", locked);
+      doc.body.style.overflow = locked ? "hidden" : "";
+    };
+    const hide = (modal) => {
+      modal.classList.remove("show");
+      modal.style.display = "none";
+      modal.setAttribute("aria-hidden", "true");
+      if (backdrop) {
+        backdrop.classList.remove("show");
+        backdrop.style.display = "none";
+        backdrop.onclick = null;
       }
-    }
-
-    function resetSaveModalSearch() {
-      /* istanbul ignore next */
-      if (!saveSearchInput) return;
-      saveSearchInput.value = "";
-      filterSaveModalList();
-    }
-
-    if (saveModalList) {
-      getSaveRows().forEach((row) => {
-        const nameEl = row.querySelector(".fw-semibold");
-        const rowName = nameEl ? nameEl.textContent : "";
-        setRowSearchValue(row, rowName);
-      });
-    }
-
-    if (saveSearchInput) {
-      saveSearchInput.addEventListener("input", filterSaveModalList);
-    }
-
-    function setSaveView(view) {
-      /* istanbul ignore next */
-      if (!saveModalViews.length) return;
-      saveModalViews.forEach((v) => {
-        const isTarget = v.getAttribute("data-save-view") === view;
-        v.classList.toggle("d-none", !isTarget);
-      });
-
-      const titles = saveModal.querySelectorAll("[data-save-title]");
-      const subtitles = saveModal.querySelectorAll("[data-save-subtitle]");
-      titles.forEach((t) => {
-        t.classList.toggle("d-none", t.getAttribute("data-save-title") !== view);
-      });
-      subtitles.forEach((s) => {
-        s.classList.toggle("d-none", s.getAttribute("data-save-subtitle") !== view);
-      });
-
-      const hideOnCreateElems = saveModal.querySelectorAll("[data-hide-when-view]");
-      hideOnCreateElems.forEach((el) => {
-        const hideOn = el.getAttribute("data-hide-when-view") || "";
-        el.classList.toggle("d-none", hideOn === view);
-      });
-    }
-
-    function ensureFallbackBackdrop() {
-      if (fallbackBackdrop) return fallbackBackdrop;
-      const el = doc.createElement("div");
-      el.className = "modal-backdrop fade custom-modal-backdrop";
-      doc.body.appendChild(el);
-      fallbackBackdrop = el;
-      return el;
-    }
-
-    function showSaveModal() {
-      setSaveView("list");
-      resetSaveModalSearch();
-      if (hasBootstrapModal) {
-        const instance = w.bootstrap.Modal.getOrCreateInstance(saveModal);
-        instance.show();
-        return;
-      }
-      const backdrop = ensureFallbackBackdrop();
+      lockBody(false);
+    };
+    const show = (modal, onBackdrop) => {
+      backdrop = backdrop || buildBackdrop(doc);
       backdrop.style.display = "block";
       w.requestAnimationFrame(() => backdrop.classList.add("show"));
-      backdrop.onclick = hideSaveModal;
+      modal.classList.add("show");
+      modal.style.display = "block";
+      modal.removeAttribute("aria-hidden");
+      lockBody(true);
+      backdrop.onclick = onBackdrop;
+    };
+    return { show, hide };
+  }
 
-      saveModal.classList.add("show");
-      saveModal.style.display = "block";
-      saveModal.removeAttribute("aria-hidden");
+  function buildSaveState(w, doc) {
+    const modal = doc.getElementById("saveModal");
+    if (!modal) return null;
+    const csrfInput = doc.querySelector("input[name=csrfmiddlewaretoken]");
+    return {
+      w,
+      doc,
+      modal,
+      views: Array.from(modal.querySelectorAll(".save-modal-view")),
+      list: modal.querySelector(".save-modal-list"),
+      searchInput: modal.querySelector(".save-modal-search input"),
+      openCreate: modal.querySelector("[data-save-open-create]"),
+      backBtn: modal.querySelector("[data-save-back]"),
+      createForm: doc.getElementById("save-modal-create-form"),
+      nameInput: doc.getElementById("new-collection-name"),
+      hasBootstrap: !!(w.bootstrap && w.bootstrap.Modal),
+      toggleButtons: Array.from(modal.querySelectorAll("[data-save-toggle]")),
+      csrfToken: modal.dataset.csrf || (csrfInput ? csrfInput.value : ""),
+      saveEndpoint: modal.dataset.saveEndpoint || "",
+      fallback: createFallbackModalDisplay(w, doc),
+      noResultsRow: null,
+    };
+  }
 
-      doc.body.classList.add("modal-open");
-      doc.body.style.overflow = "hidden";
+  function getSaveRows(state) {
+    return state.list ? Array.from(state.list.querySelectorAll(".save-modal-row")) : [];
+  }
+
+  function ensureNoResultsRow(state) {
+    if (state.noResultsRow || !state.list) return state.noResultsRow;
+    const existing = state.list.querySelector(".save-modal-no-results");
+    if (existing) {
+      state.noResultsRow = existing;
+      return existing;
     }
+    const row = state.doc.createElement("li");
+    row.className = "text-muted small px-1 py-2 save-modal-no-results d-none";
+    row.textContent = "No collections found";
+    state.list.appendChild(row);
+    state.noResultsRow = row;
+    return row;
+  }
 
-    function hideSaveModal() {
-      if (hasBootstrapModal) {
-        const instance = w.bootstrap.Modal.getOrCreateInstance(saveModal);
-        instance.hide();
+  function setRowSearchValue(row, name) {
+    row.setAttribute("data-collection-name", (name || "").toLowerCase());
+  }
+
+  function prepareSearchState(state) {
+    getSaveRows(state).forEach((row) => {
+      const nameEl = row.querySelector(".fw-semibold");
+      setRowSearchValue(row, nameEl ? nameEl.textContent : "");
+    });
+  }
+
+  function filterSaveList(state) {
+    if (!state.list || !state.searchInput) return;
+    const rows = getSaveRows(state);
+    if (!rows.length) return;
+    const term = state.searchInput.value.trim().toLowerCase();
+    let visible = 0;
+    rows.forEach((row) => {
+      const name = row.getAttribute("data-collection-name") || "";
+      const match = !term || name.indexOf(term) !== -1;
+      row.classList.toggle("d-none", !match);
+      if (match) visible += 1;
+    });
+    const noResults = ensureNoResultsRow(state);
+    if (noResults) noResults.classList.toggle("d-none", visible !== 0);
+  }
+
+  function resetSearch(state) {
+    if (!state.searchInput) return;
+    state.searchInput.value = "";
+    filterSaveList(state);
+  }
+
+  function setSaveView(state, view) {
+    if (!state.views.length) return;
+    state.views.forEach((v) => {
+      v.classList.toggle("d-none", v.getAttribute("data-save-view") !== view);
+    });
+    state.modal.querySelectorAll("[data-save-title]").forEach((title) => {
+      title.classList.toggle("d-none", title.getAttribute("data-save-title") !== view);
+    });
+    state.modal.querySelectorAll("[data-save-subtitle]").forEach((subtitle) => {
+      subtitle.classList.toggle("d-none", subtitle.getAttribute("data-save-subtitle") !== view);
+    });
+    state.modal.querySelectorAll("[data-hide-when-view]").forEach((el) => {
+      el.classList.toggle("d-none", el.getAttribute("data-hide-when-view") === view);
+    });
+  }
+
+  function showSaveModal(state) {
+    setSaveView(state, VIEWS.list);
+    resetSearch(state);
+    if (state.hasBootstrap) {
+      const instance = state.w.bootstrap.Modal.getOrCreateInstance(state.modal);
+      instance.show();
+      return;
+    }
+    state.fallback.show(state.modal, () => hideSaveModal(state));
+  }
+
+  function hideSaveModal(state) {
+    if (state.hasBootstrap) {
+      state.w.bootstrap.Modal.getOrCreateInstance(state.modal).hide();
+      return;
+    }
+    state.fallback.hide(state.modal);
+  }
+
+  function handleToggleRequest(state, btn) {
+    const collectionId = btn.getAttribute("data-collection-id");
+    const icon = btn.querySelector("i");
+    if (!collectionId || !icon) return null;
+    const body = new URLSearchParams({ collection_id: collectionId }).toString();
+    return state.w
+      .fetch(state.saveEndpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
+          "X-CSRFToken": state.csrfToken,
+          "X-Requested-With": "XMLHttpRequest",
+        },
+        body,
+      })
+      .then((resp) => (resp.ok ? resp.json().catch(() => null) : null))
+      .then((data) => {
+        const saved = data && Object.prototype.hasOwnProperty.call(data, "saved")
+          ? !!data.saved
+          : !icon.classList.contains("bi-bookmark-fill");
+        icon.classList.toggle("bi-bookmark-fill", saved);
+        icon.classList.toggle("bi-bookmark", !saved);
+      })
+      .catch(() => {
+        const saved = !icon.classList.contains("bi-bookmark-fill");
+        icon.classList.toggle("bi-bookmark-fill", saved);
+        icon.classList.toggle("bi-bookmark", !saved);
+      });
+  }
+
+  function attachToggleHandler(state, btn) {
+    if (!btn || btn.dataset.saveHandlerAttached === "1") return;
+    btn.dataset.saveHandlerAttached = "1";
+    const row = btn.closest(".save-modal-row");
+    const handleToggle = (event) => {
+      event.preventDefault();
+      handleToggleRequest(state, btn);
+    };
+    btn.addEventListener("click", handleToggle);
+    if (row) {
+      row.addEventListener("click", (event) => {
+        if (event.target.closest("[data-save-toggle]")) return;
+        handleToggle(event);
+      });
+    }
+  }
+
+  function buildNewRow(state, collection, saved) {
+    const row = state.doc.createElement("li");
+    row.className = "save-modal-row";
+    row.setAttribute("data-collection-id", collection.id);
+    row.innerHTML = `
+      <div class="save-modal-avatar${collection.thumb_url ? " save-modal-avatar-has-thumb" : ""}" aria-hidden="true">
+        ${collection.thumb_url ? `<img src="${collection.thumb_url}" alt="" class="save-modal-avatar-img">` : (collection.name || "").charAt(0).toUpperCase()}
+      </div>
+      <div>
+        <p class="mb-0 fw-semibold"></p>
+        <p class="mb-0 text-muted small">Private</p>
+      </div>
+      <button
+        type="button"
+        class="save-modal-action"
+        data-save-toggle
+        data-collection-id="${collection.id}"
+        aria-label="Toggle ${collection.name || ""}"
+      >
+        <i class="bi"></i>
+      </button>
+    `;
+    if (state.list) state.list.appendChild(row);
+    const nameEl = row.querySelector("p.mb-0.fw-semibold") || row.querySelector("p.fw-semibold");
+    if (nameEl) {
+      nameEl.textContent = collection.name || "";
+      setRowSearchValue(row, collection.name || "");
+    }
+    const toggleBtn = row.querySelector("[data-save-toggle]");
+    const icon = toggleBtn ? toggleBtn.querySelector("i") : null;
+    if (icon) {
+      icon.classList.toggle("bi-bookmark-fill", saved);
+      icon.classList.toggle("bi-bookmark", !saved);
+    }
+    attachToggleHandler(state, toggleBtn);
+    return row;
+  }
+
+  function handleCreateSubmit(state) {
+    if (!state.createForm) return;
+    state.createForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const name = (state.nameInput && state.nameInput.value ? state.nameInput.value : "").trim();
+      if (!name) {
+        if (state.nameInput) state.nameInput.focus();
         return;
       }
-      saveModal.classList.remove("show");
-      saveModal.style.display = "none";
-      saveModal.setAttribute("aria-hidden", "true");
-
-      if (fallbackBackdrop) {
-        fallbackBackdrop.classList.remove("show");
-        fallbackBackdrop.style.display = "none";
-        fallbackBackdrop.onclick = null;
-      }
-
-      doc.body.classList.remove("modal-open");
-      doc.body.style.overflow = "";
-    }
-
-    const saveButtons = Array.from(doc.querySelectorAll("[data-open-save-modal]"));
-    saveButtons.forEach((btn) => {
-      btn.addEventListener("click", (e) => {
-        e.preventDefault();
-        showSaveModal();
-      });
-    });
-
-    saveModal.querySelectorAll("[data-dismiss-save-modal]").forEach((btn) => {
-      btn.addEventListener("click", hideSaveModal);
-    });
-
-    if (saveOpenCreate) {
-      saveOpenCreate.addEventListener("click", (e) => {
-        e.preventDefault();
-        setSaveView("create");
-        if (saveNameInput) saveNameInput.focus();
-      });
-    }
-
-    if (saveBackBtn) {
-      saveBackBtn.addEventListener("click", (e) => {
-        e.preventDefault();
-        setSaveView("list");
-      });
-    }
-
-    const attachToggleHandler = (btn) => {
-      if (!btn || btn.dataset.saveHandlerAttached === "1") return;
-      btn.dataset.saveHandlerAttached = "1";
-
-      const row = btn.closest(".save-modal-row");
-
-      const handleToggle = (e) => {
-        e.preventDefault();
-        const collectionId = btn.getAttribute("data-collection-id");
-        const icon = btn.querySelector("i");
-        if (!collectionId || !icon) return;
-
-        const body = new URLSearchParams({
-          collection_id: collectionId
-        }).toString();
-
-        return w
-          .fetch(saveEndpoint, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
-              "X-CSRFToken": csrfToken,
-              "X-Requested-With": "XMLHttpRequest"
-            },
-            body
-          })
-          .then((resp) => (resp.ok ? resp.json().catch(() => null) : null))
-          .then((data) => {
-            const saved = data && Object.prototype.hasOwnProperty.call(data, "saved") ? !!data.saved : !icon.classList.contains("bi-bookmark-fill");
-            icon.classList.toggle("bi-bookmark-fill", saved);
-            icon.classList.toggle("bi-bookmark", !saved);
-          })
-          .catch(() => {
-            const saved = !icon.classList.contains("bi-bookmark-fill");
-            icon.classList.toggle("bi-bookmark-fill", saved);
-            icon.classList.toggle("bi-bookmark", !saved);
-          });
-      };
-
-      btn.addEventListener("click", handleToggle);
-
-      if (row) {
-        row.addEventListener("click", (e) => {
-          if (e.target.closest("[data-save-toggle]")) return;
-          handleToggle(e);
-        });
-      }
-    };
-
-    if (saveCreateForm) {
-      saveCreateForm.addEventListener("submit", (e) => {
-        e.preventDefault();
-        const name = (saveNameInput && saveNameInput.value ? saveNameInput.value : "").trim();
-        if (!name) {
-          if (saveNameInput) saveNameInput.focus();
-          return;
-        }
-
-        const body = new URLSearchParams({
-          collection_name: name
-        }).toString();
-
-        w
-          .fetch(saveEndpoint, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
-              "X-CSRFToken": csrfToken,
-              "X-Requested-With": "XMLHttpRequest"
-            },
-            body
-          })
-          .then((resp) => (resp.ok ? resp.json().catch(() => null) : null))
-          .then((data) => {
-            if (!data || !data.collection || !saveModalList) return;
-            const col = data.collection;
-            let row = saveModalList.querySelector(`[data-collection-id="${col.id}"]`);
-            const saved = !!data.saved;
-            if (!row) {
-              row = doc.createElement("li");
-              row.className = "save-modal-row";
-              row.setAttribute("data-collection-id", col.id);
-              row.innerHTML = `
-              <div class="save-modal-avatar${col.thumb_url ? " save-modal-avatar-has-thumb" : ""}" aria-hidden="true">
-                ${col.thumb_url ? `<img src="${col.thumb_url}" alt="" class="save-modal-avatar-img">` : (col.name || "").charAt(0).toUpperCase()}
-              </div>
-              <div>
-                <p class="mb-0 fw-semibold"></p>
-                <p class="mb-0 text-muted small">Private</p>
-              </div>
-              <button
-                type="button"
-                class="save-modal-action"
-                data-save-toggle
-                data-collection-id="${col.id}"
-                aria-label="Toggle ${col.name || ""}"
-              >
-                <i class="bi"></i>
-              </button>
-            `;
-              saveModalList.appendChild(row);
-            }
-
-            const nameEl = row.querySelector("p.mb-0.fw-semibold") || row.querySelector("p.fw-semibold");
-            if (nameEl) {
-              nameEl.textContent = col.name || "";
-              setRowSearchValue(row, col.name || "");
-            }
+      const body = new URLSearchParams({ collection_name: name }).toString();
+      state.w
+        .fetch(state.saveEndpoint, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
+            "X-CSRFToken": state.csrfToken,
+            "X-Requested-With": "XMLHttpRequest",
+          },
+          body,
+        })
+        .then((resp) => (resp.ok ? resp.json().catch(() => null) : null))
+        .then((data) => {
+          if (!data || !data.collection) return;
+          const saved = !!data.saved;
+          const existing = state.list
+            ? state.list.querySelector(`[data-collection-id="${data.collection.id}"]`)
+            : null;
+          const row = existing || buildNewRow(state, data.collection, saved);
+          if (existing) {
             const toggleBtn = row.querySelector("[data-save-toggle]");
-            const icon = toggleBtn ? toggleBtn.querySelector("i") : null;
-            if (icon) {
-              icon.classList.toggle("bi-bookmark-fill", saved);
-              icon.classList.toggle("bi-bookmark", !saved);
-            }
-            attachToggleHandler(toggleBtn);
-            filterSaveModalList();
-            setSaveView("list");
-            hideSaveModal();
-          })
-          .catch(() => {
-            hideSaveModal();
-          });
+            if (toggleBtn) attachToggleHandler(state, toggleBtn);
+          }
+          filterSaveList(state);
+          setSaveView(state, VIEWS.list);
+          hideSaveModal(state);
+        })
+        .catch(() => hideSaveModal(state));
+    });
+  }
+
+  function wireViewButtons(state) {
+    if (state.openCreate) {
+      state.openCreate.addEventListener("click", (event) => {
+        event.preventDefault();
+        setSaveView(state, VIEWS.create);
+        if (state.nameInput) state.nameInput.focus();
       });
     }
-
-    saveToggleButtons.forEach(attachToggleHandler);
-
-    saveModal.addEventListener("click", (e) => {
-      if (!saveModal.classList.contains("show")) return;
-      const dialog = saveModal.querySelector(".modal-dialog");
-      if (dialog && dialog.contains(e.target)) return;
-      hideSaveModal();
-    });
-
-    if (hasBootstrapModal) {
-      saveModal.addEventListener("shown.bs.modal", () => setSaveView("list"));
+    if (state.backBtn) {
+      state.backBtn.addEventListener("click", (event) => {
+        event.preventDefault();
+        setSaveView(state, VIEWS.list);
+      });
     }
+  }
 
-    filterSaveModalList();
+  function wireModalTriggers(state) {
+    Array.from(state.doc.querySelectorAll("[data-open-save-modal]")).forEach((btn) => {
+      btn.addEventListener("click", (event) => {
+        event.preventDefault();
+        showSaveModal(state);
+      });
+    });
+    state.modal.querySelectorAll("[data-dismiss-save-modal]").forEach((btn) => {
+      btn.addEventListener("click", () => hideSaveModal(state));
+    });
+    state.modal.addEventListener("click", (event) => {
+      if (!state.modal.classList.contains("show")) return;
+      const dialog = state.modal.querySelector(".modal-dialog");
+      if (dialog && dialog.contains(event.target)) return;
+      hideSaveModal(state);
+    });
+    if (state.hasBootstrap) {
+      state.modal.addEventListener("shown.bs.modal", () => setSaveView(state, VIEWS.list));
+    }
+  }
+
+  function initSaveModal(win) {
+    const w = resolveWindow(win);
+    if (!w) return;
+    const state = buildSaveState(w, w.document);
+    if (!state) return;
+    prepareSearchState(state);
+    if (state.searchInput) {
+      state.searchInput.addEventListener("input", () => filterSaveList(state));
+    }
+    wireViewButtons(state);
+    wireModalTriggers(state);
+    handleCreateSubmit(state);
+    state.toggleButtons.forEach((btn) => attachToggleHandler(state, btn));
+    filterSaveList(state);
   }
 
   if (typeof module !== "undefined" && module.exports) {

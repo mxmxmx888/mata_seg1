@@ -38,17 +38,9 @@
 
             <div class="shopping-links-upload mt-3">
               <label class="form-label mb-1 text-white-50 small" for="{{ form.shop_images.id_for_label }}">Shopping images</label>
-              {% if form.shop_images.errors %}
-                {% render_field form.shop_images class="form-control form-control-dark shopping-upload-input is-invalid" %}
-              {% else %}
-                {% render_field form.shop_images class="form-control form-control-dark shopping-upload-input" %}
-              {% endif %}
-              <small class="text-white-50 small d-block mt-1"></small>
-              {% if form.shop_images.errors %}
-                <div class="invalid-feedback d-block">
-                  {{ form.shop_images.errors }}
-                </div>
-              {% endif %}
+              {% render_field form.shop_images class="file-pill-input" %}
+              <label for="{{ form.shop_images.id_for_label }}" class="file-pill-btn">Choose file</label>
+              <small class="text-white-50 small d-block mt-1">{{ form.shop_images.help_text }}</small>
               <div id="shop-image-file-list" class="small text-white-50 mt-2"></div>
             </div>
 
@@ -58,7 +50,12 @@
 
             <div class="mt-4 shopping-links-list">
               <div class="small fw-bold text-white-50 mb-2 text-uppercase tracking-wide">Added Items</div>
-              <div id="shop-list" class="shopping-list-box text-white-50 small">No shopping links added yet.</div>
+              <div
+                id="shop-list"
+                class="shopping-list-box text-white-50 small"
+                data-shopping-items="{{ shopping_items_json|default:'[]'|escapejs }}"
+              >No shopping links added yet.</div>
+              {{ shopping_items_data|json_script:"existing-shopping-items" }}
             </div>
           </div>
 
@@ -77,6 +74,9 @@
   </div>
   </main>
 
+  <script src="{% static 'js/create_recipe_validation.js' %}"></script>
+  <script src="{% static 'js/create_recipe_images.js' %}"></script>
+  <script src="{% static 'js/create_recipe_shopping.js' %}"></script>
   <script src="{% static 'js/create_recipe_helpers.js' %}"></script>
   <script src="{% static 'js/create_recipe.js' %}"></script>
 {% endblock %}

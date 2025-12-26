@@ -62,6 +62,7 @@ urlpatterns = [
     path('saved/', saved_recipes, name='saved_recipes'),
     path('api/profile', views.profile_api, name='profile_api'),
     path('u/<str:username>/follow/', toggle_follow, name='toggle_follow'),
+    path('profile/follows/', profile_view.profile_follow_list, name='profile_follow_list'),
     path('followers/<str:username>/remove/', remove_follower, name='remove_follower'),
     path('following/<str:username>/remove/', remove_following, name='remove_following'),
     path('close-friends/<str:username>/add/', add_close_friend, name='add_close_friend'),

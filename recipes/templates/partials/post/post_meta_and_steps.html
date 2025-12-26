@@ -44,6 +44,7 @@
   </section>
   {% endif %}
 
+  {% if ingredients %}
   <section class="mb-4">
     <h2 class="h4 fw-semibold mb-2">Ingredients</h2>
     <ul class="post-ingredients mt-1">
@@ -54,7 +55,9 @@
       {% endfor %}
     </ul>
   </section>
+  {% endif %}
 
+  {% if steps %}
   <section class="mb-4">
     <h2 class="h4 fw-semibold mb-2">Steps</h2>
     <ol class="post-steps mt-1">
@@ -63,6 +66,14 @@
       {% endfor %}
     </ol>
   </section>
+  {% endif %}
+
+  {% if recipe.nutrition %}
+  <section class="mb-4">
+    <h2 class="h4 fw-semibold mb-2">Nutrition</h2>
+    <p class="mb-0">{{ recipe.nutrition|linebreaksbr }}</p>
+  </section>
+  {% endif %}
 
   {% if tags %}
   <section class="post-tags mb-4">

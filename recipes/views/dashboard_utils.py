@@ -3,14 +3,7 @@ from django.contrib.auth import get_user_model
 from django.db.models import Q, Exists, OuterRef
 from django.utils import timezone
 from recipes.services import PrivacyService
-
-try:
-    from recipes.models import RecipePost, Like, Follower, Ingredient
-except Exception:
-    from recipes.models.recipe_post import RecipePost
-    from recipes.models.like import Like
-    from recipes.models.followers import Follower
-    from recipes.models.ingredient import Ingredient
+from recipes.models import RecipePost, Like, Follower, Ingredient
 
 privacy_service = PrivacyService()
 

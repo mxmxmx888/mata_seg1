@@ -1,3 +1,5 @@
+"""Management command to seed the database with sample users, posts, and related data."""
+
 from random import sample, randint, choice
 from typing import List
 
@@ -32,6 +34,7 @@ class Command(SeedHelpers, BaseCommand):
     help = 'Seeds the database with sample data'
 
     def __init__(self, *args, **kwargs):
+        """Set up faker instance for generating seed content."""
         super().__init__(*args, **kwargs)
         self.faker = Faker('en_GB')
 
@@ -244,12 +247,14 @@ class Command(SeedHelpers, BaseCommand):
         )
 
     def _get_recipe_posts_for_favourites(self) -> List[str]:
+        """Fetch IDs for all recipe posts to seed favourites against."""
         posts = list(RecipePost.objects.values_list("id", flat=True))
         if not posts:
             self.stdout.write("no recipe posts found, skipping favourites seeding.")
         return posts
 
     def _bulk_create_favourites(self, favourites: List[Favourite]) -> None:
+        """Bulk create Favourite rows with conflict tolerance."""
         with transaction.atomic():
             Favourite.objects.bulk_create(
                 favourites,
@@ -258,6 +263,7 @@ class Command(SeedHelpers, BaseCommand):
             )
 
     def _bulk_create_favourite_items(self, items: List[FavouriteItem]) -> None:
+        """Bulk create FavouriteItem rows with conflict tolerance."""
         with transaction.atomic():
             FavouriteItem.objects.bulk_create(
                 items,

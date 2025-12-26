@@ -1,3 +1,5 @@
+"""Repository helpers for fetching recipe posts."""
+
 from typing import Any, Dict, List, Optional, Sequence
 from django.db.models import QuerySet
 from recipes.db_accessor import DB_Accessor
@@ -8,6 +10,7 @@ from recipes.models import Follows
 class PostRepo(DB_Accessor):
     """Repository for RecipePost queries (feed, user-specific, following)."""
     def __init__(self) -> None:
+        """Initialise with the RecipePost model."""
         super().__init__(RecipePost)
 
     def list_ids(self) -> List[str]:

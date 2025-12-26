@@ -10,9 +10,12 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 import os
+import sys
+import copy
 from pathlib import Path
 from django.contrib.messages import constants as messages
 from dotenv import load_dotenv
+from django.utils.log import DEFAULT_LOGGING
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -23,6 +26,7 @@ FIREBASE_API_KEY = os.getenv("FIREBASE_API_KEY")
 
 
 def env_list(name: str):
+    """Read a comma-separated env var into a list of trimmed strings."""
     value = os.getenv(name, "")
     return [item.strip() for item in value.split(",") if item.strip()]
 
@@ -211,3 +215,19 @@ EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS') == 'True'  # Cast string to Boolean
 EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
 DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL')
+
+# Silence verbose Firebase logger output during test runs while preserving default logging.
+RUNNING_TESTS = any(arg in sys.argv for arg in ["test", "pytest"])
+if RUNNING_TESTS:
+    LOGGING = copy.deepcopy(DEFAULT_LOGGING)
+    LOGGING["handlers"]["null"] = {"class": "logging.NullHandler"}
+    LOGGING["loggers"]["recipes.firebase_admin_client"] = {
+        "handlers": ["null"],
+        "level": "CRITICAL",
+        "propagate": False,
+    }
+    LOGGING["loggers"]["recipes.firebase_auth_services"] = {
+        "handlers": ["null"],
+        "level": "CRITICAL",
+        "propagate": False,
+    }

@@ -1,4 +1,5 @@
 const modulePath = "../../static/js/discover_infinite";
+const { attachGlobal } = require("../../static/js/infinite_list");
 let scrollHandlers = [];
 
 function loadModule() {
@@ -16,6 +17,7 @@ describe("discover_infinite", () => {
   beforeEach(() => {
     document.body.innerHTML = "";
     scrollHandlers = [];
+    attachGlobal(window);
     addEventListenerSpy = jest.spyOn(window, "addEventListener").mockImplementation((type, handler) => {
       if (type === "scroll") {
         scrollHandlers.push(handler);
