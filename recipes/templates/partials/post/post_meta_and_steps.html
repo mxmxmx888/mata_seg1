@@ -16,6 +16,9 @@
         {% if recipe.visibility == 'public' %}Public{% elif recipe.visibility == 'followers' %}Followers only{% else %}Close friends only{% endif %}
       </span>
     </div>
+    <p class="text-muted small mb-0">
+      Published {% if recipe.published_at %}{{ recipe.published_at|timesince }}{% else %}{{ recipe.created_at|timesince }}{% endif %} ago
+    </p>
   </header>
 
   <p class="post-summary text-muted mb-4">{{ summary }}</p>
