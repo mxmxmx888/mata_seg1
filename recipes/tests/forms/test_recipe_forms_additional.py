@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 from django import forms
 from django.test import TestCase
 from django.utils.datastructures import MultiValueDict
@@ -233,3 +235,11 @@ class RecipePostFormAdditionalTests(TestCase):
             files=MultiValueDict({"images": [fake_image("cover.jpg")]}),
         )
         self.assertTrue(form.is_valid(), form.errors)
+
+    def test_init_handles_missing_nutrition_field(self):
+        fields_without_nutrition = {
+            name: field for name, field in RecipePostForm.base_fields.items() if name != "nutrition"
+        }
+        with patch.object(RecipePostForm, "base_fields", fields_without_nutrition):
+            form = RecipePostForm()
+            self.assertNotIn("nutrition", form.fields)

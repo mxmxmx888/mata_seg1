@@ -2,6 +2,7 @@ from django.test import TestCase
 from django.utils.datastructures import MultiValueDict
 
 from recipes.forms.recipe_forms import (
+    MAX_SHOPPING_LINKS,
     RecipePostForm,
 )
 from recipes.models import User
@@ -325,6 +326,28 @@ class RecipePostFormTests(TestCase):
         self.assertFalse(form.is_valid())
         self.assertIn("shop_images", form.errors)
         self.assertIn("need 2, provided 1", str(form.errors["shop_images"]))
+
+    def test_clean_enforces_max_shopping_links(self):
+        too_many_links = "\n".join(
+            f"Item{i} | example{i}.com" for i in range(MAX_SHOPPING_LINKS + 1)
+        )
+        form = RecipePostForm(
+            data={
+                "title": "X",
+                "description": "Y",
+                "category": "dinner",
+                "prep_time_min": 1,
+                "cook_time_min": 1,
+                "nutrition": "",
+                "visibility": RecipePost.VISIBILITY_PUBLIC,
+                "shopping_links_text": too_many_links,
+            },
+            files=MultiValueDict({"images": [fake_image("cover.jpg")]}),
+        )
+
+        self.assertFalse(form.is_valid())
+        self.assertIn("shopping_links_text", form.errors)
+        self.assertIn("Add up to", str(form.errors["shopping_links_text"]))
 
     def test_clean_accepts_enough_shop_images_for_links(self):
         files = MultiValueDict({

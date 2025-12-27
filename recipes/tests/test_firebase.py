@@ -88,6 +88,16 @@ class FirebaseAuthServicesTests(TestCase):
                     self.assertIsNone(res)
                     print_mock.assert_called_once()
 
+    def test_sign_in_missing_api_key_skips_logs_in_tests(self):
+        with patch("recipes.firebase_auth_services._is_running_tests", return_value=True):
+            with patch("recipes.firebase_auth_services.requests.post", MagicMock(name="post")):
+                with patch("recipes.firebase_auth_services.settings", create=True) as mock_settings:
+                    mock_settings.FIREBASE_API_KEY = None
+                    with patch("builtins.print") as print_mock:
+                        res = firebase_auth_services.sign_in_with_email_and_password("u", "p")
+                        self.assertIsNone(res)
+                        print_mock.assert_not_called()
+
     @patch("recipes.firebase_auth_services.requests.post")
     def test_sign_in_success(self, mock_post):
         mock_post.return_value.status_code = 200
