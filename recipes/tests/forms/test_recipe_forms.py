@@ -20,6 +20,34 @@ class RecipePostFormTests(TestCase):
             password="Password123",
         )
 
+    def form_data(self, **overrides):
+        base = {
+            "title": "X",
+            "description": "Y",
+            "category": "dinner",
+            "prep_time_min": 1,
+            "cook_time_min": 1,
+            "nutrition": "",
+            "visibility": RecipePost.VISIBILITY_PUBLIC,
+        }
+        base.update(overrides)
+        return base
+
+    def build_form(self, data=None, files=None, instance=None):
+        return RecipePostForm(
+            data=self.form_data(**(data or {})),
+            files=files or MultiValueDict(),
+            instance=instance,
+        )
+
+    def form_files(self, images=None, shop_images=None):
+        payload = {}
+        if images is not None:
+            payload["images"] = images
+        if shop_images is not None:
+            payload["shop_images"] = shop_images
+        return MultiValueDict(payload)
+
     def make_recipe(self):
         return RecipePost.objects.create(
             author=self.user,
@@ -33,19 +61,9 @@ class RecipePostFormTests(TestCase):
         )
 
     def test_parse_tags_adds_category_tag(self):
-        form = RecipePostForm(
-            data={
-                "title": "Pasta",
-                "description": "Nice",
-                "category": "dinner",
-                "prep_time_min": 1,
-                "cook_time_min": 1,
-                "nutrition": "",
-                "visibility": RecipePost.VISIBILITY_PUBLIC,
-                "tags_text": "quick, ,  family ",
-            }
-            ,
-            files=MultiValueDict({"images": [fake_image("cover.jpg")]}),
+        form = self.build_form(
+            data={"title": "Pasta", "description": "Nice", "tags_text": "quick, ,  family "},
+            files=self.form_files(images=[fake_image("cover.jpg")]),
         )
         self.assertTrue(form.is_valid(), form.errors)
         tags = form.parse_tags()
@@ -54,18 +72,9 @@ class RecipePostFormTests(TestCase):
         self.assertIn("category:dinner", tags)
 
     def test_serves_rejects_non_numeric_input(self):
-        form = RecipePostForm(
-            data={
-                "title": "X",
-                "description": "Y",
-                "category": "dinner",
-                "prep_time_min": 1,
-                "cook_time_min": 1,
-                "serves": "abc",
-                "nutrition": "",
-                "visibility": RecipePost.VISIBILITY_PUBLIC,
-            },
-            files=MultiValueDict({"images": [fake_image("cover.jpg")]}),
+        form = self.build_form(
+            data={"serves": "abc"},
+            files=self.form_files(images=[fake_image("cover.jpg")]),
         )
 
         self.assertFalse(form.is_valid())
@@ -85,7 +94,7 @@ class RecipePostFormTests(TestCase):
         recipe = self.make_recipe()
         RecipeStep.objects.create(recipe_post=recipe, position=1, description="old")
 
-        form = RecipePostForm(data={"category": "dinner"})
+        form = self.build_form()
         form.cleaned_data = {"steps_text": "step 1\nstep 2"}
         form.create_steps(recipe)
 
@@ -101,7 +110,7 @@ class RecipePostFormTests(TestCase):
         RecipeImage.objects.create(recipe_post=recipe, image=fake_image("old.jpg"), position=0)
 
         files = [fake_image(f"{i}.jpg") for i in range(12)]
-        form = RecipePostForm(data={"category": "dinner"}, files=MultiValueDict({"images": files}))
+        form = self.build_form(files=self.form_files(images=files))
 
         form.create_images(recipe)
 
@@ -114,9 +123,7 @@ class RecipePostFormTests(TestCase):
         recipe = self.make_recipe()
         existing = RecipeImage.objects.create(recipe_post=recipe, image=fake_image("keep.jpg"), position=0)
 
-        form = RecipePostForm(data={"category": "dinner"}, files=MultiValueDict())
-
-        form.create_images(recipe)
+        self.build_form().create_images(recipe)
 
         imgs = list(RecipeImage.objects.filter(recipe_post=recipe).order_by("position"))
         self.assertEqual(len(imgs), 1)
@@ -143,7 +150,7 @@ class RecipePostFormTests(TestCase):
         ])
 
         shop_imgs = [fake_image("s1.jpg"), fake_image("s2.jpg")]
-        form = RecipePostForm(data={"category": "dinner"}, files=MultiValueDict({"shop_images": shop_imgs}))
+        form = self.build_form(files=self.form_files(shop_images=shop_imgs))
         form.cleaned_data = {
             "ingredients_text": ingredients_text,
             "shopping_links_text": shopping_links_text,
@@ -173,35 +180,13 @@ class RecipePostFormTests(TestCase):
 
     def test_clean_images_limits_to_10(self):
         files = [fake_image(f"{i}.jpg") for i in range(11)]
-        form = RecipePostForm(
-            data={
-                "title": "X",
-                "description": "Y",
-                "category": "dinner",
-                "prep_time_min": 1,
-                "cook_time_min": 1,
-                "nutrition": "",
-                "visibility": RecipePost.VISIBILITY_PUBLIC,
-            },
-            files=MultiValueDict({"images": files}),
-        )
+        form = self.build_form(files=self.form_files(images=files))
         self.assertFalse(form.is_valid())
         self.assertIn("images", form.errors)
         self.assertIn("up to 10 images", str(form.errors["images"]))
 
     def test_clean_images_rejects_files_over_size_limit(self):
-        form = RecipePostForm(
-            data={
-                "title": "X",
-                "description": "Y",
-                "category": "dinner",
-                "prep_time_min": 1,
-                "cook_time_min": 1,
-                "nutrition": "",
-                "visibility": RecipePost.VISIBILITY_PUBLIC,
-            },
-            files=MultiValueDict({"images": [oversized_image()]}),
-        )
+        form = self.build_form(files=self.form_files(images=[oversized_image()]))
         self.assertFalse(form.is_valid())
         self.assertIn("images", form.errors)
         self.assertIn("MB or smaller", str(form.errors["images"]))
@@ -209,38 +194,16 @@ class RecipePostFormTests(TestCase):
 
     def test_clean_shop_images_limits_to_10(self):
         files = [fake_image(f"{i}.jpg") for i in range(11)]
-        form = RecipePostForm(
-            data={
-                "title": "X",
-                "description": "Y",
-                "category": "dinner",
-                "prep_time_min": 1,
-                "cook_time_min": 1,
-                "nutrition": "",
-                "visibility": RecipePost.VISIBILITY_PUBLIC,
-            },
-            files=MultiValueDict({"shop_images": files}),
-        )
+        form = self.build_form(files=self.form_files(shop_images=files))
         self.assertFalse(form.is_valid())
         self.assertIn("shop_images", form.errors)
         self.assertIn("up to 10 shopping images", str(form.errors["shop_images"]))
 
     def test_clean_shop_images_rejects_files_over_size_limit(self):
-        form = RecipePostForm(
-            data={
-                "title": "X",
-                "description": "Y",
-                "category": "dinner",
-                "prep_time_min": 1,
-                "cook_time_min": 1,
-                "nutrition": "",
-                "visibility": RecipePost.VISIBILITY_PUBLIC,
-            },
-            files=MultiValueDict(
-                {
-                    "images": [fake_image("cover.jpg")],
-                    "shop_images": [oversized_image("too-big.jpg")],
-                }
+        form = self.build_form(
+            files=self.form_files(
+                images=[fake_image("cover.jpg")],
+                shop_images=[oversized_image("too-big.jpg")],
             ),
         )
         self.assertFalse(form.is_valid())
@@ -249,18 +212,7 @@ class RecipePostFormTests(TestCase):
         self.assertIn("too-big.jpg", str(form.errors["shop_images"]))
 
     def test_clean_images_requires_one_on_create(self):
-        form = RecipePostForm(
-            data={
-                "title": "X",
-                "description": "Y",
-                "category": "dinner",
-                "prep_time_min": 1,
-                "cook_time_min": 1,
-                "nutrition": "",
-                "visibility": RecipePost.VISIBILITY_PUBLIC,
-            },
-            files=MultiValueDict(),
-        )
+        form = self.build_form()
 
         self.assertFalse(form.is_valid())
         self.assertIn("images", form.errors)
@@ -270,19 +222,7 @@ class RecipePostFormTests(TestCase):
         recipe = self.make_recipe()
         RecipeImage.objects.create(recipe_post=recipe, image=fake_image("existing.jpg"), position=0)
 
-        form = RecipePostForm(
-            data={
-                "title": "X",
-                "description": "Y",
-                "category": "dinner",
-                "prep_time_min": 1,
-                "cook_time_min": 1,
-                "nutrition": "",
-                "visibility": RecipePost.VISIBILITY_PUBLIC,
-            },
-            instance=recipe,
-            files=MultiValueDict(),
-        )
+        form = self.build_form(instance=recipe)
 
         self.assertTrue(form.is_valid(), form.errors)
 
@@ -291,36 +231,14 @@ class RecipePostFormTests(TestCase):
         recipe.image = "legacy.jpg"
         recipe.save()
 
-        form = RecipePostForm(
-            data={
-                "title": "X",
-                "description": "Y",
-                "category": "dinner",
-                "prep_time_min": 1,
-                "cook_time_min": 1,
-                "nutrition": "",
-                "visibility": RecipePost.VISIBILITY_PUBLIC,
-            },
-            instance=recipe,
-            files=MultiValueDict(),
-        )
+        form = self.build_form(instance=recipe)
 
         self.assertTrue(form.is_valid(), form.errors)
 
     def test_clean_requires_shop_images_for_each_link(self):
-        files = MultiValueDict({"shop_images": [fake_image("only1.jpg")]})
-        form = RecipePostForm(
-            data={
-                "title": "X",
-                "description": "Y",
-                "category": "dinner",
-                "prep_time_min": 1,
-                "cook_time_min": 1,
-                "nutrition": "",
-                "visibility": RecipePost.VISIBILITY_PUBLIC,
-                "shopping_links_text": "Milk | https://store.com/milk\nFlour | amazon.com/flour",
-            },
-            files=files,
+        form = self.build_form(
+            data={"shopping_links_text": "Milk | https://store.com/milk\nFlour | amazon.com/flour"},
+            files=self.form_files(shop_images=[fake_image("only1.jpg")]),
         )
 
         self.assertFalse(form.is_valid())
@@ -331,18 +249,9 @@ class RecipePostFormTests(TestCase):
         too_many_links = "\n".join(
             f"Item{i} | example{i}.com" for i in range(MAX_SHOPPING_LINKS + 1)
         )
-        form = RecipePostForm(
-            data={
-                "title": "X",
-                "description": "Y",
-                "category": "dinner",
-                "prep_time_min": 1,
-                "cook_time_min": 1,
-                "nutrition": "",
-                "visibility": RecipePost.VISIBILITY_PUBLIC,
-                "shopping_links_text": too_many_links,
-            },
-            files=MultiValueDict({"images": [fake_image("cover.jpg")]}),
+        form = self.build_form(
+            data={"shopping_links_text": too_many_links},
+            files=self.form_files(images=[fake_image("cover.jpg")]),
         )
 
         self.assertFalse(form.is_valid())
@@ -350,24 +259,14 @@ class RecipePostFormTests(TestCase):
         self.assertIn("Add up to", str(form.errors["shopping_links_text"]))
 
     def test_clean_accepts_enough_shop_images_for_links(self):
-        files = MultiValueDict({
-            "shop_images": [fake_image("milk.jpg"), fake_image("flour.jpg")],
-        })
-        form = RecipePostForm(
+        form = self.build_form(
             data={
-                "title": "X",
-                "description": "Y",
-                "category": "dinner",
-                "prep_time_min": 1,
-                "cook_time_min": 1,
-                "nutrition": "",
-                "visibility": RecipePost.VISIBILITY_PUBLIC,
                 "shopping_links_text": "Milk | https://store.com/milk\nFlour | amazon.com/flour",
             },
-            files=MultiValueDict({
-                "shop_images": [fake_image("milk.jpg"), fake_image("flour.jpg")],
-                "images": [fake_image("cover.jpg")],
-            }),
+            files=self.form_files(
+                shop_images=[fake_image("milk.jpg"), fake_image("flour.jpg")],
+                images=[fake_image("cover.jpg")],
+            ),
         )
 
         self.assertTrue(form.is_valid(), form.errors)
@@ -381,19 +280,10 @@ class RecipePostFormTests(TestCase):
             shop_image_upload=fake_image("existing.jpg"),
             position=1,
         )
-        form = RecipePostForm(
-            data={
-                "title": "X",
-                "description": "Y",
-                "category": "dinner",
-                "prep_time_min": 1,
-                "cook_time_min": 1,
-                "nutrition": "",
-                "visibility": RecipePost.VISIBILITY_PUBLIC,
-                "shopping_links_text": "Milk | https://store.com/milk",
-            },
+        form = self.build_form(
+            data={"shopping_links_text": "Milk | https://store.com/milk"},
             instance=recipe,
-            files=MultiValueDict({"images": [fake_image("cover.jpg")]}),
+            files=self.form_files(images=[fake_image("cover.jpg")]),
         )
 
         self.assertTrue(form.is_valid(), form.errors)
