@@ -6,49 +6,9 @@
     {{ field }}
   {% else %}
     {% if field.name == "images" %}
-      <div class="mb-3 image-upload-field">
-        <label for="{{ field.id_for_label }}">
-          {% if field.field.required %}
-            <span class="text-danger me-1">*</span>
-          {% endif %}
-          {{ field.label }}{% if form.label_suffix %}{{ form.label_suffix }}{% endif %}
-        </label>
-        {% if form.is_bound and field.errors %}
-          {% render_field field class="file-pill-input is-invalid" %}
-        {% else %}
-          {% render_field field class="file-pill-input" %}
-        {% endif %}
-        <label for="{{ field.id_for_label }}" class="file-pill-btn">Choose files</label>
-        {% if field.help_text %}
-          <small class="form-text text-muted d-block mt-2">{{ field.help_text }}</small>
-        {% endif %}
-        <div class="invalid-feedback{% if field.errors %} d-block{% endif %}">
-          {{ field.errors }}
-        </div>
-        <div id="image-file-list" class="small text-muted mt-2"></div>
-      </div>
+      {% include "partials/forms/file_upload_field.html" with form=form field=field choose_label="Choose files" file_list_id="image-file-list" %}
     {% elif field.name == "shop_images" %}
-      <div class="mb-3 image-upload-field">
-        <label for="{{ field.id_for_label }}">
-          {% if field.field.required %}
-            <span class="text-danger me-1">*</span>
-          {% endif %}
-          {{ field.label }}{% if form.label_suffix %}{{ form.label_suffix }}{% endif %}
-        </label>
-        {% if form.is_bound and field.errors %}
-          {% render_field field class="file-pill-input is-invalid" %}
-        {% else %}
-          {% render_field field class="file-pill-input" %}
-        {% endif %}
-        <label for="{{ field.id_for_label }}" class="file-pill-btn">Choose file</label>
-        {% if field.help_text %}
-          <small class="form-text text-muted d-block mt-2">{{ field.help_text }}</small>
-        {% endif %}
-        <div class="invalid-feedback{% if field.errors %} d-block{% endif %}">
-          {{ field.errors }}
-        </div>
-        <div id="shop-image-file-list" class="small text-muted mt-2"></div>
-      </div>
+      {% include "partials/forms/file_upload_field.html" with form=form field=field choose_label="Choose file" file_list_id="shop-image-file-list" %}
     {% else %}
       <div class="mb-3">
         <label for="{{ field.id_for_label }}">

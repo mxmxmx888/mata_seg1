@@ -1,179 +1,183 @@
-(function (global) {
-  /**
-   * Build a fetcher that returns JSON payloads for infinite lists.
-   * Options:
-   * - endpoint: base URL (string, relative allowed)
-   * - pageParam: query param name for page (default: "page")
-   * - pageSizeParam / pageSize: optional size control
-   * - extraParams: object of additional query params
-   * - fetchInit: fetch init overrides
-   * - mapResponse: function(json) -> { html, hasMore, nextPage }
-   */
-  function buildJsonFetcher(win, options) {
-    const w = win || (typeof window !== "undefined" ? window : undefined);
-    if (!w || !options || !options.endpoint) return null;
+const hasModuleExports = typeof module !== "undefined" && module.exports;
+const globalWindow = typeof window !== "undefined" && window.document ? window : null;
 
-    const {
-      endpoint,
-      pageParam = "page",
-      pageSizeParam,
-      pageSize,
-      extraParams = {},
-      fetchInit = {},
-      mapResponse,
-    } = options;
+const resolveWindow = (win) => {
+  const candidate = win || globalWindow;
+  return candidate && candidate.document ? candidate : null;
+};
 
-    return ({ page }) => {
-      if (!page && page !== 0) return Promise.resolve({ html: "", hasMore: false, nextPage: null });
-      const url = new URL(endpoint, w.location.origin);
-      url.searchParams.set(pageParam, String(page));
-      if (pageSizeParam && pageSize) {
-        url.searchParams.set(pageSizeParam, String(pageSize));
-      }
-      Object.entries(extraParams || {}).forEach(([key, value]) => {
-        if (value === undefined || value === null) return;
-        url.searchParams.set(key, String(value));
-      });
+const mapJsonResponse = (mapResponse, json) => {
+  if (typeof mapResponse === "function") return mapResponse(json);
+  return {
+    html: (json && json.html) || "",
+    hasMore: Boolean(json && json.has_more),
+    nextPage: json ? json.next_page : null
+  };
+};
 
-      return w
-        .fetch(url.toString(), fetchInit)
-        .then((resp) => {
-          if (!resp.ok) throw new Error("Request failed");
-          return resp.json();
-        })
-        .then((json) => {
-          if (typeof mapResponse === "function") {
-            return mapResponse(json);
-          }
-          return {
-            html: (json && json.html) || "",
-            hasMore: Boolean(json && json.has_more),
-            nextPage: json ? json.next_page : null,
-          };
-        });
-    };
+const buildJsonUrl = (w, options, page) => {
+  const url = new URL(options.endpoint, w.location.origin);
+  url.searchParams.set(options.pageParam, String(page));
+  if (options.pageSizeParam && options.pageSize) {
+    url.searchParams.set(options.pageSizeParam, String(options.pageSize));
   }
+  Object.entries(options.extraParams || {}).forEach(([key, value]) => {
+    if (value === undefined || value === null) return;
+    url.searchParams.set(key, String(value));
+  });
+  return url;
+};
 
-  /**
-   * Create an infinite list loader with IntersectionObserver (and optional scroll fallback).
-   * Options:
-   * - root: scroll container for observer (default: viewport)
-   * - sentinel: element to observe (required)
-   * - fetchPage: ({page}) => Promise<{html, hasMore, nextPage}> (required)
-   * - append: (html, ctx) => void (required)
-   * - hasMore: initial boolean
-   * - nextPage: initial page number
-   * - observerOptions: options passed to IntersectionObserver
-   * - fallbackScroll: enable scroll listener when IntersectionObserver is unavailable
-   * - fallbackMargin: px distance from viewport bottom to trigger (default: 300)
-   * - fallbackMode: "sentinel" (default) uses the sentinel's position; "document" uses page height.
-   */
-  function createInfiniteList(win, opts) {
-    const w = win || (typeof window !== "undefined" ? window : undefined);
-    if (!w || !opts || !opts.sentinel || !opts.fetchPage || !opts.append) return null;
+const buildJsonFetcher = (win, options) => {
+  const w = win || globalWindow || (typeof window !== "undefined" ? window : null);
+  if (!w || !options || !options.endpoint) return null;
+  const fetchFn = w.fetch || (typeof fetch !== "undefined" ? fetch : null);
+  const origin = (w.location && w.location.origin) || (globalWindow && globalWindow.location && globalWindow.location.origin) || "http://localhost";
+  const opts = {
+    endpoint: options.endpoint,
+    pageParam: options.pageParam || "page",
+    pageSizeParam: options.pageSizeParam,
+    pageSize: options.pageSize,
+    extraParams: options.extraParams || {},
+    fetchInit: options.fetchInit || {},
+    mapResponse: options.mapResponse
+  };
+  return ({ page }) => {
+    if (!page && page !== 0) return Promise.resolve({ html: "", hasMore: false, nextPage: null });
+    const url = buildJsonUrl({ location: { origin } }, opts, page);
+    if (!fetchFn) return Promise.reject(new Error("fetch unavailable"));
+    return fetchFn(url.toString(), opts.fetchInit)
+      .then((resp) => {
+        if (!resp.ok) throw new Error("Request failed");
+        return resp.json();
+      })
+      .then((json) => mapJsonResponse(opts.mapResponse, json));
+  };
+};
 
-    const sentinel = opts.sentinel;
-    let hasMore = Boolean(opts.hasMore);
-    let nextPage = opts.nextPage;
-    let loading = false;
-    let observer = null;
-    let scrollHandler = null;
+const createInfiniteState = (win, opts) => {
+  const w = resolveWindow(win);
+  if (!w || !opts || !opts.sentinel || !opts.fetchPage || !opts.append) return null;
+  if (!opts.hasMore || !opts.nextPage) return null;
+  return {
+    w,
+    opts,
+    sentinel: opts.sentinel,
+    hasMore: Boolean(opts.hasMore),
+    nextPage: opts.nextPage,
+    loading: false,
+    observer: null,
+    scrollHandler: null,
+    fallbackMode: opts.fallbackMode || "sentinel"
+  };
+};
 
-    if (!hasMore || !nextPage) return null;
-
-    const observerOptions = opts.observerOptions || { root: opts.root || null, threshold: 0.1 };
-    const fallbackMode = opts.fallbackMode || "sentinel"; // "sentinel" | "document"
-
-    function fetchMore() {
-      if (loading || !hasMore || !nextPage) return;
-      loading = true;
-      opts
-        .fetchPage({ page: nextPage })
-        .then((payload) => {
-          const html = payload && payload.html ? payload.html : "";
-          opts.append(html, { page: nextPage });
-          hasMore = Boolean(payload && payload.hasMore);
-          nextPage = payload ? payload.nextPage : null;
-          if (!hasMore && observer && typeof observer.disconnect === "function") observer.disconnect();
-        })
-        .catch(() => {
-        })
-        .finally(() => {
-          loading = false;
-        });
-    }
-
-    if ("IntersectionObserver" in w) {
-      observer = new w.IntersectionObserver((entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            fetchMore();
-          }
-        });
-      }, observerOptions);
-      observer.observe(sentinel);
-    } else if (opts.fallbackScroll) {
-      const margin = Number.isFinite(opts.fallbackMargin) ? opts.fallbackMargin : 300;
-      scrollHandler = () => {
-        if (loading || !hasMore || !nextPage) return;
-        if (fallbackMode === "document" && w.document && w.document.body) {
-          const threshold = (w.document.body.offsetHeight || 0) - margin;
-          const scrollPosition = (w.innerHeight || 0) + (w.scrollY || 0);
-          if (scrollPosition >= threshold) fetchMore();
-        } else {
-          const rect = sentinel.getBoundingClientRect();
-          if (rect.top - (w.innerHeight || 0) <= margin) {
-            fetchMore();
-          }
-        }
-      };
-      w.addEventListener("scroll", scrollHandler);
-    }
-
-    return {
-      disconnect() {
-        if (observer) observer.disconnect();
-        if (scrollHandler) w.removeEventListener("scroll", scrollHandler);
-      },
-      trigger() {
-        fetchMore();
-      },
-    };
+const applyPayload = (state, payload) => {
+  const html = payload && payload.html ? payload.html : "";
+  state.opts.append(html, { page: state.nextPage });
+  state.hasMore = Boolean(payload && payload.hasMore);
+  state.nextPage = payload ? payload.nextPage : null;
+  if (!state.hasMore && state.observer && typeof state.observer.disconnect === "function") {
+    state.observer.disconnect();
   }
+};
 
-  // Utility to append nodes into the shortest column for masonry-like layouts.
-  function placeInColumns(nodes, columns) {
-    if (!nodes || !columns || !columns.length) return;
-    nodes.forEach((node) => {
-      let target = columns[0];
-      let minHeight = columns[0].offsetHeight;
-      for (let i = 1; i < columns.length; i += 1) {
-        const h = columns[i].offsetHeight;
-        if (h < minHeight) {
-          minHeight = h;
-          target = columns[i];
-        }
-      }
-      target.appendChild(node);
+const fetchMore = (state) => {
+  if (state.loading || !state.hasMore || !state.nextPage) return;
+  state.loading = true;
+  state.opts
+    .fetchPage({ page: state.nextPage })
+    .then((payload) => applyPayload(state, payload))
+    .catch(() => {})
+    .finally(() => {
+      state.loading = false;
     });
-  }
+};
 
-  function attachGlobal(win) {
-    const w = win || (typeof window !== "undefined" ? window : undefined);
-    if (!w) return;
-    w.InfiniteList = {
-      create: (opts) => createInfiniteList(w, opts),
-      buildJsonFetcher: (opts) => buildJsonFetcher(w, opts),
-      placeInColumns,
-    };
-  }
+const setupObserver = (state) => {
+  if (!("IntersectionObserver" in state.w)) return null;
+  const observerOptions = state.opts.observerOptions || { root: state.opts.root || null, threshold: 0.1 };
+  const observer = new state.w.IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (entry.isIntersecting) fetchMore(state);
+    });
+  }, observerOptions);
+  observer.observe(state.sentinel);
+  return observer;
+};
 
-  if (typeof module !== "undefined" && module.exports) {
-    module.exports = { createInfiniteList, buildJsonFetcher, attachGlobal, placeInColumns };
-  }
+const shouldTriggerDocumentScroll = (state, margin) => {
+  if (!state.w.document || !state.w.document.body) return false;
+  const threshold = (state.w.document.body.offsetHeight || 0) - margin;
+  const scrollPosition = (state.w.innerHeight || 0) + (state.w.scrollY || 0);
+  return scrollPosition >= threshold;
+};
 
-  /* istanbul ignore next */
-  if (global && global.document) {
-    attachGlobal(global);
+const setupFallbackScroll = (state) => {
+  if (!state.opts.fallbackScroll) return null;
+  const margin = Number.isFinite(state.opts.fallbackMargin) ? state.opts.fallbackMargin : 300;
+  const handler = () => {
+    if (state.loading || !state.hasMore || !state.nextPage) return;
+    if (state.fallbackMode === "document") {
+      if (shouldTriggerDocumentScroll(state, margin)) fetchMore(state);
+    } else {
+      const rect = state.sentinel.getBoundingClientRect();
+      if (rect.top - (state.w.innerHeight || 0) <= margin) fetchMore(state);
+    }
+  };
+  state.w.addEventListener("scroll", handler);
+  return handler;
+};
+
+const createInfiniteList = (win, opts) => {
+  const state = createInfiniteState(win, opts);
+  if (!state) return null;
+  state.observer = setupObserver(state);
+  if (!state.observer) {
+    state.scrollHandler = setupFallbackScroll(state);
   }
-})(typeof window !== "undefined" ? window : null);
+  return {
+    disconnect() {
+      if (state.observer) state.observer.disconnect();
+      if (state.scrollHandler) state.w.removeEventListener("scroll", state.scrollHandler);
+    },
+    trigger() {
+      fetchMore(state);
+    }
+  };
+};
+
+const placeInColumns = (nodes, columns) => {
+  if (!nodes || !columns || !columns.length) return;
+  nodes.forEach((node) => {
+    let target = columns[0];
+    let minHeight = columns[0].offsetHeight;
+    for (let i = 1; i < columns.length; i += 1) {
+      const h = columns[i].offsetHeight;
+      if (h < minHeight) {
+        minHeight = h;
+        target = columns[i];
+      }
+    }
+    target.appendChild(node);
+  });
+};
+
+const attachGlobal = (win) => {
+  const w = win || globalWindow;
+  if (!w) return;
+  w.InfiniteList = {
+    create: (opts) => createInfiniteList(w, opts),
+    buildJsonFetcher: (opts) => buildJsonFetcher(w, opts),
+    placeInColumns
+  };
+};
+
+if (hasModuleExports) {
+  module.exports = { createInfiniteList, buildJsonFetcher, attachGlobal, placeInColumns };
+}
+
+/* istanbul ignore next */
+if (globalWindow && globalWindow.document) {
+  attachGlobal(globalWindow);
+}

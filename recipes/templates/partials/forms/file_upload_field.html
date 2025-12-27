@@ -1,0 +1,22 @@
+{% load widget_tweaks %}
+<div class="mb-3 image-upload-field">
+  <label for="{{ field.id_for_label }}">
+    {% if field.field.required %}
+      <span class="text-danger me-1">*</span>
+    {% endif %}
+    {{ field.label }}{% if form.label_suffix %}{{ form.label_suffix }}{% endif %}
+  </label>
+  {% if form.is_bound and field.errors %}
+    {% render_field field class="file-pill-input is-invalid" %}
+  {% else %}
+    {% render_field field class="file-pill-input" %}
+  {% endif %}
+  <label for="{{ field.id_for_label }}" class="file-pill-btn">{{ choose_label }}</label>
+  {% if field.help_text %}
+    <small class="form-text text-muted d-block mt-2">{{ field.help_text }}</small>
+  {% endif %}
+  <div class="invalid-feedback{% if field.errors %} d-block{% endif %}">
+    {{ field.errors }}
+  </div>
+  <div id="{{ file_list_id }}" class="small text-muted mt-2"></div>
+</div>

@@ -1,49 +1,51 @@
-(function (global) {
-  const modalsModule =
-    typeof module !== "undefined" && module.exports
-      ? require("./profile_modals")
-      : global && global.ProfileModals;
-  const infiniteModule =
-    typeof module !== "undefined" && module.exports
-      ? require("./profile_infinite")
-      : global && global.ProfileInfinite;
+const hasModuleExports = typeof module !== "undefined" && module.exports;
+const globalWindow = typeof window !== "undefined" && window.document ? window : null;
 
-  function resolveWindow(win) {
-    const w = win || (typeof window !== "undefined" ? window : undefined);
-    return w && w.document ? w : null;
-  }
+const modalsModule = hasModuleExports
+  ? require("./profile_modals")
+  : globalWindow && globalWindow.ProfileModals;
+const infiniteModule = hasModuleExports
+  ? require("./profile_infinite")
+  : globalWindow && globalWindow.ProfileInfinite;
 
-  function markInitialized(w, flag) {
-    if (w[flag]) return false;
-    w[flag] = true;
-    return true;
-  }
+function resolveWindow(win) {
+  const candidate = win || globalWindow;
+  return candidate && candidate.document ? candidate : null;
+}
 
-  function initProfileScripts(win) {
-    const w = resolveWindow(win);
-    if (!w) return;
-    if (!markInitialized(w, "__profileScriptsInitialized")) return;
-    const doc = w.document;
-    const modalDeps =
-      modalsModule && typeof modalsModule.initProfileModals === "function"
-        ? modalsModule.initProfileModals(w, doc)
-        : null;
-    if (infiniteModule && typeof infiniteModule.initProfileInfinite === "function") {
-      infiniteModule.initProfileInfinite(w, doc, modalDeps || {});
-    }
-  }
+function markInitialized(w, flag) {
+  if (w[flag]) return false;
+  w[flag] = true;
+  return true;
+}
 
-  if (typeof module !== "undefined" && module.exports) {
-    module.exports = { initProfileScripts };
+function initProfileScripts(win) {
+  const w = resolveWindow(win);
+  if (!w || !markInitialized(w, "__profileScriptsInitialized")) return;
+  const doc = w.document;
+  const modalDeps =
+    modalsModule && typeof modalsModule.initProfileModals === "function"
+      ? modalsModule.initProfileModals(w, doc)
+      : null;
+  if (infiniteModule && typeof infiniteModule.initProfileInfinite === "function") {
+    infiniteModule.initProfileInfinite(w, doc, modalDeps || {});
   }
+}
 
-  /* istanbul ignore next */
-  if (global && global.document) {
-    const runInit = () => initProfileScripts(global);
-    if (global.document.readyState === "loading") {
-      global.document.addEventListener("DOMContentLoaded", runInit, { once: true });
-    } else {
-      runInit();
-    }
+function autoInitProfileScripts() {
+  const w = resolveWindow();
+  if (!w) return;
+  const runInit = () => initProfileScripts(w);
+  if (w.document.readyState === "loading") {
+    w.document.addEventListener("DOMContentLoaded", runInit, { once: true });
+  } else {
+    runInit();
   }
-})(typeof window !== "undefined" ? window : null);
+}
+
+if (hasModuleExports) {
+  module.exports = { initProfileScripts };
+}
+
+/* istanbul ignore next */
+autoInitProfileScripts();

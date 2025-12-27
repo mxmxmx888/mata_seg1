@@ -13,67 +13,75 @@
     return el;
   }
 
+  function lockBody(doc, locked) {
+    doc.body.classList.toggle("modal-open", locked);
+    doc.body.style.overflow = locked ? "hidden" : "";
+  }
+
+  function hideFallbackModal(state) {
+    if (!state.current) return;
+    state.current.classList.remove("show");
+    state.current.style.display = "none";
+    state.current.setAttribute("aria-hidden", "true");
+    if (state.backdrop) {
+      state.backdrop.classList.remove("show");
+      state.backdrop.style.display = "none";
+      state.backdrop.onclick = null;
+    }
+    lockBody(state.doc, false);
+    state.current = null;
+  }
+
+  function showFallbackModal(state, modalEl) {
+    state.current = modalEl;
+    state.backdrop = state.backdrop || buildBackdrop(state.doc);
+    state.backdrop.style.display = "block";
+    state.w.setTimeout(() => state.backdrop.classList.add("show"), 0);
+    modalEl.classList.add("show");
+    modalEl.style.display = "block";
+    modalEl.removeAttribute("aria-hidden");
+    lockBody(state.doc, true);
+    state.backdrop.onclick = () => hideFallbackModal(state);
+  }
+
   function createFallbackModalController(w, doc) {
-    let backdrop = null;
-    let current = null;
-    const lockBody = (locked) => {
-      doc.body.classList.toggle("modal-open", locked);
-      doc.body.style.overflow = locked ? "hidden" : "";
+    const state = { w, doc, backdrop: null, current: null };
+    return {
+      show: (modalEl) => showFallbackModal(state, modalEl),
+      hide: () => hideFallbackModal(state),
     };
-    const hide = () => {
-      if (!current) return;
-      current.classList.remove("show");
-      current.style.display = "none";
-      current.setAttribute("aria-hidden", "true");
-      if (backdrop) {
-        backdrop.classList.remove("show");
-        backdrop.style.display = "none";
-        backdrop.onclick = null;
-      }
-      lockBody(false);
-      current = null;
-    };
-    const show = (modalEl) => {
-      current = modalEl;
-      backdrop = backdrop || buildBackdrop(doc);
-      backdrop.style.display = "block";
-      w.setTimeout(() => backdrop.classList.add("show"), 0);
-      modalEl.classList.add("show");
-      modalEl.style.display = "block";
-      modalEl.removeAttribute("aria-hidden");
-      lockBody(true);
-      backdrop.onclick = hide;
-    };
-    return { show, hide };
+  }
+
+  function attachFallbackClose(modalCtrl, modalEl) {
+    modalEl.addEventListener("click", (event) => {
+      if (event.target === modalEl) modalCtrl.hide();
+    });
+    const closeBtn = modalEl.querySelector("[data-bs-dismiss='modal'], .btn-close");
+    if (closeBtn) {
+      closeBtn.addEventListener("click", (event) => {
+        event.preventDefault();
+        modalCtrl.hide();
+      });
+    }
+  }
+
+  function openFollowModal(w, modalCtrl, modalEl, usingBootstrap) {
+    if (usingBootstrap) {
+      w.bootstrap.Modal.getOrCreateInstance(modalEl).show();
+    } else {
+      modalCtrl.show(modalEl);
+    }
   }
 
   function wireFollowModal(w, doc, modalCtrl, usingBootstrap, selector, modalId) {
     const buttons = doc.querySelectorAll(selector);
     const modalEl = doc.getElementById(modalId);
     if (!buttons.length || !modalEl) return;
-    if (!usingBootstrap) {
-      modalEl.addEventListener("click", (event) => {
-        if (event.target === modalEl) modalCtrl.hide();
-      });
-      const closeBtn = modalEl.querySelector("[data-bs-dismiss='modal'], .btn-close");
-      if (closeBtn) {
-        closeBtn.addEventListener("click", (event) => {
-          event.preventDefault();
-          modalCtrl.hide();
-        });
-      }
-    }
-    const open = () => {
-      if (usingBootstrap) {
-        w.bootstrap.Modal.getOrCreateInstance(modalEl).show();
-      } else {
-        modalCtrl.show(modalEl);
-      }
-    };
+    if (!usingBootstrap) attachFallbackClose(modalCtrl, modalEl);
     buttons.forEach((btn) => {
       btn.addEventListener("click", (event) => {
         event.preventDefault();
-        open();
+        openFollowModal(w, modalCtrl, modalEl, usingBootstrap);
       });
     });
   }
@@ -147,30 +155,35 @@
     return apply;
   }
 
+  function submitAjaxForm(w, form) {
+    const url = form.getAttribute("action");
+    if (!url) return Promise.resolve(null);
+    return postFormData(w, form).then((response) => {
+      if (!response || !response.ok) throw new Error("Request failed");
+      return response.json().catch(() => ({}));
+    });
+  }
+
+  function bindAjaxForm(w, form, onSuccess) {
+    if (form.dataset.ajaxBound === "1") return;
+    form.dataset.ajaxBound = "1";
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+      submitAjaxForm(w, form)
+        .then((payload) => {
+          if (typeof onSuccess === "function") {
+            onSuccess({ form, url: form.getAttribute("action") || "", payload: payload || {} });
+          }
+        })
+        .catch(() => form.submit());
+    });
+  }
+
   function createAjaxModalBinder(w, doc) {
     return (modalId, onSuccess) => {
       const modalEl = doc.getElementById(modalId);
       if (!modalEl) return;
-      modalEl.querySelectorAll("form").forEach((form) => {
-        if (form.dataset.ajaxBound === "1") return;
-        form.dataset.ajaxBound = "1";
-        form.addEventListener("submit", (event) => {
-          event.preventDefault();
-          const url = form.getAttribute("action");
-          if (!url) return;
-          postFormData(w, form)
-            .then((response) => {
-              if (!response || !response.ok) throw new Error("Request failed");
-              return response.json().catch(() => ({}));
-            })
-            .then((payload) => {
-              if (typeof onSuccess === "function") {
-                onSuccess({ form, url, payload: payload || {} });
-              }
-            })
-            .catch(() => form.submit());
-        });
-      });
+      modalEl.querySelectorAll("form").forEach((form) => bindAjaxForm(w, form, onSuccess));
     };
   }
 

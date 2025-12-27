@@ -1,45 +1,56 @@
-(function (global) {
-  function initMessagesToast(win) {
-    const w = win || (typeof window !== "undefined" ? window : undefined);
-    if (!w || !w.document) return;
-    if (w.__messagesToastInitialized) return;
-    w.__messagesToastInitialized = true;
+const hasModuleExports = typeof module !== "undefined" && module.exports;
+const globalWindow = typeof window !== "undefined" && window.document ? window : null;
 
-    const doc = w.document;
-    const toastEls = Array.from(doc.querySelectorAll(".toast"));
-    toastEls.forEach((toastEl) => {
-      const duration = 2000;
-      const hasBootstrap = !!(w.bootstrap && w.bootstrap.Toast);
-      const toast = hasBootstrap ? new w.bootstrap.Toast(toastEl, { delay: duration, autohide: true }) : null;
+function resolveWindow(win) {
+  const candidate = win || globalWindow;
+  return candidate && candidate.document ? candidate : null;
+}
 
-      if (toast && typeof toast.show === "function") {
-        toast.show();
-      } else {
-        toastEl.classList.add("show");
-      }
+function markInitialized(w, flag) {
+  if (w[flag]) return false;
+  w[flag] = true;
+  return true;
+}
 
-      w.setTimeout(() => {
-        if (toast && typeof toast.hide === "function") {
-          toast.hide();
-        } else {
-          toastEl.classList.remove("show");
-          toastEl.classList.add("hide");
-        }
-      }, duration);
-    });
+function applyToast(w, toastEl, duration) {
+  const hasBootstrap = !!(w.bootstrap && w.bootstrap.Toast);
+  const toast = hasBootstrap ? new w.bootstrap.Toast(toastEl, { delay: duration, autohide: true }) : null;
+  if (toast && typeof toast.show === "function") {
+    toast.show();
+  } else {
+    toastEl.classList.add("show");
   }
-
-  if (typeof module !== "undefined" && module.exports) {
-    module.exports = { initMessagesToast };
-  }
-
-  /* istanbul ignore next */
-  if (global && global.document) {
-    const runInit = () => initMessagesToast(global);
-    if (global.document.readyState === "loading") {
-      global.document.addEventListener("DOMContentLoaded", runInit, { once: true });
+  w.setTimeout(() => {
+    if (toast && typeof toast.hide === "function") {
+      toast.hide();
     } else {
-      runInit();
+      toastEl.classList.remove("show");
+      toastEl.classList.add("hide");
     }
+  }, duration);
+}
+
+function initMessagesToast(win) {
+  const w = resolveWindow(win);
+  if (!w || !markInitialized(w, "__messagesToastInitialized")) return;
+  const toasts = Array.from(w.document.querySelectorAll(".toast"));
+  toasts.forEach((toastEl) => applyToast(w, toastEl, 2000));
+}
+
+function autoInitMessagesToast() {
+  const w = resolveWindow();
+  if (!w) return;
+  const runInit = () => initMessagesToast(w);
+  if (w.document.readyState === "loading") {
+    w.document.addEventListener("DOMContentLoaded", runInit, { once: true });
+  } else {
+    runInit();
   }
-})(typeof window !== "undefined" ? window : null);
+}
+
+if (hasModuleExports) {
+  module.exports = { initMessagesToast };
+}
+
+/* istanbul ignore next */
+autoInitMessagesToast();
