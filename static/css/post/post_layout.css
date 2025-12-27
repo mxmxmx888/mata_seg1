@@ -144,6 +144,10 @@ body.post-body {
   color: var(--text-muted);
 }
 
+.post-nutrition {
+  color: var(--text-muted);
+}
+
 .post-ingredients {
   padding-left: 0;
 }

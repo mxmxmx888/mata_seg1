@@ -164,6 +164,8 @@
       state.shopImageInput && typeof state.getFiles === "function"
         ? Array.from(state.getFiles(state.shopImageInput) || [])
         : [];
+    const storedFiles = state.shopImageFiles.filter(Boolean);
+    const storedCount = storedFiles.length;
 
     if (!inputFiles.length) {
       if (state.pendingFile) {
@@ -176,7 +178,12 @@
 
     if (state.pendingFile) return [state.pendingFile];
 
-    const storedCount = state.shopImageFiles.filter(Boolean).length;
+    const newSelection = inputFiles.find((file) => !storedFiles.includes(file));
+    if (newSelection) {
+      state.pendingFile = newSelection;
+      return [newSelection];
+    }
+
     if (storedCount === 0 || inputFiles.length > storedCount) {
       state.pendingFile = inputFiles[0];
       return inputFiles;

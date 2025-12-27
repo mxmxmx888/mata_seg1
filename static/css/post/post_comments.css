@@ -87,6 +87,15 @@
   color: #b91c1c;
 }
 
+@media (max-width: 991.98px) {
+  .post-actions-dropdown .dropdown-menu {
+    left: 0;
+    right: auto;
+    transform: translateY(8px);
+    max-width: calc(100vw - 2.5rem);
+  }
+}
+
 .comment-icon-btn {
   width: 36px;
   height: 36px;

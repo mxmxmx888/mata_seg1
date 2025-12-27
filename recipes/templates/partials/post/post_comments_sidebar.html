@@ -26,14 +26,17 @@
                 </a>
               </li>
               <li>
-                <form
-                  action="{% url 'delete_my_recipe' recipe.id %}"
-                  method="post"
-                  onsubmit="return confirm('Delete this post? This cannot be undone.');"
-                >
+                <form id="delete-post-form" action="{% url 'delete_my_recipe' recipe.id %}" method="post" class="d-none">
                   {% csrf_token %}
-                  <button type="submit" class="dropdown-item text-danger">Delete post</button>
                 </form>
+                <button
+                  type="button"
+                  class="dropdown-item text-danger"
+                  data-bs-toggle="modal"
+                  data-bs-target="#delete-post-modal"
+                >
+                  Delete post
+                </button>
               </li>
             {% else %}
               <li>
@@ -129,11 +132,54 @@
   </div>
 </aside>
 
-<script>
+<div
+  class="modal fade delete-post-modal"
+  id="delete-post-modal"
+  tabindex="-1"
+  aria-labelledby="delete-post-modal-title"
+  aria-describedby="delete-post-modal-text"
+  aria-hidden="true"
+  role="dialog"
+  aria-modal="true"
+  data-bs-backdrop="false"
+  data-bs-scroll="true"
+>
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-body">
+        <h2 class="delete-post-modal-title" id="delete-post-modal-title">Delete post?</h2>
+        <p class="delete-post-modal-text" id="delete-post-modal-text">
+          This will permanently delete your recipe. You can't undo this action.
+        </p>
+        <div class="delete-post-modal-actions">
+          <button type="submit" form="delete-post-form" class="btn delete-post-confirm w-100">
+            Delete
+          </button>
+          <button type="button" class="btn delete-post-cancel w-100" data-bs-dismiss="modal">
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+  <script>
   (function() {
-    const sentinel = document.getElementById("comments-sentinel");
+    const doc = document;
+    const deleteModal = doc.getElementById("delete-post-modal");
+    if (deleteModal) {
+      deleteModal.addEventListener("shown.bs.modal", () => {
+        const confirmBtn = deleteModal.querySelector(".delete-post-confirm");
+        if (confirmBtn) {
+          confirmBtn.focus();
+        }
+      });
+    }
+
+    const sentinel = doc.getElementById("comments-sentinel");
     if (!sentinel) return;
-    const list = document.getElementById("post-comments-list");
+    const list = doc.getElementById("post-comments-list");
     const endpoint = sentinel.getAttribute("data-comments-endpoint");
 
     function fetchMore() {
