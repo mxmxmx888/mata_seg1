@@ -15,6 +15,7 @@
   border-radius: 999px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
   min-width: 0;
+  animation: app-toast-hide 2.4s ease 0s forwards;
 }
 
 .app-toast-body {
@@ -22,6 +23,21 @@
   font-size: 0.82rem;
   font-weight: 600;
   color: var(--text-primary);
+}
+
+@keyframes app-toast-hide {
+  0% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  80% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-6px);
+    visibility: hidden;
+  }
 }
 
 

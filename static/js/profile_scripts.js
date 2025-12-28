@@ -1,3 +1,4 @@
+(() => {
 const hasModuleExports = typeof module !== "undefined" && module.exports;
 const globalWindow = typeof window !== "undefined" && window.document ? window : null;
 
@@ -49,3 +50,4 @@ if (hasModuleExports) {
 
 /* istanbul ignore next */
 autoInitProfileScripts();
+})();

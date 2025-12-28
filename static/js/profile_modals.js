@@ -106,6 +106,8 @@
   }
 
   function handleFollowToggleSubmit(w, form, event) {
+    const url = form.getAttribute("action");
+    if (!url) return;
     event.preventDefault();
     postFormData(w, form)
       .then((response) => {
@@ -121,7 +123,8 @@
 
   function bindFollowToggleForm(w, form) {
     const btn = form.querySelector(".follow-toggle-btn");
-    if (!btn) return;
+    const url = form.getAttribute("action");
+    if (!btn || !url) return;
     const followingLabel = btn.getAttribute("data-label-following") || "Following";
     const unfollowLabel = btn.getAttribute("data-label-unfollow") || "Unfollow";
     btn.addEventListener("mouseenter", () => {

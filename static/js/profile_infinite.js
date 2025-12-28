@@ -7,24 +7,13 @@
     ].filter(Boolean);
   }
 
-  function createColumnPlacer(infinite, columns) {
+  function createColumnPlacer(columns) {
     return (cards) => {
       if (!cards || !cards.length) return;
-      if (typeof infinite.placeInColumns === "function") {
-        infinite.placeInColumns(cards, columns);
-        return;
-      }
-      cards.forEach((card) => {
-        let target = columns[0];
-        let minHeight = columns[0].offsetHeight;
-        columns.forEach((col) => {
-          const h = col.offsetHeight;
-          if (h < minHeight) {
-            minHeight = h;
-            target = col;
-          }
-        });
-        target.appendChild(card);
+      const existingCount = columns.reduce((sum, col) => sum + col.children.length, 0);
+      cards.forEach((card, index) => {
+        const targetIndex = (existingCount + index) % columns.length;
+        columns[targetIndex].appendChild(card);
       });
     };
   }
@@ -40,6 +29,15 @@
     };
   }
 
+  function parseNextPage(value) {
+    const parsed = parseInt(value || "", 10);
+    return Number.isNaN(parsed) ? null : parsed;
+  }
+
+  function countCards(html) {
+    return (html.match(/class=["']my-recipe-card["']/g) || []).length;
+  }
+
   function createProfileFetcher(w, endpoint) {
     return ({ page }) => {
       const url = endpoint.includes("?")
@@ -50,13 +48,7 @@
         .then((resp) => resp.text())
         .then((html) => {
           const trimmed = (html || "").trim();
-          if (!trimmed) {
-            return { html: "", hasMore: false, nextPage: null };
-          }
-          const parser = new DOMParser();
-          const docNode = parser.parseFromString(trimmed, "text/html");
-          const cards = docNode.querySelectorAll(".my-recipe-card");
-          const count = cards.length;
+          const count = trimmed ? countCards(trimmed) : 0;
           return {
             html: trimmed,
             hasMore: count >= 12,
@@ -69,27 +61,22 @@
 
   function initProfilePostsInfinite(w, doc) {
     const sentinel = doc.getElementById("profile-posts-sentinel");
-    const grid = doc.getElementById("profile-posts-grid");
     const columns = getProfileColumns(doc);
-    if (!sentinel || !grid || !columns.length) return;
-    if (w.history && "scrollRestoration" in w.history) {
-      w.history.scrollRestoration = "manual";
-    }
+    if (!sentinel || !doc.getElementById("profile-posts-grid") || !columns.length) return;
+    if (w.history && "scrollRestoration" in w.history) w.history.scrollRestoration = "manual";
     w.scrollTo(0, 0);
     const endpoint = sentinel.getAttribute("data-endpoint");
     const infinite = w.InfiniteList || {};
     if (!infinite.create || !endpoint) return;
-    const placeCards = createColumnPlacer(infinite, columns);
-    const appendHtml = createProfileAppendHtml(placeCards);
     const hasMore = sentinel.getAttribute("data-has-more") === "true";
-    const parsedNext = parseInt(sentinel.getAttribute("data-next-page") || "", 10);
-    const nextPage = Number.isNaN(parsedNext) ? null : parsedNext;
+    const nextPage = parseNextPage(sentinel.getAttribute("data-next-page"));
+    const placeCards = createColumnPlacer(columns);
     infinite.create({
       sentinel,
       hasMore,
       nextPage,
       fetchPage: createProfileFetcher(w, endpoint),
-      append: appendHtml,
+      append: createProfileAppendHtml(placeCards),
       observerOptions: { root: null, threshold: 0.1 },
       fallbackScroll: true,
       fallbackMargin: 300,
@@ -109,49 +96,44 @@
     };
   }
 
-  function initFollowListLoader(w, doc, modalId, listType, attachAjaxModalForms, modalSuccessHandlers, applyCloseFriendsFilter) {
+  function getFollowListElements(doc, modalId) {
     const modalEl = doc.getElementById(modalId);
-    if (!modalEl) return;
+    if (!modalEl) return null;
     const modalBody = modalEl.querySelector(".modal-body[data-list-type]");
     const listEl = modalEl.querySelector(".follow-list-items");
     const sentinel = modalEl.querySelector(".follow-list-sentinel");
-    if (!modalBody || !listEl || !sentinel) return;
-    const endpoint = modalBody.getAttribute("data-endpoint");
-    const hasMore = modalBody.getAttribute("data-has-more") === "true";
-    const parsedNext = parseInt(modalBody.getAttribute("data-next-page") || "", 10);
-    const nextPage = Number.isNaN(parsedNext) ? null : parsedNext;
-    const infinite = w.InfiniteList || {};
-    const buildFetcher = typeof infinite.buildJsonFetcher === "function" ? infinite.buildJsonFetcher : null;
-    const createLoader = typeof infinite.create === "function" ? infinite.create : null;
-    if (!endpoint || !buildFetcher || !createLoader) return;
-    const fetchPage = buildFetcher({
+    return modalBody && listEl && sentinel ? { modalBody, listEl, sentinel } : null;
+  }
+
+  function buildFollowListFetcher(infinite, endpoint) {
+    if (!endpoint || typeof infinite.buildJsonFetcher !== "function") return null;
+    return infinite.buildJsonFetcher({
       endpoint,
       pageParam: "page",
-      fetchInit: {
-        headers: { "X-Requested-With": "XMLHttpRequest" },
-        credentials: "same-origin",
-      },
+      fetchInit: { headers: { "X-Requested-With": "XMLHttpRequest" }, credentials: "same-origin" },
       mapResponse: (payload) => ({
         html: (payload && payload.html) || "",
         hasMore: Boolean(payload && payload.has_more),
         nextPage: payload ? payload.next_page : null,
       }),
     });
+  }
+
+  function initFollowListLoader(w, doc, modalId, listType, attachAjaxModalForms, modalSuccessHandlers, applyCloseFriendsFilter) {
+    const nodes = getFollowListElements(doc, modalId);
+    if (!nodes) return;
+    const { modalBody, listEl, sentinel } = nodes;
+    const infinite = w.InfiniteList || {};
+    const createLoader = typeof infinite.create === "function" ? infinite.create : null;
+    const fetchPage = buildFollowListFetcher(infinite, modalBody.getAttribute("data-endpoint"));
+    if (!fetchPage || !createLoader) return;
     createLoader({
       root: modalBody,
       sentinel,
-      hasMore,
-      nextPage,
+      hasMore: modalBody.getAttribute("data-has-more") === "true",
+      nextPage: parseNextPage(modalBody.getAttribute("data-next-page")),
       fetchPage,
-      append: createFollowListAppend(
-        doc,
-        modalId,
-        listType,
-        attachAjaxModalForms,
-        modalSuccessHandlers,
-        applyCloseFriendsFilter,
-        listEl
-      ),
+      append: createFollowListAppend(doc, modalId, listType, attachAjaxModalForms, modalSuccessHandlers, applyCloseFriendsFilter, listEl),
       observerOptions: { root: modalBody, threshold: 0.1 },
     });
   }

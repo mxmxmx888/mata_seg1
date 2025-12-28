@@ -130,7 +130,6 @@ class PostRepoTestCase(TestCase):
     # ---- list_for_following ----------------------------------------------
 
     def test_list_for_following_handles_branches(self):
-        # Simulate a real Post model on recipes.models with .objects
         from recipes import models as model_pkg
 
         model_pkg.Post = type(
@@ -139,21 +138,13 @@ class PostRepoTestCase(TestCase):
             {"objects": RecipePost.objects},
         )()
 
-        # Monkeypatch repo.list_for_feed to cover the branch where
-        # following_ids are passed down.
-        self.repo.list_for_feed = (
-            lambda *args, **kwargs: RecipePost.objects.all()
-        )
-
-        # No follows => should be empty iterable
+        self.repo.list_for_feed = lambda *args, **kwargs: RecipePost.objects.all()
         none_list = self.repo.list_for_following(self.user.id, limit=1)
         self.assertEqual(list(none_list), [])
 
-        # Add follow relationship, ensure we now see followee posts
         Follows.objects.create(author=self.user, followee=self.other)
-        feed = self.repo.list_for_following(self.user.id, limit=5)
-        titles = [p.title for p in feed]
-        self.assertIn("Toast", titles)
+        feed_titles = [p.title for p in self.repo.list_for_following(self.user.id, limit=5)]
+        self.assertIn("Toast", feed_titles)
 
     def test_list_for_following_uses_none_when_no_post_model(self):
         from recipes import models as model_pkg

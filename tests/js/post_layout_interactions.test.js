@@ -54,7 +54,7 @@ describe("post_layout interactions", () => {
     const backSpy = jest.spyOn(window.history, "back").mockImplementation(() => {});
     const { initPostLayout } = loadModule();
     initPostLayout(window);
-    document.dispatchEvent(new KeyboardEvent("keyup", { key: "Escape" }));
+    document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
     const assignSpy = jest.spyOn(window.location, "assign");
     expect(backSpy.mock.calls.length + assignSpy.mock.calls.length).toBeGreaterThan(0);
     backSpy.mockRestore();
@@ -79,7 +79,7 @@ describe("post_layout interactions", () => {
     expect(window.location.assign).toHaveBeenLastCalledWith("http://localhost/from");
     backSpy.mockRestore();
     window.location.assign.mockClear();
-    document.dispatchEvent(new KeyboardEvent("keyup", { key: "Escape" }));
+    document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
     expect(window.location.assign).toHaveBeenLastCalledWith("http://localhost/from");
   });
 
@@ -193,12 +193,70 @@ describe("post_layout interactions", () => {
     rafSpy.mockRestore();
   });
 
+  test("balances columns even when global InfiniteList is present", () => {
+    window.InfiniteList = { placeInColumns: jest.fn() };
+    document.body.innerHTML = `
+      <div class="post-media-masonry">
+        <div class="post-media-masonry-item"><img id="tall" /></div>
+        <div class="post-media-masonry-item"><img id="short" /></div>
+      </div>
+      <div class="post-view-similar"></div>
+    `;
+    mockRect(document.getElementById("tall"), 200);
+    mockRect(document.getElementById("short"), 20);
+    const { initPostLayout } = loadModule();
+    initPostLayout(window);
+    const cols = document.querySelectorAll(".post-media-masonry-col");
+    expect(cols[0].children.length).toBe(1);
+    expect(cols[1].children.length).toBe(1);
+    delete window.InfiniteList;
+  });
+
   test("gracefully exits when no masonry or similar grids", () => {
     document.body.innerHTML = `
       <div id="post-primary"></div>
     `;
     const { initPostLayout } = loadModule();
     expect(() => initPostLayout(window)).not.toThrow();
+  });
+
+  test("uses one masonry column when only one item on wide screens", () => {
+    const originalWidth = window.innerWidth;
+    window.innerWidth = 1200;
+    document.body.innerHTML = `
+      <div class="post-media-masonry">
+        <div class="post-media-masonry-item"><img id="solo-img" /></div>
+      </div>
+      <div class="post-view-similar"></div>
+    `;
+    const img = document.getElementById("solo-img");
+    img.complete = true;
+    mockRect(img, 40);
+    const { initPostLayout } = loadModule();
+    initPostLayout(window);
+    const cols = document.querySelectorAll(".post-media-masonry-col");
+    expect(cols.length).toBe(2);
+    expect(cols[1].style.display).toBe("none");
+    window.innerWidth = originalWidth;
+  });
+
+  test("rebuilds masonry when media fires error", () => {
+    document.body.innerHTML = `
+      <div class="post-media-masonry">
+        <div class="post-media-masonry-item"><img id="err-img" /></div>
+      </div>
+      <div class="post-view-similar"></div>
+    `;
+    const img = document.getElementById("err-img");
+    Object.defineProperty(img, "complete", { value: false });
+    mockRect(img, 25);
+    const rafSpy = jest.spyOn(window, "requestAnimationFrame").mockImplementation((cb) => cb());
+    const { initPostLayout } = loadModule();
+    initPostLayout(window);
+    rafSpy.mockClear();
+    img.dispatchEvent(new Event("error"));
+    expect(rafSpy).toHaveBeenCalled();
+    rafSpy.mockRestore();
   });
 
   test("handles narrow viewport with single masonry column and no media rect", () => {

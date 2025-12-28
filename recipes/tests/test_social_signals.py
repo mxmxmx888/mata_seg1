@@ -53,11 +53,11 @@ class SocialSignalsTestCase(TestCase):
 
     def test_social_signal_logs_exception_when_logging_enabled(self):
         sociallogin = type("SL", (), {"user": self.user})
-        with patch.object(social_signals, "_should_log", return_value=True):
-            with patch.object(social_signals, "ensure_firebase_user", side_effect=RuntimeError("boom")):
-                with patch.object(social_signals.logger, "warning") as log_mock:
-                    social_signals.sync_google_user_to_firebase_on_social(None, None, sociallogin)
-                    log_mock.assert_called_once()
+        with patch.object(social_signals, "_should_log", return_value=True), \
+             patch.object(social_signals, "ensure_firebase_user", side_effect=RuntimeError("boom")), \
+             patch.object(social_signals.logger, "warning") as log_mock:
+            social_signals.sync_google_user_to_firebase_on_social(None, None, sociallogin)
+            log_mock.assert_called_once()
 
     def test_login_signal_syncs_user(self):
         with patch.object(social_signals, "ensure_firebase_user") as sync:
@@ -88,11 +88,11 @@ class SocialSignalsTestCase(TestCase):
             social_signals.sync_user_to_firebase_on_login(None, None, self.user)
 
     def test_login_signal_logs_exception_when_logging_enabled(self):
-        with patch.object(social_signals, "_should_log", return_value=True):
-            with patch.object(social_signals, "ensure_firebase_user", side_effect=RuntimeError("x")):
-                with patch.object(social_signals.logger, "warning") as log_mock:
-                    social_signals.sync_user_to_firebase_on_login(None, None, self.user)
-                    log_mock.assert_called_once()
+        with patch.object(social_signals, "_should_log", return_value=True), \
+             patch.object(social_signals, "ensure_firebase_user", side_effect=RuntimeError("x")), \
+             patch.object(social_signals.logger, "warning") as log_mock:
+            social_signals.sync_user_to_firebase_on_login(None, None, self.user)
+            log_mock.assert_called_once()
 
     def test_sync_user_data_to_firestore_skips_when_no_client(self):
         with patch.object(social_signals, "get_firestore_client", return_value=None):
@@ -109,35 +109,32 @@ class SocialSignalsTestCase(TestCase):
         mock_doc.set.assert_called_once()
 
     def test_sync_user_data_to_firestore_logs_errors_when_enabled(self):
-        with patch.object(social_signals, "get_firestore_client") as get_client:
-            mock_db = MagicMock()
-            mock_db.collection.return_value.document.return_value.set.side_effect = RuntimeError("fail")
-            get_client.return_value = mock_db
-            with patch.object(social_signals, "_should_log", return_value=True):
-                with patch.object(social_signals.logger, "warning") as log_mock:
-                    social_signals.sync_user_data_to_firestore(User, self.user, created=False)
-                    log_mock.assert_called_once()
+        mock_db = MagicMock()
+        mock_db.collection.return_value.document.return_value.set.side_effect = RuntimeError("fail")
+        with patch.object(social_signals, "get_firestore_client", return_value=mock_db), \
+             patch.object(social_signals, "_should_log", return_value=True), \
+             patch.object(social_signals.logger, "warning") as log_mock:
+            social_signals.sync_user_data_to_firestore(User, self.user, created=False)
+            log_mock.assert_called_once()
 
     def test_sync_user_data_to_firestore_suppresses_log_when_disabled(self):
-        with patch.object(social_signals, "get_firestore_client") as get_client:
-            mock_db = MagicMock()
-            mock_db.collection.return_value.document.return_value.set.side_effect = RuntimeError("fail")
-            get_client.return_value = mock_db
-            with patch.object(social_signals, "_should_log", return_value=False):
-                with patch.object(social_signals.logger, "warning") as log_mock:
-                    social_signals.sync_user_data_to_firestore(User, self.user, created=False)
-                    log_mock.assert_not_called()
+        mock_db = MagicMock()
+        mock_db.collection.return_value.document.return_value.set.side_effect = RuntimeError("fail")
+        with patch.object(social_signals, "get_firestore_client", return_value=mock_db), \
+             patch.object(social_signals, "_should_log", return_value=False), \
+             patch.object(social_signals.logger, "warning") as log_mock:
+            social_signals.sync_user_data_to_firestore(User, self.user, created=False)
+            log_mock.assert_not_called()
 
     def test_sync_user_data_to_firestore_disables_after_missing_db(self):
-        with patch.object(social_signals, "get_firestore_client") as get_client:
-            mock_db = MagicMock()
-            mock_db.collection.return_value.document.return_value.set.side_effect = NotFound("no db")
-            get_client.return_value = mock_db
-            with patch.object(social_signals, "_should_log", return_value=True):
-                with patch.object(social_signals.logger, "warning") as log_mock:
-                    social_signals.sync_user_data_to_firestore(User, self.user, created=False)
-                    self.assertTrue(social_signals._firestore_unavailable)
-                    log_mock.assert_called_once()
+        mock_db = MagicMock()
+        mock_db.collection.return_value.document.return_value.set.side_effect = NotFound("no db")
+        with patch.object(social_signals, "get_firestore_client", return_value=mock_db), \
+             patch.object(social_signals, "_should_log", return_value=True), \
+             patch.object(social_signals.logger, "warning") as log_mock:
+            social_signals.sync_user_data_to_firestore(User, self.user, created=False)
+            self.assertTrue(social_signals._firestore_unavailable)
+            log_mock.assert_called_once()
 
         # Once disabled, it should short-circuit without hitting Firestore
         mock_db.collection.assert_called_once()  # first call

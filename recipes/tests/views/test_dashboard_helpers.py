@@ -114,11 +114,18 @@ class DashboardParamsTests(TestCase):
 class DashboardUtilsTests(TestCase):
     def setUp(self):
         self.user = make_user(username="util_user")
+        self.published = lambda title, date: RecipePost.objects.create(
+            author=self.user,
+            title=title,
+            description="d",
+            published_at=date,
+        )
 
     def test_normalise_tags_handles_empty_string_and_unknown_type(self):
         self.assertEqual(dashboard_utils._normalise_tags(None), [])
         self.assertEqual(dashboard_utils._normalise_tags("A, b ,"), ["a", "b"])
         self.assertEqual(dashboard_utils._normalise_tags(123), [])
+        self.assertEqual(dashboard_utils._normalise_tags(["Pasta ", ""]), ["pasta"])
 
     def test_apply_query_filters_and_tag_filtering(self):
         liked = make_recipe_post(author=self.user, title="Liked pasta", tags=["pasta"])
@@ -153,6 +160,10 @@ class DashboardUtilsTests(TestCase):
         self.assertIn(missing_date, scored)
         score_missing = dashboard_utils._score_post_for_user(missing_date, ["pasta"])
         self.assertGreaterEqual(score_missing, 3)
+
+    def test_score_and_sort_posts_returns_original_when_no_preferences(self):
+        posts = [SimpleNamespace(tags=["x"], saved_count=0, published_at=None)]
+        self.assertEqual(dashboard_utils._score_and_sort_posts(posts, []), posts)
 
     def test_get_for_you_posts_uses_seed_limit_and_offset(self):
         posts = [
@@ -199,6 +210,14 @@ class DashboardUtilsTests(TestCase):
         users = dashboard_utils._search_users("a")
         self.assertTrue(any(u.username == "@alice" for u in users))
 
+    def test_search_users_matches_full_name_with_spaces(self):
+        target = make_user(username="eileenchamberlain", first_name="Eileen", last_name="Chamberlain")
+
+        results = dashboard_utils._search_users("Eileen Chamberlain")
+        self.assertIn(target, results)
+        reversed_order = dashboard_utils._search_users("Chamberlain Eileen")
+        self.assertIn(target, reversed_order)
+
     def test_filter_posts_by_prep_time_skips_non_int(self):
         posts = [
             SimpleNamespace(prep_time_min="bad"),
@@ -226,31 +245,23 @@ class DashboardUtilsTests(TestCase):
         self.assertEqual(result, [posts[0]])
 
     def test_base_posts_queryset_filters_unpublished_and_orders(self):
-        older = RecipePost.objects.create(
-            author=self.user,
-            title="Old",
-            description="d",
-            published_at=timezone.now() - timedelta(days=1),
-        )
-        newer = RecipePost.objects.create(
-            author=self.user,
-            title="New",
-            description="d",
-            published_at=timezone.now(),
-        )
-        RecipePost.objects.create(
-            author=self.user,
-            title="Draft",
-            description="d",
-            published_at=None,
-        )
+        older = self.published("Old", timezone.now() - timedelta(days=1))
+        newer = self.published("New", timezone.now())
+        RecipePost.objects.create(author=self.user, title="Draft", description="d", published_at=None)
 
-        qs = dashboard_utils._base_posts_queryset()
-        titles = [p.title for p in qs]
+        titles = [p.title for p in dashboard_utils._base_posts_queryset()]
 
         self.assertNotIn("Draft", titles)
         self.assertEqual(titles[0], "New")
         self.assertEqual(set(titles), {"Old", "New"})
+
+    def test_apply_query_filters_returns_all_when_blank(self):
+        make_recipe_post(author=self.user, title="A")
+        qs = RecipePost.objects.all()
+
+        result = dashboard_utils._apply_query_filters(qs, "")
+
+        self.assertEqual(set(qs.values_list("id", flat=True)), set(result.values_list("id", flat=True)))
 
     def test_preferred_tags_for_user_and_anonymous(self):
         anon = AnonymousUser()

@@ -169,6 +169,10 @@
     const doc = document;
     const deleteModal = doc.getElementById("delete-post-modal");
     if (deleteModal) {
+      // Ensure the modal sits at the document root so fixed positioning centers against the viewport.
+      if (deleteModal.parentElement !== doc.body) {
+        doc.body.appendChild(deleteModal);
+      }
       deleteModal.addEventListener("shown.bs.modal", () => {
         const confirmBtn = deleteModal.querySelector(".delete-post-confirm");
         if (confirmBtn) {

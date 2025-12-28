@@ -20,6 +20,28 @@ class RecipeViewsCreateEditTests(RecipeViewTestCase):
     def setUp(self):
         super().setUp()
         self.factory = RequestFactory()
+        self.default_form_data = {
+            "title": "Title",
+            "description": "Desc",
+            "prep_time_min": 1,
+            "cook_time_min": 1,
+            "nutrition": "",
+            "category": "",
+            "visibility": RecipePost.VISIBILITY_PUBLIC,
+        }
+
+    def _mock_form(self, MockForm, data=None, tags=None, image_hook=None):
+        form = MagicMock()
+        payload = dict(self.default_form_data)
+        payload.update(data or {})
+        form.cleaned_data = payload
+        form.is_valid.return_value = True
+        form.parse_tags.return_value = tags or []
+        form.create_ingredients.side_effect = lambda recipe: None
+        form.create_steps.side_effect = lambda recipe: None
+        form.create_images.side_effect = image_hook or (lambda recipe: None)
+        MockForm.return_value = form
+        return form
 
     def test_recipe_create_requires_login(self):
         request = self.factory.get("/fake/recipe/create/")
@@ -39,30 +61,23 @@ class RecipeViewsCreateEditTests(RecipeViewTestCase):
 
     @patch("recipes.views.recipe_views.RecipePostForm")
     def test_recipe_create_post_valid_creates_recipe_and_redirects(self, MockForm):
-        form = MagicMock()
-        form.is_valid.return_value = True
-        form.cleaned_data = {
-            "title": "Created title",
-            "description": "Created desc",
-            "prep_time_min": 3,
-            "cook_time_min": 7,
-            "nutrition": "kcal=500",
-            "category": "Lunch",
-            "visibility": RecipePost.VISIBILITY_PUBLIC,
-        }
-        form.parse_tags.return_value = ["tag1", "tag2"]
-        form.create_ingredients.return_value = None
-        form.create_steps.return_value = None
-        form.create_images.return_value = None
-        MockForm.return_value = form
-
+        self._mock_form(
+            MockForm,
+            data={
+                "title": "Created title",
+                "description": "Created desc",
+                "prep_time_min": 3,
+                "cook_time_min": 7,
+                "nutrition": "kcal=500",
+                "category": "Lunch",
+            },
+            tags=["tag1", "tag2"],
+        )
         request = self.factory.post("/fake/recipe/create/", data={"title": "x"})
         request.user = self.user
         add_session_and_messages(request)
-
         with patch("recipes.views.recipe_views.PrivacyService.can_view_post", return_value=True):
             response = recipe_create(request)
-
         self.assertEqual(response.status_code, 302)
         self.assertTrue(
             RecipePost.objects.filter(title="Created title", author=self.user).exists()
@@ -84,22 +99,11 @@ class RecipeViewsCreateEditTests(RecipeViewTestCase):
             )
             RecipeImage.objects.create(recipe_post=recipe, image=image_file, position=0)
 
-        form = MagicMock()
-        form.is_valid.return_value = True
-        form.cleaned_data = {
-            "title": "With image",
-            "description": "",
-            "prep_time_min": 0,
-            "cook_time_min": 0,
-            "nutrition": "",
-            "category": "",
-            "visibility": RecipePost.VISIBILITY_PUBLIC,
-        }
-        form.parse_tags.return_value = []
-        form.create_ingredients.side_effect = lambda recipe: None
-        form.create_steps.side_effect = lambda recipe: None
-        form.create_images.side_effect = set_image
-        MockForm.return_value = form
+        self._mock_form(
+            MockForm,
+            data={"title": "With image", "prep_time_min": 0, "cook_time_min": 0},
+            image_hook=set_image,
+        )
 
         request = self.factory.post("/fake/recipe/create/", data={"title": "With image"})
         request.user = self.user
@@ -120,32 +124,25 @@ class RecipeViewsCreateEditTests(RecipeViewTestCase):
 
     @patch("recipes.views.recipe_views.RecipePostForm")
     def test_recipe_edit_post_valid_updates_recipe(self, MockForm):
-        form = MagicMock()
-        form.is_valid.return_value = True
-        form.cleaned_data = {
-            "title": "Updated",
-            "description": "Updated desc",
-            "prep_time_min": 11,
-            "cook_time_min": 22,
-            "nutrition": "kcal=700",
-            "category": "Breakfast",
-            "visibility": RecipePost.VISIBILITY_PUBLIC,
-        }
-        form.parse_tags.return_value = ["newtag"]
-        form.create_ingredients.return_value = None
-        form.create_steps.return_value = None
-        form.create_images.return_value = None
-        MockForm.return_value = form
-
+        self._mock_form(
+            MockForm,
+            data={
+                "title": "Updated",
+                "description": "Updated desc",
+                "prep_time_min": 11,
+                "cook_time_min": 22,
+                "nutrition": "kcal=700",
+                "category": "Breakfast",
+            },
+            tags=["newtag"],
+        )
         request = self.factory.post(
             f"/fake/recipe/{self.post.id}/edit/", data={"title": "Updated"}
         )
         request.user = self.user
         add_session_and_messages(request)
-
         response = recipe_edit(request, post_id=self.post.id)
         self.assertEqual(response.status_code, 302)
-
         self.post.refresh_from_db()
         self.assertEqual(self.post.title, "Updated")
         self.assertEqual(self.post.prep_time_min, 11)
@@ -167,22 +164,11 @@ class RecipeViewsCreateEditTests(RecipeViewTestCase):
             )
             RecipeImage.objects.create(recipe_post=recipe, image=image_file, position=0)
 
-        form = MagicMock()
-        form.is_valid.return_value = True
-        form.cleaned_data = {
-            "title": "Updated",
-            "description": "",
-            "prep_time_min": 1,
-            "cook_time_min": 2,
-            "nutrition": "",
-            "category": "",
-            "visibility": RecipePost.VISIBILITY_PUBLIC,
-        }
-        form.parse_tags.return_value = []
-        form.create_ingredients.side_effect = lambda recipe: None
-        form.create_steps.side_effect = lambda recipe: None
-        form.create_images.side_effect = set_image
-        MockForm.return_value = form
+        self._mock_form(
+            MockForm,
+            data={"title": "Updated", "prep_time_min": 1, "cook_time_min": 2},
+            image_hook=set_image,
+        )
 
         request = self.factory.post(
             f"/fake/recipe/{self.post.id}/edit/", data={"title": "Updated"}
@@ -243,27 +229,17 @@ class RecipeViewsCreateEditTests(RecipeViewTestCase):
         self.post.image = "cover.jpg"
         self.post.save(update_fields=["image"])
         other_post = RecipePost.objects.create(
-            author=self.user,
-            title="Another",
-            description="Other",
-            prep_time_min=1,
-            cook_time_min=1,
-            tags=["other"],
-            category="Lunch",
-            visibility=RecipePost.VISIBILITY_PUBLIC,
+            author=self.user, title="Another", description="Other",
+            prep_time_min=1, cook_time_min=1, tags=["other"],
+            category="Lunch", visibility=RecipePost.VISIBILITY_PUBLIC,
         )
-
         fav_saved = Favourite.objects.create(user=self.user, name="A")
         fav_other = Favourite.objects.create(user=self.user, name="B")
-
-        saved_item = FavouriteItem.objects.create(
-            favourite=fav_saved, recipe_post=self.post
-        )
-        other_item = FavouriteItem.objects.create(
-            favourite=fav_other, recipe_post=other_post
-        )
-        FavouriteItem.objects.filter(id=other_item.id).update(
-            added_at=saved_item.added_at - timedelta(hours=1)
+        saved_item = FavouriteItem.objects.create(favourite=fav_saved, recipe_post=self.post)
+        FavouriteItem.objects.create(
+            favourite=fav_other,
+            recipe_post=other_post,
+            added_at=saved_item.added_at - timedelta(hours=1),
         )
 
         collections = recipe_views._collections_modal_state(self.user, self.post)

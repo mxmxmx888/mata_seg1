@@ -1,6 +1,7 @@
 import random
 from django.contrib.auth import get_user_model
-from django.db.models import Q, Exists, OuterRef
+from django.db.models import Q, Exists, OuterRef, Value
+from django.db.models.functions import Concat
 from django.utils import timezone
 from recipes.services import PrivacyService
 from recipes.models import RecipePost, Like, Follower, Ingredient
@@ -154,13 +155,38 @@ def _get_following_posts(user, query=None, limit=12, offset=0):
     return list(qs[offset:offset + limit])
 
 def _search_users(query, limit=18):
-    """Search users by username substring."""
+    """Search users by username or name substrings, tolerating spaces."""
     User = get_user_model()
+    query = (query or "").strip()
     if not query:
         return []
+    username_query = query.replace(" ", "")
+    tokens = [part for part in query.replace("@", " ").split() if part]
+    token_filters = []
+    for token in tokens:
+        token_filters.append(
+            Q(username__icontains=token)
+            | Q(first_name__icontains=token)
+            | Q(last_name__icontains=token)
+        )
+    combined_tokens = None
+    if token_filters:
+        combined_tokens = token_filters[0]
+        for extra in token_filters[1:]:
+            combined_tokens &= extra
+    base_filter = (
+        Q(username__icontains=query)
+        | Q(username__icontains=username_query)
+        | Q(first_name__icontains=query)
+        | Q(last_name__icontains=query)
+        | Q(full_name__icontains=query)
+    )
+    if combined_tokens is not None:
+        base_filter |= combined_tokens
     return list(
-        User.objects.filter(username__icontains=query)
-        .order_by("username")[:limit]
+        User.objects.annotate(full_name=Concat("first_name", Value(" "), "last_name"))
+        .filter(base_filter)
+        .order_by("username", "last_name", "first_name")[:limit]
     )
 
 def _filter_posts_by_prep_time(posts, min_prep=None, max_prep=None):

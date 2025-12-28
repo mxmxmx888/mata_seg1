@@ -1,3 +1,4 @@
+(() => {
 const hasModuleExports = typeof module !== "undefined" && module.exports;
 const globalWindow = typeof window !== "undefined" && window.document ? window : null;
 
@@ -7,6 +8,7 @@ const resolveWindow = (win) => {
 };
 
 const markInitialized = (w, flag) => {
+  if (!w) return false;
   if (w[flag]) return false;
   w[flag] = true;
   return true;
@@ -40,39 +42,74 @@ const measureHeight = (el) => {
   return rect && rect.height ? rect.height : 1;
 };
 
+const createMasonryRequester = (w, masonry, items) => {
+  let layoutPending = false;
+  const runLayout = () => {
+    layoutPending = false;
+    buildMasonry(w, masonry, items);
+  };
+  return () => {
+    if (layoutPending) return;
+    layoutPending = true;
+    if (typeof w.requestAnimationFrame === "function") {
+      w.requestAnimationFrame(runLayout);
+    } else {
+      w.setTimeout(runLayout, 0);
+    }
+  };
+};
+
+const attachMasonryMediaHandlers = (items, requestLayout) => {
+  items.forEach((item) => {
+    const media = item.querySelector("img, video");
+    if (!media) return;
+    if (media.complete) {
+      requestLayout();
+    } else {
+      media.addEventListener("load", requestLayout, { once: true });
+      media.addEventListener("error", requestLayout, { once: true });
+    }
+  });
+};
+
+const placeItemsInColumns = (items, activeCols) => {
+  if (!items.length || !activeCols.length) return;
+  const heights = activeCols.map((col) => col.offsetHeight || 0);
+  const measuredHeights = items.map((item) => {
+    const media = item.querySelector("img, video");
+    return measureHeight(media || item);
+  });
+  items.forEach((item, index) => {
+    let target = 0;
+    for (let i = 1; i < heights.length; i += 1) {
+      if (heights[i] < heights[target]) target = i;
+    }
+    activeCols[target].appendChild(item);
+    heights[target] += measuredHeights[index] || 1;
+  });
+};
+
 const buildMasonry = (w, masonry, items) => {
   if (!masonry || items.length === 0) return;
   const cols = ensureMasonryColumns(masonry.ownerDocument, masonry);
   if (cols.length === 0) return;
-  const colCount = w.innerWidth <= 768 ? 1 : 2;
+  const colCount = items.length === 1 ? 1 : w.innerWidth <= 768 ? 1 : 2;
   masonry.style.gridTemplateColumns = `repeat(${colCount}, minmax(0, 1fr))`;
   const activeCols = cols.slice(0, colCount);
   resetMasonryColumns(cols, colCount);
-  const heights = activeCols.map(() => 0);
-  items.forEach((item) => {
-    const media = item.querySelector("img, video");
-    const height = measureHeight(media || item);
-    const target = colCount === 1 ? 0 : heights[0] <= heights[1] ? 0 : 1;
-    activeCols[target].appendChild(item);
-    heights[target] += height;
-  });
+  placeItemsInColumns(items, activeCols);
 };
 
-const setupMasonry = (w, doc, masonry) => {
+const setupMasonry = (w, masonry) => {
   if (!masonry) return;
   const items = Array.from(masonry.querySelectorAll(".post-media-masonry-item"));
-  const requestLayout = () => w.requestAnimationFrame(() => buildMasonry(w, masonry, items));
-  items.forEach((item) => {
-    const media = item.querySelector("img, video");
-    if (media) {
-      if (media.complete) {
-        requestLayout();
-      } else {
-        media.addEventListener("load", requestLayout, { once: true });
-      }
-    }
-  });
+  const requestLayout = createMasonryRequester(w, masonry, items);
+  attachMasonryMediaHandlers(items, requestLayout);
   w.addEventListener("resize", requestLayout);
+  if (typeof w.ResizeObserver === "function") {
+    const ro = new w.ResizeObserver(() => requestLayout());
+    ro.observe(masonry);
+  }
   requestLayout();
 };
 
@@ -220,21 +257,20 @@ const setupBackNavigation = (w, doc) => {
   const preventReturn = cameFromCreate(w, doc) || cameFromEdit(w, doc);
   applyPreventReturnGuards(w, preventReturn, backButton);
   resolveBackTarget(w, doc, backButton, preventReturn);
+  const handleEscape = (event) => {
+    const key = (event.key || "").toLowerCase();
+    const keyCode = typeof event.keyCode === "number" ? event.keyCode : event.which;
+    const isEscape = key === "escape" || key === "esc" || keyCode === 27;
+    if (!isEscape) return;
+    triggerBack(w, doc, backButton, preventReturn);
+  };
   if (backButton) {
     backButton.addEventListener("click", (event) => {
       event.preventDefault();
       triggerBack(w, doc, backButton, preventReturn);
     });
   }
-  const lightbox = doc.getElementById("lightbox");
-  doc.addEventListener("keyup", (event) => {
-    if (event.key !== "Escape") return;
-    const modalOpen = doc.querySelector(".modal.show");
-    const lightboxOpen = lightbox && !lightbox.classList.contains("d-none");
-    const photoswipeOpen = doc.querySelector(".pswp--open");
-    if (modalOpen || lightboxOpen || photoswipeOpen) return;
-    triggerBack(w, doc, backButton, preventReturn);
-  });
+  doc.addEventListener("keydown", handleEscape, true);
 };
 
 const getCsrfToken = (doc, form) => {
@@ -303,9 +339,9 @@ const wireLikeForm = (w, doc) => {
 
 const initPostLayout = (win) => {
   const w = resolveWindow(win);
-  if (!w || !markInitialized(w, "__postLayoutInitialized")) return;
+  if (!w || !w.document || !markInitialized(w, "__postLayoutInitialized")) return;
   const doc = w.document;
-  setupMasonry(w, doc, doc.querySelector(".post-media-masonry"));
+  setupMasonry(w, doc.querySelector(".post-media-masonry"));
   setupSimilarGrid(w, doc);
   setupScrollFade(w, doc.getElementById("post-primary"), doc.querySelector(".post-view-similar"));
   setupBackNavigation(w, doc);
@@ -329,3 +365,4 @@ if (hasModuleExports) {
 
 /* istanbul ignore next */
 autoInitPostLayout();
+})();

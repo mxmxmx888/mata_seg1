@@ -130,53 +130,39 @@ class RecipePostFormTests(TestCase):
         self.assertIn("keep", imgs[0].image.name)
         self.assertEqual(imgs[0].position, 0)
 
+    def _shopping_links_text(self):
+        return "\n".join(
+            [
+                "Matcha Powder | amazon.com/matcha",
+                "  matcha powder  | https://example.com/dup ",
+                "Milk | https://store.com/milk",
+                "Plate",
+            ]
+        )
+
+    def _create_shop_ingredients(self, recipe, shop_imgs):
+        form = self.build_form(files=self.form_files(shop_images=shop_imgs))
+        form.cleaned_data = {
+            "ingredients_text": "Flour",
+            "shopping_links_text": self._shopping_links_text(),
+            "shop_images": shop_imgs,
+        }
+        form.create_ingredients(recipe)
+        return list(Ingredient.objects.filter(recipe_post=recipe).order_by("position"))
+
     def test_create_ingredients_replaces_existing_dedupes_and_parses_shop_url(self):
         recipe = self.make_recipe()
         Ingredient.objects.create(recipe_post=recipe, name="old", position=1)
+        ingredients = self._create_shop_ingredients(recipe, [fake_image("s1.jpg"), fake_image("s2.jpg")])
 
-        # Manual ingredient list (no shopping links here)
-        ingredients_text = "Flour"
-
-        # Shopping links:
-        # 1st has url without scheme -> should become https://...
-        # 2nd is dup (case-insensitive) -> skipped
-        # 3rd has https url -> should be stored as-is and consume the 2nd shop image
-        # 4th has no url -> url stays None (and should not consume a shop_image)
-        shopping_links_text = "\n".join([
-            "Matcha Powder | amazon.com/matcha",
-            "  matcha powder  | https://example.com/dup ",
-            "Milk | https://store.com/milk",
-            "Plate",
-        ])
-
-        shop_imgs = [fake_image("s1.jpg"), fake_image("s2.jpg")]
-        form = self.build_form(files=self.form_files(shop_images=shop_imgs))
-        form.cleaned_data = {
-            "ingredients_text": ingredients_text,
-            "shopping_links_text": shopping_links_text,
-            "shop_images": shop_imgs,
-        }
-
-        form.create_ingredients(recipe)
-
-        ings = list(Ingredient.objects.filter(recipe_post=recipe).order_by("position"))
-        self.assertEqual(len(ings), 4)  # dup removed, old removed
-
-        self.assertEqual(ings[0].name, "flour")
-        self.assertIsNone(ings[0].shop_url)
-        self.assertFalse(bool(ings[0].shop_image_upload))
-
-        self.assertEqual(ings[1].name, "matcha powder")
-        self.assertEqual(ings[1].shop_url, "https://amazon.com/matcha")
-        self.assertTrue(bool(ings[1].shop_image_upload))  # consumed s1
-
-        self.assertEqual(ings[2].name, "milk")
-        self.assertEqual(ings[2].shop_url, "https://store.com/milk")
-        self.assertTrue(bool(ings[2].shop_image_upload))  # consumed s2
-
-        self.assertEqual(ings[3].name, "plate")
-        self.assertIsNone(ings[3].shop_url)
-        self.assertFalse(bool(ings[3].shop_image_upload))
+        expected = [
+            ("flour", None, False),
+            ("matcha powder", "https://amazon.com/matcha", True),
+            ("milk", "https://store.com/milk", True),
+            ("plate", None, False),
+        ]
+        result = [(i.name, i.shop_url, bool(i.shop_image_upload)) for i in ingredients]
+        self.assertEqual(result, expected)
 
     def test_clean_images_limits_to_10(self):
         files = [fake_image(f"{i}.jpg") for i in range(11)]

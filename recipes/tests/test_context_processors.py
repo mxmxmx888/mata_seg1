@@ -43,6 +43,51 @@ class NotificationsContextTests(TestCase):
         self.pending_sender = make_user(username="@pending")
         self.follower_sender = make_user(username="@follower")
 
+    def _request_for(self, user):
+        req = self.factory.get("/")
+        req.user = user
+        return req
+
+    def _seed_follow_data(self):
+        Follower.objects.bulk_create(
+            [
+                Follower(follower=self.recipient, author=self.pending_sender),
+                Follower(follower=self.recipient, author=self.follower_sender),
+            ]
+        )
+        follow_request = FollowRequest.objects.create(
+            requester=self.pending_sender,
+            target=self.recipient,
+            status=FollowRequest.STATUS_PENDING,
+        )
+        Notification.objects.bulk_create(
+            [
+                Notification(
+                    recipient=self.recipient,
+                    sender=self.pending_sender,
+                    notification_type="follow_request",
+                    follow_request=follow_request,
+                ),
+                Notification(
+                    recipient=self.recipient,
+                    sender=self.pending_sender,
+                    notification_type="follow",
+                ),
+                Notification(
+                    recipient=self.recipient,
+                    sender=self.follower_sender,
+                    notification_type="follow",
+                    is_read=True,
+                ),
+                Notification(
+                    recipient=self.recipient,
+                    sender=self.follower_sender,
+                    notification_type="follow",
+                    is_read=False,
+                ),
+            ]
+        )
+
     def test_returns_empty_for_anonymous_user(self):
         req = self.factory.get("/")
         req.user = AnonymousUser()
@@ -50,48 +95,8 @@ class NotificationsContextTests(TestCase):
         self.assertEqual(notifications(req), {})
 
     def test_filters_follow_notifications_and_counts_unread(self):
-        req = self.factory.get("/")
-        req.user = self.recipient
-
-        # following_ids should include authors the user follows
-        Follower.objects.create(follower=self.recipient, author=self.pending_sender)
-        Follower.objects.create(follower=self.recipient, author=self.follower_sender)
-
-        # Pending follow request notification (should remain)
-        fr = FollowRequest.objects.create(
-            requester=self.pending_sender,
-            target=self.recipient,
-            status=FollowRequest.STATUS_PENDING,
-        )
-        Notification.objects.create(
-            recipient=self.recipient,
-            sender=self.pending_sender,
-            notification_type="follow_request",
-            follow_request=fr,
-        )
-
-        # Follow from pending sender should be filtered out
-        Notification.objects.create(
-            recipient=self.recipient,
-            sender=self.pending_sender,
-            notification_type="follow",
-        )
-
-        # Two follow notifications from same sender -> should de-duplicate to one
-        Notification.objects.create(
-            recipient=self.recipient,
-            sender=self.follower_sender,
-            notification_type="follow",
-            is_read=True,
-        )
-        Notification.objects.create(
-            recipient=self.recipient,
-            sender=self.follower_sender,
-            notification_type="follow",
-            is_read=False,
-        )
-
-        ctx = notifications(req)
+        self._seed_follow_data()
+        ctx = notifications(self._request_for(self.recipient))
 
         self.assertEqual(len(ctx["notifications"]), 2)  # pending follow_request + one follow
         types_and_senders = {(n.notification_type, n.sender_id) for n in ctx["notifications"]}

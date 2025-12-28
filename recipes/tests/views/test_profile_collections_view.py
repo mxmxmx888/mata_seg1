@@ -1,6 +1,7 @@
 from unittest.mock import patch
 from django.test import TestCase
 from django.urls import reverse
+from django.utils import timezone
 
 from recipes.models import (
     User,
@@ -37,6 +38,22 @@ class ProfileCollectionViewTests(TestCase):
 
     def tearDown(self):
         self.firebase_patch.stop()
+
+    def _fake_qs(self, fav):
+        class FakeFavQS(list):
+            def prefetch_related(self, *args, **kwargs):
+                return self
+        return FakeFavQS([fav])
+
+    def _fake_fav(self, name, cover_post, created_at, items):
+        class FakeFav:
+            def __init__(self, cover_post, created_at, items):
+                self.id = "fav"
+                self.name = name
+                self.cover_post = cover_post
+                self.created_at = created_at
+                self.items = items
+        return FakeFav(cover_post, created_at, items)
 
     def test_collections_helper_builds_payload(self):
         fav = Favourite.objects.create(user=self.user, name="List")
@@ -324,65 +341,37 @@ class ProfileCollectionViewTests(TestCase):
         self.assertEqual(resp4.status_code, 200)
 
     def test_collections_helper_skips_items_without_recipe(self):
-        class FakeFav:
-            def __init__(self, user):
-                self.id = "abc"
-                self.name = "Ghost"
-                self.user = user
-                self.cover_post = None
-                from django.utils import timezone
-
-                self.created_at = timezone.now()
-                self.items = self
-
+        class Items(list):
             def select_related(self, *args, **kwargs):
                 return self
-
             def order_by(self, *args, **kwargs):
                 return [type("Item", (), {"recipe_post": None, "added_at": None})()]
 
+        ghost = self._fake_fav("Ghost", None, timezone.now(), Items())
         with patch("recipes.views.profile_view.Favourite.objects") as fav_mgr:
-            class FakeFavQS(list):
-                def prefetch_related(self, *args, **kwargs):
-                    return self
-
-            fav_mgr.filter.return_value = FakeFavQS([FakeFav(self.user)])
+            fav_mgr.filter.return_value = self._fake_qs(ghost)
             cols = _collections_for_user(self.user)
         self.assertEqual(cols[0]["count"], 0)
 
     def test_collections_helper_respects_cover_post_and_existing_images(self):
         cover = RecipePost.objects.create(author=self.user, title="Cover", description="d", image="cover.png")
 
-        class Item:
-            def __init__(self, recipe_post, added_at):
-                self.recipe_post = recipe_post
-                self.added_at = added_at
-
-        class FakeQS(list):
-            def select_related(self, *args, **kwargs):
-                return self
-
-            def order_by(self, *args, **kwargs):
-                return self
-
-        class FakeFav:
-            def __init__(self, cover_post, created_at, items):
-                self.id = "fav"
-                self.name = "Has cover"
-                self.cover_post = cover_post
-                self.created_at = created_at
-                self.items = items
-
         first = RecipePost.objects.create(author=self.user, title="First", description="d", image="first.png")
         second = RecipePost.objects.create(author=self.user, title="Second", description="d", image="second.png")
-        fake_items = FakeQS([Item(first, None), Item(second, cover.created_at)])
-        fake_fav = FakeFav(cover, cover.created_at, fake_items)
+        class Items(list):
+            def select_related(self, *args, **kwargs):
+                return self
+            def order_by(self, *args, **kwargs):
+                return self
+        fake_items = Items(
+            [
+                type("Item", (), {"recipe_post": first, "added_at": None})(),
+                type("Item", (), {"recipe_post": second, "added_at": cover.created_at})(),
+            ]
+        )
+        fake_fav = self._fake_fav("Has cover", cover, cover.created_at, fake_items)
         with patch("recipes.views.profile_view.Favourite.objects") as fav_mgr:
-            class FakeFavQS(list):
-                def prefetch_related(self, *args, **kwargs):
-                    return self
-
-            fav_mgr.filter.return_value = FakeFavQS([fake_fav])
+            fav_mgr.filter.return_value = self._fake_qs(fake_fav)
             cols = _collections_for_user(self.user)
 
         self.assertEqual(cols[0]["cover"], "cover.png")

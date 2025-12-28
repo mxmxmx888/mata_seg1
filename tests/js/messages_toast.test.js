@@ -37,7 +37,7 @@ describe("messages_toast", () => {
     expect(show).toHaveBeenCalled();
     jest.runAllTimers();
     expect(hide).toHaveBeenCalled();
-    jest.useRealTimers();
+    expect(document.querySelector(".toast")).toBeNull();
   });
 
   test("falls back to class toggles without bootstrap", () => {
@@ -50,8 +50,7 @@ describe("messages_toast", () => {
     const toast = document.querySelector(".toast");
     expect(toast.classList.contains("show")).toBe(true);
     jest.runAllTimers();
-    expect(toast.classList.contains("show")).toBe(false);
-    expect(toast.classList.contains("hide")).toBe(true);
+    expect(document.querySelector(".toast")).toBeNull();
   });
 
   test("no toasts exits cleanly", () => {
@@ -85,10 +84,26 @@ describe("messages_toast", () => {
   });
 
   test("returns early when already initialized", () => {
+    jest.useFakeTimers();
+    document.body.innerHTML = `<div class="toast"></div>`;
     const { initMessagesToast } = loadModule();
     global.__messagesToastInitialized = true;
     expect(() => initMessagesToast(window)).not.toThrow();
+    jest.runAllTimers();
+    expect(document.querySelector(".toast")).toBeNull();
     delete global.__messagesToastInitialized;
+  });
+
+  test("watches for toasts added after init", async () => {
+    jest.useFakeTimers();
+    const { initMessagesToast } = loadModule();
+    initMessagesToast(window);
+    const toast = document.createElement("div");
+    toast.className = "toast";
+    document.body.appendChild(toast);
+    await Promise.resolve();
+    jest.runAllTimers();
+    expect(document.querySelector(".toast")).toBeNull();
   });
 
   test("ignores when no document present on global init path", () => {

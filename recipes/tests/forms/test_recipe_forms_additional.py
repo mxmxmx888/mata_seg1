@@ -35,6 +35,19 @@ class RecipePostFormAdditionalTests(TestCase):
             visibility=RecipePost.VISIBILITY_PUBLIC,
         )
 
+    def base_form_data(self, **overrides):
+        data = {
+            "title": "X",
+            "description": "Y",
+            "category": "dinner",
+            "prep_time_min": 1,
+            "cook_time_min": 1,
+            "nutrition": "",
+            "visibility": RecipePost.VISIBILITY_PUBLIC,
+        }
+        data.update(overrides)
+        return data
+
     def test_parse_tags_handles_empty(self):
         form = RecipePostForm(data={"category": "dinner"})
         form.cleaned_data = {"tags_text": "   ", "category": None}
@@ -192,16 +205,7 @@ class RecipePostFormAdditionalTests(TestCase):
             position=1,
         )
         form = RecipePostForm(
-            data={
-                "title": "X",
-                "description": "Y",
-                "category": "dinner",
-                "prep_time_min": 1,
-                "cook_time_min": 1,
-                "nutrition": "",
-                "visibility": RecipePost.VISIBILITY_PUBLIC,
-                "shopping_links_text": "Milk | https://shop.com/milk",
-            },
+            data=self.base_form_data(shopping_links_text="Milk | https://shop.com/milk"),
             instance=recipe,
             files=MultiValueDict({"images": [fake_image("cover.jpg")]}),
         )

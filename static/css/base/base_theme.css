@@ -24,15 +24,15 @@ body.dashboard-body:not([data-theme="light"]),
 body.shop-body:not([data-theme="light"]),
 body.app-body:not([data-theme="light"]) {
   color-scheme: dark;
-  --bg-1: rgb(13, 13, 13);
-  --bg-2: rgb(29, 29, 29);
-  --bg-3: rgb(36, 36, 36);
-  --surface: #0f1014;
+  --bg-1: rgb(12, 12, 12);
+  --bg-2: rgb(24, 24, 24);
+  --bg-3: rgb(32, 32, 32);
+  --surface: #101010;
   --text-primary: #f6f6f7;
   --text-muted: #a5a6b5;
   --text-inverse: #0b1220;
-  --border-subtle: #32323d;
-  --border-strong: #3a3a46;
+  --border-subtle: #2e2e32;
+  --border-strong: #37373c;
   --comment-author-color: var(--text-primary);
   --comment-text-color: color-mix(in srgb, var(--text-primary) 88%, var(--text-muted) 12%);
   --comment-meta-color: color-mix(in srgb, var(--text-muted) 82%, var(--text-primary) 18%);
@@ -43,15 +43,15 @@ body.app-body:not([data-theme="light"]) {
   :root:not([data-theme="light"]),
   body:not([data-theme="light"]):not(.auth-body):not(.public-body) {
     color-scheme: dark;
-    --bg-1: rgb(13, 13, 13);
-    --bg-2: rgb(29, 29, 29);
-    --bg-3: rgb(36, 36, 36);
-    --surface: #0f1014;
+    --bg-1: rgb(12, 12, 12);
+    --bg-2: rgb(24, 24, 24);
+    --bg-3: rgb(32, 32, 32);
+    --surface: #101010;
     --text-primary: #f6f6f7;
     --text-muted: #a5a6b5;
     --text-inverse: #0b1220;
-    --border-subtle: #32323d;
-    --border-strong: #3a3a46;
+    --border-subtle: #2e2e32;
+    --border-strong: #37373c;
   }
 }
 

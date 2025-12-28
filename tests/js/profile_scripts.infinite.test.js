@@ -50,9 +50,6 @@ describe("profile_scripts infinite lists", () => {
       document.getElementById("profile-posts-col-2"),
       document.getElementById("profile-posts-col-3"),
     ];
-    Object.defineProperty(columns[0], "offsetHeight", { get: () => 30 });
-    Object.defineProperty(columns[1], "offsetHeight", { get: () => 5 });
-    Object.defineProperty(columns[2], "offsetHeight", { get: () => 15 });
 
     expect(options.append("<div></div>")).toBe(0);
     const appendedCount = options.append(`
@@ -60,16 +57,15 @@ describe("profile_scripts infinite lists", () => {
       <div class="my-recipe-card" id="card-2"></div>
     `);
     expect(appendedCount).toBe(2);
-    expect(columns[1].querySelector("#card-1")).not.toBeNull();
+    expect(columns[0].querySelector("#card-1")).not.toBeNull();
     expect(columns[1].querySelector("#card-2")).not.toBeNull();
   });
 
   test("profile posts infinite uses provided column placer and profile fetcher branches", async () => {
     window.history.scrollRestoration = "auto";
     window.scrollTo = jest.fn();
-    const placeSpy = jest.fn();
     const createSpy = jest.fn();
-    window.InfiniteList = { placeInColumns: placeSpy, create: createSpy };
+    window.InfiniteList = { placeInColumns: jest.fn(), create: createSpy };
     const { initProfileScripts } = loadModule();
     document.body.innerHTML = `
       <div id="profile-posts-grid">
@@ -86,14 +82,12 @@ describe("profile_scripts infinite lists", () => {
     expect(createSpy).toHaveBeenCalledTimes(1);
     const options = createSpy.mock.calls[0][0];
     options.append(`<div class="my-recipe-card" id="append-card"></div>`);
-    expect(placeSpy).toHaveBeenCalledWith(
-      expect.any(Array),
-      [
-        document.getElementById("profile-posts-col-1"),
-        document.getElementById("profile-posts-col-2"),
-        document.getElementById("profile-posts-col-3"),
-      ]
-    );
+    const cols = [
+      document.getElementById("profile-posts-col-1"),
+      document.getElementById("profile-posts-col-2"),
+      document.getElementById("profile-posts-col-3"),
+    ];
+    expect(cols[0].querySelector("#append-card")).not.toBeNull();
 
     global.fetch.mockResolvedValueOnce({ text: () => Promise.resolve("   ") });
     const emptyResult = await options.fetchPage({ page: 2 });

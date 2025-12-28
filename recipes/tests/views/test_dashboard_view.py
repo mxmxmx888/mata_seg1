@@ -11,6 +11,24 @@ class DashboardSearchViewTests(TestCase):
         self.user = make_user(username="searcher")
         self.client.login(username=self.user.username, password="Password123")
         self.url = reverse("dashboard")
+        self.make_published = lambda title, days_ago, saves: self._publish(
+            title=title,
+            days_ago=days_ago,
+            saved_count=saves,
+        )
+
+    def _publish(self, title, days_ago, saved_count):
+        post = make_recipe_post(
+            author=self.user,
+            title=title,
+            prep_time_min=1,
+            cook_time_min=1,
+            saved_count=saved_count,
+            published=False,
+        )
+        post.published_at = timezone.now() - timezone.timedelta(days=days_ago)
+        post.save(update_fields=["published_at"])
+        return post
 
     def test_search_matches_title_and_description(self):
         matching = make_recipe_post(
@@ -246,27 +264,8 @@ class DashboardSearchViewTests(TestCase):
         self.assertEqual(response.context["scope"], "recipes")
 
     def test_dashboard_sort_popular_and_oldest(self):
-        older = make_recipe_post(
-            author=self.user,
-            title="Older",
-            prep_time_min=1,
-            cook_time_min=1,
-            saved_count=5,
-            published=False,
-        )
-        recent = make_recipe_post(
-            author=self.user,
-            title="Recent",
-            prep_time_min=1,
-            cook_time_min=1,
-            saved_count=1,
-            published=False,
-        )
-        older.published_at = timezone.now() - timezone.timedelta(days=2)
-        older.save(update_fields=["published_at"])
-        recent.published_at = timezone.now()
-        recent.save(update_fields=["published_at"])
-        self.client.login(username=self.user.username, password="Password123")
+        older = self.make_published("Older", days_ago=2, saves=5)
+        recent = self.make_published("Recent", days_ago=0, saves=1)
 
         res_popular = self.client.get(self.url, {"sort": "popular"})
         self.assertEqual(res_popular.status_code, 200)

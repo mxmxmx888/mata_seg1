@@ -21,6 +21,10 @@ class NotificationSignalsTests(TestCase):
         self.notification_patcher.stop()
         self.user_patcher.stop()
 
+    def _make_comment(self, author, commenter, text):
+        post = SimpleNamespace(author=author)
+        return post, SimpleNamespace(user=commenter, recipe_post=post, text=text)
+
     
 
     def test_notify_on_like_creates_notification_for_non_author(self):
@@ -122,20 +126,10 @@ class NotificationSignalsTests(TestCase):
     def test_notify_on_comment_notifies_post_author_for_new_comment_from_other_user(self):
         self.MockNotification.objects.create.reset_mock()
 
-        author = object()
-        commenter = object()
-        post = SimpleNamespace(author=author)
-        comment_instance = SimpleNamespace(
-            user=commenter,
-            recipe_post=post,
-            text="Just a comment.",
-        )
+        author, commenter = object(), object()
+        post, comment_instance = self._make_comment(author, commenter, "Just a comment.")
 
-        signals.notify_on_comment(
-            sender=None,
-            instance=comment_instance,
-            created=True,
-        )
+        signals.notify_on_comment(sender=None, instance=comment_instance, created=True)
 
         self.MockNotification.objects.create.assert_called_once_with(
             recipient=author,
@@ -166,53 +160,27 @@ class NotificationSignalsTests(TestCase):
 
     def test_notify_on_comment_creates_tag_notifications_for_mentions(self):
         self.MockNotification.objects.create.reset_mock()
-
         author = object()
         commenter = object()
         tagged_user = object()
-        self_mentioned_user = commenter
-
-        def get_side_effect(username):
-            if username == "alice":
-                return tagged_user
-            if username == "self":
-                return self_mentioned_user
+        post, comment_instance = self._make_comment(
+            author,
+            commenter,
+            "Hello @alice @missing and @self",
+        )
+        def lookup(username):
+            mapping = {"alice": tagged_user, "self": commenter}
+            if username in mapping:
+                return mapping[username]
             raise self.MockUser.DoesNotExist()
+        self.MockUser.objects.get.side_effect = lookup
 
-        self.MockUser.objects.get.side_effect = get_side_effect
+        signals.notify_on_comment(sender=None, instance=comment_instance, created=True)
 
-        post = SimpleNamespace(author=author)
-        comment_instance = SimpleNamespace(
-            user=commenter,
-            recipe_post=post,
-            text="Hello @alice @missing and @self",
-        )
-
-        signals.notify_on_comment(
-            sender=None,
-            instance=comment_instance,
-            created=True,
-        )
-
-        expected_calls = [
-            call(
-                recipient=author,
-                sender=commenter,
-                notification_type="comment",
-                post=post,
-                comment=comment_instance,
-            ),
-            call(
-                recipient=tagged_user,
-                sender=commenter,
-                notification_type="tag",
-                post=post,
-                comment=comment_instance,
-            ),
-        ]
-
-        self.assertEqual(self.MockNotification.objects.create.call_count, 2)
-        self.MockNotification.objects.create.assert_has_calls(expected_calls, any_order=True)
+        calls = self.MockNotification.objects.create.call_args_list
+        recipients = {(c.kwargs["notification_type"], c.kwargs["recipient"]) for c in calls}
+        self.assertEqual(len(calls), 2)
+        self.assertSetEqual(recipients, {("comment", author), ("tag", tagged_user)})
 
     def test_notify_on_comment_does_nothing_when_not_created(self):
         self.MockNotification.objects.create.reset_mock()

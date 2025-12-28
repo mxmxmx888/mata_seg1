@@ -12,7 +12,6 @@ class CommentForm(forms.ModelForm):
             'text': forms.Textarea(attrs={
                 'rows': 1,
                 'placeholder': 'Add a comment...',
-                'class': 'form-control rounded-pill px-3',
-                'style': 'resize: none; overflow: hidden; min-height: 40px;'
+                'class': 'form-control rounded-pill px-3'
             }),
         }
