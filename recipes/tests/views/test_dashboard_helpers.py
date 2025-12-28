@@ -127,6 +127,14 @@ class DashboardUtilsTests(TestCase):
         self.assertEqual(dashboard_utils._normalise_tags(123), [])
         self.assertEqual(dashboard_utils._normalise_tags(["Pasta ", ""]), ["pasta"])
 
+    def test_user_preference_tags_dedupes_liked_posts(self):
+        liked = make_recipe_post(author=self.user, title="P1", tags=["Herb", "herb"])
+        Like.objects.create(user=self.user, recipe_post=liked)
+
+        tags = dashboard_utils._user_preference_tags(self.user)
+
+        self.assertEqual(tags, ["herb"])
+
     def test_apply_query_filters_and_tag_filtering(self):
         liked = make_recipe_post(author=self.user, title="Liked pasta", tags=["pasta"])
         other = make_recipe_post(author=self.user, title="Soup", tags=["soup"])
@@ -165,6 +173,11 @@ class DashboardUtilsTests(TestCase):
         posts = [SimpleNamespace(tags=["x"], saved_count=0, published_at=None)]
         self.assertEqual(dashboard_utils._score_and_sort_posts(posts, []), posts)
 
+    def test_score_post_without_tag_match_still_counts_saves(self):
+        post = SimpleNamespace(tags=["x"], saved_count=2, published_at=None)
+        score = dashboard_utils._score_post_for_user(post, ["y"])
+        self.assertGreaterEqual(score, 2)
+
     def test_get_for_you_posts_uses_seed_limit_and_offset(self):
         posts = [
             make_recipe_post(author=self.user, title=f"P{i}", tags=["x"])
@@ -198,6 +211,15 @@ class DashboardUtilsTests(TestCase):
         self.assertEqual(len(filtered), 1)
         self.assertEqual(filtered[0].id, initial[1].id)
 
+    def test_get_following_posts_without_query_returns_all(self):
+        author = make_user(username="plain_author")
+        Follower.objects.create(follower=self.user, author=author)
+        post = make_recipe_post(author=author, title="Dish")
+
+        result = dashboard_utils._get_following_posts(self.user, query=None)
+
+        self.assertEqual([p.id for p in result], [post.id])
+
     def test_get_following_posts_returns_empty_when_not_following(self):
         make_recipe_post(author=self.user, title="Solo")
 
@@ -217,6 +239,16 @@ class DashboardUtilsTests(TestCase):
         self.assertIn(target, results)
         reversed_order = dashboard_utils._search_users("Chamberlain Eileen")
         self.assertIn(target, reversed_order)
+
+    def test_search_users_combines_multiple_tokens(self):
+        target = make_user(username="tokenuser", first_name="Token", last_name="User")
+        results = dashboard_utils._search_users("Token User")
+        self.assertIn(target, results)
+
+    def test_search_users_handles_at_symbol_with_no_tokens(self):
+        make_user(username="@symuser", first_name="Sym", last_name="User")
+        results = dashboard_utils._search_users("@")
+        self.assertIsInstance(results, list)
 
     def test_filter_posts_by_prep_time_skips_non_int(self):
         posts = [
@@ -243,6 +275,13 @@ class DashboardUtilsTests(TestCase):
         result = dashboard_utils._filter_posts_by_prep_time(posts, max_prep=10)
 
         self.assertEqual(result, [posts[0]])
+
+    def test_filter_posts_by_prep_time_returns_copy_when_no_bounds(self):
+        posts = [SimpleNamespace(prep_time_min=1)]
+
+        result = dashboard_utils._filter_posts_by_prep_time(posts)
+
+        self.assertEqual(result, posts)
 
     def test_base_posts_queryset_filters_unpublished_and_orders(self):
         older = self.published("Old", timezone.now() - timedelta(days=1))
