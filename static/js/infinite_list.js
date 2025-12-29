@@ -1,4 +1,3 @@
-(() => {
 const hasModuleExports = typeof module !== "undefined" && module.exports;
 const globalWindow = typeof window !== "undefined" && window.document ? window : null;
 
@@ -31,22 +30,21 @@ const buildJsonUrl = (w, options, page) => {
 
 const buildJsonFetcher = (win, options) => {
   const w = win || globalWindow || (typeof window !== "undefined" ? window : null);
-  if (!w || !options || !options.endpoint) return null;
+  if (!w || !(options && options.endpoint)) return null;
   const fetchFn = w.fetch || (typeof fetch !== "undefined" ? fetch : null);
-  const origin = (w.location && w.location.origin) || (globalWindow && globalWindow.location && globalWindow.location.origin) || "http://localhost";
   const opts = {
     endpoint: options.endpoint,
     pageParam: options.pageParam || "page",
-    pageSizeParam: options.pageSizeParam,
-    pageSize: options.pageSize,
+    pageSizeParam: options.pageSizeParam, pageSize: options.pageSize,
     extraParams: options.extraParams || {},
     fetchInit: options.fetchInit || {},
-    mapResponse: options.mapResponse
+    mapResponse: options.mapResponse,
+    origin: (w.location && w.location.origin) || (globalWindow && globalWindow.location && globalWindow.location.origin) || "http://localhost",
   };
   return ({ page }) => {
     if (!page && page !== 0) return Promise.resolve({ html: "", hasMore: false, nextPage: null });
-    const url = buildJsonUrl({ location: { origin } }, opts, page);
     if (!fetchFn) return Promise.reject(new Error("fetch unavailable"));
+    const url = buildJsonUrl({ location: { origin: opts.origin } }, opts, page);
     return fetchFn(url.toString(), opts.fetchInit)
       .then((resp) => {
         if (!resp.ok) throw new Error("Request failed");
@@ -182,4 +180,3 @@ if (hasModuleExports) {
 if (globalWindow && globalWindow.document) {
   attachGlobal(globalWindow);
 }
-})();

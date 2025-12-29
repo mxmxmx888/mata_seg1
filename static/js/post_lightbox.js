@@ -1,4 +1,3 @@
-(() => {
 const hasModuleExports = typeof module !== "undefined" && module.exports;
 const globalWindow = typeof window !== "undefined" && window.document ? window : null;
 
@@ -73,10 +72,14 @@ const wireKeyboard = (state) => {
     if (event.key === "ArrowLeft") {
       event.preventDefault();
       showImage(state, state.currentIndex - 1);
-    } else if (event.key === "ArrowRight") {
+      return;
+    }
+    if (event.key === "ArrowRight") {
       event.preventDefault();
       showImage(state, state.currentIndex + 1);
-    } else if (event.key === "Escape") {
+      return;
+    }
+    if (event.key === "Escape") {
       closeLightbox(state);
     }
   });
@@ -112,4 +115,3 @@ if (hasModuleExports) {
 
 /* istanbul ignore next */
 autoInitPostLightbox();
-})();

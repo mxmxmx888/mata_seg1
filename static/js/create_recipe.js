@@ -34,29 +34,12 @@ const createShoppingManager = helpers.createShoppingManager || (() => ({
 }));
 
 const readExistingShoppingItems = (listBox, inlineJson) => {
-  let existing = [];
-  const candidates = [
-    inlineJson && inlineJson.textContent,
-    listBox && listBox.dataset.shoppingItems,
-    "[]",
-  ];
+  const candidates = [inlineJson?.textContent, listBox?.dataset.shoppingItems, "[]"];
   for (const candidate of candidates) {
-    if (!candidate) continue;
-    try {
-      existing = JSON.parse(candidate);
-      break;
-    } catch (err) {
-      existing = [];
-    }
+    const parsed = helpers.parseArrayFrom ? helpers.parseArrayFrom(candidate) : null;
+    if (parsed) return parsed;
   }
-  if (typeof existing === "string") {
-    try {
-      existing = JSON.parse(existing);
-    } catch (err) {
-      existing = [];
-    }
-  }
-  return Array.isArray(existing) ? existing : [];
+  return [];
 };
 
 const cleanIngredientsField = (ingredientsField) => {

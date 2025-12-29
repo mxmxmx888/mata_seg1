@@ -1,4 +1,3 @@
-(() => {
 const FLOATING_MENU_PROPS = ["position", "top", "left", "right", "transform", "width", "max-width"];
 const DEFAULT_DROPDOWN_MARGIN = 12;
 const hasModuleExports = typeof module !== "undefined" && module.exports;
@@ -48,13 +47,7 @@ const initPrepFilter = (w, doc) => {
   const popover = doc.getElementById("prepFilterPopover");
   if (!toggleBtn || !popover) return;
   const positionPopover = () =>
-    positionFloatingMenu({
-      trigger: toggleBtn,
-      menu: popover,
-      breakpoint: 640,
-      maxWidth: 360,
-      offset: getDropdownOffset(w)
-    });
+    positionFloatingMenu({ trigger: toggleBtn, menu: popover, breakpoint: 640, maxWidth: 360, offset: getDropdownOffset(w) });
   toggleBtn.addEventListener("click", (event) => {
     event.stopPropagation();
     const shouldOpen = !popover.classList.contains("prep-filter-open");
@@ -331,4 +324,3 @@ if (hasModuleExports) {
 
 /* istanbul ignore next */
 autoInitNavbar();
-})();

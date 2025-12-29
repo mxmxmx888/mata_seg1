@@ -1,4 +1,5 @@
-(function (global) {
+const globalWindow = typeof window !== "undefined" ? window : null;
+
   function getProfileColumns(doc) {
     return [
       doc.getElementById("profile-posts-col-1"),
@@ -152,7 +153,6 @@
 
   if (typeof module !== "undefined" && module.exports) {
     module.exports = api;
-  } else if (global) {
-    global.ProfileInfinite = api;
+  } else if (globalWindow) {
+    globalWindow.ProfileInfinite = api;
   }
-})(typeof window !== "undefined" ? window : {});

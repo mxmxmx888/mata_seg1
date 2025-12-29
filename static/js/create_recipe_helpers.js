@@ -2,15 +2,18 @@
 const hasModuleExports = typeof module !== "undefined" && module.exports;
 const globalWindow = typeof window !== "undefined" && window.document ? window : null;
 
-const loadModule = (path, globalKey) => {
-  if (hasModuleExports) {
-    try {
-      return require(path);
-    } catch (err) {
-      return {};
-    }
+const safeRequire = (path) => {
+  try {
+    return require(path);
+  } catch (err) {
+    return {};
   }
-  return globalWindow && globalWindow[globalKey] ? globalWindow[globalKey] : {};
+};
+
+const loadModule = (path, globalKey) => {
+  if (hasModuleExports) return safeRequire(path);
+  const globalVal = globalWindow && globalWindow[globalKey];
+  return globalVal || {};
 };
 
 const validation = loadModule("./create_recipe_validation", "createRecipeValidation");
@@ -20,6 +23,25 @@ const shopping = loadModule("./create_recipe_shopping", "createRecipeShopping");
 const noop = () => {};
 
 const normalizeUrl = (url) => (!url ? "" : /^https?:\/\//i.test(url) ? url : "https://" + url);
+
+const parseJsonSafe = (raw) => {
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw);
+  } catch (err) {
+    return null;
+  }
+};
+
+const parseArrayFrom = (raw) => {
+  const parsed = parseJsonSafe(raw);
+  if (Array.isArray(parsed)) return parsed;
+  if (typeof parsed === "string") {
+    const nested = parseJsonSafe(parsed);
+    if (Array.isArray(nested)) return nested;
+  }
+  return null;
+};
 
 const normalizeToFileList = (files) => {
   if (!(files instanceof FileList) && typeof DataTransfer !== "undefined") {
@@ -251,6 +273,7 @@ const createShoppingManager =
 
 const api = {
   normalizeUrl,
+  parseArrayFrom,
   setInputFiles,
   getFiles,
   persistFiles,

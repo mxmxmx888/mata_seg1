@@ -1,4 +1,5 @@
-(function (global) {
+const globalWindow = typeof window !== "undefined" ? window : null;
+
   const FOLLOW_MODAL_CONFIGS = [
     ['[data-bs-target="#followersModal"]', "followersModal"],
     ['[data-bs-target="#followingModal"]', "followingModal"],
@@ -234,7 +235,6 @@
 
   if (typeof module !== "undefined" && module.exports) {
     module.exports = api;
-  } else if (global) {
-    global.ProfileModals = api;
+  } else if (globalWindow) {
+    globalWindow.ProfileModals = api;
   }
-})(typeof window !== "undefined" ? window : {});
