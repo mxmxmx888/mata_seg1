@@ -1,107 +1,119 @@
-(function (global) {
-  function initForYouInfinite(win) {
-    // Sets up infinite scroll for the For You grid (#forYou-grid + .feed-masonry-column items).
-    const w = win || (typeof window !== "undefined" ? window : undefined);
-    if (!w || !w.document) return;
-    if (w.__forYouInfiniteInitialized) return;
-    w.__forYouInfiniteInitialized = true;
+{
+const hasModuleExports = typeof module !== "undefined" && module.exports;
+const globalWindow = typeof window !== "undefined" ? window : null;
 
-    const doc = w.document;
-    const container = doc.getElementById("forYou-grid");
-    const sentinel = doc.getElementById("forYou-sentinel");
-    const loadingEl = doc.getElementById("forYou-loading");
-    if (!container || !sentinel) return;
+const resolveWindow = (win) => win || globalWindow;
+const markInitialized = (w, flag) => {
+  if (!w || w[flag]) return false;
+  w[flag] = true;
+  return true;
+};
 
-    const columns = Array.from(container.querySelectorAll(".feed-masonry-column"));
-    if (!columns.length) return;
-
-    const LIMIT = 12;
-    let offset = container.querySelectorAll(".my-recipe-card").length;
-    const initialHasMore = offset >= LIMIT;
-    const infinite = w.InfiniteList || {};
-
-    function setLoading(state) {
-      if (!loadingEl) return;
-      loadingEl.classList.toggle("d-none", !state);
-    }
-
-    const placeCards = (cards) => {
-      if (!cards || !cards.length) return;
-      if (typeof infinite.placeInColumns === "function") {
-        infinite.placeInColumns(cards, columns);
-        return;
-      }
-      cards.forEach((card) => {
-        let target = columns[0];
-        for (let i = 1; i < columns.length; i += 1) {
-          if (columns[i].offsetHeight < target.offsetHeight) {
-            target = columns[i];
-          }
-        }
-        target.appendChild(card);
-      });
-    };
-
-    function appendHtmlToColumns(html) {
-      if (!html) return;
-      const temp = doc.createElement("div");
-      temp.innerHTML = html;
-      const cards = Array.from(temp.querySelectorAll(".my-recipe-card"));
-
-      placeCards(cards);
-    }
-
-    if (!infinite.create) return;
-
-    const fetchPage = ({ page }) => {
-      setLoading(true);
-      const url = new URL(w.location.href);
-      url.searchParams.set("for_you_ajax", "1");
-      url.searchParams.set("for_you_offset", String(page));
-
-      return w
-        .fetch(url.toString(), {
-          headers: { "X-Requested-With": "XMLHttpRequest" }
-        })
-        .then((response) => {
-          if (!response.ok) throw new Error("Network response was not ok");
-          return response.json();
-        })
-        .then((data) => {
-          const count = (data && data.count) || 0;
-          offset = page + count;
-          return {
-            html: (data && data.html) || "",
-            hasMore: Boolean(data && data.has_more),
-            nextPage: count ? page + count : null,
-          };
-        })
-        .finally(() => setLoading(false));
-    };
-
-    infinite.create({
-      sentinel,
-      hasMore: initialHasMore,
-      nextPage: initialHasMore ? offset : null,
-      fetchPage,
-      append: appendHtmlToColumns,
-      observerOptions: { rootMargin: "600px 0px" },
-      fallbackScroll: true,
-      fallbackMargin: 300,
-    });
+const placeCards = (cards, infinite, columns, state) => {
+  if (!cards || !cards.length) return;
+  if (typeof infinite.placeInColumns === "function") {
+    infinite.placeInColumns(cards, columns);
+    return;
   }
+  cards.forEach((card) => {
+    const idx = state && columns.length ? state.nextColumn % columns.length : 0;
+    const target = columns[idx] || columns[0];
+    target.appendChild(card);
+    if (state) state.nextColumn = (idx + 1) % columns.length;
+  });
+};
 
-  if (typeof module !== "undefined" && module.exports) {
-    module.exports = { initForYouInfinite };
-  }
+const appendHtmlToColumns = (doc, infinite, columns, state) => (html) => {
+  if (!html) return;
+  const temp = doc.createElement("div");
+  temp.innerHTML = html;
+  const cards = Array.from(temp.querySelectorAll(".my-recipe-card"));
+  placeCards(cards, infinite, columns, state);
+};
 
-  /* istanbul ignore next */
-  if (global && global.document) {
-    const runInit = () => initForYouInfinite(global);
-    if (global.document.readyState === "loading") {
-      global.document.addEventListener("DOMContentLoaded", runInit, { once: true });
-    } else {
-      runInit();
-    }
+const setLoading = (loadingEl, state) => {
+  if (!loadingEl) return;
+  loadingEl.classList.toggle("d-none", !state);
+};
+
+const fetchPageFactory = (w, state, loadingEl) => ({ page }) => {
+  setLoading(loadingEl, true);
+  const url = new URL(w.location.href);
+  url.searchParams.set("for_you_ajax", "1");
+  url.searchParams.set("for_you_offset", String(page));
+  return w
+    .fetch(url.toString(), { headers: { "X-Requested-With": "XMLHttpRequest" } })
+    .then((resp) => {
+      if (!resp.ok) throw new Error("Network response was not ok");
+      return resp.json();
+    })
+    .then((data) => {
+      const count = (data && data.count) || 0;
+      state.offset = page + count;
+      return {
+        html: (data && data.html) || "",
+        hasMore: Boolean(data && data.has_more),
+        nextPage: count ? page + count : null,
+      };
+    })
+    .finally(() => setLoading(loadingEl, false));
+};
+
+const gatherForYouContext = (w) => {
+  const doc = w.document;
+  const container = doc.getElementById("forYou-grid");
+  const sentinel = doc.getElementById("forYou-sentinel");
+  const loadingEl = doc.getElementById("forYou-loading");
+  if (!container || !sentinel) return null;
+  const columns = Array.from(container.querySelectorAll(".feed-masonry-column"));
+  if (!columns.length) return null;
+  const LIMIT = 12;
+  const initialCards = container.querySelectorAll(".my-recipe-card").length;
+  const state = { offset: initialCards, nextColumn: initialCards % (columns.length || 1) };
+  return {
+    doc,
+    sentinel,
+    loadingEl,
+    columns,
+    state,
+    initialHasMore: initialCards >= LIMIT,
+    infinite: w.InfiniteList || {},
+  };
+};
+
+const initForYouInfinite = (win) => {
+  const w = resolveWindow(win);
+  if (!w || !w.document || !markInitialized(w, "__forYouInfiniteInitialized")) return;
+  const ctx = gatherForYouContext(w);
+  if (!ctx || !ctx.infinite.create) return;
+  ctx.infinite.create({
+    sentinel: ctx.sentinel,
+    hasMore: ctx.initialHasMore,
+    nextPage: ctx.initialHasMore ? ctx.state.offset : null,
+    fetchPage: fetchPageFactory(w, ctx.state, ctx.loadingEl),
+    append: appendHtmlToColumns(ctx.doc, ctx.infinite, ctx.columns, ctx.state),
+    observerOptions: { rootMargin: "600px 0px" },
+    fallbackScroll: true,
+    fallbackMargin: 300,
+    fallbackMode: "document",
+  });
+};
+
+const autoInit = () => {
+  const w = resolveWindow();
+  if (!w || !w.document) return;
+  const runInit = () => initForYouInfinite(w);
+  if (w.document.readyState === "loading") {
+    w.document.addEventListener("DOMContentLoaded", runInit, { once: true });
+  } else {
+    runInit();
   }
-})(typeof window !== "undefined" ? window : null);
+};
+
+if (hasModuleExports) {
+  module.exports = { initForYouInfinite };
+}
+
+/* istanbul ignore next */
+autoInit();
+}

@@ -98,18 +98,20 @@ class CustomSocialAccountAdapter(DefaultSocialAccountAdapter):
         conflict happens during social signup.
         """
         try:
-            user = super().save_user(request, sociallogin, form=form)
+            return super().save_user(request, sociallogin, form=form)
         except IntegrityError:
-            email = (getattr(sociallogin.user, "email", "") or "").strip()
-            if not email:
-                raise
+            return self._connect_existing_user_or_raise(request, sociallogin)
 
-            User = get_user_model()
-            existing = User.objects.filter(email__iexact=email).first()
-            if not existing:
-                raise
+    def _connect_existing_user_or_raise(self, request, sociallogin):
+        existing_user = self._find_existing_user(sociallogin)
+        if not existing_user:
+            raise
+        sociallogin.connect(request, existing_user)
+        return existing_user
 
-            # Attach the social account to the existing user and return it.
-            sociallogin.connect(request, existing)
-            return existing
-        return user
+    def _find_existing_user(self, sociallogin):
+        email = (getattr(sociallogin.user, "email", "") or "").strip()
+        if not email:
+            return None
+        User = get_user_model()
+        return User.objects.filter(email__iexact=email).first()

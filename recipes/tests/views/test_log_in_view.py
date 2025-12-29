@@ -46,6 +46,12 @@ class LogInViewTestCase(TestCase, LogInTester):
         self.assertTrue(isinstance(form, LogInForm))
         self.assertFalse(form.is_bound)
 
+    def test_log_in_response_is_not_cached(self):
+        response = self.client.get(self.url)
+        cache_control = response.headers.get("Cache-Control", "")
+        self.assertIn("no-store", cache_control)
+        self.assertIn("no-cache", cache_control)
+
     def test_get_log_in_redirects_when_logged_in(self):
         self.client.login(email=self.user.email, password='Password123')
         response = self.client.get(self.url, follow=True)

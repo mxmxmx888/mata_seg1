@@ -4,7 +4,7 @@
   --auth-card-width: clamp(320px, 36vw, 400px);
   --auth-card-pad-y: clamp(1.5rem, 2.6vh, 2.05rem);
   --auth-card-pad-x: clamp(1.45rem, 3vw, 1.9rem);
-  --auth-card-radius: clamp(1.2rem, 1.8vw, 1.55rem);
+  --auth-card-radius: var(--radius-surface);
   --auth-card-scale: clamp(0.86, 0.64 + 0.03vw + 0.03vh, 0.95);
   min-height: 100vh;
   flex: 1;

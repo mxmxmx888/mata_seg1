@@ -13,6 +13,9 @@ recipe_image_file_pool = [
     "static/post_images/meal6.jpg",
     "static/post_images/meal7.jpg",
     "static/post_images/meal8.jpg",
+    "static/post_images/meal9.jpg",
+    "static/post_images/meal10.jpg",
+    "static/post_images/meal11.jpg",
 ]
 
 BASE_INGREDIENT_POOL = [

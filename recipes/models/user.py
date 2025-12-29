@@ -49,12 +49,18 @@ class User(AbstractUser):
 
     def avatar_or_gravatar(self, size=120):
         """Return uploaded avatar URL or a default gravatar fallback."""
-        if self.avatar:
-            try:
-                return self.avatar.url
-            except ValueError:
-                pass
+        avatar_url = self._safe_avatar_url()
+        if avatar_url:
+            return avatar_url
         return static("img/default-avatar.svg")
+
+    def _safe_avatar_url(self):
+        if not self.avatar:
+            return None
+        try:
+            return self.avatar.url
+        except ValueError:
+            return None
 
     @property
     def avatar_url(self):

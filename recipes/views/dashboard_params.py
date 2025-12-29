@@ -77,15 +77,13 @@ def parse_dashboard_params(request):
         "category": category,
         "ingredient_q": ingredient_q,
         "sort": (request.GET.get("sort") or "newest").strip(),
-        "mode": mode,
-        "min_prep": min_prep,
-        "max_prep": max_prep,
+        "mode": mode, "min_prep": min_prep, "max_prep": max_prep,
         "have_ingredients_raw": have_ingredients_raw,
         "have_ingredients_list": have_ingredients_list,
         "has_search": _has_search(mode, q, ingredient_q, have_ingredients_list, min_prep, max_prep, category),
         "page_number": _safe_int(request.GET.get("page") or 1, default=1),
         "is_ajax": _is_ajax(request),
-        "for_you_ajax": request.GET.get("for_you_ajax") == "1",
+        "for_you_ajax": request.GET.get("for_you_ajax") == "1", "following_ajax": request.GET.get("following_ajax") == "1",
     }
 
 

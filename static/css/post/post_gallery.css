@@ -15,7 +15,7 @@
 }
 
 .post-media-stack-item {
-  border-radius: 10px;
+  border-radius: var(--radius-surface);
   overflow: hidden;
   background: #0f0f14;
 }
@@ -30,7 +30,7 @@
 }
 
 .post-gallery-tile {
-  border-radius: 1rem;
+  border-radius: var(--radius-surface);
   overflow: hidden;
   background-color: transparent;
   min-height: 0;
@@ -43,7 +43,7 @@
 }
 
 .post-video {
-  border-radius: 1.5rem;
+  border-radius: var(--radius-surface);
   overflow: hidden;
   background-color: #000;
   display: flex;
@@ -91,7 +91,7 @@ body[data-theme="dark"]:not(.auth-body) .post-gallery-tile {
 }
 
 .post-media-masonry-item {
-  border-radius: 18px;
+  border-radius: var(--radius-surface);
   overflow: hidden;
   background: #0f0f14;
   width: 100%;
@@ -179,7 +179,7 @@ body[data-theme="dark"]:not(.auth-body) .post-gallery-tile {
 
 .gallery-hero {
   width: 100%;
-  border-radius: 18px;
+  border-radius: var(--radius-surface);
   background: #0f0f14;
   overflow: hidden;
 }

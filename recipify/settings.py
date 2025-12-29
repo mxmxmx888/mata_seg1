@@ -45,6 +45,10 @@ CSRF_COOKIE_SECURE = os.getenv("CSRF_COOKIE_SECURE", "False") == "True"
 SESSION_COOKIE_SECURE = os.getenv("SESSION_COOKIE_SECURE", "False") == "True"
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
+if DEBUG:
+    # Log CSRF failures with more context during development.
+    CSRF_FAILURE_VIEW = "recipes.views.csrf_failure_view.csrf_debug_failure"
+
 SOCIALACCOUNT_LOGIN_ON_GET = True
 
 # Application definition

@@ -174,7 +174,7 @@ class Command(SeedHelpers, BaseCommand):
         if not users or not posts:
             return
 
-        rows = self._build_like_rows(users, posts, max_likes_per_post)
+        rows = _build_like_rows(users, posts, max_likes_per_post)
 
         with transaction.atomic():
             Like.objects.bulk_create(rows, ignore_conflicts=True, batch_size=1000)

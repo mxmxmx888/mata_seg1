@@ -1,4 +1,4 @@
-(() => {
+{
 const MAX_SHOPPING_LINKS = 10;
 const hasModuleExports = typeof module !== "undefined" && module.exports;
 const globalWindow = typeof window !== "undefined" && window.document ? window : null;
@@ -12,7 +12,7 @@ const createState = (params) => ({
   shopImageFiles: [],
   pendingFile: null,
   pendingPreviewUrl: null,
-  existingShoppingItems: params.existingShoppingItems || []
+  existingShoppingItems: params.existingShoppingItems || [],
 });
 
 const safeNormalize = (normalizeFn, url) => (typeof normalizeFn === "function" ? normalizeFn(url) : url);
@@ -171,6 +171,14 @@ const getInputFiles = (state) => {
   return files ? Array.from(files) : [];
 };
 
+const choosePendingFile = (state, inputFiles, storedFiles) => {
+  if (state.pendingFile) return state.pendingFile;
+  const newSelection = inputFiles.find((file) => !storedFiles.includes(file));
+  if (newSelection) return newSelection;
+  if (storedFiles.length === 0 || inputFiles.length > storedFiles.length) return inputFiles[0];
+  return null;
+};
+
 const parseFiles = (state) => {
   const inputFiles = getInputFiles(state);
   const storedFiles = state.shopImageFiles.filter(Boolean);
@@ -178,17 +186,9 @@ const parseFiles = (state) => {
     clearPendingFile(state);
     return [];
   }
-  if (state.pendingFile) return [state.pendingFile];
-  const newSelection = inputFiles.find((file) => !storedFiles.includes(file));
-  if (newSelection) {
-    state.pendingFile = newSelection;
-    return [newSelection];
-  }
-  if (storedFiles.length === 0 || inputFiles.length > storedFiles.length) {
-    state.pendingFile = inputFiles[0];
-    return inputFiles;
-  }
-  return [];
+  const picked = choosePendingFile(state, inputFiles, storedFiles);
+  if (picked) state.pendingFile = picked;
+  return state.pendingFile ? [state.pendingFile] : [];
 };
 
 const hasMissingFields = (state, name, rawUrl, files) => {
@@ -212,9 +212,13 @@ const hasMissingFields = (state, name, rawUrl, files) => {
 const focusFirstMissing = (state, name, rawUrl, files) => {
   if (!name) {
     state.itemInput.focus();
-  } else if (!rawUrl) {
+    return;
+  }
+  if (!rawUrl) {
     state.linkInput.focus();
-  } else if (!files.length && state.shopImageInput) {
+    return;
+  }
+  if (!files.length && state.shopImageInput) {
     state.shopImageInput.focus();
   }
 };
@@ -277,7 +281,7 @@ const normalizeExistingItems = (existing = []) =>
   existing.map((item) => ({
     name: (item.name || "").trim(),
     rawUrl: (item.url || "").trim(),
-    previewUrl: item.image_url || null
+    previewUrl: item.image_url || null,
   }));
 
 const bootstrapExisting = (state) => {
@@ -333,7 +337,7 @@ const createShoppingManager = (params) => {
     bootstrapExisting: () => bootstrapExisting(state),
     renderList: () => renderList(state),
     syncShoppingField: () => setShoppingField(state),
-    syncShopImagesInput: () => syncShopImagesInput(state)
+    syncShopImagesInput: () => syncShopImagesInput(state),
   };
 };
 
@@ -347,4 +351,4 @@ if (hasModuleExports) {
 if (globalWindow) {
   globalWindow.createRecipeShopping = api;
 }
-})();
+}

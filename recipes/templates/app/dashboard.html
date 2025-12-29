@@ -170,7 +170,12 @@
 
       <div class="tab-pane fade" id="following" role="tabpanel" aria-labelledby="following-tab">
         {% if following_posts %}
-          {% include "partials/feed/feed_masonry_grid.html" with posts=following_posts %}
+          {% include "partials/feed/feed_masonry_grid.html" with posts=following_posts grid_id="following-grid" %}
+          <div id="following-loading" class="text-center py-3 d-none">
+            <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+            Loading more recipes…
+          </div>
+          <div id="following-sentinel" aria-hidden="true"></div>
         {% else %}
           <div class="text-center py-5 dashboard-empty-state">
             Follow some cullinarians to get started!
@@ -185,8 +190,10 @@
   </div>
 </main>
 
+<script src="{% static 'js/infinite_list.js' %}" defer></script>
 {% include "partials/dashboard/discover_infinite_scroll.html" %}
 {% include "partials/dashboard/for_you_infinite_scroll.html" %}
+{% include "partials/dashboard/following_infinite_scroll.html" %}
 {% include "partials/dashboard/shopping_infinite_scroll.html" %}
 <script src="{% static 'js/dashboard_scroll.js' %}" defer></script>
 

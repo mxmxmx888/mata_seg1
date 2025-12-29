@@ -7,7 +7,7 @@
 .edit-collection-modal {
   background: var(--surface);
   color: var(--text-primary);
-  border-radius: 1.6rem;
+  border-radius: var(--radius-surface);
   border: 1px solid var(--border-subtle);
   box-shadow: 0 22px 70px rgba(0, 0, 0, 0.18);
   --save-field-bg: var(--surface);
@@ -96,7 +96,7 @@
   margin-bottom: 0.9rem;
   padding: 0.75rem 1.1rem 0.7rem;
   background-color: var(--save-field-bg);
-  border-radius: 18px;
+  border-radius: var(--radius-surface);
   border: 1px solid var(--save-field-border);
 }
 
@@ -123,7 +123,7 @@
 }
 
 .edit-collection-modal .edit-collection-done-btn {
-  border-radius: 0.9rem;
+  border-radius: var(--radius-surface);
   padding: 0.3rem 1.2rem;
   font-size: 0.9rem;
 }

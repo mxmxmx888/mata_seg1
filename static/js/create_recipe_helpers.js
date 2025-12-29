@@ -1,4 +1,4 @@
-(() => {
+{
 const hasModuleExports = typeof module !== "undefined" && module.exports;
 const globalWindow = typeof window !== "undefined" && window.document ? window : null;
 
@@ -19,10 +19,7 @@ const shopping = loadModule("./create_recipe_shopping", "createRecipeShopping");
 
 const noop = () => {};
 
-const normalizeUrl = (url) => {
-  if (!url) return "";
-  return /^https?:\/\//i.test(url) ? url : "https://" + url;
-};
+const normalizeUrl = (url) => (!url ? "" : /^https?:\/\//i.test(url) ? url : "https://" + url);
 
 const normalizeToFileList = (files) => {
   if (!(files instanceof FileList) && typeof DataTransfer !== "undefined") {
@@ -60,7 +57,7 @@ const setInputFiles = (input, files) => {
   try {
     Object.defineProperty(input, "files", {
       configurable: true,
-      get: () => normalized
+      get: () => normalized,
     });
   } catch (err) {
     /* ignore */
@@ -93,79 +90,81 @@ const serializeFile = (win, file) =>
         name: file.name,
         type: file.type,
         lastModified: file.lastModified,
-        data: reader.result
+        data: reader.result,
       });
     reader.onerror = () => resolve(null);
     reader.readAsDataURL(file);
   });
 
+const clearStorageKey = (win, storageKey) => {
+  try {
+    win.sessionStorage.removeItem(storageKey);
+  } catch (err) {
+    /* ignore */
+  }
+};
+
+const writeStorage = (win, storageKey, payload) => {
+  try {
+    win.sessionStorage.setItem(storageKey, JSON.stringify(payload));
+  } catch (err) {
+    /* ignore */
+  }
+};
+
 const persistFiles = (win, input, storageKey) => {
-  if (!win || !input || !storageKey) return;
+  if (!win || !input || !storageKey) return Promise.resolve();
   const files = getFiles(input);
   if (!files || !files.length) {
-    try {
-      win.sessionStorage.removeItem(storageKey);
-    } catch (err) {
-      /* ignore */
-    }
-    return;
+    clearStorageKey(win, storageKey);
+    return Promise.resolve();
   }
-  const entries = Array.from(files)
-    .slice(0, 10)
-    .map((file) => serializeFile(win, file));
-  Promise.all(entries).then((results) => {
+  const limited = Array.from(files).slice(0, 10);
+  writeStorage(win, storageKey, limited.map((file) => ({ name: file.name, type: file.type, lastModified: file.lastModified, data: null })));
+  return Promise.all(limited.map((file) => serializeFile(win, file))).then((results) => {
     const cleaned = results.filter(Boolean);
-    if (!cleaned.length) {
-      try {
-        win.sessionStorage.removeItem(storageKey);
-      } catch (err) {
-        /* ignore */
-      }
-      return;
-    }
-    try {
-      win.sessionStorage.setItem(storageKey, JSON.stringify(cleaned));
-    } catch (err) {
-      /* ignore */
-    }
+    if (!cleaned.length) return clearStorageKey(win, storageKey);
+    writeStorage(win, storageKey, cleaned);
   });
+};
+
+const fetchStoredEntries = (win, storageKey) => {
+  try {
+    const parsed = JSON.parse(win.sessionStorage.getItem(storageKey) || "[]");
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (err) {
+    return [];
+  }
+};
+
+const makeRestoredFile = async (win, item) => {
+  if (!item || !item.data) return null;
+  try {
+    const response = await win.fetch(item.data);
+    const blob = await response.blob();
+    return new win.File([blob], item.name || "upload", {
+      type: item.type || blob.type || "application/octet-stream",
+      lastModified: item.lastModified || Date.now(),
+    });
+  } catch (err) {
+    return null;
+  }
 };
 
 const restoreFiles = async (win, input, storageKey, onAfterRestore) => {
   if (!win || !input || !storageKey) return;
-  let stored = [];
-  try {
-    stored = JSON.parse(win.sessionStorage.getItem(storageKey) || "[]");
-  } catch (err) {
-    return;
-  }
-  if (!Array.isArray(stored) || !stored.length) return;
+  const stored = fetchStoredEntries(win, storageKey);
+  if (!stored.length) return;
   const canUseDataTransfer = typeof win.DataTransfer !== "undefined";
   const dataTransfer = canUseDataTransfer ? new win.DataTransfer() : null;
-  const fallbackFiles = [];
-  for (const item of stored) {
-    if (!item || !item.data) continue;
-    try {
-      const response = await win.fetch(item.data);
-      const blob = await response.blob();
-      const file = new win.File([blob], item.name || "upload", {
-        type: item.type || blob.type || "application/octet-stream",
-        lastModified: item.lastModified || Date.now()
-      });
-      if (dataTransfer) {
-        dataTransfer.items.add(file);
-      } else {
-        fallbackFiles.push(file);
-      }
-    } catch (err) {
-      /* ignore */
-    }
+  const results = await Promise.all(stored.map((item) => makeRestoredFile(win, item)));
+  const files = results.filter(Boolean);
+  if (!files.length) return;
+  if (dataTransfer) {
+    files.forEach((file) => dataTransfer.items.add(file));
   }
-  const restored = dataTransfer ? dataTransfer.files : fallbackFiles;
-  if (restored && restored.length) {
-    setInputFiles(input, restored);
-    if (typeof onAfterRestore === "function") onAfterRestore();
-  }
+  setInputFiles(input, dataTransfer ? dataTransfer.files : files);
+  if (typeof onAfterRestore === "function") onAfterRestore();
 };
 
 const renderFieldError = (doc, field) => {
@@ -183,39 +182,48 @@ const renderFieldError = (doc, field) => {
   }
 };
 
+const fieldMissing = (field, getFilesSafe) => {
+  const candidateFiles = field.type === "file" ? getFilesSafe(field) : null;
+  const missingText = !(field.value || "").trim();
+  const missingValidity = field.validity ? field.validity.valueMissing : missingText;
+  return missingValidity && !(candidateFiles && candidateFiles.length);
+};
+
+const removeFieldErrors = (field) => {
+  const container = field.closest(".mb-3") || field.parentElement;
+  if (!container) return;
+  container.querySelectorAll(".client-required-error").forEach((msg) => msg.remove());
+};
+
+const renderRequiredFieldErrors = (doc, formEl, fields, getFilesSafe) => {
+  if (!formEl) return false;
+  let hasClientErrors = false;
+  formEl.querySelectorAll(".client-required-error").forEach((msg) => msg.remove());
+  fields.forEach((field) => {
+    if (fieldMissing(field, getFilesSafe)) {
+      hasClientErrors = true;
+      renderFieldError(doc, field);
+    }
+  });
+  return hasClientErrors;
+};
+
+const bindRequiredListeners = (fields) => {
+  fields.forEach((field) => {
+    field.addEventListener("input", () => removeFieldErrors(field));
+    field.addEventListener("change", () => removeFieldErrors(field));
+  });
+};
+
 const createRequiredFieldValidator =
   validation.createRequiredFieldValidator ||
   ((doc, formEl, requiredFields, getFilesFn) => {
     const getFilesSafe = typeof getFilesFn === "function" ? getFilesFn : () => null;
     const fields = requiredFields || [];
-    const removeErrors = (field) => {
-      const container = field.closest(".mb-3") || field.parentElement;
-      if (!container) return;
-      container.querySelectorAll(".client-required-error").forEach((msg) => msg.remove());
+    return {
+      renderRequiredFieldErrors: () => renderRequiredFieldErrors(doc, formEl, fields, getFilesSafe),
+      bindRequiredListeners: () => bindRequiredListeners(fields),
     };
-    const renderRequiredFieldErrors = () => {
-      if (!formEl) return false;
-      let hasClientErrors = false;
-      formEl.querySelectorAll(".client-required-error").forEach((msg) => msg.remove());
-      fields.forEach((field) => {
-        const candidateFiles = field.type === "file" ? getFilesSafe(field) : null;
-        const missingText = !(field.value || "").trim();
-        const missingValidity = field.validity ? field.validity.valueMissing : missingText;
-        const isMissing = missingValidity && !(candidateFiles && candidateFiles.length);
-        if (isMissing) {
-          hasClientErrors = true;
-          renderFieldError(doc, field);
-        }
-      });
-      return hasClientErrors;
-    };
-    const bindRequiredListeners = () => {
-      fields.forEach((field) => {
-        field.addEventListener("input", () => removeErrors(field));
-        field.addEventListener("change", () => removeErrors(field));
-      });
-    };
-    return { renderRequiredFieldErrors, bindRequiredListeners };
   });
 
 const createImageManager =
@@ -227,7 +235,7 @@ const createImageManager =
     removeImageAt: noop,
     syncImageFiles: noop,
     restoreFromStorage: noop,
-    persistSelection: noop
+    persistSelection: noop,
   }));
 
 const createShoppingManager =
@@ -238,7 +246,7 @@ const createShoppingManager =
     bootstrapExisting: noop,
     renderList: noop,
     syncShoppingField: noop,
-    syncShopImagesInput: noop
+    syncShopImagesInput: noop,
   }));
 
 const api = {
@@ -250,7 +258,7 @@ const api = {
   clearStoredFiles,
   createRequiredFieldValidator,
   createImageManager,
-  createShoppingManager
+  createShoppingManager,
 };
 
 if (hasModuleExports) {
@@ -261,4 +269,4 @@ if (hasModuleExports) {
 if (globalWindow) {
   globalWindow.createRecipeHelpers = api;
 }
-})();
+}

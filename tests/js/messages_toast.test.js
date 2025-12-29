@@ -3,8 +3,10 @@ const modulePath = "../../static/js/messages_toast";
 function loadModule() {
   jest.resetModules();
   delete global.__messagesToastInitialized;
+  delete global.__messagesToastLifecycleBound;
   const mod = require(modulePath);
   delete global.__messagesToastInitialized;
+  delete global.__messagesToastLifecycleBound;
   return mod;
 }
 
@@ -50,6 +52,18 @@ describe("messages_toast", () => {
     const toast = document.querySelector(".toast");
     expect(toast.classList.contains("show")).toBe(true);
     jest.runAllTimers();
+    expect(document.querySelector(".toast")).toBeNull();
+  });
+
+  test("cleans up toasts on pagehide so back nav ignores them", () => {
+    jest.useFakeTimers();
+    document.body.innerHTML = `<div class="toast"></div>`;
+
+    const { initMessagesToast } = loadModule();
+    initMessagesToast(window);
+
+    expect(document.querySelector(".toast")).not.toBeNull();
+    window.dispatchEvent(new Event("pagehide"));
     expect(document.querySelector(".toast")).toBeNull();
   });
 

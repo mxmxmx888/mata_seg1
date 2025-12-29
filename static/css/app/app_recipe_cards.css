@@ -10,7 +10,7 @@
 
 .my-recipe-card {
   border-radius: 18px;
-  border: 1px solid var(--border-subtle);
+  border: none;
   background-color: var(--surface);
   padding: 1.25rem 1.35rem;
 }
@@ -104,7 +104,7 @@
   -webkit-column-break-inside: avoid;
   margin-bottom: 1.8rem;
   border-radius: 18px;
-  border: 1px solid var(--border-subtle);
+  border: none;
   background-color: var(--surface);
   padding: 1.1rem 1.2rem 1rem;
   display: flex;
@@ -191,7 +191,6 @@ body[data-theme="light"] .my-recipe-description {
 
 body[data-theme="light"] .my-recipe-card {
   background-color: var(--bg-2);
-  border-color: var(--border-subtle);
   color: var(--text-primary);
 }
 

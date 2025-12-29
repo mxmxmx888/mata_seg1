@@ -184,6 +184,19 @@ class DashboardSearchViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(self.client.session["for_you_seed"], 0.5)
 
+    def test_dashboard_following_ajax_returns_json(self):
+        author = make_user(username="followed")
+        Follower.objects.create(follower=self.user, author=author)
+        make_recipe_post(author=author, title="Followed post")
+        self.client.login(username=self.user.username, password="Password123")
+
+        response = self.client.get(self.url, {"following_ajax": "1"})
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertIn("html", payload)
+        self.assertIn("has_more", payload)
+
     def test_dashboard_user_search_scope(self):
         target = make_user(username="alice")
         self.client.login(username=self.user.username, password="Password123")

@@ -2,10 +2,13 @@ from django.shortcuts import render, redirect
 from django.urls import reverse, reverse_lazy
 from django.contrib.auth import login
 from django.views import View
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import never_cache
 from django.contrib import messages
 from recipes.forms.log_in_form import LogInForm
 from recipes.views.decorators import LoginProhibitedMixin
 
+@method_decorator(never_cache, name="dispatch")
 class LogInView(LoginProhibitedMixin, View):
     """Display and process the login form for unauthenticated users."""
     

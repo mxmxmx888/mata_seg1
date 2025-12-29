@@ -83,6 +83,74 @@ describe("post_layout interactions", () => {
     expect(window.location.assign).toHaveBeenLastCalledWith("http://localhost/from");
   });
 
+  test("back button ignores comment action referrers and keeps stored entry", () => {
+    Object.defineProperty(document, "referrer", { value: "http://localhost/recipes/12/comment/", configurable: true });
+    window.sessionStorage.setItem("post-entry-12", "http://localhost/from-feed");
+    document.body.innerHTML = `
+      <div id="post-primary"></div>
+      <div class="post-view-similar"></div>
+      <a class="post-back-button" data-post-id="12" data-fallback="/fb"></a>
+    `;
+    const { initPostLayout } = loadModule();
+    initPostLayout(window);
+    const btn = document.querySelector(".post-back-button");
+    btn.dispatchEvent(new Event("click", { bubbles: true, cancelable: true }));
+    expect(window.location.assign).toHaveBeenLastCalledWith("http://localhost/from-feed");
+  });
+
+  test("back button ignores comment referrer without stored entry and falls back", () => {
+    Object.defineProperty(document, "referrer", { value: "http://localhost/recipes/34/comment/", configurable: true });
+    document.body.innerHTML = `
+      <div id="post-primary"></div>
+      <div class="post-view-similar"></div>
+      <a class="post-back-button" data-post-id="34" data-fallback="/fb"></a>
+    `;
+    const backSpy = jest.spyOn(window.history, "back");
+    const { initPostLayout } = loadModule();
+    initPostLayout(window);
+    const btn = document.querySelector(".post-back-button");
+    btn.dispatchEvent(new Event("click", { bubbles: true, cancelable: true }));
+    expect(backSpy).not.toHaveBeenCalled();
+    expect(window.location.assign).toHaveBeenLastCalledWith("/fb");
+    backSpy.mockRestore();
+  });
+
+  test("back button falls back when stored entry matches current page", () => {
+    window.sessionStorage.setItem("post-entry-12", "http://localhost/post/1");
+    document.body.innerHTML = `
+      <div id="post-primary"></div>
+      <div class="post-view-similar"></div>
+      <a class="post-back-button" data-post-id="12" data-fallback="/fb"></a>
+    `;
+    window.history.length = 3;
+    const backSpy = jest.spyOn(window.history, "back");
+    const { initPostLayout } = loadModule();
+    initPostLayout(window);
+    const btn = document.querySelector(".post-back-button");
+    btn.dispatchEvent(new Event("click", { bubbles: true, cancelable: true }));
+    expect(backSpy).not.toHaveBeenCalled();
+    expect(window.location.assign).toHaveBeenLastCalledWith("/fb");
+    backSpy.mockRestore();
+  });
+
+  test("back button prefers stored entry even when history available", () => {
+    Object.defineProperty(document, "referrer", { value: "http://localhost/from", configurable: true });
+    window.sessionStorage.setItem("post-entry-99", "http://localhost/feed");
+    document.body.innerHTML = `
+      <div id="post-primary"></div>
+      <div class="post-view-similar"></div>
+      <a class="post-back-button" data-post-id="99" data-entry="http://localhost/from" data-fallback="/fb"></a>
+    `;
+    window.history.length = 4;
+    const backSpy = jest.spyOn(window.history, "back").mockImplementation(() => {});
+    const { initPostLayout } = loadModule();
+    initPostLayout(window);
+    document.querySelector(".post-back-button").dispatchEvent(new Event("click", { bubbles: true, cancelable: true }));
+    expect(backSpy).not.toHaveBeenCalled();
+    expect(window.location.assign).toHaveBeenLastCalledWith("http://localhost/feed");
+    backSpy.mockRestore();
+  });
+
   test("parseUrl returns null for invalid ref and backButton absent", () => {
     Object.defineProperty(document, "referrer", { value: "::::", configurable: true });
     document.body.innerHTML = `

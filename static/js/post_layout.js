@@ -171,6 +171,12 @@ const parseUrl = (w, value) => {
   }
 };
 
+const isActionReferrer = (w, value) => {
+  const parsed = parseUrl(w, value);
+  if (!parsed) return false;
+  return /\/comment\/?$/i.test(parsed.pathname);
+};
+
 const cameFromCreate = (w, doc) => {
   const parsed = parseUrl(w, doc.referrer);
   return parsed ? /\/recipes\/create\/?$/i.test(parsed.pathname) : false;
@@ -204,18 +210,26 @@ const getStoredEntry = (w, postId) => {
 const resolveBackTarget = (w, doc, backButton, preventReturn) => {
   if (!backButton) return { target: null, referrer: null, fallback: "/" };
   const fallbackHref = backButton.dataset.fallback || backButton.getAttribute("href") || "/";
+  const currentHref = w.location.href;
   const postId = backButton.dataset.postId || "";
   const entryCandidate = backButton.dataset.entry || doc.referrer || "";
-  if (!preventReturn && entryCandidate) {
+  const storedEntryRaw = getStoredEntry(w, postId);
+  const storedEntry = storedEntryRaw && storedEntryRaw !== currentHref ? storedEntryRaw : "";
+  const useStoredEntry = isActionReferrer(w, entryCandidate);
+  if (!preventReturn && entryCandidate && !useStoredEntry && !storedEntry) {
     storeEntry(w, postId, entryCandidate);
   }
-  const storedEntry = getStoredEntry(w, postId);
-  const refValue = preventReturn ? storedEntry || "" : entryCandidate;
+  const refValue = preventReturn
+    ? storedEntry || ""
+    : useStoredEntry
+      ? storedEntry || ""
+      : entryCandidate || storedEntry || "";
   const parsedRef = parseUrl(w, refValue);
-  const isSameOrigin = parsedRef && parsedRef.origin === w.location.origin && parsedRef.href !== w.location.href;
-  const target = isSameOrigin ? parsedRef.href : fallbackHref;
+  const isSameOrigin = parsedRef && parsedRef.origin === w.location.origin && parsedRef.href !== currentHref;
+  const targetCandidate = isSameOrigin ? parsedRef.href : fallbackHref;
+  const target = targetCandidate && targetCandidate !== currentHref ? targetCandidate : fallbackHref;
   backButton.setAttribute("href", target);
-  return { target, fallback: fallbackHref, storedEntry };
+  return { target, fallback: fallbackHref, storedEntry, useStoredEntry };
 };
 
 const applyPreventReturnGuards = (w, preventReturn, backButton) => {
@@ -236,20 +250,52 @@ const applyPreventReturnGuards = (w, preventReturn, backButton) => {
   }
 };
 
+const updateBackHintVisibility = (w, doc) => {
+  const backButton = doc.querySelector(".post-back-button");
+  const gallery = doc.querySelector(".recipe-gallery");
+  if (!backButton || !gallery || !backButton.getBoundingClientRect || !gallery.getBoundingClientRect) return;
+  const backRect = backButton.getBoundingClientRect();
+  const galleryRect = gallery.getBoundingClientRect();
+  const verticalOverlap = backRect.bottom > galleryRect.top && backRect.top < galleryRect.bottom;
+  const leftOfGallery = backRect.right <= galleryRect.left - 8;
+  const shouldHide = !(verticalOverlap && leftOfGallery);
+  backButton.classList.toggle("post-back-button--hide-hint", shouldHide);
+};
+
+const setupBackHintVisibility = (w, doc) => {
+  const run = () => updateBackHintVisibility(w, doc);
+  const requestRun = () => {
+    if (typeof w.requestAnimationFrame === "function") {
+      w.requestAnimationFrame(run);
+    } else {
+      run();
+    }
+  };
+  run();
+  w.addEventListener("resize", requestRun);
+  w.addEventListener("load", requestRun, { once: true });
+  const gallery = doc.querySelector(".recipe-gallery");
+  if (gallery && typeof w.ResizeObserver === "function") {
+    const ro = new w.ResizeObserver(() => requestRun());
+    ro.observe(gallery);
+  }
+};
+
 const triggerBack = (w, doc, backButton, preventReturn) => {
   const backState = resolveBackTarget(w, doc, backButton, preventReturn);
   const fallbackHref = backState.fallback || backState.target || "/";
-  const destination = backState.storedEntry || backState.target || fallbackHref;
-  if (preventReturn) {
+  const currentHref = w.location.href;
+  const destination = [backState.storedEntry, backState.target, fallbackHref].find(
+    (href) => href && href !== currentHref
+  ) || fallbackHref;
+  const shouldBypassHistory =
+    preventReturn || backState.useStoredEntry || !!backState.storedEntry || destination === fallbackHref;
+  const hasHistory = w.history && w.history.length > 1 && !shouldBypassHistory;
+  if (shouldBypassHistory || !hasHistory) {
     w.location.assign(destination);
     return;
   }
-  const hasHistory = w.history && w.history.length > 1;
-  if (hasHistory) {
-    w.history.back();
-    return;
-  }
-  w.location.assign(destination);
+  w.history.back();
 };
 
 const setupBackNavigation = (w, doc) => {
@@ -345,6 +391,7 @@ const initPostLayout = (win) => {
   setupSimilarGrid(w, doc);
   setupScrollFade(w, doc.getElementById("post-primary"), doc.querySelector(".post-view-similar"));
   setupBackNavigation(w, doc);
+  setupBackHintVisibility(w, doc);
   wireLikeForm(w, doc);
 };
 

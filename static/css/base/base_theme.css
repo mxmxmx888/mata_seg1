@@ -16,6 +16,7 @@
   --comment-text-color: #374151;
   --comment-meta-color: #6b7280;
   --placeholder-muted: color-mix(in srgb, var(--text-muted) 20%, transparent 80%);
+  --radius-surface: clamp(0.75rem, 2vw, 1rem);
 }
 
 :root[data-theme="dark"],

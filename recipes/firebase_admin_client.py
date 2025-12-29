@@ -52,11 +52,16 @@ def _init_app(cred):
     try:
         return firebase_admin.initialize_app(cred)
     except Exception as e:
-        if _should_log():
-            message = f"Failed to initialize Firebase: {e}"
-            print(message)
-            logger.error(message)
+        _log_init_failure(e)
         return None
+
+
+def _log_init_failure(error):
+    if not _should_log():
+        return
+    message = f"Failed to initialize Firebase: {error}"
+    print(message)
+    logger.error(message)
 
 _app = None
 
@@ -107,19 +112,29 @@ def _fetch_user(email):
     except auth.UserNotFoundError:
         return None, True
     except Exception as e:
-        if _should_log():
-            print(f"Firebase connection error: {e}")
-            logger.error("Firebase connection error: %s", e)
+        _log_connection_error(e)
         return None, False
 
 def _create_firebase_user(email: str, display_name: str | None):
     try:
         return auth.create_user(email=email, display_name=display_name)
     except Exception as e:
-        if _should_log():
-            print(f"Error creating Firebase user: {e}")
-            logger.error("Error creating Firebase user: %s", e)
+        _log_user_creation_error(e)
         return None
+
+
+def _log_connection_error(error):
+    if not _should_log():
+        return
+    print(f"Firebase connection error: {error}")
+    logger.error("Firebase connection error: %s", error)
+
+
+def _log_user_creation_error(error):
+    if not _should_log():
+        return
+    print(f"Error creating Firebase user: {error}")
+    logger.error("Error creating Firebase user: %s", error)
 
 def ensure_firebase_user(email: str, display_name: str | None = None):
     """

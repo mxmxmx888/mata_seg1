@@ -9,18 +9,24 @@
     <h1 class="collection-title mb-1">Collections</h1>
   </header>
   <section class="profile-collections-grid">
-    <div class="profile-collections" id="collections-list">
-      {% include "partials/collections/collection_cards.html" with collections=collections %}
-      <div
-        id="collections-sentinel"
-        class="infinite-sentinel"
-        data-next-page="{{ collections_next_page }}"
-        data-has-more="{{ collections_has_more|yesno:'true,false' }}"
-        data-endpoint="{% url 'collections' %}"
-      ></div>
+    <div class="profile-collections {% if not has_collections %}profile-collections--empty{% endif %}" id="collections-list">
+      {% if has_collections %}
+        {% include "partials/collections/collection_cards.html" with collections=collections %}
+        <div
+          id="collections-sentinel"
+          class="infinite-sentinel"
+          data-next-page="{{ collections_next_page }}"
+          data-has-more="{{ collections_has_more|yesno:'true,false' }}"
+          data-endpoint="{% url 'collections' %}"
+        ></div>
+      {% else %}
+        <div class="collections-empty-state">
+          Save a recipe to a collection and see it here!
+        </div>
+      {% endif %}
     </div>
-	  </section>
-	</main>
+  </section>
+</main>
 <script>
   (function() {
     const sentinel = document.getElementById("collections-sentinel");

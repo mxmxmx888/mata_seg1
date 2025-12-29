@@ -1,174 +1,189 @@
-(function (global) {
-  /* istanbul ignore next */
-  const helpers = (() => {
-    if (typeof module !== "undefined" && module.exports) {
-      return require("./create_recipe_helpers");
-    }
-    return global && global.createRecipeHelpers ? global.createRecipeHelpers : {};
-  })();
-  const normalizeUrl =
-    helpers.normalizeUrl ||
-    /* istanbul ignore next */ ((url) => (/^https?:\/\//i.test(url || "") ? url : url ? "https://" + url : ""));
-  const setInputFiles = helpers.setInputFiles || /* istanbul ignore next */ (() => {});
-  const getFiles = helpers.getFiles || /* istanbul ignore next */ (() => null);
-  const persistFiles = helpers.persistFiles || /* istanbul ignore next */ (() => {});
-  const restoreFiles = helpers.restoreFiles || /* istanbul ignore next */ (() => Promise.resolve());
-  const clearStoredFiles = helpers.clearStoredFiles || /* istanbul ignore next */ (() => {});
-  const createRequiredFieldValidator =
-    helpers.createRequiredFieldValidator ||
-    /* istanbul ignore next */ (() => ({
-      renderRequiredFieldErrors: () => false,
-      bindRequiredListeners: () => {}
-    }));
-  const createImageManager =
-    helpers.createImageManager ||
-    /* istanbul ignore next */ (() => ({
-      bind: () => {},
-      restoreFromStorage: () => {},
-      persistSelection: () => {},
-      renderImagesList: () => {}
-    }));
-  const createShoppingManager =
-    helpers.createShoppingManager ||
-    /* istanbul ignore next */ (() => ({
-      bind: () => {},
-      bootstrapExisting: () => {},
-      renderList: () => {},
-      syncShoppingField: () => {},
-      syncShopImagesInput: () => {}
-    }));
+{
+const hasModuleExports = typeof module !== "undefined" && module.exports;
+const globalWindow = typeof window !== "undefined" ? window : null;
 
-  function cleanIngredientsField(ingredientsField) {
-    const manual = (ingredientsField.value || "").trim();
-    const manualLines = manual ? manual.split(/\r?\n/).map((l) => l.trim()).filter(Boolean) : [];
-    ingredientsField.value = manualLines.join("\n");
-  }
+const helpers = (() => {
+  if (hasModuleExports) return require("./create_recipe_helpers");
+  return globalWindow && globalWindow.createRecipeHelpers ? globalWindow.createRecipeHelpers : {};
+})();
 
-  function initCreateRecipe(win) {
-    const w = win || (typeof window !== "undefined" ? window : undefined);
-    /* istanbul ignore next */
-    if (!w || !w.document) return;
-    const doc = w.document;
+const normalizeUrl = helpers.normalizeUrl || ((url) => (/^https?:\/\//i.test(url || "") ? url : url ? "https://" + url : ""));
+const setInputFiles = helpers.setInputFiles || (() => {});
+const getFiles = helpers.getFiles || (() => null);
+const noop = () => {};
+const noopPromise = () => Promise.resolve();
+const persistFiles = helpers.persistFiles || noopPromise;
+const restoreFiles = helpers.restoreFiles || noopPromise;
+const clearStoredFiles = helpers.clearStoredFiles || noop;
+const createRequiredFieldValidator = helpers.createRequiredFieldValidator || (() => ({
+  renderRequiredFieldErrors: () => false,
+  bindRequiredListeners: noop,
+}));
+const createImageManager = helpers.createImageManager || (() => ({
+  bind: noop,
+  restoreFromStorage: noop,
+  persistSelection: noop,
+  renderImagesList: noop,
+}));
+const createShoppingManager = helpers.createShoppingManager || (() => ({
+  bind: noop,
+  bootstrapExisting: noop,
+  renderList: noop,
+  syncShoppingField: noop,
+  syncShopImagesInput: noop,
+}));
 
-    const formEl = doc.querySelector(".create-recipe-card form");
-    const imageInput = doc.getElementById("id_images");
-    const imageList = doc.getElementById("image-file-list");
-    const shopImageInput = doc.getElementById("id_shop_images");
-    const shopImageList = doc.getElementById("shop-image-file-list");
-    const shoppingField = doc.getElementById("id_shopping_links_text");
-    const ingredientsField = doc.getElementById("id_ingredients_text");
-    const itemInput = doc.getElementById("shop-item");
-    const linkInput = doc.getElementById("shop-link");
-    const addBtn = doc.getElementById("add-shop-link");
-    const listBox = doc.getElementById("shop-list");
-    const inlineJson = doc.getElementById("existing-shopping-items");
-    let existingShoppingItems = [];
-    if (inlineJson && inlineJson.textContent) {
-      try {
-        existingShoppingItems = JSON.parse(inlineJson.textContent);
-      } catch (err) {
-        existingShoppingItems = [];
-      }
-    } else {
-      const shoppingItemsData = listBox && listBox.dataset.shoppingItems ? listBox.dataset.shoppingItems : "[]";
-      try {
-        existingShoppingItems = JSON.parse(shoppingItemsData);
-      } catch (err) {
-        existingShoppingItems = [];
-      }
-    }
-    if (typeof existingShoppingItems === "string") {
-      try {
-        existingShoppingItems = JSON.parse(existingShoppingItems);
-      } catch (err) {
-        existingShoppingItems = [];
-      }
-    }
-    if (!Array.isArray(existingShoppingItems)) {
-      existingShoppingItems = [];
-    }
-    const isBound = formEl && formEl.dataset.formBound === "true";
-    const hasErrors = formEl && formEl.dataset.formHasErrors === "true";
-    const requiredFields = formEl ? Array.from(formEl.querySelectorAll("[required]")) : [];
-    const IMG_STORAGE_KEY = "create-recipe-images";
-
-    /* istanbul ignore next */
-    if (!formEl || !ingredientsField || !itemInput || !linkInput || !addBtn || !listBox || !shoppingField) return;
-
-    if (imageInput) {
-      imageInput.setAttribute("required", "required");
-      requiredFields.push(imageInput);
-    }
-
-    const validator = createRequiredFieldValidator(doc, formEl, requiredFields, getFiles);
-    const imageManager = createImageManager({
-      w,
-      doc,
-      imageInput,
-      imageList,
-      storageKey: IMG_STORAGE_KEY,
-      setInputFiles,
-      getFiles,
-      persistFiles,
-      restoreFiles
-    });
-    const shoppingManager = createShoppingManager({
-      w,
-      doc,
-      itemInput,
-      linkInput,
-      addBtn,
-      listBox,
-      shoppingField,
-      shopImageInput,
-      shopImageList,
-      normalizeUrl,
-      setInputFiles,
-      getFiles,
-      existingShoppingItems
-    });
-
-    validator.bindRequiredListeners();
-    shoppingManager.bind();
-    imageManager.bind();
-
-    if (!isBound) {
-      clearStoredFiles(w, IMG_STORAGE_KEY);
-    } else if (hasErrors) {
-      imageManager.restoreFromStorage();
-    }
-
-    shoppingManager.bootstrapExisting();
-    shoppingManager.renderList();
-
-    formEl.addEventListener("submit", (event) => {
-      const hasClientErrors = validator.renderRequiredFieldErrors();
-      if (hasClientErrors) {
-        event.preventDefault();
-        return;
-      }
-      cleanIngredientsField(ingredientsField);
-      shoppingManager.syncShoppingField();
-      shoppingManager.syncShopImagesInput();
-      imageManager.persistSelection();
-    });
-  }
-
-  if (typeof module !== "undefined" && module.exports) {
-    module.exports = {
-      initCreateRecipe,
-      normalizeUrl
-    };
-  }
-
-  /* istanbul ignore next */
-  if (global && global.document) {
-    const runInit = () => initCreateRecipe(global);
-    /* istanbul ignore next */
-    if (global.document.readyState === "loading") {
-      global.document.addEventListener("DOMContentLoaded", runInit, { once: true });
-    } else {
-      runInit();
+const readExistingShoppingItems = (listBox, inlineJson) => {
+  let existing = [];
+  const candidates = [
+    inlineJson && inlineJson.textContent,
+    listBox && listBox.dataset.shoppingItems,
+    "[]",
+  ];
+  for (const candidate of candidates) {
+    if (!candidate) continue;
+    try {
+      existing = JSON.parse(candidate);
+      break;
+    } catch (err) {
+      existing = [];
     }
   }
-})(typeof window !== "undefined" ? window : null);
+  if (typeof existing === "string") {
+    try {
+      existing = JSON.parse(existing);
+    } catch (err) {
+      existing = [];
+    }
+  }
+  return Array.isArray(existing) ? existing : [];
+};
+
+const cleanIngredientsField = (ingredientsField) => {
+  const manual = (ingredientsField.value || "").trim();
+  const lines = manual ? manual.split(/\r?\n/).map((l) => l.trim()).filter(Boolean) : [];
+  ingredientsField.value = lines.join("\n");
+};
+
+const imageManagerFor = (ctx) =>
+  createImageManager({
+    w: ctx.w,
+    doc: ctx.doc,
+    imageInput: ctx.imageInput,
+    imageList: ctx.imageList,
+    storageKey: ctx.IMG_STORAGE_KEY,
+    setInputFiles,
+    getFiles,
+    persistFiles,
+    restoreFiles,
+  });
+
+const shoppingManagerFor = (ctx) =>
+  createShoppingManager({
+    w: ctx.w,
+    doc: ctx.doc,
+    itemInput: ctx.itemInput,
+    linkInput: ctx.linkInput,
+    addBtn: ctx.addBtn,
+    listBox: ctx.listBox,
+    shoppingField: ctx.shoppingField,
+    shopImageInput: ctx.shopImageInput,
+    shopImageList: ctx.shopImageList,
+    normalizeUrl,
+    setInputFiles,
+    getFiles,
+    existingShoppingItems: ctx.existingShoppingItems,
+  });
+
+const buildManagers = (ctx) => ({
+  validator: createRequiredFieldValidator(ctx.doc, ctx.formEl, ctx.requiredFields, getFiles),
+  imageManager: imageManagerFor(ctx),
+  shoppingManager: shoppingManagerFor(ctx),
+});
+
+const resolveRequiredElements = (doc) => {
+  const formEl = doc.querySelector(".create-recipe-card form");
+  const ids = ["id_ingredients_text", "shop-item", "shop-link", "add-shop-link", "shop-list", "id_shopping_links_text"];
+  const [ingredientsField, itemInput, linkInput, addBtn, listBox, shoppingField] = ids.map((id) => doc.getElementById(id));
+  if (!formEl || [ingredientsField, itemInput, linkInput, addBtn, listBox, shoppingField].includes(null)) return null;
+  return { formEl, ingredientsField, itemInput, linkInput, addBtn, listBox, shoppingField };
+};
+
+const gatherContext = (w) => {
+  if (!w || !w.document) return null;
+  const doc = w.document;
+  const requiredEls = resolveRequiredElements(doc);
+  if (!requiredEls) return null;
+  const inlineJson = doc.getElementById("existing-shopping-items");
+  const imageInput = doc.getElementById("id_images");
+  const requiredFields = Array.from(requiredEls.formEl.querySelectorAll("[required]"));
+  if (imageInput) {
+    imageInput.setAttribute("required", "required");
+    requiredFields.push(imageInput);
+  }
+  const extras = {
+    imageInput,
+    imageList: doc.getElementById("image-file-list"),
+    shopImageInput: doc.getElementById("id_shop_images"),
+    shopImageList: doc.getElementById("shop-image-file-list"),
+    existingShoppingItems: readExistingShoppingItems(requiredEls.listBox, inlineJson),
+    requiredFields,
+    IMG_STORAGE_KEY: "create-recipe-images",
+    isBound: requiredEls.formEl.dataset.formBound === "true",
+    hasErrors: requiredEls.formEl.dataset.formHasErrors === "true",
+  };
+  return { w, doc, ...requiredEls, ...extras };
+};
+
+const bindManagers = (ctx, validator, shoppingManager, imageManager) => {
+  validator.bindRequiredListeners();
+  shoppingManager.bind();
+  imageManager.bind();
+  if (!ctx.isBound) {
+    clearStoredFiles(ctx.w, ctx.IMG_STORAGE_KEY);
+  } else if (ctx.hasErrors) {
+    imageManager.restoreFromStorage();
+  }
+  shoppingManager.bootstrapExisting();
+  shoppingManager.renderList();
+};
+
+const handleSubmit = (ctx, validator, shoppingManager, imageManager) => {
+  ctx.formEl.addEventListener("submit", (event) => {
+    if (validator.renderRequiredFieldErrors()) {
+      event.preventDefault();
+      return;
+    }
+    cleanIngredientsField(ctx.ingredientsField);
+    shoppingManager.syncShoppingField();
+    shoppingManager.syncShopImagesInput();
+    imageManager.persistSelection();
+  });
+};
+
+const initCreateRecipe = (win) => {
+  const ctx = gatherContext(win || globalWindow);
+  if (!ctx) return;
+  const managers = buildManagers(ctx);
+  bindManagers(ctx, managers.validator, managers.shoppingManager, managers.imageManager);
+  handleSubmit(ctx, managers.validator, managers.shoppingManager, managers.imageManager);
+};
+
+const autoInit = () => {
+  const w = globalWindow;
+  if (!w || !w.document) return;
+  const runInit = () => initCreateRecipe(w);
+  if (w.document.readyState === "loading") {
+    w.document.addEventListener("DOMContentLoaded", runInit, { once: true });
+  } else {
+    runInit();
+  }
+};
+
+if (hasModuleExports) {
+  module.exports = { initCreateRecipe, normalizeUrl };
+}
+
+/* istanbul ignore next */
+autoInit();
+}

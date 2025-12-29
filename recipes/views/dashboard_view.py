@@ -68,9 +68,18 @@ def _apply_ingredient_filter(qs, ingredient_q):
     return qs
 
 
+def _coerce_to_int(value):
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
+
+
 def _apply_time_filters(qs, min_prep, max_prep):
     """Filter posts by total prep+cook time bounds."""
-    if not (min_prep or max_prep):
+    min_bound = _coerce_to_int(min_prep)
+    max_bound = _coerce_to_int(max_prep)
+    if min_bound is None and max_bound is None:
         return qs
 
     total_time_expr = ExpressionWrapper(
@@ -79,17 +88,11 @@ def _apply_time_filters(qs, min_prep, max_prep):
     )
     qs = qs.annotate(total_time_min=total_time_expr)
 
-    if min_prep:
-        try:
-            qs = qs.filter(total_time_min__gte=int(min_prep))
-        except (TypeError, ValueError):
-            pass
+    if min_bound is not None:
+        qs = qs.filter(total_time_min__gte=min_bound)
 
-    if max_prep:
-        try:
-            qs = qs.filter(total_time_min__lte=int(max_prep))
-        except (TypeError, ValueError):
-            pass
+    if max_bound is not None:
+        qs = qs.filter(total_time_min__lte=max_bound)
 
     return qs
 
@@ -149,6 +152,17 @@ def _for_you_ajax_response(request, seed, privacy):
     offset = _safe_offset(request.GET.get("for_you_offset"))
     seed = _ensure_for_you_seed(request, seed)
     posts = _get_for_you_posts(request.user, limit=limit, offset=offset, seed=seed, privacy=privacy)
+    html = render_to_string("partials/feed/feed_cards.html", {"posts": posts, "request": request}, request=request)
+    return JsonResponse(
+        {"html": html, "has_more": len(posts) == limit, "count": len(posts)}
+    )
+
+
+def _following_ajax_response(request):
+    """Return the JSON payload for the 'following' infinite scroll."""
+    limit = 12
+    offset = _safe_offset(request.GET.get("following_offset"))
+    posts = _get_following_posts(request.user, limit=limit, offset=offset)
     html = render_to_string("partials/feed/feed_cards.html", {"posts": posts, "request": request}, request=request)
     return JsonResponse(
         {"html": html, "has_more": len(posts) == limit, "count": len(posts)}
@@ -335,6 +349,9 @@ def dashboard(request):
     params = parse_dashboard_params(request)
     privacy = privacy_service
     for_you_seed = get_for_you_seed(request, params["for_you_ajax"])
+
+    if params["following_ajax"]:
+        return _following_ajax_response(request)
 
     if params["for_you_ajax"]:
         return _for_you_ajax_response(request, for_you_seed, privacy)

@@ -43,11 +43,17 @@ def _gallery_images(images_qs):
     """Return URLs for gallery images beyond the first."""
     gallery = []
     for extra in images_qs[1:]:
-        try:
-            gallery.append(extra.image.url)
-        except ValueError:
-            continue
+        url = _safe_image_url(extra)
+        if url:
+            gallery.append(url)
     return gallery
+
+
+def _safe_image_url(image_obj):
+    try:
+        return image_obj.image.url
+    except ValueError:
+        return None
 
 
 def collection_thumb(cover_post, fallback_post):

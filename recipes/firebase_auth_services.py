@@ -85,14 +85,24 @@ def generate_password_reset_link(email: str):
         link = firebase_auth.generate_password_reset_link(email)
         return link
     except firebase_auth.UserNotFoundError:
-        if not is_test_run:
-            message = f"Firebase user not found for password reset: {email}"
-            print(message)
-            logger.info(message)
+        _log_missing_user(email, is_test_run)
         return None
     except Exception as e:
-        if not is_test_run:
-            message = f"Error generating Firebase password reset link: {e}"
-            print(message)
-            logger.warning(message)
+        _log_reset_error(e, is_test_run)
         return None
+
+
+def _log_missing_user(email, is_test_run):
+    if is_test_run:
+        return
+    message = f"Firebase user not found for password reset: {email}"
+    print(message)
+    logger.info(message)
+
+
+def _log_reset_error(error, is_test_run):
+    if is_test_run:
+        return
+    message = f"Error generating Firebase password reset link: {error}"
+    print(message)
+    logger.warning(message)

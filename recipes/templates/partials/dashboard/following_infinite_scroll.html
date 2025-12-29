@@ -1,0 +1,4 @@
+{% if not has_search and following_posts %}
+{% load static %}
+<script src="{% static 'js/following_infinite.js' %}" defer></script>
+{% endif %}

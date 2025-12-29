@@ -228,6 +228,21 @@ describe("post_layout", () => {
     expect(window.location.assign).toHaveBeenCalledWith("http://localhost/from");
   });
 
+  test("back button falls back when target matches current page", () => {
+    Object.defineProperty(document, "referrer", { value: "http://localhost/post/1", configurable: true });
+    document.body.innerHTML = `
+      <a class="post-back-button" data-entry="http://localhost/post/1" data-fallback="/fallback"></a>
+    `;
+    window.history.length = 2;
+    const backSpy = jest.spyOn(window.history, "back");
+    const { initPostLayout } = loadModule();
+    initPostLayout(window);
+    document.querySelector(".post-back-button").dispatchEvent(new Event("click", { bubbles: true, cancelable: true }));
+    expect(backSpy).not.toHaveBeenCalled();
+    expect(window.location.assign).toHaveBeenLastCalledWith("/fallback");
+    backSpy.mockRestore();
+  });
+
   test("like form toggles state on fetch success", async () => {
     document.body.innerHTML = `
       <form data-like-form action="/like">

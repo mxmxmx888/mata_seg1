@@ -130,7 +130,7 @@ body[data-theme="dark"] .auth-footer-link a {
     --auth-card-width: clamp(300px, 80vw, 380px);
     --auth-card-pad-y: clamp(1.8rem, 3.2vh, 2.2rem);
     --auth-card-pad-x: clamp(1.5rem, 5vw, 2rem);
-    --auth-card-radius: clamp(1.2rem, 3vw, 1.6rem);
+    --auth-card-radius: var(--radius-surface);
     padding: 2.5rem 1.5rem;
     align-items: center;
   }
@@ -161,7 +161,7 @@ body[data-theme="dark"] .auth-footer-link a {
     --auth-card-width: clamp(300px, 75vw, 370px);
     --auth-card-pad-y: clamp(1.6rem, 3vh, 2rem);
     --auth-card-pad-x: clamp(1.4rem, 4vw, 1.8rem);
-    --auth-card-radius: clamp(1.2rem, 3vw, 1.5rem);
+    --auth-card-radius: var(--radius-surface);
     padding: 1.5rem 1.25rem;
     align-items: flex-start;
   }

@@ -36,8 +36,13 @@ def _sync_user_to_firebase(user, context):
     try:
         ensure_firebase_user(email=email, display_name=_display_name_for(user))
     except Exception as e:  # pragma: no cover - safety net
-        if _should_log():
-            logger.warning("Firebase sync (%s) failed: %s", context, e)
+        _log_sync_warning(context, e)
+
+
+def _log_sync_warning(context, error):
+    if not _should_log():
+        return
+    logger.warning("Firebase sync (%s) failed: %s", context, error)
 
 
 @receiver(social_account_added)

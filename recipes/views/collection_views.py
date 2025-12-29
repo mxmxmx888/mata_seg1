@@ -14,15 +14,14 @@ from recipes.views.view_utils import is_ajax_request
 @login_required
 def collections_overview(request):
     """Render the current user's collections list page."""
-    # Show roughly 7 rows of collection cards per load (5 cards per row)
     page_size = 35
     page_number = max(1, int(request.GET.get("page") or 1))
     collections_all = collections_for_user(request.user)
+    has_collections = bool(collections_all)
     start = (page_number - 1) * page_size
     end = start + page_size
     collections_page = collections_all[start:end]
     has_more = len(collections_all) > end
-
     if is_ajax_request(request):
         return render(
             request,
@@ -35,6 +34,7 @@ def collections_overview(request):
         "collections": collections_page,
         "collections_has_more": has_more,
         "collections_next_page": page_number + 1 if has_more else None,
+        "has_collections": has_collections,
     }
     return render(request, "app/collections.html", context)
 

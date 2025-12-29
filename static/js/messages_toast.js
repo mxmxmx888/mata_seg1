@@ -1,4 +1,4 @@
-(() => {
+{
 const hasModuleExports = typeof module !== "undefined" && module.exports;
 const globalWindow = typeof window !== "undefined" && window.document ? window : null;
 
@@ -15,6 +15,11 @@ const markInitialized = (w, flag) => {
   if (w[flag]) return false;
   w[flag] = true;
   return true;
+};
+
+const finalizeAllToasts = (doc) => {
+  if (!doc) return;
+  Array.from(doc.querySelectorAll(TOAST_SELECTOR)).forEach((toastEl) => finalizeToast(toastEl));
 };
 
 const finalizeToast = (toastEl, toast) => {
@@ -54,7 +59,7 @@ const applyToast = (w, toastEl, duration) => {
 const scheduleFallbackCleanup = (w, doc, duration) => {
   if (!w || !doc) return;
   w.setTimeout(() => {
-    Array.from(doc.querySelectorAll(TOAST_SELECTOR)).forEach((toastEl) => finalizeToast(toastEl));
+    finalizeAllToasts(doc);
   }, duration + TOAST_CLEANUP_PADDING);
 };
 
@@ -74,17 +79,29 @@ const observeNewToasts = (w, doc, duration) => {
   observer.observe(doc.body, { childList: true, subtree: true });
 };
 
-function initMessagesToast(win) {
+const bindLifecycleCleanup = (w, doc) => {
+  if (!w || !doc || !markInitialized(w, "__messagesToastLifecycleBound")) return;
+  const cleanup = () => finalizeAllToasts(doc);
+  w.addEventListener("pagehide", cleanup);
+  doc.addEventListener("visibilitychange", () => {
+    if (doc.visibilityState === "hidden") {
+      cleanup();
+    }
+  });
+};
+
+const initMessagesToast = (win) => {
   const w = resolveWindow(win);
   const doc = w && w.document;
   scheduleFallbackCleanup(w, doc, TOAST_DURATION);
   if (!w || !markInitialized(w, "__messagesToastInitialized")) return;
+  bindLifecycleCleanup(w, doc);
   const toasts = Array.from(doc.querySelectorAll(TOAST_SELECTOR));
   toasts.forEach((toastEl) => applyToast(w, toastEl, TOAST_DURATION));
   observeNewToasts(w, doc, TOAST_DURATION);
-}
+};
 
-function autoInitMessagesToast() {
+const autoInitMessagesToast = () => {
   const w = resolveWindow();
   if (!w) return;
   const runInit = () => initMessagesToast(w);
@@ -93,7 +110,7 @@ function autoInitMessagesToast() {
   } else {
     runInit();
   }
-}
+};
 
 if (hasModuleExports) {
   module.exports = { initMessagesToast };
@@ -101,4 +118,4 @@ if (hasModuleExports) {
 
 /* istanbul ignore next */
 autoInitMessagesToast();
-})();
+}

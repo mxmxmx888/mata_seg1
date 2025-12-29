@@ -75,6 +75,7 @@ body[data-theme="light"] .modal-backdrop.custom-modal-backdrop.show {
   max-height: 70vh;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 .follow-modal .modal-dialog {
@@ -179,9 +180,9 @@ body.profile-body .follow-modal .btn-outline-light:focus-visible {
 
 .follow-modal .modal-body {
   overflow-y: auto;
-  height: min(520px, 70vh);
-  min-height: 360px;
-  max-height: min(520px, 70vh);
+  flex: 1 1 auto;
+  max-height: min(520px, calc(70vh - 4.5rem));
+  scrollbar-gutter: stable;
 }
 
 body.profile-body .follow-modal .follow-user-name {
