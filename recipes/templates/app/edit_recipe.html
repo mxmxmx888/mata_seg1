@@ -19,29 +19,29 @@
           <div class="shopping-links-helper mt-5 mb-4">
             <div class="d-flex justify-content-between align-items-center mb-3">
               <div>
-                <h5 class="mb-1 shopping-links-title text-white">Shopping links</h5>
-                <p class="text-white-50 small mb-0">Add items with links to appear in the shop section.</p>
+                <h5 class="mb-1 shopping-links-title">Shopping links</h5>
+                <p class="text-muted small mb-0">Add items with links to appear in the shop section.</p>
               </div>
-              <span class="badge rounded-pill bg-white text-dark border-0">Optional</span>
+              <span class="shopping-links-optional small fw-semibold">Optional</span>
             </div>
 
             <div class="row g-3 align-items-end shopping-links-row">
               <div class="col-12 col-md-5 col-lg-5 shopping-links-field">
-                <label for="shop-item" class="form-label mb-1 text-white-50 small">Item Name</label>
+                <label for="shop-item" class="form-label mb-1 text-muted small">Item Name</label>
                 <input type="text" id="shop-item" class="form-control form-control-dark" placeholder="e.g. Matcha Powder">
               </div>
               <div class="col-12 col-md-5 col-lg-5 shopping-links-field">
-                <label for="shop-link" class="form-label mb-1 text-white-50 small">Online Link</label>
+                <label for="shop-link" class="form-label mb-1 text-muted small">Online Link</label>
                 <input type="url" id="shop-link" class="form-control form-control-dark" placeholder="https://...">
               </div>
             </div>
 
             <div class="shopping-links-upload mt-3">
-              <label class="form-label mb-1 text-white-50 small" for="{{ form.shop_images.id_for_label }}">Shopping images</label>
+              <label class="form-label mb-1 text-muted small" for="{{ form.shop_images.id_for_label }}">Shopping images</label>
               {% render_field form.shop_images class="file-pill-input" %}
               <label for="{{ form.shop_images.id_for_label }}" class="file-pill-btn">Choose file</label>
-              <small class="text-white-50 small d-block mt-1">{{ form.shop_images.help_text }}</small>
-              <div id="shop-image-file-list" class="small text-white-50 mt-2"></div>
+              <small class="text-muted small d-block mt-1">{{ form.shop_images.help_text }}</small>
+              <div id="shop-image-file-list" class="small text-muted mt-2"></div>
             </div>
 
             <div class="col-12 mt-3">
@@ -49,10 +49,10 @@
             </div>
 
             <div class="mt-4 shopping-links-list">
-              <div class="small fw-bold text-white-50 mb-2 text-uppercase tracking-wide">Added Items</div>
+              <div class="small fw-bold text-muted mb-2 text-uppercase tracking-wide">Added Items</div>
               <div
                 id="shop-list"
-                class="shopping-list-box text-white-50 small"
+                class="shopping-list-box text-muted small"
                 data-shopping-items="{{ shopping_items_json|default:'[]'|escapejs }}"
               >No shopping links added yet.</div>
               {{ shopping_items_data|json_script:"existing-shopping-items" }}

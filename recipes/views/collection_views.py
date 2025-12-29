@@ -42,31 +42,10 @@ def collections_overview(request):
 @login_required
 def collection_detail(request, slug):
     """Render a single collection with its saved posts."""
-    try:
-        favourite = Favourite.objects.get(id=slug, user=request.user)
-    except Favourite.DoesNotExist:
-        raise Http404()
-
-    items_qs = FavouriteItem.objects.filter(favourite=favourite).select_related("recipe_post")
-    # Some tests use a FakeQS without order_by; guard to keep compatibility.
-    if hasattr(items_qs, "order_by"):
-        items_qs = items_qs.order_by("-added_at", "-id")
-    posts = [item.recipe_post for item in items_qs if item.recipe_post]
-
-    collection = {
-        "id": str(favourite.id),
-        "slug": str(favourite.id),
-        "title": favourite.name,
-        "description": "",
-        "followers": 0,
-        "items": posts,
-    }
-
-    # Distribute posts into 5 masonry columns (row-wise across the page)
-    num_columns = 5
-    collection_columns = [[] for _ in range(num_columns)]
-    for idx, post in enumerate(posts):
-        collection_columns[idx % num_columns].append(post)
+    favourite = _get_favourite_or_404(slug, request.user)
+    posts = _collection_posts(favourite)
+    collection = _collection_payload(favourite, posts)
+    collection_columns = _distribute_posts(posts)
 
     context = {
         "profile": profile_data_for_user(request.user),
@@ -99,30 +78,49 @@ def update_collection(request, slug):
     data = request.POST.copy()
     name_val = (data.get("name") or data.get("title") or "").strip()
 
-    # If no new name provided, keep existing title and return current payload.
     if not name_val:
-        payload = {
-            "id": str(favourite.id),
-            "title": favourite.name,
-        }
-        if is_ajax_request(request):
-            return JsonResponse(payload)
-        return redirect(reverse("collection_detail", kwargs={"slug": favourite.id}))
+        return _collection_response(request, favourite)
 
-    # Normal update path via Django form validation.
     data["name"] = name_val
     form = FavouriteForm(data or None, instance=favourite)
-
     if form.is_valid():
         form.save()
-        payload = {
-            "id": str(favourite.id),
-            "title": favourite.name,
-        }
-        if is_ajax_request(request):
-            return JsonResponse(payload)
-        return redirect(reverse("collection_detail", kwargs={"slug": favourite.id}))
+        return _collection_response(request, favourite)
 
     if is_ajax_request(request):
         return JsonResponse({"errors": form.errors}, status=400)
+    return redirect(reverse("collection_detail", kwargs={"slug": favourite.id}))
+
+def _get_favourite_or_404(slug, user):
+    try:
+        return Favourite.objects.get(id=slug, user=user)
+    except Favourite.DoesNotExist:
+        raise Http404()
+
+def _collection_posts(favourite):
+    items_qs = FavouriteItem.objects.filter(favourite=favourite).select_related("recipe_post")
+    if hasattr(items_qs, "order_by"):
+        items_qs = items_qs.order_by("-added_at", "-id")
+    return [item.recipe_post for item in items_qs if item.recipe_post]
+
+def _collection_payload(favourite, posts):
+    return {
+        "id": str(favourite.id),
+        "slug": str(favourite.id),
+        "title": favourite.name,
+        "description": "",
+        "followers": 0,
+        "items": posts,
+    }
+
+def _distribute_posts(posts, num_columns=5):
+    columns = [[] for _ in range(num_columns)]
+    for idx, post in enumerate(posts):
+        columns[idx % num_columns].append(post)
+    return columns
+
+def _collection_response(request, favourite):
+    payload = {"id": str(favourite.id), "title": favourite.name}
+    if is_ajax_request(request):
+        return JsonResponse(payload)
     return redirect(reverse("collection_detail", kwargs={"slug": favourite.id}))

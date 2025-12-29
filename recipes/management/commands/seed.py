@@ -174,19 +174,7 @@ class Command(SeedHelpers, BaseCommand):
         if not users or not posts:
             return
 
-        rows = []
-
-        for post_id in posts:
-            like_count = randint(0, min(max_likes_per_post, len(users)))
-            liked_by = sample(users, like_count)
-
-            for user_id in liked_by:
-                rows.append(
-                    Like(
-                        user_id=user_id,
-                        recipe_post_id=post_id,
-                    )
-                )
+        rows = self._build_like_rows(users, posts, max_likes_per_post)
 
         with transaction.atomic():
             Like.objects.bulk_create(rows, ignore_conflicts=True, batch_size=1000)
@@ -293,17 +281,8 @@ class Command(SeedHelpers, BaseCommand):
             media_root / "avatars",
         ]
         for path in targets:
-            if not path.exists():
-                path.mkdir(parents=True, exist_ok=True)
-                continue
-            for child in path.iterdir():
-                if child.is_dir():
-                    shutil.rmtree(child, ignore_errors=True)
-                else:
-                    try:
-                        child.unlink()
-                    except FileNotFoundError:
-                        pass
+            _ensure_dir(path)
+            _clear_children(path)
         self.stdout.write(self.style.WARNING("Media directories reset (recipes, shop_items, avatars)."))
 
     def create_user(self, data):
@@ -316,3 +295,27 @@ class Command(SeedHelpers, BaseCommand):
             last_name=data['last_name'],
             bio = choice(bio_phrases)
         )
+
+def _ensure_dir(path: Path):
+    path.mkdir(parents=True, exist_ok=True)
+
+def _clear_children(path: Path):
+    for child in path.iterdir():
+        _remove_child(child)
+
+def _remove_child(child: Path):
+    if child.is_dir():
+        shutil.rmtree(child, ignore_errors=True)
+        return
+    try:
+        child.unlink()
+    except FileNotFoundError:
+        pass
+
+def _build_like_rows(users, posts, max_likes_per_post):
+    rows = []
+    for post_id in posts:
+        like_count = randint(0, min(max_likes_per_post, len(users)))
+        for user_id in sample(users, like_count):
+            rows.append(Like(user_id=user_id, recipe_post_id=post_id))
+    return rows

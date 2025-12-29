@@ -74,17 +74,22 @@ class RecipePost(models.Model):
     @property
     def primary_image_url(self):
         """Return the best available image URL for the post."""
+        url = self._first_image_url()
+        if url:
+            return url
+        return self.image or None
+
+    def _first_image_url(self):
         images_qs = getattr(self, "images", None)
-        if images_qs is not None:
-            first = images_qs.first()
-            if first and first.image:
-                try:
-                    return first.image.url
-                except ValueError:
-                    pass
-        if self.image:
-            return self.image
-        return None
+        if not images_qs:
+            return None
+        first = images_qs.first()
+        if not first or not getattr(first, "image", None):
+            return None
+        try:
+            return first.image.url
+        except ValueError:
+            return None
     
     @property
     def likes_count(self):

@@ -110,29 +110,14 @@ def _score_and_sort_posts(posts, preferred_tags):
 def _get_for_you_posts(user, query=None, limit=None, offset=0, seed=None, privacy=privacy_service):
     """Return personalised 'for you' posts shuffled by a seed."""
     base_qs = privacy.filter_visible_posts(_base_posts_queryset(), user)
-    qs = base_qs
-
     liked_post_ids, preferred_tags = _preferred_tags_for_user(user)
-
-    qs = _apply_query_filters(qs, query)
+    qs = _apply_query_filters(base_qs, query)
     base_qs = _apply_query_filters(base_qs, query)
-
     if preferred_tags:
         qs = _tag_filtered_qs(qs, preferred_tags, liked_post_ids)
-
-    posts = list(qs)
-    if preferred_tags and not posts:
-        # Fallback to general feed if tag-based filtering produced nothing
-        posts = list(base_qs)
-
+    posts = _for_you_posts_list(qs, base_qs, preferred_tags)
     posts = _score_and_sort_posts(posts, preferred_tags)
-
-    rng = random.Random(seed)
-    rng.shuffle(posts)
-
-    if limit is None:
-        return posts[offset:]
-    return posts[offset:offset + limit]
+    return _shuffle_and_slice(posts, seed, limit, offset)
 
 def _get_following_posts(user, query=None, limit=12, offset=0):
     """Return a list of posts from authors the user follows."""
@@ -160,29 +145,10 @@ def _search_users(query, limit=18):
     query = (query or "").strip()
     if not query:
         return []
-    username_query = query.replace(" ", "")
-    tokens = [part for part in query.replace("@", " ").split() if part]
-    token_filters = []
-    for token in tokens:
-        token_filters.append(
-            Q(username__icontains=token)
-            | Q(first_name__icontains=token)
-            | Q(last_name__icontains=token)
-        )
-    combined_tokens = None
-    if token_filters:
-        combined_tokens = token_filters[0]
-        for extra in token_filters[1:]:
-            combined_tokens &= extra
-    base_filter = (
-        Q(username__icontains=query)
-        | Q(username__icontains=username_query)
-        | Q(first_name__icontains=query)
-        | Q(last_name__icontains=query)
-        | Q(full_name__icontains=query)
-    )
-    if combined_tokens is not None:
-        base_filter |= combined_tokens
+    base_filter = _user_base_filter(query)
+    token_filter = _token_filter(query)
+    if token_filter is not None:
+        base_filter |= token_filter
     return list(
         User.objects.annotate(full_name=Concat("first_name", Value(" "), "last_name"))
         .filter(base_filter)
@@ -194,29 +160,65 @@ def _filter_posts_by_prep_time(posts, min_prep=None, max_prep=None):
     Filter in-memory posts by prep time bounds.
     Values that cannot be coerced to ints or missing prep times are ignored.
     """
-    try:
-        min_val = int(min_prep) if min_prep is not None else None
-    except (TypeError, ValueError):
-        min_val = None
-
-    try:
-        max_val = int(max_prep) if max_prep is not None else None
-    except (TypeError, ValueError):
-        max_val = None
-
+    min_val = _safe_int(min_prep)
+    max_val = _safe_int(max_prep)
     if min_val is None and max_val is None:
         return list(posts)
+    return [post for post in posts if _prep_within(post, min_val, max_val)]
 
-    filtered = []
-    for post in posts:
-        try:
-            prep = int(getattr(post, "prep_time_min", None))
-        except (TypeError, ValueError):
-            continue
+def _for_you_posts_list(qs, fallback_qs, preferred_tags):
+    posts = list(qs)
+    if preferred_tags and not posts:
+        return list(fallback_qs)
+    return posts
 
-        if min_val is not None and prep < min_val:
-            continue
-        if max_val is not None and prep > max_val:
-            continue
-        filtered.append(post)
-    return filtered
+def _shuffle_and_slice(posts, seed, limit, offset):
+    rng = random.Random(seed)
+    rng.shuffle(posts)
+    if limit is None:
+        return posts[offset:]
+    return posts[offset:offset + limit]
+
+def _user_base_filter(query):
+    username_query = query.replace(" ", "")
+    return (
+        Q(username__icontains=query)
+        | Q(username__icontains=username_query)
+        | Q(first_name__icontains=query)
+        | Q(last_name__icontains=query)
+        | Q(full_name__icontains=query)
+    )
+
+def _token_filter(query):
+    tokens = [part for part in query.replace("@", " ").split() if part]
+    if not tokens:
+        return None
+    combined = (
+        Q(username__icontains=tokens[0])
+        | Q(first_name__icontains=tokens[0])
+        | Q(last_name__icontains=tokens[0])
+    )
+    for token in tokens[1:]:
+        combined &= (
+            Q(username__icontains=token)
+            | Q(first_name__icontains=token)
+            | Q(last_name__icontains=token)
+        )
+    return combined
+
+def _safe_int(value):
+    try:
+        return int(value) if value is not None else None
+    except (TypeError, ValueError):
+        return None
+
+def _prep_within(post, min_val, max_val):
+    try:
+        prep = int(getattr(post, "prep_time_min", None))
+    except (TypeError, ValueError):
+        return False
+    if min_val is not None and prep < min_val:
+        return False
+    if max_val is not None and prep > max_val:
+        return False
+    return True

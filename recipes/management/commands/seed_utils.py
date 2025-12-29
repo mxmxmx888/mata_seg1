@@ -100,45 +100,46 @@ class SeedHelpers:
         """Build Ingredient rows for a post with plain ingredients plus shop items."""
         rows: List[Ingredient] = []
         seen_names: set[str] = set()
-        position = 1
+        position = self._add_base_ingredients(rows, seen_names, post_id)
+        self._add_shop_ingredients(rows, seen_names, position, post_id, ingredient_set)
+        return rows
 
+    def _add_base_ingredients(self, rows, seen_names, post_id):
+        position = 1
         base_pool = BASE_INGREDIENT_POOL or []
         base_count = randint(5, 8)
         base_choices = sample(base_pool, k=min(base_count, len(base_pool))) if base_pool else []
-
         for name in base_choices:
-            key = name.lower()
-            if key in seen_names:
-                continue
-            rows.append(
-                Ingredient(
-                    recipe_post_id=post_id,
-                    name=name,
-                    position=position,
-                )
-            )
-            seen_names.add(key)
-            position += 1
+            position = self._append_ingredient(rows, seen_names, post_id, name, position)
+        return position
 
+    def _add_shop_ingredients(self, rows, seen_names, position, post_id, ingredient_set):
         for item in ingredient_set:
             name = item["name"]
-            key = name.lower()
-            if key in seen_names:
+            if name.lower() in seen_names:
                 continue
-            image_file, shop_url = self._resolve_ingredient_assets(item, key)
-            rows.append(
-                Ingredient(
-                    recipe_post_id=post_id,
-                    name=name,
-                    position=position,
-                    shop_url=shop_url,
-                    shop_image_upload=image_file,
-                )
+            image_file, shop_url = self._resolve_ingredient_assets(item, name.lower())
+            position = self._append_ingredient(
+                rows,
+                seen_names,
+                post_id,
+                name,
+                position,
+                shop_url=shop_url,
+                shop_image_upload=image_file,
             )
-            seen_names.add(key)
-            position += 1
 
-        return rows
+    def _append_ingredient(self, rows, seen_names, post_id, name, position, **extra_fields):
+        rows.append(
+            Ingredient(
+                recipe_post_id=post_id,
+                name=name,
+                position=position,
+                **extra_fields,
+            )
+        )
+        seen_names.add(name.lower())
+        return position + 1
 
     def _resolve_ingredient_assets(
         self, item: Dict[str, Any], name_key: str
@@ -155,16 +156,20 @@ class SeedHelpers:
     def _build_favourites(self, user_ids: List[str], per_user: int, favourite_names: list[str]) -> List[Favourite]:
         """Create unsaved Favourite rows for each user from provided names."""
         collections_per_user = min(per_user, len(favourite_names))
-        favourites: List[Favourite] = []
         fav_keys: Set[Tuple[str, str]] = set()
+        favourites: List[Favourite] = []
         for user_id in user_ids:
-            chosen = sample(favourite_names, k=collections_per_user)
-            for name in chosen:
-                key = (str(user_id), name)
-                if key in fav_keys:
-                    continue
-                fav_keys.add(key)
-                favourites.append(Favourite(user_id=user_id, name=name))
+            favourites.extend(self._favourites_for_user(user_id, collections_per_user, favourite_names, fav_keys))
+        return favourites
+
+    def _favourites_for_user(self, user_id, collections_per_user, favourite_names, fav_keys):
+        favourites: List[Favourite] = []
+        for name in sample(favourite_names, k=collections_per_user):
+            key = (str(user_id), name)
+            if key in fav_keys:
+                continue
+            fav_keys.add(key)
+            favourites.append(Favourite(user_id=user_id, name=name))
         return favourites
 
     def _fetch_favourites_by_user(self, user_ids: List[str]) -> Dict[str, List[str]]:
@@ -186,14 +191,15 @@ class SeedHelpers:
         """Build FavouriteItem rows for sampled posts per user favourite."""
         items: List[FavouriteItem] = []
         for user_id in user_ids:
-            user_fav_ids = favs_by_user.get(str(user_id), [])
-            if not user_fav_ids:
-                continue
-            for fav_id in user_fav_ids:
-                k = randint(3, 8)
-                chosen_posts = sample(posts, k=min(k, len(posts)))
-                for post_id in chosen_posts:
-                    items.append(FavouriteItem(favourite_id=fav_id, recipe_post_id=post_id))
+            items.extend(self._items_for_user(user_id, posts, favs_by_user))
+        return items
+
+    def _items_for_user(self, user_id, posts, favs_by_user):
+        items: List[FavouriteItem] = []
+        for fav_id in favs_by_user.get(str(user_id), []):
+            k = randint(3, 8)
+            for post_id in sample(posts, k=min(k, len(posts))):
+                items.append(FavouriteItem(favourite_id=fav_id, recipe_post_id=post_id))
         return items
 
 

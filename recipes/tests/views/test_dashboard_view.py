@@ -277,6 +277,20 @@ class DashboardSearchViewTests(TestCase):
         oldest_titles = [p.title for p in res_oldest.context["popular_recipes"]]
         self.assertEqual(oldest_titles[0], "Older")
 
+    def test_dashboard_sort_popular_uses_likes_and_saves(self):
+        liked = self.make_published("Liked", days_ago=1, saves=1)
+        saved_only = self.make_published("SavedOnly", days_ago=1, saves=2)
+
+        liker_one = make_user(username="liker_one")
+        liker_two = make_user(username="liker_two")
+        Like.objects.create(user=liker_one, recipe_post=liked)
+        Like.objects.create(user=liker_two, recipe_post=liked)
+
+        res = self.client.get(self.url, {"sort": "popular"})
+        self.assertEqual(res.status_code, 200)
+        titles = [p.title for p in res.context["popular_recipes"]]
+        self.assertEqual(titles[0], "Liked")
+
     def test_dashboard_for_you_invalid_offset_uses_zero(self):
         make_recipe_post(author=self.user, title="One")
         self.client.login(username=self.user.username, password="Password123")

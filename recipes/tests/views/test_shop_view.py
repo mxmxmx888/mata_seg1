@@ -6,31 +6,11 @@ from django.contrib.sites.models import Site
 
 class ShopViewTests(TestCase):
     def setUp(self):
-        self.user = User.objects.create_user(
-            username='johndoe', 
-            email='test@example.com', 
-            password='Password123'
-        )
-        self.post = RecipePost.objects.create(
-            author=self.user, 
-            title="Cake", 
-            description="Delicious"
-        )
-        self.ing = Ingredient.objects.create(
-            recipe_post=self.post, 
-            name="flour", 
-            shop_url="http://shop.com",
-            position=1
-        )
+        self.user = User.objects.create_user(username='johndoe', email='test@example.com', password='Password123')
+        self.post = RecipePost.objects.create(author=self.user, title="Cake", description="Delicious")
+        self.ing = Ingredient.objects.create(recipe_post=self.post, name="flour", shop_url="http://shop.com", position=1)
         self.url = reverse('shop')
-        site = Site.objects.get_current()
-        provider = SocialApp.objects.create(
-            provider="google",
-            name="Google",
-            client_id="fake-client-id",
-            secret="fake-secret",
-        )
-        provider.sites.add(site)
+        self._ensure_social_app()
 
     def test_login_required(self):
         response = self.client.get(self.url)
@@ -84,3 +64,8 @@ class ShopViewTests(TestCase):
         # Second page should be empty but valid
         response2 = self.client.get(self.url, {"seed": "deadbeef", "page": 2})
         self.assertEqual(response2.status_code, 200)
+
+    def _ensure_social_app(self):
+        site = Site.objects.get_current()
+        provider = SocialApp.objects.create(provider="google", name="Google", client_id="fake-client-id", secret="fake-secret")
+        provider.sites.add(site)

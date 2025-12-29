@@ -12,36 +12,43 @@ class LogInForm(forms.Form):
 
     def get_user(self):
         """Return the authenticated user or None after validating credentials."""
-        user = None
-        if self.is_valid():
-            username = self.cleaned_data.get('username')
-            password = self.cleaned_data.get('password')
+        if not self.is_valid():
+            return None
 
-            if not username or not password:
-                return None
+        username = self.cleaned_data.get("username")
+        password = self.cleaned_data.get("password")
+        if not username or not password:
+            return None
 
-            try:
-                django_user = User.objects.get(username=username)
-            except User.DoesNotExist:
-                if not _is_running_tests():
-                    print("DEBUG: No Django user with that username")
-                return None
+        user = self._get_django_user(username)
+        if not user:
+            return None
 
-            firebase_result = sign_in_with_email_and_password(
-                email=django_user.email,
-                password=password,
-            )
+        authed = self._authenticate_with_firebase(user, password) or self._authenticate_with_django(
+            username, password
+        )
+        self._log_debug(f"get_user returning: {authed}")
+        return authed
 
-            if firebase_result is not None:
-                if not _is_running_tests():
-                    print("DEBUG: Firebase login succeeded")
-                user = django_user
-                user.backend = 'django.contrib.auth.backends.ModelBackend'
-            else:
-                if not _is_running_tests():
-                    print("DEBUG: Firebase login FAILED, trying Django authenticate()")
-                user = authenticate(username=username, password=password)
-
-        if not _is_running_tests():
-            print("DEBUG: get_user returning:", user)
+    def _authenticate_with_firebase(self, user, password):
+        result = sign_in_with_email_and_password(email=user.email, password=password)
+        if result is None:
+            self._log_debug("Firebase login FAILED, trying Django authenticate()")
+            return None
+        self._log_debug("Firebase login succeeded")
+        user.backend = "django.contrib.auth.backends.ModelBackend"
         return user
+
+    def _authenticate_with_django(self, username, password):
+        return authenticate(username=username, password=password)
+
+    def _get_django_user(self, username):
+        try:
+            return User.objects.get(username=username)
+        except User.DoesNotExist:
+            self._log_debug("No Django user with that username")
+            return None
+
+    def _log_debug(self, message: str):
+        if not _is_running_tests():
+            print(f"DEBUG: {message}")

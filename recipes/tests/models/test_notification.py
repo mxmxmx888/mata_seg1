@@ -21,75 +21,56 @@ class NotificationModelTestCase(TestCase):
         how to create FK objects for User / RecipePost).
         """
         kwargs: dict = {}
-
         for field in Notification._meta.concrete_fields:
-            # Skip PK / auto fields
-            if field.primary_key or getattr(field, "auto_created", False):
+            if self._skip_field(field):
                 continue
-
-            # Skip auto timestamps (auto_now / auto_now_add)
-            if isinstance(field, models.DateTimeField) and (field.auto_now or field.auto_now_add):
-                continue
-
-            # If field has a default, let Django fill it
-            if field.has_default():
-                continue
-
-            # If nullable / blankable, we can omit it
-            # (blank is form-level, but usually aligns with "not required" semantics for seeding tests)
-            if getattr(field, "null", False) or getattr(field, "blank", False):
-                continue
-
-            # Foreign keys
             if isinstance(field, models.ForeignKey):
-                rel_model = field.remote_field.model
-
-                # If FK points to User, choose one of our users
-                if rel_model._meta.label_lower.endswith("user"):
-                    kwargs[field.name] = self.user_b
-                    continue
-
-                # If FK points to RecipePost, use our post
-                if rel_model._meta.model_name == "recipepost":
-                    kwargs[field.name] = self.post
-                    continue
-
-                # Unknown FK model: try to create a minimal instance (may fail if it has required fields)
-                try:
-                    kwargs[field.name] = rel_model.objects.create()
-                    continue
-                except Exception:
-                    # If your Notification has a required FK to another model, replace this section
-                    # with a proper factory helper for that model.
-                    raise AssertionError(
-                        f"Notification has required FK '{field.name}' to '{rel_model.__name__}', "
-                        f"but the test doesn't know how to create it. "
-                        f"Add a helper factory for {rel_model.__name__} and set it here."
-                    )
-
-            # Simple field types
-            if isinstance(field, (models.CharField, models.TextField)):
-                kwargs[field.name] = "Test notification"
-            elif isinstance(field, models.BooleanField):
-                kwargs[field.name] = False
-            elif isinstance(field, (models.IntegerField, models.BigIntegerField, models.SmallIntegerField)):
-                kwargs[field.name] = 1
-            elif isinstance(field, models.UUIDField):
-                kwargs[field.name] = uuid.uuid4()
-            elif isinstance(field, models.DateTimeField):
-                kwargs[field.name] = timezone.now()
-            elif isinstance(field, models.DateField):
-                kwargs[field.name] = timezone.now().date()
-            elif isinstance(field, models.TimeField):
-                kwargs[field.name] = timezone.now().time()
-            else:
-                # If you hit this, your model has a required field type we didn't handle.
-                raise AssertionError(
-                    f"Unhandled required field type for '{field.name}': {field.__class__.__name__}. "
-                    f"Add handling in _build_notification_kwargs()."
-                )
-
+                kwargs[field.name] = self._resolve_fk(field)
+                continue
+            kwargs[field.name] = self._resolve_field_value(field)
         return kwargs
+
+    def _skip_field(self, field):
+        if field.primary_key or getattr(field, "auto_created", False):
+            return True
+        if isinstance(field, models.DateTimeField) and (field.auto_now or field.auto_now_add):
+            return True
+        return field.has_default() or getattr(field, "null", False) or getattr(field, "blank", False)
+
+    def _resolve_fk(self, field):
+        rel_model = field.remote_field.model
+        if rel_model._meta.label_lower.endswith("user"):
+            return self.user_b
+        if rel_model._meta.model_name == "recipepost":
+            return self.post
+        try:
+            return rel_model.objects.create()
+        except Exception:
+            raise AssertionError(
+                f"Notification has required FK '{field.name}' to '{rel_model.__name__}', "
+                "but the test doesn't know how to create it. "
+                f"Add a helper factory for {rel_model.__name__} and set it here."
+            )
+
+    def _resolve_field_value(self, field):
+        if isinstance(field, (models.CharField, models.TextField)):
+            return "Test notification"
+        if isinstance(field, models.BooleanField):
+            return False
+        if isinstance(field, (models.IntegerField, models.BigIntegerField, models.SmallIntegerField)):
+            return 1
+        if isinstance(field, models.UUIDField):
+            return uuid.uuid4()
+        if isinstance(field, models.DateTimeField):
+            return timezone.now()
+        if isinstance(field, models.DateField):
+            return timezone.now().date()
+        if isinstance(field, models.TimeField):
+            return timezone.now().time()
+        raise AssertionError(
+            f"Unhandled required field type for '{field.name}': {field.__class__.__name__}. "
+            "Add handling in _build_notification_kwargs()."
+        )
 
     def test_can_create_notification(self):
         n = Notification.objects.create(**self._build_notification_kwargs())

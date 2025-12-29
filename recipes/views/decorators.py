@@ -4,31 +4,11 @@ from django.shortcuts import redirect
 
 
 def login_prohibited(view_function):
-    """
-    Decorator that prevents logged-in users from accessing a view.
-
-    This decorator is typically used for pages such as login or registration,
-    where it doesn't make sense for an authenticated user to remain.
-    If the user is already authenticated, they are redirected to the URL
-    defined in `settings.REDIRECT_URL_WHEN_LOGGED_IN`.
-
-    Args:
-        view_function (Callable): The Django view function being decorated.
-
-    Returns:
-        Callable: A wrapped view function that either redirects an authenticated
-        user or calls the original view for unauthenticated users.
-
-    Raises:
-        ImproperlyConfigured: If `settings.REDIRECT_URL_WHEN_LOGGED_IN` is not defined.
-    """
-    
+    """Redirect authenticated users away from views that should be anonymous-only."""
     def modified_view_function(request):
-        """Redirect authenticated users; allow unauthenticated through."""
         if request.user.is_authenticated:
             return redirect(settings.REDIRECT_URL_WHEN_LOGGED_IN)
-        else:
-            return view_function(request)
+        return view_function(request)
     return modified_view_function
 
 

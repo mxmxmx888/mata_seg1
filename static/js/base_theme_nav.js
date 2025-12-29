@@ -1,4 +1,4 @@
-(() => {
+{
 const hasModuleExports = typeof module !== "undefined" && module.exports;
 const globalWindow = typeof window !== "undefined" && window.document ? window : null;
 
@@ -83,32 +83,33 @@ const attachDropdownFallback = (doc, win) => {
   });
 };
 
+const activateTab = (doc, toggle, target) => {
+  const tablist = toggle.closest('[role="tablist"]');
+  if (tablist) {
+    tablist.querySelectorAll('[data-bs-toggle="tab"], [data-bs-toggle="pill"]').forEach((btn) => {
+      btn.classList.remove("active");
+      btn.setAttribute("aria-selected", "false");
+    });
+  }
+  toggle.classList.add("active");
+  toggle.setAttribute("aria-selected", "true");
+  const tabContent = target.closest(".tab-content");
+  if (tabContent) {
+    tabContent.querySelectorAll(".tab-pane").forEach((pane) => pane.classList.remove("active", "show"));
+  }
+  target.classList.add("active", "show");
+};
+
 const attachTabFallback = (doc, win) => {
   if (!doc || (win && win.bootstrap && win.bootstrap.Tab)) return;
+  const handleClick = (toggle) => (event) => {
+    event.preventDefault();
+    const targetSelector = toggle.getAttribute("data-bs-target") || toggle.getAttribute("href");
+    const target = targetSelector ? doc.querySelector(targetSelector) : null;
+    if (target) activateTab(doc, toggle, target);
+  };
   doc.querySelectorAll('[data-bs-toggle="tab"], [data-bs-toggle="pill"]').forEach((toggle) => {
-    toggle.addEventListener("click", (event) => {
-      event.preventDefault();
-      const targetSelector = toggle.getAttribute("data-bs-target") || toggle.getAttribute("href");
-      if (!targetSelector) return;
-      const target = doc.querySelector(targetSelector);
-      if (!target) return;
-      const tablist = toggle.closest('[role="tablist"]');
-      if (tablist) {
-        tablist.querySelectorAll('[data-bs-toggle="tab"], [data-bs-toggle="pill"]').forEach((btn) => {
-          btn.classList.remove("active");
-          btn.setAttribute("aria-selected", "false");
-        });
-      }
-      toggle.classList.add("active");
-      toggle.setAttribute("aria-selected", "true");
-      const tabContent = target.closest(".tab-content");
-      if (tabContent) {
-        tabContent.querySelectorAll(".tab-pane").forEach((pane) => {
-          pane.classList.remove("active", "show");
-        });
-      }
-      target.classList.add("active", "show");
-    });
+    toggle.addEventListener("click", handleClick(toggle));
   });
 };
 
@@ -191,4 +192,4 @@ if (hasModuleExports) {
 
 /* istanbul ignore next */
 autoInit();
-})();
+}

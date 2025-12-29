@@ -12,19 +12,7 @@ from recipes.tests.test_utils import LogInTester
 class SignUpViewTestCase(TestCase, LogInTester):
     def setUp(self):
         self.url = reverse("sign_up")
-
-        site, _ = Site.objects.get_or_create(
-            id=settings.SITE_ID,
-            defaults={"domain": "example.com", "name": "example.com"},
-        )
-
-        provider = SocialApp.objects.create(
-            provider="google",
-            name="Google",
-            client_id="fake-client-id",
-            secret="fake-secret",
-        )
-        provider.sites.add(site)
+        self._ensure_social_app()
 
         self.form_input = {
             "first_name": "Jane",
@@ -42,6 +30,19 @@ class SignUpViewTestCase(TestCase, LogInTester):
             password="Password123",
             bio="Bio",
         )
+
+    def _ensure_social_app(self):
+        site, _ = Site.objects.get_or_create(
+            id=settings.SITE_ID,
+            defaults={"domain": "example.com", "name": "example.com"},
+        )
+        provider = SocialApp.objects.create(
+            provider="google",
+            name="Google",
+            client_id="fake-client-id",
+            secret="fake-secret",
+        )
+        provider.sites.add(site)
 
     def test_sign_up_url(self):
         self.assertEqual(self.url, "/sign_up/")

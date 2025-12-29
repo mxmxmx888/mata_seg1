@@ -3,6 +3,9 @@
 from recipes.models import Favourite
 from recipes.models.favourite_item import FavouriteItem
 
+def _post_image_url(post):
+    """Return the best image URL for a post if available."""
+    return getattr(post, "primary_image_url", None) or getattr(post, "image", None)
 
 def profile_data_for_user(user):
     """Return profile metadata dict for display components."""
@@ -24,29 +27,22 @@ def profile_data_for_user(user):
 def _collection_meta(items, favourite):
     """Compute last_saved_at, cover image url, and item count for a favourite."""
 
-    def _post_image_url(post):
-        """Return the best image URL for a post if available."""
-        return getattr(post, "primary_image_url", None) or getattr(post, "image", None)
-
     last_saved_at = favourite.created_at
     cover_post = favourite.cover_post if _post_image_url(getattr(favourite, "cover_post", None)) else None
-    first_post_with_image = None
+    first_image_post = None
     visible_posts = []
 
     for item in items:
-        if not item.recipe_post:
+        post = item.recipe_post
+        if not post:
             continue
-        visible_posts.append(item.recipe_post)
+        visible_posts.append(post)
         if item.added_at and (last_saved_at is None or item.added_at > last_saved_at):
             last_saved_at = item.added_at
-        if not first_post_with_image:
-            image_url = _post_image_url(item.recipe_post)
-            if image_url:
-                first_post_with_image = item.recipe_post
+        if not first_image_post and _post_image_url(post):
+            first_image_post = post
 
-    if not cover_post:
-        cover_post = first_post_with_image
-
+    cover_post = cover_post or first_image_post
     cover_url = _post_image_url(cover_post) if cover_post else None
     return last_saved_at, cover_url, len(visible_posts)
 
@@ -57,25 +53,20 @@ def collections_for_user(user):
     Each Favourite becomes a collection backed by the user's saved posts.
     """
     favourites = Favourite.objects.filter(user=user).prefetch_related("items__recipe_post")
-
-    collections = []
-    for fav in favourites:
-        items = list(fav.items.select_related("recipe_post").order_by("-added_at", "-id"))
-        last_saved_at, cover_url, count = _collection_meta(items, fav)
-
-        collections.append(
-            {
-                "id": str(fav.id),
-                "slug": str(fav.id),
-                "title": fav.name,
-                "count": count,
-                "privacy": None,
-                "cover": cover_url,
-                "has_image": bool(cover_url),
-                "last_saved_at": last_saved_at,
-            }
-        )
-
+    collections = [_collection_card(fav) for fav in favourites]
     collections.sort(key=lambda c: c.get("last_saved_at"), reverse=True)
-
     return collections
+
+def _collection_card(fav):
+    items = list(fav.items.select_related("recipe_post").order_by("-added_at", "-id"))
+    last_saved_at, cover_url, count = _collection_meta(items, fav)
+    return {
+        "id": str(fav.id),
+        "slug": str(fav.id),
+        "title": fav.name,
+        "count": count,
+        "privacy": None,
+        "cover": cover_url,
+        "has_image": bool(cover_url),
+        "last_saved_at": last_saved_at,
+    }

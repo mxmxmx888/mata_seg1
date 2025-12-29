@@ -41,22 +41,19 @@ class FollowService:
         """Follow a target user or create a follow request if target is private."""
         if not self._can_act(target):
             return {"status": "noop"}
-
-        # If already following, do nothing.
         if Follower.objects.filter(follower=self.actor, author=target).exists():
             return {"status": "following"}
-
-        # Public target → immediate follow (Scenarios A, B)
         if not getattr(target, "is_private", False):
-            Follower.objects.get_or_create(follower=self.actor, author=target)
-            # Remove any pending request artifacts
-            FollowRequest.objects.filter(
-                requester=self.actor, target=target
-            ).delete()
-            self._notify(target, self.actor, "follow")
-            return {"status": "following"}
+            return self._follow_public_target(target)
+        return self._request_private_follow(target)
 
-        # Private target → request (Scenarios C, D)
+    def _follow_public_target(self, target):
+        Follower.objects.get_or_create(follower=self.actor, author=target)
+        FollowRequest.objects.filter(requester=self.actor, target=target).delete()
+        self._notify(target, self.actor, "follow")
+        return {"status": "following"}
+
+    def _request_private_follow(self, target):
         fr, created = FollowRequest.objects.get_or_create(
             requester=self.actor,
             target=target,
@@ -116,32 +113,39 @@ class FollowService:
     @transaction.atomic
     def accept_request(self, request_id):
         """Accept a follow request by id when the actor is the target."""
-        try:
-            fr = FollowRequest.objects.select_for_update().get(
-                id=request_id,
-                target=self.actor,
-                status=FollowRequest.STATUS_PENDING,
-            )
-        except FollowRequest.DoesNotExist:
+        fr = self._get_pending_request(request_id)
+        if not fr:
             return False
 
         Follower.objects.get_or_create(follower=fr.requester, author=fr.target)
         fr.status = FollowRequest.STATUS_ACCEPTED
         fr.save(update_fields=["status"])
         self._notify(fr.requester, fr.target, "follow")
+        self._retarget_request_notification(fr)
+        return True
 
-        # Keep the original request notification visible, but mark it as a "follow"
-        # so the UI shows "[user] started following you" instead of disappearing.
-        existing_notif = (
-            Notification.objects.filter(follow_request=fr, recipient=self.actor)
+    def _get_pending_request(self, request_id):
+        try:
+            return FollowRequest.objects.select_for_update().get(
+                id=request_id,
+                target=self.actor,
+                status=FollowRequest.STATUS_PENDING,
+            )
+        except FollowRequest.DoesNotExist:
+            return None
+
+    def _retarget_request_notification(self, follow_request):
+        """Keep the original request notification visible but mark it as a follow."""
+        notif = (
+            Notification.objects.filter(follow_request=follow_request, recipient=self.actor)
             .order_by("-created_at", "-id")
             .first()
         )
-        if existing_notif:
-            existing_notif.notification_type = "follow"
-            existing_notif.follow_request = None
-            existing_notif.save(update_fields=["notification_type", "follow_request"])
-        return True
+        if not notif:
+            return
+        notif.notification_type = "follow"
+        notif.follow_request = None
+        notif.save(update_fields=["notification_type", "follow_request"])
 
     @transaction.atomic
     def reject_request(self, request_id):

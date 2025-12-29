@@ -169,7 +169,7 @@
 .shopping-links-upload #shop-image-file-list {
   font-size: 0.85rem;
   font-weight: 400;
-  color: color-mix(in srgb, var(--text-muted) 90%, var(--text-primary) 10%);
+  color: var(--text-muted);
 }
 
 .app-page .btn-save-recipe {
@@ -217,10 +217,21 @@
   color: var(--text-primary);
 }
 
+.shopping-links-optional {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.35rem 0.85rem;
+  border-radius: 999px;
+  border: 1px solid var(--border-subtle);
+  background: var(--surface);
+  color: var(--text-primary);
+  line-height: 1;
+}
+
 .shopping-links-title {
   font-weight: 500;
   letter-spacing: 0.01em;
-  color: #111827;
+  color: var(--text-primary);
 }
 
 .shopping-links-row {
@@ -251,7 +262,7 @@
 .shopping-links-field .form-label {
   margin-bottom: 0.15rem;
   font-size: 0.8rem;
-  color: var(--text-primary);
+  color: var(--text-muted);
 }
 
 .form-control-dark {
@@ -321,6 +332,10 @@
   padding: 1rem;
   min-height: 48px;
   color: var(--text-primary);
+}
+
+.shopping-list-box.text-muted {
+  color: var(--text-muted);
 }
 
 .shopping-list-item {

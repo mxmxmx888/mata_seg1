@@ -247,3 +247,37 @@ class RecipePostFormAdditionalTests(TestCase):
         with patch.object(RecipePostForm, "base_fields", fields_without_nutrition):
             form = RecipePostForm()
             self.assertNotIn("nutrition", form.fields)
+
+    def test_prefill_serves_sets_initial_when_present(self):
+        recipe = self.make_recipe()
+        recipe.serves = 4
+        recipe.save()
+
+        form = RecipePostForm(instance=recipe)
+
+        self.assertEqual(form.fields["serves"].initial, 4)
+
+    def test_parse_shopping_links_sets_none_url_when_missing(self):
+        form = RecipePostForm(data={"category": "dinner"})
+        form.cleaned_data = {"shopping_links_text": "Spice |   "}
+        links = form._parse_shopping_links()
+        self.assertEqual(len(links), 1)
+        self.assertIsNone(links[0]["url"])
+
+    def test_parse_shop_line_blank_returns_none_pair(self):
+        form = RecipePostForm(data={"category": "dinner"})
+        name, url = form._parse_shop_line("   ")
+        self.assertIsNone(name)
+        self.assertIsNone(url)
+
+    def test_normalize_shop_url_adds_scheme(self):
+        form = RecipePostForm(data={"category": "dinner"})
+        self.assertEqual(form._normalize_shop_url("example.com"), "https://example.com")
+        self.assertEqual(form._normalize_shop_url("http://example.com"), "http://example.com")
+
+    def test_existing_shop_image_count_returns_zero_for_new_instance(self):
+        recipe = self.make_recipe()
+        form = RecipePostForm(instance=recipe, data={"category": "dinner"})
+        form.instance.pk = None
+        form.instance._state.adding = True
+        self.assertEqual(form._existing_shop_image_count(), 0)

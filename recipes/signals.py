@@ -30,30 +30,40 @@ def notify_on_follow(sender, instance, created, **kwargs):
 @receiver(post_save, sender=Comment)
 def notify_on_comment(sender, instance, created, **kwargs):
     """Create notifications for comments and @mentions."""
-    if created:
-        if instance.user != instance.recipe_post.author:
-            Notification.objects.create(
-                recipient=instance.recipe_post.author,
-                sender=instance.user,
-                notification_type='comment',
-                post=instance.recipe_post,
-                comment=instance
-            )
-        
-        mentions = re.findall(r'@(\w+)', instance.text)
-        for username in mentions:
-            try:
-                tagged_user = User.objects.get(username=username)
-                if tagged_user != instance.user:
-                    Notification.objects.create(
-                        recipient=tagged_user,
-                        sender=instance.user,
-                        notification_type='tag',
-                        post=instance.recipe_post,
-                        comment=instance
-                    )
-            except User.DoesNotExist:
-                continue
+    if not created:
+        return
+    _notify_post_author(instance)
+    _notify_mentions(instance)
+
+def _notify_post_author(comment):
+    if comment.user == comment.recipe_post.author:
+        return
+    Notification.objects.create(
+        recipient=comment.recipe_post.author,
+        sender=comment.user,
+        notification_type='comment',
+        post=comment.recipe_post,
+        comment=comment,
+    )
+
+def _notify_mentions(comment):
+    for username in re.findall(r'@(\w+)', comment.text):
+        tagged_user = _safe_get_user(username)
+        if not tagged_user or tagged_user == comment.user:
+            continue
+        Notification.objects.create(
+            recipient=tagged_user,
+            sender=comment.user,
+            notification_type='tag',
+            post=comment.recipe_post,
+            comment=comment,
+        )
+
+def _safe_get_user(username):
+    try:
+        return User.objects.get(username=username)
+    except User.DoesNotExist:
+        return None
 
 
 @receiver(post_save, sender=Notification)

@@ -40,52 +40,45 @@ def scrape_product_image(url: str | None) -> str | None:
     """
     if not url:
         return None
+    html = _fetch_html(url)
+    if not html:
+        return None
+    return _extract_meta_image(url, html) or _extract_first_img(url, html)
 
+def _fetch_html(url):
+    headers = {
+        "User-Agent": (
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+            "AppleWebKit/537.36 (KHTML, like Gecko) "
+            "Chrome/115.0 Safari/537.36"
+        )
+    }
     try:
-        headers = {
-            "User-Agent": (
-                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                "AppleWebKit/537.36 (KHTML, like Gecko) "
-                "Chrome/115.0 Safari/537.36"
-            )
-        }
         resp = requests.get(url, headers=headers, timeout=8)
         if resp.status_code != 200:
             logger.warning("[scraper] Non-200 for %s: %s", url, resp.status_code)
             return None
-
-        html = resp.text or ""
-
-        # 1) Meta & link tags (attributes in ANY order)
-        meta_patterns = [
-            # <meta property="og:image" content="...">
-            r'<meta[^>]+property=["\']og:image["\'][^>]+content=["\'](.*?)["\']',
-            # <meta content="..." property="og:image">
-            r'<meta[^>]+content=["\'](.*?)["\'][^>]+property=["\']og:image["\']',
-
-            # <meta name="twitter:image" content="...">
-            r'<meta[^>]+name=["\']twitter:image["\'][^>]+content=["\'](.*?)["\']',
-            # <meta content="..." name="twitter:image">
-            r'<meta[^>]+content=["\'](.*?)["\'][^>]+name=["\']twitter:image["\']',
-
-            # <link rel="image_src" href="...">
-            r'<link[^>]+rel=["\']image_src["\'][^>]+href=["\'](.*?)["\']',
-        ]
-
-        for pat in meta_patterns:
-            m = re.search(pat, html, re.IGNORECASE)
-            if m:
-                img_url = _normalize_img_url(url, m.group(1))
-                return img_url
-
-        # 2) Fallback: first <img src="...">
-        img_tag_pattern = r'<img[^>]+src=["\'](.*?)["\']'
-        m = re.search(img_tag_pattern, html, re.IGNORECASE)
-        if m:
-            img_url = _normalize_img_url(url, m.group(1))
-            return img_url
-
-    except Exception as e:
+        return resp.text or ""
+    except Exception as e:  # pragma: no cover - defensive
         logger.warning("[scraper] Error while scraping %s: %s", url, e)
+        return None
 
+def _extract_meta_image(url, html):
+    patterns = [
+        r'<meta[^>]+property=["\']og:image["\'][^>]+content=["\'](.*?)["\']',
+        r'<meta[^>]+content=["\'](.*?)["\'][^>]+property=["\']og:image["\']',
+        r'<meta[^>]+name=["\']twitter:image["\'][^>]+content=["\'](.*?)["\']',
+        r'<meta[^>]+content=["\'](.*?)["\'][^>]+name=["\']twitter:image["\']',
+        r'<link[^>]+rel=["\']image_src["\'][^>]+href=["\'](.*?)["\']',
+    ]
+    for pat in patterns:
+        match = re.search(pat, html, re.IGNORECASE)
+        if match:
+            return _normalize_img_url(url, match.group(1))
+    return None
+
+def _extract_first_img(url, html):
+    match = re.search(r'<img[^>]+src=["\'](.*?)["\']', html, re.IGNORECASE)
+    if match:
+        return _normalize_img_url(url, match.group(1))
     return None

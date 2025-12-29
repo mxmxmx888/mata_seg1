@@ -1,7 +1,7 @@
 """Dashboard view helpers for discovery feed, search scopes, and AJAX fragments."""
 
 from django.core.paginator import Paginator
-from django.db.models import Exists, ExpressionWrapper, F, IntegerField, OuterRef, Q
+from django.db.models import Count, Exists, ExpressionWrapper, F, IntegerField, OuterRef, Q
 from django.http import JsonResponse
 from django.shortcuts import render
 from django.template.loader import render_to_string
@@ -119,7 +119,12 @@ def _apply_have_ingredients_filter(qs, have_ingredients_list):
 def _sort_discover(discover_qs, sort):
     """Apply sort mode to the discover queryset."""
     if sort == "popular":
-        return discover_qs.order_by("-saved_count", "-published_at", "-created_at")
+        return (
+            discover_qs.annotate(
+                likes_total=Count("likes", distinct=True),
+                popularity=F("saved_count") + F("likes_total"),
+            ).order_by("-popularity", "-published_at", "-created_at")
+        )
     if sort == "oldest":
         return discover_qs.order_by("published_at", "created_at")
     return discover_qs.order_by("-published_at", "-created_at")

@@ -203,6 +203,43 @@ class RecipeViewHelpersTests(TestCase):
 
         self.assertEqual(gallery, [])
 
+    def test_recipe_media_single_image_has_empty_gallery(self):
+        RecipeImage.objects.create(recipe_post=self.recipe, image=SimpleUploadedFile("only.jpg", b"x"), position=0)
+        image_url, gallery = helpers.recipe_media(self.recipe)
+        self.assertTrue(image_url.endswith(".jpg"))
+        self.assertEqual(gallery, [])
+
+    def test_first_item_post_and_last_saved_defaults(self):
+        self.assertIsNone(helpers._first_item_post([]))
+        now = timezone.now()
+        self.assertEqual(helpers._last_saved_at([], now), now)
+
+    def test_first_item_post_returns_first_available(self):
+        items = [SimpleNamespace(recipe_post=self.recipe)]
+
+        self.assertEqual(helpers._first_item_post(items), self.recipe)
+
+    def test_first_item_post_skips_missing_posts(self):
+        items = [SimpleNamespace(recipe_post=None), SimpleNamespace(recipe_post=self.recipe)]
+
+        self.assertEqual(helpers._first_item_post(items), self.recipe)
+
+    def test_collection_entry_unsaved_uses_item_cover(self):
+        fav = Favourite.objects.create(user=self.user, name="N")
+        other_post = RecipePost.objects.create(
+            author=self.user,
+            title="X",
+            description="d",
+            category="dinner",
+            prep_time_min=1,
+            cook_time_min=1,
+            image="cover.png",
+        )
+        FavouriteItem.objects.create(favourite=fav, recipe_post=other_post)
+        entry = helpers._collection_entry(fav, self.recipe)
+        self.assertFalse(entry["saved"])
+        self.assertIn("cover", entry["thumb_url"])
+
     def test_ingredient_lists_split_shop_and_non_shop(self):
         Ingredient.objects.create(recipe_post=self.recipe, name="plain", position=1)
         Ingredient.objects.create(recipe_post=self.recipe, name="shop", shop_url=" https://x.com ", position=2)

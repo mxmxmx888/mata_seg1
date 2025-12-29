@@ -36,26 +36,28 @@ class UserForm(forms.ModelForm):
         remove_avatar = self.cleaned_data.get('remove_avatar')
         new_avatar = self.cleaned_data.get('avatar')
 
-        if remove_avatar:
-            if existing_avatar:
-                existing_avatar.delete(save=False)
-            user.avatar = None
-        elif new_avatar:
-            if existing_avatar and existing_avatar != new_avatar:
-                existing_avatar.delete(save=False)
-            user.avatar = new_avatar
-        else:
-            user.avatar = existing_avatar
-
-        # to not accidentally keep the initial file when clearing
-        if remove_avatar:
-            if existing_avatar:
-                existing_avatar.delete(save=False)
-            user.avatar = None
+        user.avatar = self._resolve_avatar(existing_avatar, new_avatar, remove_avatar)
 
         if commit:
             user.save()
         return user
+
+    def _delete_avatar(self, avatar_file):
+        if avatar_file:
+            avatar_file.delete(save=False)
+
+    def _replace_avatar(self, existing_avatar, new_avatar):
+        if existing_avatar and existing_avatar != new_avatar:
+            self._delete_avatar(existing_avatar)
+
+    def _resolve_avatar(self, existing_avatar, new_avatar, remove_avatar):
+        if remove_avatar:
+            self._delete_avatar(existing_avatar)
+            return None
+        if new_avatar:
+            self._replace_avatar(existing_avatar, new_avatar)
+            return new_avatar
+        return existing_avatar
 
 class NewPasswordMixin(forms.Form):
     """Mixin providing password and password confirmation fields."""

@@ -21,54 +21,57 @@ def create_firebase_user(uid: str, email: str, password: str):
     )
     return user
 
+def _requests_call_mocked():
+    try:
+        return "unittest.mock" in type(requests.post).__module__
+    except Exception:
+        return False
+
+def _get_api_key(is_test_run: bool):
+    api_key = getattr(settings, "FIREBASE_API_KEY", None)
+    if api_key or is_test_run:
+        return api_key
+    message = "Firebase sign-in skipped: FIREBASE_API_KEY not configured"
+    print(message)
+    logger.warning(message)
+    return None
+
+def _log_sign_in_failure(email, response):
+    body = getattr(response, "text", "")
+    print("Firebase sign-in failed")
+    print(f"status={response.status_code}")
+    print(f"body={body}")
+    logger.warning(
+        "Firebase sign-in failed for %s (status=%s, body=%s)",
+        email,
+        response.status_code,
+        body,
+    )
+
 
 def sign_in_with_email_and_password(email: str, password: str):
     """Sign in against Firebase REST API; return response JSON or None."""
-    # Avoid real network calls during most test runs unless the HTTP client is mocked.
     is_test_run = _is_running_tests()
-    if is_test_run:
-        try:
-            is_mocked = "unittest.mock" in type(requests.post).__module__
-        except Exception:
-            is_mocked = False
-        if not is_mocked:
-            return None
-
-    api_key = getattr(settings, "FIREBASE_API_KEY", None)
-    if not api_key:
-        if not is_test_run:
-            message = "Firebase sign-in skipped: FIREBASE_API_KEY not configured"
-            print(message)
-            logger.warning(message)
+    if is_test_run and not _requests_call_mocked():
         return None
 
-    url = f"https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key={api_key}"
-    payload = {
-        "email": email,
-        "password": password,
-        "returnSecureToken": True,
-    }
+    api_key = _get_api_key(is_test_run)
+    if not api_key:
+        return None
 
-    response = requests.post(url, json=payload)
+    response = requests.post(
+        f"https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key={api_key}",
+        json={"email": email, "password": password, "returnSecureToken": True},
+    )
 
     if response.status_code == 200:
         if not is_test_run:
-            message = f"Firebase sign-in OK for {email}"
-            print(message)
-            logger.debug(message)
+            print(f"Firebase sign-in OK for {email}")
+            logger.debug("Firebase sign-in OK for %s", email)
         return response.json()
 
     if not is_test_run:
-        body = getattr(response, "text", "")
-        print("Firebase sign-in failed")
-        print(f"status={response.status_code}")
-        print(f"body={body}")
-        logger.warning(
-            "Firebase sign-in failed for %s (status=%s, body=%s)",
-            email,
-            response.status_code,
-            body,
-        )
+        _log_sign_in_failure(email, response)
     return None
 
 

@@ -42,39 +42,11 @@ def recipe_create(request):
     """Create a new recipe post from a submitted RecipePostForm."""
     form = RecipePostForm(request.POST or None, request.FILES or None)
     if request.method == "POST" and form.is_valid():
-        cleaned = form.cleaned_data
-        tags_list = form.parse_tags()
-        recipe = RecipePost.objects.create(
-            author=request.user,
-            title=cleaned["title"],
-            description=cleaned.get("description") or "",
-            prep_time_min=cleaned.get("prep_time_min") or 0,
-            cook_time_min=cleaned.get("cook_time_min") or 0,
-            serves=cleaned.get("serves") or 0,
-            nutrition=cleaned.get("nutrition") or "",
-            tags=tags_list,
-            category=cleaned.get("category") or "",
-            visibility=cleaned.get("visibility") or RecipePost.VISIBILITY_PUBLIC,
-            published_at=timezone.now(),
-        )
-        form.create_ingredients(recipe)
-        form.create_steps(recipe)
-        form.create_images(recipe)
-        set_primary_image(recipe)
+        recipe = _create_recipe_from_form(form, request.user)
+        _persist_recipe_relations(form, recipe)
         return redirect("recipe_detail", post_id=recipe.id)
 
-    response = render(
-        request,
-        "app/create_recipe.html",
-        {
-            "form": form,
-            "exclude_fields": ["shop_images"],  # render form fields except shopping images (handled manually)
-        },
-    )
-    response["Cache-Control"] = "no-store, must-revalidate"
-    response["Pragma"] = "no-cache"
-    response["Expires"] = "0"
-    return response
+    return _render_create_form(request, form)
 
 @login_required
 def recipe_edit(request, post_id):
@@ -82,34 +54,13 @@ def recipe_edit(request, post_id):
     recipe = get_object_or_404(RecipePost, id=post_id, author=request.user)
     form = RecipePostForm(request.POST or None, request.FILES or None, instance=recipe)
     if request.method == "POST" and form.is_valid():
-        cleaned = form.cleaned_data
-        tags_list = form.parse_tags()
-        recipe.title = cleaned["title"]
-        recipe.description = cleaned.get("description") or ""
-        recipe.prep_time_min = cleaned.get("prep_time_min") or 0
-        recipe.cook_time_min = cleaned.get("cook_time_min") or 0
-        recipe.serves = cleaned.get("serves") or 0
-        recipe.nutrition = cleaned.get("nutrition") or ""
-        recipe.tags = tags_list
-        recipe.category = cleaned.get("category") or ""
-        recipe.visibility = cleaned.get("visibility") or RecipePost.VISIBILITY_PUBLIC
-        recipe.save()
-        form.create_ingredients(recipe)
-        form.create_steps(recipe)
-        form.create_images(recipe)
-        set_primary_image(recipe)
+        _update_recipe_from_form(recipe, form)
+        _persist_recipe_relations(form, recipe)
         messages.success(request, "Recipe updated.")
         detail_url = reverse("recipe_detail", kwargs={"post_id": recipe.id})
         return redirect(f"{detail_url}?from_edit=1")
 
-    shopping_items = [
-        {
-            "name": ing.name,
-            "url": ing.shop_url or "",
-            "image_url": ing.shop_image_upload.url if ing.shop_image_upload else "",
-        }
-        for ing in Ingredient.objects.filter(recipe_post=recipe, shop_url__isnull=False).order_by("position")
-    ]
+    shopping_items = _shopping_items_for(recipe)
     return render(
         request,
         "app/edit_recipe.html",
@@ -131,20 +82,9 @@ def recipe_detail(request, post_id):
     if not privacy_service.can_view_post(request.user, recipe):
         raise Http404("Post not available.")
 
-    comments_qs = recipe.comments.select_related("user").order_by("-created_at")
-    page_size = 50
-    page_number = max(1, int(request.GET.get("comments_page") or 1))
-    start = (page_number - 1) * page_size
-    end = start + page_size
-    comments_page = list(comments_qs[start:end])
-    has_more_comments = comments_qs.count() > end
-
+    comments_page, has_more_comments, page_number = _comments_page(recipe, request)
     if request.headers.get("HX-Request") and request.GET.get("comments_only") == "1":
-        return render(
-            request,
-            "partials/post/comment_items.html",
-            {"comments": comments_page, "request": request},
-        )
+        return render(request, "partials/post/comment_items.html", {"comments": comments_page, "request": request})
 
     context = build_recipe_context(recipe, request.user, comments_page)
     context.update(
@@ -156,6 +96,72 @@ def recipe_detail(request, post_id):
     # Ensure source_link is absolute for sharing
     context["source_link"] = request.build_absolute_uri(context["source_link"])
     return render(request, "post/post_detail.html", context)
+
+def _render_create_form(request, form):
+    response = render(
+        request,
+        "app/create_recipe.html",
+        {"form": form, "exclude_fields": ["shop_images"]},
+    )
+    response["Cache-Control"] = "no-store, must-revalidate"
+    response["Pragma"] = "no-cache"
+    response["Expires"] = "0"
+    return response
+
+def _persist_recipe_relations(form, recipe):
+    form.create_ingredients(recipe)
+    form.create_steps(recipe)
+    form.create_images(recipe)
+    set_primary_image(recipe)
+
+def _create_recipe_from_form(form, user):
+    cleaned = form.cleaned_data
+    tags_list = form.parse_tags()
+    return RecipePost.objects.create(
+        author=user,
+        title=cleaned["title"],
+        description=cleaned.get("description") or "",
+        prep_time_min=cleaned.get("prep_time_min") or 0,
+        cook_time_min=cleaned.get("cook_time_min") or 0,
+        serves=cleaned.get("serves") or 0,
+        nutrition=cleaned.get("nutrition") or "",
+        tags=tags_list,
+        category=cleaned.get("category") or "",
+        visibility=cleaned.get("visibility") or RecipePost.VISIBILITY_PUBLIC,
+        published_at=timezone.now(),
+    )
+
+def _update_recipe_from_form(recipe, form):
+    cleaned = form.cleaned_data
+    recipe.title = cleaned["title"]
+    recipe.description = cleaned.get("description") or ""
+    recipe.prep_time_min = cleaned.get("prep_time_min") or 0
+    recipe.cook_time_min = cleaned.get("cook_time_min") or 0
+    recipe.serves = cleaned.get("serves") or 0
+    recipe.nutrition = cleaned.get("nutrition") or ""
+    recipe.tags = form.parse_tags()
+    recipe.category = cleaned.get("category") or ""
+    recipe.visibility = cleaned.get("visibility") or RecipePost.VISIBILITY_PUBLIC
+    recipe.save()
+
+def _shopping_items_for(recipe):
+    return [
+        {
+            "name": ing.name,
+            "url": ing.shop_url or "",
+            "image_url": ing.shop_image_upload.url if ing.shop_image_upload else "",
+        }
+        for ing in Ingredient.objects.filter(recipe_post=recipe, shop_url__isnull=False).order_by("position")
+    ]
+
+def _comments_page(recipe, request, page_size=50):
+    comments_qs = recipe.comments.select_related("user").order_by("-created_at")
+    page_number = max(1, int(request.GET.get("comments_page") or 1))
+    start = (page_number - 1) * page_size
+    end = start + page_size
+    comments_page = list(comments_qs[start:end])
+    has_more_comments = comments_qs.count() > end
+    return comments_page, has_more_comments, page_number
 
 @login_required
 def saved_recipes(request):

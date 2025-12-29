@@ -49,44 +49,29 @@ class NotificationsContextTests(TestCase):
         return req
 
     def _seed_follow_data(self):
+        self._seed_follow_edges()
+        follow_request = FollowRequest.objects.create(
+            requester=self.pending_sender,
+            target=self.recipient,
+            status=FollowRequest.STATUS_PENDING,
+        )
+        Notification.objects.bulk_create(self._follow_notifications(follow_request))
+
+    def _seed_follow_edges(self):
         Follower.objects.bulk_create(
             [
                 Follower(follower=self.recipient, author=self.pending_sender),
                 Follower(follower=self.recipient, author=self.follower_sender),
             ]
         )
-        follow_request = FollowRequest.objects.create(
-            requester=self.pending_sender,
-            target=self.recipient,
-            status=FollowRequest.STATUS_PENDING,
-        )
-        Notification.objects.bulk_create(
-            [
-                Notification(
-                    recipient=self.recipient,
-                    sender=self.pending_sender,
-                    notification_type="follow_request",
-                    follow_request=follow_request,
-                ),
-                Notification(
-                    recipient=self.recipient,
-                    sender=self.pending_sender,
-                    notification_type="follow",
-                ),
-                Notification(
-                    recipient=self.recipient,
-                    sender=self.follower_sender,
-                    notification_type="follow",
-                    is_read=True,
-                ),
-                Notification(
-                    recipient=self.recipient,
-                    sender=self.follower_sender,
-                    notification_type="follow",
-                    is_read=False,
-                ),
-            ]
-        )
+
+    def _follow_notifications(self, follow_request):
+        return [
+            Notification(recipient=self.recipient, sender=self.pending_sender, notification_type="follow_request", follow_request=follow_request),
+            Notification(recipient=self.recipient, sender=self.pending_sender, notification_type="follow"),
+            Notification(recipient=self.recipient, sender=self.follower_sender, notification_type="follow", is_read=True),
+            Notification(recipient=self.recipient, sender=self.follower_sender, notification_type="follow", is_read=False),
+        ]
 
     def test_returns_empty_for_anonymous_user(self):
         req = self.factory.get("/")

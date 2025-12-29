@@ -24,22 +24,21 @@ class LogInView(LoginProhibitedMixin, View):
     def post(self, request):
         """Process login form submission."""
         form = LogInForm(request.POST)
-
         if form.is_valid():
             user = form.get_user()
-            if user is not None:
-                login(request, user, backend='django.contrib.auth.backends.ModelBackend')
-                
-                messages.add_message(request, messages.SUCCESS, "You have logged in successfully!")
-
-                next_url = self.next
-                if not next_url or next_url == "None":
-                    next_url = reverse("dashboard")
-
-                return redirect(next_url)
-
-        error_message = "Oh no, perhaps your username or password is incorrect!"
-        if form.is_valid():
-            form.add_error(None, error_message)
-        messages.add_message(request, messages.ERROR, error_message)
+            if user:
+                return self._login_success(request, user)
+            form.add_error(None, self._error_message())
+        messages.add_message(request, messages.ERROR, self._error_message())
         return render(request, "auth/log_in.html", {"form": form, "next": self.next})
+
+    def _login_success(self, request, user):
+        login(request, user, backend='django.contrib.auth.backends.ModelBackend')
+        messages.add_message(request, messages.SUCCESS, "You have logged in successfully!")
+        next_url = self.next or reverse("dashboard")
+        if next_url == "None":
+            next_url = reverse("dashboard")
+        return redirect(next_url)
+
+    def _error_message(self):
+        return "Oh no, perhaps your username or password is incorrect!"

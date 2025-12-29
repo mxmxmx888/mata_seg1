@@ -1,68 +1,76 @@
-(function (global) {
-  function createRequiredFieldValidator(doc, formEl, requiredFields, getFilesFn) {
-    const getFilesSafe = typeof getFilesFn === "function" ? getFilesFn : () => null;
-    const fields = requiredFields || [];
+{
+const hasModuleExports = typeof module !== "undefined" && module.exports;
+const globalScope = typeof window !== "undefined" ? window : null;
 
-    function clearFieldError(field) {
-      const container = field && (field.closest(".mb-3") || field.parentElement);
-      /* istanbul ignore next */
-      if (!container) return;
-      container.querySelectorAll(".client-required-error").forEach((msg) => msg.remove());
-    }
+const resolveFilesGetter = (fn) => (typeof fn === "function" ? fn : () => null);
 
-    function renderRequiredFieldErrors() {
-      /* istanbul ignore next */
-      if (!formEl) return false;
-      let hasClientErrors = false;
-      formEl.querySelectorAll(".client-required-error").forEach((msg) => msg.remove());
-      fields.forEach((field) => {
-        const candidateFiles = field.type === "file" ? getFilesSafe(field) : null;
-        let isMissing = field.validity ? field.validity.valueMissing : !(field.value || "").trim();
-        if (candidateFiles && candidateFiles.length) {
-          isMissing = false;
-        }
-        if (!isMissing) {
-          clearFieldError(field);
-          return;
-        }
-        hasClientErrors = true;
-        const message = doc.createElement("div");
-        message.className = "client-required-error";
-        message.textContent = "field required";
-        const container = field.closest(".mb-3") || field.parentElement;
-        const invalidFeedback = container ? container.querySelector(".invalid-feedback") : null;
-        if (invalidFeedback) {
-          invalidFeedback.insertAdjacentElement("beforebegin", message);
-        } else if (container) {
-          container.appendChild(message);
-        } else {
-          /* istanbul ignore next */
-          field.insertAdjacentElement("afterend", message);
-        }
-      });
-      return hasClientErrors;
-    }
+const clearFieldError = (field) => {
+  const container = field && (field.closest(".mb-3") || field.parentElement);
+  if (!container) return;
+  container.querySelectorAll(".client-required-error").forEach((msg) => msg.remove());
+};
 
-    function bindRequiredListeners() {
-      fields.forEach((field) => {
-        /* istanbul ignore next */
-        field.addEventListener("input", () => clearFieldError(field));
-        /* istanbul ignore next */
-        field.addEventListener("change", () => clearFieldError(field));
-      });
-    }
+const fieldMissing = (field, getFilesSafe) => {
+  const candidateFiles = field.type === "file" ? getFilesSafe(field) : null;
+  if (candidateFiles && candidateFiles.length) return false;
+  if (field.validity) return field.validity.valueMissing;
+  return !((field.value || "").trim());
+};
 
-    return { renderRequiredFieldErrors, bindRequiredListeners };
+const insertError = (doc, field, message) => {
+  const container = field.closest(".mb-3") || field.parentElement;
+  const msg = doc.createElement("div");
+  msg.className = "client-required-error";
+  msg.textContent = message;
+  const invalid = container ? container.querySelector(".invalid-feedback") : null;
+  if (invalid) {
+    invalid.insertAdjacentElement("beforebegin", msg);
+  } else if (container) {
+    container.appendChild(msg);
+  } else {
+    field.insertAdjacentElement("afterend", msg);
   }
+};
 
-  const api = { createRequiredFieldValidator };
+const renderRequiredFieldErrors = (doc, formEl, fields, getFilesSafe) => {
+  if (!formEl) return false;
+  formEl.querySelectorAll(".client-required-error").forEach((msg) => msg.remove());
+  let hasErrors = false;
+  fields.forEach((field) => {
+    if (!fieldMissing(field, getFilesSafe)) {
+      clearFieldError(field);
+      return;
+    }
+    hasErrors = true;
+    insertError(doc, field, "field required");
+  });
+  return hasErrors;
+};
 
-  if (typeof module !== "undefined" && module.exports) {
-    module.exports = api;
-  }
+const bindRequiredListeners = (fields) => {
+  fields.forEach((field) => {
+    field.addEventListener("input", () => clearFieldError(field));
+    field.addEventListener("change", () => clearFieldError(field));
+  });
+};
 
-  /* istanbul ignore next */
-  if (global) {
-    global.createRecipeValidation = api;
-  }
-})(typeof window !== "undefined" ? window : null);
+const createRequiredFieldValidator = (doc, formEl, requiredFields, getFilesFn) => {
+  const fields = requiredFields || [];
+  const getFilesSafe = resolveFilesGetter(getFilesFn);
+  return {
+    renderRequiredFieldErrors: () => renderRequiredFieldErrors(doc, formEl, fields, getFilesSafe),
+    bindRequiredListeners: () => bindRequiredListeners(fields),
+  };
+};
+
+const api = { createRequiredFieldValidator };
+
+if (hasModuleExports) {
+  module.exports = api;
+}
+
+/* istanbul ignore next */
+if (globalScope) {
+  globalScope.createRecipeValidation = api;
+}
+}

@@ -70,40 +70,41 @@ def gallery_images(images_qs):
 
 def collections_modal_state(user, recipe):
     """Build modal-friendly collection metadata for a user and target recipe."""
-    collections = []
-    favourites_qs = Favourite.objects.filter(user=user).prefetch_related("items__recipe_post", "cover_post")
-    for fav in favourites_qs:
-        items = list(fav.items.all())
-        is_in_collection = any(item.recipe_post_id == recipe.id for item in items)
-        last_saved_at = fav.created_at
-        cover_post = fav.cover_post
-        fallback_cover = recipe if is_in_collection else None
-
-        for item in items:
-            if item.added_at and (last_saved_at is None or item.added_at > last_saved_at):
-                last_saved_at = item.added_at
-            if not cover_post and item.recipe_post:
-                cover_post = item.recipe_post
-            if not fallback_cover and item.recipe_post:
-                fallback_cover = item.recipe_post
-
-        thumb_url = collection_thumb(cover_post, fallback_cover)
-
-        collections.append(
-            {
-                "id": str(fav.id),
-                "name": fav.name,
-                "saved": is_in_collection,
-                "count": len(items),
-                "thumb_url": thumb_url,
-                "last_saved_at": last_saved_at,
-            }
-        )
-
+    collections = [_collection_entry(fav, recipe) for fav in _favourites_for(user)]
     collections.sort(key=lambda c: c.get("last_saved_at") or c.get("created_at"), reverse=True)
     collections.sort(key=lambda c: 0 if c.get("saved") else 1)
     return collections
 
+def _favourites_for(user):
+    return Favourite.objects.filter(user=user).prefetch_related("items__recipe_post", "cover_post")
+
+def _collection_entry(fav, recipe):
+    items = list(fav.items.all())
+    saved_here = any(item.recipe_post_id == recipe.id for item in items)
+    cover_post = fav.cover_post or _first_item_post(items)
+    fallback_cover = recipe if saved_here else _first_item_post(items)
+    return {
+        "id": str(fav.id),
+        "name": fav.name,
+        "saved": saved_here,
+        "count": len(items),
+        "thumb_url": collection_thumb(cover_post, fallback_cover),
+        "last_saved_at": _last_saved_at(items, fav.created_at),
+        "created_at": fav.created_at,
+    }
+
+def _first_item_post(items):
+    for item in items:
+        if item.recipe_post:
+            return item.recipe_post
+    return None
+
+def _last_saved_at(items, default):
+    latest = default
+    for item in items:
+        if item.added_at and (latest is None or item.added_at > latest):
+            latest = item.added_at
+    return latest
 
 def user_reactions(request_user, recipe):
     """Return flags and counts for likes/saves and following for the current user."""
@@ -176,41 +177,60 @@ def recipe_steps(recipe):
 
 def build_recipe_context(recipe, request_user, comments):
     """Assemble the context dict for recipe_detail."""
-    collections_for_modal = collections_modal_state(request_user, recipe)
-    reactions = user_reactions(request_user, recipe)
-    image_url, gallery_images = recipe_media(recipe)
-    meta = recipe_metadata(recipe)
-    ingredients, shop_ingredients = ingredient_lists(recipe)
-    steps = recipe_steps(recipe)
+    return _merge_recipe_context(
+        recipe,
+        comments,
+        collections_modal_state(request_user, recipe),
+        user_reactions(request_user, recipe),
+        recipe_media(recipe),
+        recipe_metadata(recipe),
+        ingredient_lists(recipe),
+        recipe_steps(recipe),
+    )
 
+def _merge_recipe_context(recipe, comments, collections_for_modal, reactions, media, meta, ingredients_data, steps):
+    image_url, gallery_images = media
+    ingredients, shop_ingredients = ingredients_data
     return {
-        "recipe": recipe,
-        "post": recipe,
-        "image_url": image_url,
+        **{
+            "recipe": recipe,
+            "post": recipe,
+            "image_url": image_url,
+            "gallery_images": gallery_images,
+            "ingredients": ingredients,
+            "shop_ingredients": shop_ingredients,
+            "steps": steps,
+            "comments": comments,
+            "comment_form": CommentForm(),
+            "save_collections": collections_for_modal,
+            "visibility": recipe.visibility,
+            "video_url": None,
+            "view_similar": [],
+        },
+        **_meta_context(recipe, meta),
+        **_reaction_context(reactions),
+    }
+
+def _meta_context(recipe, meta):
+    return {
         "author_handle": meta["author_handle"],
         "title": recipe.title,
         "cook_time": meta["cook_time"],
         "serves": meta["serves"],
-        "ingredients": ingredients,
-        "shop_ingredients": shop_ingredients,
-        "steps": steps,
         "summary": meta["summary"],
         "tags": meta["tags_list"],
         "post_date": meta["post_date"],
         "source_link": meta["source_link"],
         "source_label": meta["source_label"],
+    }
+
+def _reaction_context(reactions):
+    return {
         "user_liked": reactions["user_liked"],
         "user_saved": reactions["user_saved"],
         "is_following_author": reactions["is_following_author"],
         "likes_count": reactions["likes_count"],
         "saves_count": reactions["saves_count"],
-        "comments": comments,
-        "comment_form": CommentForm(),
-        "gallery_images": gallery_images,
-        "video_url": None,
-        "view_similar": [],
-        "save_collections": collections_for_modal,
-        "visibility": recipe.visibility,
     }
 
 

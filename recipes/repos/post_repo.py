@@ -28,11 +28,8 @@ class PostRepo(DB_Accessor):
     ) -> QuerySet:
         """Return posts for feed with optional filters and paging."""
         filters: Dict[str, Any] = {}
-
         if category and category.lower() != "all":
-            
             filters["category__iexact"] = category
-
         if author_id is not None:
             filters["author_id"] = author_id
 

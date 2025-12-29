@@ -43,42 +43,8 @@ class Command(SeedHelpers, BaseCommand):
         count = max(1, min(int(options["count"]), 500))
         prefix = options["prefix"]
 
-        try:
-            author = User.objects.get(username=username)
-        except User.DoesNotExist as exc:
-            raise CommandError(f"User '{username}' not found") from exc
-
-        faker = Faker("en_GB")
-        now = timezone.now()
-
-        posts: list[RecipePost] = []
-        images: list[RecipeImage] = []
-        for idx in range(count):
-            created_at = now - timedelta(minutes=idx)
-            title = f"{prefix} {idx + 1:03d}"
-            tag_count = randint(0, min(3, len(tags_pool)))
-            post_tags = sample(tags_pool, k=tag_count) if tag_count else []
-
-            post = RecipePost(
-                author=author,
-                title=title[:255],
-                description=faker.paragraph(nb_sentences=3)[:4000],
-                image=choice(recipe_image_file_pool) if recipe_image_file_pool else None,
-                prep_time_min=randint(0, 30),
-                cook_time_min=randint(0, 60),
-                serves=choice([0, 2, 4, 6]),
-                tags=post_tags,
-                nutrition="",
-                category=choice(categories) if categories else None,
-                visibility=RecipePost.VISIBILITY_PUBLIC,
-                published_at=created_at,
-                created_at=created_at,
-                updated_at=created_at,
-            )
-
-            posts.append(post)
-            if recipe_image_file_pool:
-                images.extend(self._build_recipe_images(post, recipe_image_file_pool))
+        author = self._get_author(username)
+        posts, images = self._generate_posts(author, count, prefix)
 
         RecipePost.objects.bulk_create(posts, batch_size=500)
         if images:
@@ -89,4 +55,44 @@ class Command(SeedHelpers, BaseCommand):
                 f"Created {len(posts)} posts for {username} (prefix '{prefix}'). "
                 f"Attached images: {len(images)}"
             )
+        )
+
+    def _get_author(self, username):
+        try:
+            return User.objects.get(username=username)
+        except User.DoesNotExist as exc:
+            raise CommandError(f"User '{username}' not found") from exc
+
+    def _generate_posts(self, author, count, prefix):
+        faker = Faker("en_GB")
+        now = timezone.now()
+        posts: list[RecipePost] = []
+        images: list[RecipeImage] = []
+        for idx in range(count):
+            post = self._build_post(author, prefix, idx, faker, now)
+            posts.append(post)
+            if recipe_image_file_pool:
+                images.extend(self._build_recipe_images(post, recipe_image_file_pool))
+        return posts, images
+
+    def _build_post(self, author, prefix, idx, faker, now):
+        created_at = now - timedelta(minutes=idx)
+        title = f"{prefix} {idx + 1:03d}"
+        tag_count = randint(0, min(3, len(tags_pool)))
+        post_tags = sample(tags_pool, k=tag_count) if tag_count else []
+        return RecipePost(
+            author=author,
+            title=title[:255],
+            description=faker.paragraph(nb_sentences=3)[:4000],
+            image=choice(recipe_image_file_pool) if recipe_image_file_pool else None,
+            prep_time_min=randint(0, 30),
+            cook_time_min=randint(0, 60),
+            serves=choice([0, 2, 4, 6]),
+            tags=post_tags,
+            nutrition="",
+            category=choice(categories) if categories else None,
+            visibility=RecipePost.VISIBILITY_PUBLIC,
+            published_at=created_at,
+            created_at=created_at,
+            updated_at=created_at,
         )

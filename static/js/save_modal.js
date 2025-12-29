@@ -1,4 +1,4 @@
-(() => {
+{
 const VIEWS = { list: "list", create: "create" };
 const hasModuleExports = typeof module !== "undefined" && module.exports;
 const globalWindow = typeof window !== "undefined" && window.document ? window : null;
@@ -20,31 +20,37 @@ const lockBody = (doc, locked) => {
   doc.body.style.overflow = locked ? "hidden" : "";
 };
 
+const ensureBackdrop = (doc, state) => state.backdrop || (state.backdrop = buildBackdrop(doc));
+
+const hideFallbackModal = (doc, state, modal) => {
+  modal.classList.remove("show");
+  modal.style.display = "none";
+  modal.setAttribute("aria-hidden", "true");
+  if (state.backdrop) {
+    state.backdrop.classList.remove("show");
+    state.backdrop.style.display = "none";
+    state.backdrop.onclick = null;
+  }
+  lockBody(doc, false);
+};
+
+const showFallbackModal = (w, doc, state, modal, onBackdrop) => {
+  const el = ensureBackdrop(doc, state);
+  el.style.display = "block";
+  w.requestAnimationFrame(() => el.classList.add("show"));
+  modal.classList.add("show");
+  modal.style.display = "block";
+  modal.removeAttribute("aria-hidden");
+  lockBody(doc, true);
+  el.onclick = onBackdrop;
+};
+
 const createFallbackModalDisplay = (w, doc) => {
-  let backdrop = null;
-  const ensureBackdrop = () => (backdrop ? backdrop : (backdrop = buildBackdrop(doc)));
-  const hide = (modal) => {
-    modal.classList.remove("show");
-    modal.style.display = "none";
-    modal.setAttribute("aria-hidden", "true");
-    if (backdrop) {
-      backdrop.classList.remove("show");
-      backdrop.style.display = "none";
-      backdrop.onclick = null;
-    }
-    lockBody(doc, false);
+  const state = { backdrop: null };
+  return {
+    show: (modal, onBackdrop) => showFallbackModal(w, doc, state, modal, onBackdrop),
+    hide: (modal) => hideFallbackModal(doc, state, modal),
   };
-  const show = (modal, onBackdrop) => {
-    const el = ensureBackdrop();
-    el.style.display = "block";
-    w.requestAnimationFrame(() => el.classList.add("show"));
-    modal.classList.add("show");
-    modal.style.display = "block";
-    modal.removeAttribute("aria-hidden");
-    lockBody(doc, true);
-    el.onclick = onBackdrop;
-  };
-  return { show, hide };
 };
 
 const buildSaveState = (w, doc) => {
@@ -371,4 +377,4 @@ if (hasModuleExports) {
 
 /* istanbul ignore next */
 autoInitSaveModal();
-})();
+}

@@ -166,6 +166,7 @@ const buildSearchState = (w, doc, input) => ({
   suggestions: ["15 minute pasta", "one-pan chicken", "banana protein milkshake", "sheet-pan salmon", "chocolate protein oats"],
   compactText: "Search...",
   fullText: "Search Recipi...",
+   focusText: "Search...",
   prefix: "Try ‘",
   suffix: "’",
   placeholderIndex: 0,
@@ -240,7 +241,7 @@ const typePlaceholder = (state) => {
 const onSearchFocus = (state) => {
   state.animationActive = false;
   clearTypingTimeout(state);
-  setPlaceholderText(state, "");
+  state.input.placeholder = state.focusText;
 };
 
 const onSearchBlur = (state) => {
