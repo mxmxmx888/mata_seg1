@@ -1,10 +1,12 @@
 from unittest.mock import patch, MagicMock
+from types import SimpleNamespace
 from django.contrib import messages
 from django.test import TestCase
 from django.urls import reverse
 from recipes.forms import UserForm
 from recipes.models import User, Favourite, FavouriteItem, RecipePost, Follower, CloseFriend, FollowRequest
 from recipes.views import profile_view
+from recipes.views import profile_view_logic as logic
 from recipes.views.profile_view import _profile_data_for_user, _collections_for_user
 from recipes.tests.test_utils import reverse_with_next
 
@@ -197,6 +199,54 @@ class ProfileViewTest(TestCase):
         self.assertEqual(len(response.context["posts"]), 12)
         self.assertTrue(response.context["posts_has_more"])
         self.assertEqual(response.context["posts_next_page"], 2)
+
+    def test_apply_follow_visibility_hides_when_private_and_not_following(self):
+        private_user = User.objects.get(username='@janedoe')
+        private_user.is_private = True
+        private_user.save()
+        followers = {"users": [self.user], "has_more": True, "next_page": 2, "visible": True}
+        following = {"users": [self.user], "has_more": False, "next_page": None, "visible": True}
+
+        hidden_followers, hidden_following = logic.apply_follow_visibility(private_user, self.user, False, followers, following)
+
+        self.assertFalse(hidden_followers["visible"])
+        self.assertEqual(hidden_followers["users"], [])
+        self.assertFalse(hidden_following["visible"])
+        self.assertEqual(hidden_following["users"], [])
+
+    def test_follow_list_selection_close_friends_requires_owner(self):
+        private_user = User.objects.get(username='@janedoe')
+        response = logic.follow_list_selection("close_friends", private_user, False, SimpleNamespace(follower_model=Follower))
+        self.assertEqual(response.status_code, 403)
+
+    def test_profile_posts_respects_privacy_block(self):
+        class StubPrivacy:
+            def __init__(self, allow): self.allow = allow
+            def can_view_profile(self, viewer, profile_user): return self.allow
+            def filter_visible_posts(self, qs, viewer): return qs
+
+        deps = SimpleNamespace(
+            privacy_service=StubPrivacy(False),
+            recipe_post_model=RecipePost,
+            post_repo=SimpleNamespace(list_for_user=lambda *args, **kwargs: RecipePost.objects.all()),
+        )
+        profile_user = User.objects.get(username='@janedoe')
+
+        posts_qs, can_view = logic.profile_posts(profile_user, self.user, deps)
+
+        self.assertFalse(can_view)
+        self.assertEqual(posts_qs.count(), 0)
+
+    def test_pending_follow_request_returns_request(self):
+        private_user = User.objects.get(username='@janedoe')
+        private_user.is_private = True
+        private_user.save()
+        fr = FollowRequest.objects.create(requester=self.user, target=private_user, status=FollowRequest.STATUS_PENDING)
+        deps = SimpleNamespace(follow_request_model=FollowRequest)
+
+        result = logic.pending_follow_request(self.user, private_user, False, deps)
+
+        self.assertEqual(result, fr)
 
     def test_follow_context_hides_lists_for_private_when_not_following(self):
         private_user = User.objects.get(username='@janedoe')

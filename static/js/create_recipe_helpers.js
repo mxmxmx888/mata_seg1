@@ -2,16 +2,20 @@
 const hasModuleExports = typeof module !== "undefined" && module.exports;
 const globalWindow = typeof window !== "undefined" && window.document ? window : null;
 
-const loadModule = (path, globalKey) => {
-  if (hasModuleExports) {
-    try {
-      return require(path);
-    } catch (err) {
-      return {};
-    }
+const safeRequire = (path) => {
+  try {
+    return require(path);
+  } catch (err) {
+    return {};
   }
-  return globalWindow && globalWindow[globalKey] ? globalWindow[globalKey] : {};
 };
+
+const loadFromWindow = (globalKey) => {
+  if (!globalWindow) return {};
+  return globalWindow[globalKey] || {};
+};
+
+const loadModule = (path, globalKey) => (hasModuleExports ? safeRequire(path) : loadFromWindow(globalKey));
 
 const validation = loadModule("./create_recipe_validation", "createRecipeValidation");
 const images = loadModule("./create_recipe_images", "createRecipeImages");

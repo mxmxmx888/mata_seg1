@@ -43,32 +43,40 @@ const positionFloatingMenu = ({ trigger, menu, breakpoint = 640, margin = DEFAUL
   menu.style.setProperty("max-width", `${w.innerWidth - margin * 2}px`, "important");
 };
 
+const createPrepPositioner = (w, toggleBtn, popover) => () =>
+  positionFloatingMenu({
+    trigger: toggleBtn,
+    menu: popover,
+    breakpoint: 640,
+    maxWidth: 360,
+    offset: getDropdownOffset(w)
+  });
+
+const createPrepToggleHandler = (popover, positionPopover) => (event) => {
+  event.stopPropagation();
+  const shouldOpen = !popover.classList.contains("prep-filter-open");
+  popover.classList.toggle("prep-filter-open", shouldOpen);
+  if (shouldOpen) positionPopover();
+};
+
+const createPrepClickAwayHandler = (popover, toggleBtn) => (event) => {
+  if (!popover.contains(event.target) && !toggleBtn.contains(event.target)) {
+    popover.classList.remove("prep-filter-open");
+  }
+};
+
+const createPrepResizeHandler = (popover, positionPopover) => () => {
+  if (popover.classList.contains("prep-filter-open")) positionPopover();
+};
+
 const initPrepFilter = (w, doc) => {
   const toggleBtn = doc.getElementById("prepTimeToggle");
   const popover = doc.getElementById("prepFilterPopover");
   if (!toggleBtn || !popover) return;
-  const positionPopover = () =>
-    positionFloatingMenu({
-      trigger: toggleBtn,
-      menu: popover,
-      breakpoint: 640,
-      maxWidth: 360,
-      offset: getDropdownOffset(w)
-    });
-  toggleBtn.addEventListener("click", (event) => {
-    event.stopPropagation();
-    const shouldOpen = !popover.classList.contains("prep-filter-open");
-    popover.classList.toggle("prep-filter-open", shouldOpen);
-    if (shouldOpen) positionPopover();
-  });
-  doc.addEventListener("click", (event) => {
-    if (!popover.contains(event.target) && !toggleBtn.contains(event.target)) {
-      popover.classList.remove("prep-filter-open");
-    }
-  });
-  w.addEventListener("resize", () => {
-    if (popover.classList.contains("prep-filter-open")) positionPopover();
-  });
+  const positionPopover = createPrepPositioner(w, toggleBtn, popover);
+  toggleBtn.addEventListener("click", createPrepToggleHandler(popover, positionPopover));
+  doc.addEventListener("click", createPrepClickAwayHandler(popover, toggleBtn));
+  w.addEventListener("resize", createPrepResizeHandler(popover, positionPopover));
 };
 
 const markNotificationsReadOnce = (w, doc) => {

@@ -9,6 +9,7 @@ from recipes.views import dashboard_view
 class DashboardSearchViewTests(TestCase):
     def setUp(self):
         self.user = make_user(username="searcher")
+        self.feed_service = dashboard_view.feed_service
         self.client.login(username=self.user.username, password="Password123")
         self.url = reverse("dashboard")
         self.make_published = lambda title, days_ago, saves: self._publish(
@@ -55,9 +56,9 @@ class DashboardSearchViewTests(TestCase):
         self.assertTemplateUsed(response, "auth/discover_logged_out.html")
 
     def test_normalise_tags_handles_strings_lists_and_none(self):
-        self.assertEqual(dashboard_view._normalise_tags(None), [])
-        self.assertEqual(dashboard_view._normalise_tags("A, b ,"), ["a", "b"])
-        self.assertEqual(dashboard_view._normalise_tags([" X ", ""]), ["x"])
+        self.assertEqual(self.feed_service.normalise_tags(None), [])
+        self.assertEqual(self.feed_service.normalise_tags("A, b ,"), ["a", "b"])
+        self.assertEqual(self.feed_service.normalise_tags([" X ", ""]), ["x"])
 
     def test_filter_posts_by_prep_time_bounds(self):
         class Obj:
@@ -65,45 +66,45 @@ class DashboardSearchViewTests(TestCase):
                 self.prep_time_min = prep
 
         posts = [Obj(5), Obj(10), Obj(None)]
-        self.assertEqual(len(dashboard_view._filter_posts_by_prep_time(posts, 6, None)), 1)
-        self.assertEqual(len(dashboard_view._filter_posts_by_prep_time(posts, None, 6)), 1)
+        self.assertEqual(len(self.feed_service.filter_posts_by_prep_time(posts, 6, None)), 1)
+        self.assertEqual(len(self.feed_service.filter_posts_by_prep_time(posts, None, 6)), 1)
 
     def test_filter_posts_by_prep_time_handles_missing_and_none_bounds(self):
         class Obj:
             def __init__(self, prep):
                 self.prep_time_min = prep
         posts = [Obj("bad"), Obj(3)]
-        result = dashboard_view._filter_posts_by_prep_time(posts, None, None)
+        result = self.feed_service.filter_posts_by_prep_time(posts, None, None)
         self.assertEqual(len(result), 2)
-        filtered = dashboard_view._filter_posts_by_prep_time(posts, 1, 5)
+        filtered = self.feed_service.filter_posts_by_prep_time(posts, 1, 5)
         self.assertEqual(filtered, [posts[1]])
 
     def test_score_post_no_tag_bonus(self):
         post = make_recipe_post(author=self.user, tags=["x"], saved_count=2, published=False)
-        score = dashboard_view._score_post_for_user(post, ["other"])
+        score = self.feed_service.score_post_for_user(post, ["other"])
         self.assertGreaterEqual(score, 2)
 
     def test_user_preference_tags_dedupes(self):
         liked = make_recipe_post(author=self.user, tags=["pasta", "pasta"])
-        dashboard_view.Like.objects.create(user=self.user, recipe_post=liked)
-        tags = dashboard_view._user_preference_tags(self.user)
+        Like.objects.create(user=self.user, recipe_post=liked)
+        tags = self.feed_service.user_preference_tags(self.user)
         self.assertEqual(tags, ["pasta"])
 
     def test_normalise_tags_unknown_type_returns_empty(self):
-        self.assertEqual(dashboard_view._normalise_tags(123), [])
+        self.assertEqual(self.feed_service.normalise_tags(123), [])
 
     def test_score_post_without_published_date(self):
         post = make_recipe_post(author=self.user, title="No date", published=False, tags=["x"], saved_count=2)
-        score = dashboard_view._score_post_for_user(post, ["x"])
+        score = self.feed_service.score_post_for_user(post, ["x"])
         self.assertGreaterEqual(score, 5) #score includes tag bonus + saved_count
 
     def test_get_for_you_posts_filters_by_liked_tags_and_excludes_liked(self):
         liked = make_recipe_post(author=self.user, tags=["pasta"])
         match = make_recipe_post(author=self.user, tags=["pasta"])
         non_match = make_recipe_post(author=self.user, tags=["soup"])
-        dashboard_view.Like.objects.create(user=self.user, recipe_post=liked)
+        Like.objects.create(user=self.user, recipe_post=liked)
 
-        posts = dashboard_view._get_for_you_posts(self.user, seed=123)
+        posts = self.feed_service.for_you_posts(self.user, seed=123)
         self.assertEqual(set(p.id for p in posts), {match.id})
         self.assertNotIn(non_match.id, [p.id for p in posts])
 
@@ -111,33 +112,33 @@ class DashboardSearchViewTests(TestCase):
         first = make_recipe_post(author=self.user, tags=["x"])
         second = make_recipe_post(author=self.user, tags=["y"])
 
-        posts = dashboard_view._get_for_you_posts(self.user, seed=1)
+        posts = self.feed_service.for_you_posts(self.user, seed=1)
         self.assertEqual(set(p.id for p in posts), {first.id, second.id})
 
     def test_get_for_you_posts_for_anonymous_user(self):
         anon = AnonymousUser()
-        posts = dashboard_view._get_for_you_posts(anon, seed=2)
+        posts = self.feed_service.for_you_posts(anon, seed=2)
         self.assertIsInstance(posts, list)
 
     def test_get_for_you_posts_with_likes_but_no_tags_falls_back_to_all(self):
         liked = make_recipe_post(author=self.user, tags=[])
         other = make_recipe_post(author=self.user, tags=["something"])
-        dashboard_view.Like.objects.create(user=self.user, recipe_post=liked)
+        Like.objects.create(user=self.user, recipe_post=liked)
 
-        posts = dashboard_view._get_for_you_posts(self.user, seed=1)
+        posts = self.feed_service.for_you_posts(self.user, seed=1)
         self.assertEqual(set(p.id for p in posts), {liked.id, other.id})
 
     def test_get_for_you_posts_with_tag_filter_no_results_falls_back(self):
         liked = make_recipe_post(author=self.user, tags=["pasta"])
-        dashboard_view.Like.objects.create(user=self.user, recipe_post=liked)
+        Like.objects.create(user=self.user, recipe_post=liked)
         # Query matches liked post; exclusion removes it, triggering fallback that should return the liked post.
-        posts = dashboard_view._get_for_you_posts(self.user, query="pasta", seed=2, limit=5)
+        posts = self.feed_service.for_you_posts(self.user, query="pasta", seed=2, limit=5)
         self.assertEqual([p.id for p in posts], [liked.id])
 
     def test_get_for_you_posts_filters_query(self):
         match = make_recipe_post(author=self.user, title="Garlic Bread")
         make_recipe_post(author=self.user, title="Something else")
-        posts = dashboard_view._get_for_you_posts(self.user, query="garlic", seed=0)
+        posts = self.feed_service.for_you_posts(self.user, query="garlic", seed=0)
         self.assertEqual([p.id for p in posts], [match.id])
 
     def test_get_following_posts_returns_only_followed(self):
@@ -146,7 +147,7 @@ class DashboardSearchViewTests(TestCase):
         post = make_recipe_post(author=author, title="From followed")
         make_recipe_post(author=self.user, title="Mine")
 
-        posts = dashboard_view._get_following_posts(self.user)
+        posts = self.feed_service.following_posts(self.user)
         self.assertEqual(len(posts), 1)
         self.assertEqual(posts[0].title, "From followed")
 
@@ -155,12 +156,12 @@ class DashboardSearchViewTests(TestCase):
         Follower.objects.create(follower=self.user, author=author)
         make_recipe_post(author=author, title="Pizza Night")
         make_recipe_post(author=author, title="Salad Bowl")
-        posts = dashboard_view._get_following_posts(self.user, query="pizza")
+        posts = self.feed_service.following_posts(self.user, query="pizza")
         self.assertEqual(len(posts), 1)
         self.assertEqual(posts[0].title, "Pizza Night")
 
     def test_search_users_no_query_returns_empty(self):
-        self.assertEqual(dashboard_view._search_users("", limit=5), [])
+        self.assertEqual(self.feed_service.search_users("", limit=5), [])
 
     def test_dashboard_for_you_ajax_returns_json(self):
         make_recipe_post(author=self.user, title="A")
@@ -366,10 +367,10 @@ class DashboardSearchViewTests(TestCase):
 
     def test_get_for_you_posts_fallback_when_no_tag_matches(self):
         liked = make_recipe_post(author=self.user, tags=["pasta"])
-        dashboard_view.Like.objects.create(user=self.user, recipe_post=liked)
-        posts = dashboard_view._get_for_you_posts(self.user, seed=5)
+        Like.objects.create(user=self.user, recipe_post=liked)
+        posts = self.feed_service.for_you_posts(self.user, seed=5)
         self.assertIn(liked, posts)
 
     def test_get_following_posts_returns_empty_when_no_relationships(self):
-        posts = dashboard_view._get_following_posts(self.user)
+        posts = self.feed_service.following_posts(self.user)
         self.assertEqual(posts, [])

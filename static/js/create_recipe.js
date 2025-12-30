@@ -33,30 +33,20 @@ const createShoppingManager = helpers.createShoppingManager || (() => ({
   syncShopImagesInput: noop,
 }));
 
+const parseJsonSafe = (value) => {
+  if (!value) return null;
+  try {
+    return JSON.parse(value);
+  } catch (err) {
+    return null;
+  }
+};
+
 const readExistingShoppingItems = (listBox, inlineJson) => {
-  let existing = [];
-  const candidates = [
-    inlineJson && inlineJson.textContent,
-    listBox && listBox.dataset.shoppingItems,
-    "[]",
-  ];
-  for (const candidate of candidates) {
-    if (!candidate) continue;
-    try {
-      existing = JSON.parse(candidate);
-      break;
-    } catch (err) {
-      existing = [];
-    }
-  }
-  if (typeof existing === "string") {
-    try {
-      existing = JSON.parse(existing);
-    } catch (err) {
-      existing = [];
-    }
-  }
-  return Array.isArray(existing) ? existing : [];
+  const candidates = [inlineJson && inlineJson.textContent, listBox && listBox.dataset.shoppingItems, "[]"];
+  const parsed = candidates.map(parseJsonSafe).find((value) => value !== null);
+  const normalized = typeof parsed === "string" ? parseJsonSafe(parsed) : parsed;
+  return Array.isArray(normalized) ? normalized : [];
 };
 
 const cleanIngredientsField = (ingredientsField) => {

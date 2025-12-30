@@ -40,7 +40,7 @@ def paginate_follow_queryset(qs, user_attr, page_size=FOLLOW_LIST_PAGE_SIZE, pag
 
 
 def follow_page_data(qs, user_attr):
-    total, users, has_more, next_page = paginate_follow_queryset(qs, user_attr)
+    total, users, has_more, next_page = paginate_follow_queryset(qs, user_attr, page_size=FOLLOW_LIST_PAGE_SIZE, page_number=1)
     return {"count": total, "users": users, "has_more": has_more, "next_page": next_page, "visible": True}
 
 
@@ -340,7 +340,7 @@ def profile_follow_list_response(request, deps):
     if isinstance(selection, JsonResponse):
         return selection
     qs, user_attr, template = selection
-    total, users, has_more, next_page = paginate_follow_queryset(qs, user_attr, page_number=page_number)
+    total, users, has_more, next_page = paginate_follow_queryset(qs, user_attr, page_size=FOLLOW_LIST_PAGE_SIZE, page_number=page_number)
     html = render_to_string(
         template,
         {"users": users, "list_type": list_type, "is_own_profile": is_own_profile, "close_friend_ids": follow_ctx["close_friend_ids"]},

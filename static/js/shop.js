@@ -122,39 +122,41 @@
       });
     }
 
+    const buildNextPageUrl = () => {
+      const nextPage = page + 1;
+      const url = new URL(w.location.href);
+      url.searchParams.set("page", String(nextPage));
+      if (seed) url.searchParams.set("seed", seed);
+      url.searchParams.set("ajax", "1");
+      return { href: url.toString(), nextPage };
+    };
+
+    const fetchShopPage = (href) =>
+      w.fetch(href, {
+        headers: { "X-Requested-With": "XMLHttpRequest" }
+      });
+
+    const applyPageData = (data) =>
+      appendHtml(data && data.html).then(() => {
+        hasNext = Boolean(data && data.has_next);
+        if (!hasNext && observer) {
+          observer.disconnect();
+        }
+      });
+
     function loadMoreShopItems() {
       if (loading || !hasNext) return;
       setLoading(true);
-
-      page += 1;
-      const url = new URL(w.location.href);
-      url.searchParams.set("page", String(page));
-      if (seed) url.searchParams.set("seed", seed);
-      url.searchParams.set("ajax", "1");
-
-      return w
-        .fetch(url.toString(), {
-          headers: {
-            "X-Requested-With": "XMLHttpRequest"
-          }
-        })
+      const { href, nextPage } = buildNextPageUrl();
+      return fetchShopPage(href)
         .then((response) => {
-          if (!response.ok) {
-            throw new Error("Network response was not ok");
-          }
+          if (!response.ok) throw new Error("Network response was not ok");
           return response.json();
         })
-        .then((data) => {
-          return appendHtml(data && data.html).then(() => {
-            hasNext = Boolean(data && data.has_next);
-            if (!hasNext && observer) {
-              observer.disconnect();
-            }
-          });
-        })
-        .catch(() => {
-          page -= 1;
-        })
+        .then((data) => applyPageData(data).then(() => {
+          page = nextPage;
+        }))
+        .catch(() => {})
         .finally(() => {
           setLoading(false);
         });

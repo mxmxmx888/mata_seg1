@@ -12,19 +12,7 @@ from recipes.views.dashboard_params import (
     _ensure_for_you_seed,
     _safe_offset,
 )
-
-from .dashboard_utils import (
-    Like,
-    _base_posts_queryset,
-    _filter_posts_by_prep_time,
-    _get_following_posts,
-    _get_for_you_posts,
-    _normalise_tags,
-    _score_post_for_user,
-    _search_users,
-    _user_preference_tags,
-    privacy_service,
-)
+from recipes.views.dashboard_utils import feed_service, privacy_service
 
 try:
     from recipes.models import Ingredient, RecipePost
@@ -151,7 +139,7 @@ def _for_you_ajax_response(request, seed, privacy):
     limit = 12
     offset = _safe_offset(request.GET.get("for_you_offset"))
     seed = _ensure_for_you_seed(request, seed)
-    posts = _get_for_you_posts(request.user, limit=limit, offset=offset, seed=seed, privacy=privacy)
+    posts = feed_service.for_you_posts(request.user, limit=limit, offset=offset, seed=seed, privacy=privacy)
     html = render_to_string("partials/feed/feed_cards.html", {"posts": posts, "request": request}, request=request)
     return JsonResponse(
         {"html": html, "has_more": len(posts) == limit, "count": len(posts)}
@@ -162,7 +150,7 @@ def _following_ajax_response(request):
     """Return the JSON payload for the 'following' infinite scroll."""
     limit = 12
     offset = _safe_offset(request.GET.get("following_offset"))
-    posts = _get_following_posts(request.user, limit=limit, offset=offset)
+    posts = feed_service.following_posts(request.user, limit=limit, offset=offset)
     html = render_to_string("partials/feed/feed_cards.html", {"posts": posts, "request": request}, request=request)
     return JsonResponse(
         {"html": html, "has_more": len(posts) == limit, "count": len(posts)}
@@ -234,7 +222,7 @@ def _recipe_search(request, params, discover_qs):
 
 def _scope_users_results(params):
     """Return user search results for the dashboard scope=users."""
-    return _search_users(params["q"], limit=18)
+    return feed_service.search_users(params["q"], limit=18)
 
 
 def _scope_shopping_results(request, params, privacy):
@@ -250,8 +238,8 @@ def _scope_recipes_results(request, params, discover_qs):
 def _default_feed(discover_qs, request, for_you_seed, privacy):
     """Build default feed bundles when no search filters are applied."""
     popular_recipes = list(discover_qs[:18])
-    for_you_posts = _get_for_you_posts(request.user, seed=for_you_seed, privacy=privacy)
-    following_posts = _get_following_posts(request.user)
+    for_you_posts = feed_service.for_you_posts(request.user, seed=for_you_seed, privacy=privacy)
+    following_posts = feed_service.following_posts(request.user, limit=None)
     return popular_recipes, for_you_posts, following_posts
 
 

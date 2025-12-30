@@ -92,14 +92,17 @@
       return;
     }
 
-    const fetchPage = ({ page: targetPage }) => {
-      setLoading(true);
+    const buildNextPageUrl = (targetPage) => {
       const url = new URL(w.location.href);
       url.searchParams.set("page", String(targetPage));
       url.searchParams.set("ajax", "1");
+      return url.toString();
+    };
 
+    const fetchPage = ({ page: targetPage }) => {
+      setLoading(true);
       return w
-        .fetch(url.toString(), {
+        .fetch(buildNextPageUrl(targetPage), {
           headers: { "X-Requested-With": "XMLHttpRequest" }
         })
         .then((response) => {

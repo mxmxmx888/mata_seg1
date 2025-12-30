@@ -1,224 +1,34 @@
-import random
-from django.contrib.auth import get_user_model
-from django.db.models import Q, Exists, OuterRef, Value
-from django.db.models.functions import Concat
-from django.utils import timezone
-from recipes.services import PrivacyService
-from recipes.models import RecipePost, Like, Follower, Ingredient
+"""Thin wrappers exposing the feed/search service to dashboard callers."""
 
-privacy_service = PrivacyService()
+from recipes.services.feed import FeedService
 
-def _normalise_tags(tags):
-    """Return a lowercased list of tag strings from comma- or list-based input."""
-    if not tags:
-        return []
-    if isinstance(tags, str):
-        parts = [p.strip() for p in tags.split(",")]
-        return [p.lower() for p in parts if p]
-    if isinstance(tags, list):
-        return [str(t).strip().lower() for t in tags if str(t).strip()]
-    return []
+feed_service = FeedService()
+privacy_service = feed_service.privacy_service
 
-def _user_preference_tags(user):
-    """Collect unique tags from posts the user has liked."""
-    tags = []
+# Public helpers
+normalise_tags = feed_service.normalise_tags
+user_preference_tags = feed_service.user_preference_tags
+preferred_tags_for_user = feed_service.preferred_tags_for_user
+base_posts_queryset = feed_service.base_posts_queryset
+apply_query_filters = feed_service.apply_query_filters
+tag_filtered_qs = feed_service.tag_filtered_qs
+score_post_for_user = feed_service.score_post_for_user
+score_and_sort_posts = feed_service.score_and_sort_posts
+for_you_posts = feed_service.for_you_posts
+following_posts = feed_service.following_posts
+search_users = feed_service.search_users
+filter_posts_by_prep_time = feed_service.filter_posts_by_prep_time
 
-    like_qs = Like.objects.filter(user=user).select_related("recipe_post")
-
-    for like in like_qs:
-        tags.extend(_normalise_tags(getattr(like.recipe_post, "tags", [])))
-
-    seen = set()
-    result = []
-    for t in tags:
-        if t not in seen:
-            seen.add(t)
-            result.append(t)
-    return result
-
-def _base_posts_queryset():
-    """Base queryset for published recipe posts with related author and images."""
-    return (
-        RecipePost.objects.filter(published_at__isnull=False)
-        .select_related("author")
-        .prefetch_related("images")
-        .order_by("-published_at", "-created_at")
-    )
-
-def _score_post_for_user(post, preferred_tags):
-    """Score a post based on preferred tags, saves, and recency."""
-    score = 0
-
-    post_tags = set(_normalise_tags(getattr(post, "tags", [])))
-    pref_set = set(preferred_tags)
-
-    if post_tags & pref_set:
-        score += 3
-
-    saved_count = getattr(post, "saved_count", 0) or 0
-    score += saved_count
-
-    if getattr(post, "published_at", None):
-        age_days = (timezone.now() - post.published_at).days
-    else:
-        age_days = 999
-    score += max(0, 10 - age_days)
-
-    return score
-
-def _preferred_tags_for_user(user):
-    """Return (liked_post_ids, preferred_tags) for the user."""
-    if not getattr(user, "is_authenticated", False):
-        return [], []
-    liked_post_ids = list(
-        Like.objects.filter(user=user).values_list("recipe_post_id", flat=True)
-    )
-    preferred_tags = _user_preference_tags(user) if liked_post_ids else []
-    return liked_post_ids, preferred_tags
-
-
-def _apply_query_filters(qs, query):
-    """Filter posts by title/description/tags containing the query."""
-    if not query:
-        return qs
-    return qs.filter(
-        Q(title__icontains=query)
-        | Q(description__icontains=query)
-        | Q(tags__icontains=query)
-    )
-
-
-def _tag_filtered_qs(qs, preferred_tags, liked_post_ids):
-    """Filter posts by preferred tags excluding already liked posts."""
-    if not preferred_tags:
-        return qs
-    tag_filter = Q()
-    for tag in preferred_tags:
-        tag_filter |= Q(tags__icontains=tag)
-    return qs.exclude(id__in=liked_post_ids).filter(tag_filter)
-
-
-def _score_and_sort_posts(posts, preferred_tags):
-    """Apply scoring and sort posts when preferences exist."""
-    if not preferred_tags:
-        return posts
-    scored = [(_score_post_for_user(p, preferred_tags), p) for p in posts]
-    scored.sort(key=lambda x: x[0], reverse=True)
-    return [p for _, p in scored]
-
-
-def _get_for_you_posts(user, query=None, limit=None, offset=0, seed=None, privacy=privacy_service):
-    """Return personalised 'for you' posts shuffled by a seed."""
-    base_qs = privacy.filter_visible_posts(_base_posts_queryset(), user)
-    liked_post_ids, preferred_tags = _preferred_tags_for_user(user)
-    qs = _apply_query_filters(base_qs, query)
-    base_qs = _apply_query_filters(base_qs, query)
-    if preferred_tags:
-        qs = _tag_filtered_qs(qs, preferred_tags, liked_post_ids)
-    posts = _for_you_posts_list(qs, base_qs, preferred_tags)
-    posts = _score_and_sort_posts(posts, preferred_tags)
-    return _shuffle_and_slice(posts, seed, limit, offset)
-
-def _get_following_posts(user, query=None, limit=12, offset=0):
-    """Return a list of posts from authors the user follows."""
-    followed_ids = list(
-        Follower.objects.filter(follower=user).values_list("author_id", flat=True)
-    )
-    if not followed_ids:
-        return []
-
-    qs = _base_posts_queryset().filter(author_id__in=followed_ids)
-    qs = privacy_service.filter_visible_posts(qs, user)
-
-    if query:
-        qs = qs.filter(
-            Q(title__icontains=query)
-            | Q(description__icontains=query)
-            | Q(tags__icontains=query)
-        )
-
-    return list(qs[offset:offset + limit])
-
-def _search_users(query, limit=18):
-    """Search users by username or name substrings, tolerating spaces."""
-    User = get_user_model()
-    query = (query or "").strip()
-    if not query:
-        return []
-    base_filter = _user_base_filter(query)
-    token_filter = _token_filter(query)
-    if token_filter is not None:
-        base_filter |= token_filter
-    return list(
-        User.objects.annotate(full_name=Concat("first_name", Value(" "), "last_name"))
-        .filter(base_filter)
-        .order_by("username", "last_name", "first_name")[:limit]
-    )
-
-def _filter_posts_by_prep_time(posts, min_prep=None, max_prep=None):
-    """
-    Filter in-memory posts by prep time bounds.
-    Values that cannot be coerced to ints or missing prep times are ignored.
-    """
-    min_val = _safe_int(min_prep)
-    max_val = _safe_int(max_prep)
-    if min_val is None and max_val is None:
-        return list(posts)
-    return [post for post in posts if _prep_within(post, min_val, max_val)]
-
-def _for_you_posts_list(qs, fallback_qs, preferred_tags):
-    posts = list(qs)
-    if preferred_tags and not posts:
-        return list(fallback_qs)
-    return posts
-
-def _shuffle_and_slice(posts, seed, limit, offset):
-    rng = random.Random(seed)
-    rng.shuffle(posts)
-    if limit is None:
-        return posts[offset:]
-    return posts[offset:offset + limit]
-
-def _user_base_filter(query):
-    username_query = query.replace(" ", "")
-    return (
-        Q(username__icontains=query)
-        | Q(username__icontains=username_query)
-        | Q(first_name__icontains=query)
-        | Q(last_name__icontains=query)
-        | Q(full_name__icontains=query)
-    )
-
-def _token_filter(query):
-    tokens = [part for part in query.replace("@", " ").split() if part]
-    if not tokens:
-        return None
-    combined = (
-        Q(username__icontains=tokens[0])
-        | Q(first_name__icontains=tokens[0])
-        | Q(last_name__icontains=tokens[0])
-    )
-    for token in tokens[1:]:
-        combined &= (
-            Q(username__icontains=token)
-            | Q(first_name__icontains=token)
-            | Q(last_name__icontains=token)
-        )
-    return combined
-
-def _safe_int(value):
-    try:
-        return int(value) if value is not None else None
-    except (TypeError, ValueError):
-        return None
-
-def _prep_within(post, min_val, max_val):
-    try:
-        prep = int(getattr(post, "prep_time_min", None))
-    except (TypeError, ValueError):
-        return False
-    if min_val is not None and prep < min_val:
-        return False
-    if max_val is not None and prep > max_val:
-        return False
-    return True
+# Backwards-compatible aliases for legacy imports/tests
+_normalise_tags = normalise_tags
+_user_preference_tags = user_preference_tags
+_preferred_tags_for_user = preferred_tags_for_user
+_base_posts_queryset = base_posts_queryset
+_apply_query_filters = apply_query_filters
+_tag_filtered_qs = tag_filtered_qs
+_score_post_for_user = score_post_for_user
+_score_and_sort_posts = score_and_sort_posts
+_get_for_you_posts = for_you_posts
+_get_following_posts = following_posts
+_search_users = search_users
+_filter_posts_by_prep_time = filter_posts_by_prep_time

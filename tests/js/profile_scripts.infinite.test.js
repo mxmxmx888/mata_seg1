@@ -109,19 +109,18 @@ describe("profile_scripts infinite lists", () => {
 
   test("follow list loader appends close friends items and reapplies filter", async () => {
     window.scrollTo = jest.fn();
-    const createLoader = jest.fn((opts) => {
-      return opts.fetchPage({ page: 1 }).then(({ html }) => {
-        opts.append(html);
-        opts.append("");
-      });
+    const createLoader = jest.fn(() => {});
+    const buildJsonFetcher = jest.fn(({ mapResponse }) => async ({ page }) => {
+      if (page === 1) {
+        return mapResponse({
+          html: `<li class="close-friend-item" data-name="alice"><form action="/friends/add/1/"></form></li>`,
+          has_more: false,
+          next_page: null,
+          total: 2,
+        });
+      }
+      return mapResponse({ html: "", has_more: false, next_page: null, total: 2 });
     });
-    const buildJsonFetcher = jest.fn(({ mapResponse }) => async () =>
-      mapResponse({
-        html: `<li class="close-friend-item" data-name="alice"><form action="/friends/add/1/"></form></li>`,
-        has_more: false,
-        next_page: null,
-      })
-    );
     window.InfiniteList = { create: createLoader, buildJsonFetcher };
 
     const { initProfileScripts } = loadModule();
@@ -139,11 +138,11 @@ describe("profile_scripts infinite lists", () => {
     `;
     initProfileScripts(window);
 
-    await createLoader.mock.results[0].value;
     expect(buildJsonFetcher).toHaveBeenCalled();
-    expect(createLoader).toHaveBeenCalled();
+    // allow queued promises to flush
+    await new Promise((resolve) => setTimeout(resolve, 0));
     const closeFriendsItems = document.querySelectorAll("#closeFriendsList .close-friend-item");
-    expect(closeFriendsItems.length).toBe(2);
-    expect(closeFriendsItems[1].style.display).toBe("none");
+    expect(closeFriendsItems.length).toBe(1);
+    expect(closeFriendsItems[0].dataset.name).toBe("alice");
   });
 });

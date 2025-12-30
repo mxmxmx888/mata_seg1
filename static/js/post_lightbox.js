@@ -68,18 +68,19 @@ const wireArrowControls = (state) => {
 };
 
 const wireKeyboard = (state) => {
-  state.body.ownerDocument.addEventListener("keydown", (event) => {
+  const actions = {
+    ArrowLeft: () => showImage(state, state.currentIndex - 1),
+    ArrowRight: () => showImage(state, state.currentIndex + 1),
+    Escape: () => closeLightbox(state),
+  };
+  const handleKeydown = (event) => {
     if (!state.isOpen) return;
-    if (event.key === "ArrowLeft") {
-      event.preventDefault();
-      showImage(state, state.currentIndex - 1);
-    } else if (event.key === "ArrowRight") {
-      event.preventDefault();
-      showImage(state, state.currentIndex + 1);
-    } else if (event.key === "Escape") {
-      closeLightbox(state);
-    }
-  });
+    const action = actions[event.key];
+    if (!action) return;
+    if (event.key !== "Escape") event.preventDefault();
+    action();
+  };
+  state.body.ownerDocument.addEventListener("keydown", handleKeydown);
 };
 
 const initPostLightbox = (win) => {

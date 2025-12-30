@@ -4,13 +4,12 @@ from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse, Http404, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
-from django.utils import timezone
+import json
 from recipes.forms.recipe_forms import RecipePostForm
 from recipes.forms.comment_form import CommentForm
-from recipes.services import PrivacyService
-from recipes.services import FollowService
-from recipes.models import RecipePost, Like, Comment, Follower, Ingredient
-import json
+from recipes.services import PrivacyService, FollowService
+from recipes.services.recipe_posts import RecipePostService
+from recipes.models import RecipePost, Comment
 from recipes.models.favourite_item import FavouriteItem
 
 from recipes.views.recipe_view_helpers import (
@@ -20,9 +19,6 @@ from recipes.views.recipe_view_helpers import (
     primary_image_url,
     gallery_images,
     collections_modal_state,
-    resolve_collection,
-    set_primary_image,
-    toggle_save,
 )
 
 # Backwards-compatible exports for tests expecting old helper names
@@ -35,6 +31,7 @@ _gallery_images = gallery_images
 User = get_user_model()
 privacy_service = PrivacyService()
 follow_service_factory = FollowService
+recipe_service = RecipePostService()
 
 
 @login_required
@@ -42,8 +39,8 @@ def recipe_create(request):
     """Create a new recipe post from a submitted RecipePostForm."""
     form = RecipePostForm(request.POST or None, request.FILES or None)
     if request.method == "POST" and form.is_valid():
-        recipe = _create_recipe_from_form(form, request.user)
-        _persist_recipe_relations(form, recipe)
+        recipe = recipe_service.create_from_form(form, request.user)
+        recipe_service.persist_relations(form, recipe)
         return redirect("recipe_detail", post_id=recipe.id)
 
     return _render_create_form(request, form)
@@ -54,13 +51,13 @@ def recipe_edit(request, post_id):
     recipe = get_object_or_404(RecipePost, id=post_id, author=request.user)
     form = RecipePostForm(request.POST or None, request.FILES or None, instance=recipe)
     if request.method == "POST" and form.is_valid():
-        _update_recipe_from_form(recipe, form)
-        _persist_recipe_relations(form, recipe)
+        recipe_service.update_from_form(recipe, form)
+        recipe_service.persist_relations(form, recipe)
         messages.success(request, "Recipe updated.")
         detail_url = reverse("recipe_detail", kwargs={"post_id": recipe.id})
         return redirect(f"{detail_url}?from_edit=1")
 
-    shopping_items = _shopping_items_for(recipe)
+    shopping_items = recipe_service.shopping_items_for(recipe)
     return render(
         request,
         "app/edit_recipe.html",
@@ -108,52 +105,6 @@ def _render_create_form(request, form):
     response["Expires"] = "0"
     return response
 
-def _persist_recipe_relations(form, recipe):
-    form.create_ingredients(recipe)
-    form.create_steps(recipe)
-    form.create_images(recipe)
-    set_primary_image(recipe)
-
-def _create_recipe_from_form(form, user):
-    cleaned = form.cleaned_data
-    tags_list = form.parse_tags()
-    return RecipePost.objects.create(
-        author=user,
-        title=cleaned["title"],
-        description=cleaned.get("description") or "",
-        prep_time_min=cleaned.get("prep_time_min") or 0,
-        cook_time_min=cleaned.get("cook_time_min") or 0,
-        serves=cleaned.get("serves") or 0,
-        nutrition=cleaned.get("nutrition") or "",
-        tags=tags_list,
-        category=cleaned.get("category") or "",
-        visibility=cleaned.get("visibility") or RecipePost.VISIBILITY_PUBLIC,
-        published_at=timezone.now(),
-    )
-
-def _update_recipe_from_form(recipe, form):
-    cleaned = form.cleaned_data
-    recipe.title = cleaned["title"]
-    recipe.description = cleaned.get("description") or ""
-    recipe.prep_time_min = cleaned.get("prep_time_min") or 0
-    recipe.cook_time_min = cleaned.get("cook_time_min") or 0
-    recipe.serves = cleaned.get("serves") or 0
-    recipe.nutrition = cleaned.get("nutrition") or ""
-    recipe.tags = form.parse_tags()
-    recipe.category = cleaned.get("category") or ""
-    recipe.visibility = cleaned.get("visibility") or RecipePost.VISIBILITY_PUBLIC
-    recipe.save()
-
-def _shopping_items_for(recipe):
-    return [
-        {
-            "name": ing.name,
-            "url": ing.shop_url or "",
-            "image_url": ing.shop_image_upload.url if ing.shop_image_upload else "",
-        }
-        for ing in Ingredient.objects.filter(recipe_post=recipe, shop_url__isnull=False).order_by("position")
-    ]
-
 def _comments_page(recipe, request, page_size=50):
     comments_qs = recipe.comments.select_related("user").order_by("-created_at")
     page_number = max(1, int(request.GET.get("comments_page") or 1))
@@ -199,21 +150,14 @@ def delete_my_recipe(request, post_id):
 def toggle_favourite(request, post_id):
     """Toggle save/unsave for a recipe and return HX JSON or redirect."""
     recipe = get_object_or_404(RecipePost, id=post_id)
-    favourite, created_collection = resolve_collection(request, recipe)
-    is_saved_now, new_count = toggle_save(favourite, recipe)
-    RecipePost.objects.filter(id=recipe.id).update(saved_count=new_count)
+    is_saved_now, new_count, collection = recipe_service.toggle_favourite(request, recipe)
 
     if is_hx(request):
         return JsonResponse(
             {
                 "saved": is_saved_now,
                 "saved_count": new_count,
-                "collection": {
-                    "id": str(favourite.id),
-                    "name": favourite.name,
-                    "created": created_collection,
-                    "thumb_url": collection_thumb(favourite.cover_post, recipe),
-                },
+                "collection": collection,
             }
         )
 
@@ -223,12 +167,7 @@ def toggle_favourite(request, post_id):
 def toggle_like(request, post_id):
     """Toggle like/unlike for a recipe and return HX or redirect."""
     recipe = get_object_or_404(RecipePost, id=post_id)
-    existing = Like.objects.filter(user=request.user, recipe_post=recipe)
-
-    if existing.exists():
-        existing.delete()
-    else:
-        Like.objects.create(user=request.user, recipe_post=recipe)
+    recipe_service.toggle_like(request.user, recipe)
 
     if is_hx(request):
         return HttpResponse(status=204)

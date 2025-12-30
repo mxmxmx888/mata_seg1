@@ -1,113 +1,117 @@
-(function (global) {
-  function getProfileColumns(doc) {
-    return [
-      doc.getElementById("profile-posts-col-1"),
-      doc.getElementById("profile-posts-col-2"),
-      doc.getElementById("profile-posts-col-3"),
-    ].filter(Boolean);
-  }
+const globalWindow = typeof window !== "undefined" ? window : null;
 
-  function createColumnPlacer(columns) {
-    return (cards) => {
-      if (!cards || !cards.length) return;
-      const existingCount = columns.reduce((sum, col) => sum + col.children.length, 0);
-      cards.forEach((card, index) => {
-        const targetIndex = (existingCount + index) % columns.length;
-        columns[targetIndex].appendChild(card);
-      });
-    };
-  }
+function getProfileColumns(doc) {
+  return [
+    doc.getElementById("profile-posts-col-1"),
+    doc.getElementById("profile-posts-col-2"),
+    doc.getElementById("profile-posts-col-3"),
+  ].filter(Boolean);
+}
 
-  function createProfileAppendHtml(placeCards) {
-    return (html) => {
-      if (!html) return 0;
-      const parser = new DOMParser();
-      const docNode = parser.parseFromString(html, "text/html");
-      const cards = Array.from(docNode.querySelectorAll(".my-recipe-card"));
-      placeCards(cards);
-      return cards.length;
-    };
-  }
-
-  function parseNextPage(value) {
-    const parsed = parseInt(value || "", 10);
-    return Number.isNaN(parsed) ? null : parsed;
-  }
-
-  function countCards(html) {
-    return (html.match(/class=["']my-recipe-card["']/g) || []).length;
-  }
-
-  function createProfileFetcher(w, endpoint) {
-    return ({ page }) => {
-      const url = endpoint.includes("?")
-        ? `${endpoint}&page=${page}&posts_only=1`
-        : `${endpoint}?page=${page}&posts_only=1`;
-      return w
-        .fetch(url, { headers: { "HX-Request": "true" } })
-        .then((resp) => resp.text())
-        .then((html) => {
-          const trimmed = (html || "").trim();
-          const count = trimmed ? countCards(trimmed) : 0;
-          return {
-            html: trimmed,
-            hasMore: count >= 12,
-            nextPage: count >= 12 ? page + 1 : null,
-          };
-        })
-        .catch(() => ({ html: "", hasMore: false, nextPage: null }));
-    };
-  }
-
-  function initProfilePostsInfinite(w, doc) {
-    const sentinel = doc.getElementById("profile-posts-sentinel");
-    const columns = getProfileColumns(doc);
-    if (!sentinel || !doc.getElementById("profile-posts-grid") || !columns.length) return;
-    if (w.history && "scrollRestoration" in w.history) w.history.scrollRestoration = "manual";
-    w.scrollTo(0, 0);
-    const endpoint = sentinel.getAttribute("data-endpoint");
-    const infinite = w.InfiniteList || {};
-    if (!infinite.create || !endpoint) return;
-    const hasMore = sentinel.getAttribute("data-has-more") === "true";
-    const nextPage = parseNextPage(sentinel.getAttribute("data-next-page"));
-    const placeCards = createColumnPlacer(columns);
-    infinite.create({
-      sentinel,
-      hasMore,
-      nextPage,
-      fetchPage: createProfileFetcher(w, endpoint),
-      append: createProfileAppendHtml(placeCards),
-      observerOptions: { root: null, threshold: 0.1 },
-      fallbackScroll: true,
-      fallbackMargin: 300,
+function createColumnPlacer(columns) {
+  return (cards) => {
+    if (!cards || !cards.length) return;
+    const existingCount = columns.reduce((sum, col) => sum + col.children.length, 0);
+    cards.forEach((card, index) => {
+      const targetIndex = (existingCount + index) % columns.length;
+      columns[targetIndex].appendChild(card);
     });
-  }
+  };
+}
 
-  function createFollowListAppend(doc, modalId, listType, attachAjaxModalForms, modalSuccessHandlers, applyCloseFriendsFilter, listEl) {
-    return (html) => {
-      if (!html) return;
-      const tmp = doc.createElement("div");
-      tmp.innerHTML = html;
-      tmp.querySelectorAll("li").forEach((li) => listEl.appendChild(li));
-      attachAjaxModalForms(modalId, modalSuccessHandlers[modalId]);
-      if (listType === "close_friends") {
-        applyCloseFriendsFilter();
-      }
-    };
-  }
+function createProfileAppendHtml(placeCards) {
+  return (html) => {
+    if (!html) return 0;
+    const parser = new DOMParser();
+    const docNode = parser.parseFromString(html, "text/html");
+    const cards = Array.from(docNode.querySelectorAll(".my-recipe-card"));
+    placeCards(cards);
+    return cards.length;
+  };
+}
 
-  function getFollowListElements(doc, modalId) {
-    const modalEl = doc.getElementById(modalId);
-    if (!modalEl) return null;
-    const modalBody = modalEl.querySelector(".modal-body[data-list-type]");
-    const listEl = modalEl.querySelector(".follow-list-items");
-    const sentinel = modalEl.querySelector(".follow-list-sentinel");
-    return modalBody && listEl && sentinel ? { modalBody, listEl, sentinel } : null;
-  }
+function parseNextPage(value) {
+  const parsed = parseInt(value || "", 10);
+  return Number.isNaN(parsed) ? null : parsed;
+}
 
-  function buildFollowListFetcher(infinite, endpoint) {
-    if (!endpoint || typeof infinite.buildJsonFetcher !== "function") return null;
-    return infinite.buildJsonFetcher({
+function countCards(html) {
+  return (html.match(/class=["']my-recipe-card["']/g) || []).length;
+}
+
+function createProfileFetcher(w, endpoint) {
+  return ({ page }) => {
+    const url = endpoint.includes("?")
+      ? `${endpoint}&page=${page}&posts_only=1`
+      : `${endpoint}?page=${page}&posts_only=1`;
+    return w
+      .fetch(url, { headers: { "HX-Request": "true" } })
+      .then((resp) => resp.text())
+      .then((html) => {
+        const trimmed = (html || "").trim();
+        const count = trimmed ? countCards(trimmed) : 0;
+        return {
+          html: trimmed,
+          hasMore: count >= 12,
+          nextPage: count >= 12 ? page + 1 : null,
+        };
+      })
+      .catch(() => ({ html: "", hasMore: false, nextPage: null }));
+  };
+}
+
+function initProfilePostsInfinite(w, doc) {
+  const sentinel = doc.getElementById("profile-posts-sentinel");
+  const columns = getProfileColumns(doc);
+  if (!sentinel || !doc.getElementById("profile-posts-grid") || !columns.length) return;
+  if (w.history && "scrollRestoration" in w.history) w.history.scrollRestoration = "manual";
+  w.scrollTo(0, 0);
+  const endpoint = sentinel.getAttribute("data-endpoint");
+  const infinite = w.InfiniteList || {};
+  if (!infinite.create || !endpoint) return;
+  const hasMore = sentinel.getAttribute("data-has-more") === "true";
+  const nextPage = parseNextPage(sentinel.getAttribute("data-next-page"));
+  const placeCards = createColumnPlacer(columns);
+  infinite.create({
+    sentinel,
+    hasMore,
+    nextPage,
+    fetchPage: createProfileFetcher(w, endpoint),
+    append: createProfileAppendHtml(placeCards),
+    observerOptions: { root: null, threshold: 0.1 },
+    fallbackScroll: true,
+    fallbackMargin: 300,
+  });
+}
+
+function createFollowListAppend(doc, modalId, listType, attachAjaxModalForms, modalSuccessHandlers, applyCloseFriendsFilter, listEl) {
+  return (html) => {
+    if (!html) return;
+    const tmp = doc.createElement("div");
+    tmp.innerHTML = html;
+    tmp.querySelectorAll("li").forEach((li) => listEl.appendChild(li));
+    attachAjaxModalForms(modalId, modalSuccessHandlers[modalId]);
+    if (listType === "close_friends") {
+      applyCloseFriendsFilter();
+    }
+  };
+}
+
+function getFollowListElements(doc, modalId) {
+  const modalEl = doc.getElementById(modalId);
+  if (!modalEl) return null;
+  const modalBody = modalEl.querySelector(".modal-body[data-list-type]");
+  const listEl = modalEl.querySelector(".follow-list-items");
+  const sentinel = modalEl.querySelector(".follow-list-sentinel");
+  return modalBody && listEl && sentinel ? { modalBody, listEl, sentinel } : null;
+}
+
+function buildFollowListFetcher(w, infinite, endpoint) {
+  if (!endpoint) return null;
+  const origin = (w && w.location && w.location.origin) || (globalWindow && globalWindow.location && globalWindow.location.origin) || "";
+
+  if (infinite && typeof infinite.buildJsonFetcher === "function") {
+    const baseFetcher = infinite.buildJsonFetcher({
       endpoint,
       pageParam: "page",
       fetchInit: { headers: { "X-Requested-With": "XMLHttpRequest" }, credentials: "same-origin" },
@@ -115,44 +119,83 @@
         html: (payload && payload.html) || "",
         hasMore: Boolean(payload && payload.has_more),
         nextPage: payload ? payload.next_page : null,
+        total: payload && payload.total,
       }),
     });
+    return ({ page, pageSize }) =>
+      baseFetcher({ page, pageSize }).then((payload) => {
+        const hasMore = Boolean(payload && payload.hasMore);
+        const nextPage = payload && (payload.nextPage ?? (hasMore && Number.isFinite(page) ? page + 1 : null));
+        return { html: payload ? payload.html : "", hasMore, nextPage, total: payload && payload.total };
+      });
   }
 
-  function initFollowListLoader(w, doc, modalId, listType, attachAjaxModalForms, modalSuccessHandlers, applyCloseFriendsFilter) {
-    const nodes = getFollowListElements(doc, modalId);
-    if (!nodes) return;
-    const { modalBody, listEl, sentinel } = nodes;
-    const infinite = w.InfiniteList || {};
-    const createLoader = typeof infinite.create === "function" ? infinite.create : null;
-    const fetchPage = buildFollowListFetcher(infinite, modalBody.getAttribute("data-endpoint"));
-    if (!fetchPage || !createLoader) return;
-    createLoader({
-      root: modalBody,
-      sentinel,
-      hasMore: modalBody.getAttribute("data-has-more") === "true",
-      nextPage: parseNextPage(modalBody.getAttribute("data-next-page")),
-      fetchPage,
-      append: createFollowListAppend(doc, modalId, listType, attachAjaxModalForms, modalSuccessHandlers, applyCloseFriendsFilter, listEl),
-      observerOptions: { root: modalBody, threshold: 0.1 },
-    });
-  }
+  return ({ page, pageSize }) => {
+    if (!page && page !== 0) return Promise.resolve({ html: "", hasMore: false, nextPage: null, total: null });
+    const url = new URL(endpoint, origin || undefined);
+    url.searchParams.set("page", String(page));
+    if (pageSize) url.searchParams.set("page_size", String(pageSize));
+    return w
+      .fetch(url.toString(), {
+        headers: { "X-Requested-With": "XMLHttpRequest" },
+        credentials: "same-origin",
+      })
+      .then((resp) => {
+        if (!resp.ok) throw new Error("Network response was not ok");
+        return resp.json();
+      })
+      .then((payload) => {
+        const hasMore = Boolean(payload && payload.has_more);
+        const nextPage = payload && (payload.next_page ?? (hasMore && Number.isFinite(page) ? page + 1 : null));
+        return {
+          html: (payload && payload.html) || "",
+          hasMore,
+          nextPage,
+          total: payload && payload.total,
+        };
+      })
+      .catch(() => ({ html: "", hasMore: false, nextPage: null, total: null }));
+  };
+}
 
-  function initProfileInfinite(w, doc, deps) {
-    const { attachAjaxModalForms = () => {}, modalSuccessHandlers = {}, applyCloseFriendsFilter = () => {} } = deps || {};
-    initProfilePostsInfinite(w, doc);
-    initFollowListLoader(w, doc, "followersModal", "followers", attachAjaxModalForms, modalSuccessHandlers, applyCloseFriendsFilter);
-    initFollowListLoader(w, doc, "followingModal", "following", attachAjaxModalForms, modalSuccessHandlers, applyCloseFriendsFilter);
-    initFollowListLoader(w, doc, "closeFriendsModal", "close_friends", attachAjaxModalForms, modalSuccessHandlers, applyCloseFriendsFilter);
-  }
-
-  const api = {
-    initProfileInfinite,
+function initFollowListLoader(w, doc, modalId, listType, attachAjaxModalForms, modalSuccessHandlers, applyCloseFriendsFilter) {
+  const nodes = getFollowListElements(doc, modalId);
+  if (!nodes) return;
+  const { modalBody, listEl, sentinel } = nodes;
+  const modalEl = modalBody.closest(".modal");
+  const infinite = w.InfiniteList || {};
+  const fetchPage = buildFollowListFetcher(w, infinite, modalBody.getAttribute("data-endpoint"));
+  if (!fetchPage) return;
+  const append = createFollowListAppend(doc, modalId, listType, attachAjaxModalForms, modalSuccessHandlers, applyCloseFriendsFilter, listEl);
+  const loadAll = async () => {
+    const payload = await fetchPage({ page: 1, pageSize: 100000 });
+    listEl.innerHTML = "";
+    if (payload && payload.html) append(payload.html);
   };
 
-  if (typeof module !== "undefined" && module.exports) {
-    module.exports = api;
-  } else if (global) {
-    global.ProfileInfinite = api;
+  if (modalEl) {
+    modalEl.addEventListener("shown.bs.modal", () => {
+      loadAll();
+    });
+  } else {
+    loadAll();
   }
-})(typeof window !== "undefined" ? window : {});
+}
+
+function initProfileInfinite(w, doc, deps) {
+  const { attachAjaxModalForms = () => {}, modalSuccessHandlers = {}, applyCloseFriendsFilter = () => {} } = deps || {};
+  initProfilePostsInfinite(w, doc);
+  initFollowListLoader(w, doc, "followersModal", "followers", attachAjaxModalForms, modalSuccessHandlers, applyCloseFriendsFilter);
+  initFollowListLoader(w, doc, "followingModal", "following", attachAjaxModalForms, modalSuccessHandlers, applyCloseFriendsFilter);
+  initFollowListLoader(w, doc, "closeFriendsModal", "close_friends", attachAjaxModalForms, modalSuccessHandlers, applyCloseFriendsFilter);
+}
+
+const api = {
+  initProfileInfinite,
+};
+
+if (typeof module !== "undefined" && module.exports) {
+  module.exports = api;
+} else if (globalWindow) {
+  globalWindow.ProfileInfinite = api;
+}

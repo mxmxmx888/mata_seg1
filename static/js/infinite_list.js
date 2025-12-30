@@ -29,11 +29,19 @@ const buildJsonUrl = (w, options, page) => {
   return url;
 };
 
-const buildJsonFetcher = (win, options) => {
+const resolveFetchContext = (win) => {
   const w = win || globalWindow || (typeof window !== "undefined" ? window : null);
-  if (!w || !options || !options.endpoint) return null;
-  const fetchFn = w.fetch || (typeof fetch !== "undefined" ? fetch : null);
-  const origin = (w.location && w.location.origin) || (globalWindow && globalWindow.location && globalWindow.location.origin) || "http://localhost";
+  if (!w) return null;
+  const origin =
+    (w.location && w.location.origin) ||
+    (globalWindow && globalWindow.location && globalWindow.location.origin) ||
+    "http://localhost";
+  return { w, fetchFn: w.fetch || (typeof fetch !== "undefined" ? fetch : null), origin };
+};
+
+const buildJsonFetcher = (win, options) => {
+  const ctx = resolveFetchContext(win);
+  if (!ctx || !options || !options.endpoint) return null;
   const opts = {
     endpoint: options.endpoint,
     pageParam: options.pageParam || "page",
@@ -45,9 +53,9 @@ const buildJsonFetcher = (win, options) => {
   };
   return ({ page }) => {
     if (!page && page !== 0) return Promise.resolve({ html: "", hasMore: false, nextPage: null });
-    const url = buildJsonUrl({ location: { origin } }, opts, page);
-    if (!fetchFn) return Promise.reject(new Error("fetch unavailable"));
-    return fetchFn(url.toString(), opts.fetchInit)
+    const url = buildJsonUrl({ location: { origin: ctx.origin } }, opts, page);
+    if (!ctx.fetchFn) return Promise.reject(new Error("fetch unavailable"));
+    return ctx.fetchFn(url.toString(), opts.fetchInit)
       .then((resp) => {
         if (!resp.ok) throw new Error("Request failed");
         return resp.json();
