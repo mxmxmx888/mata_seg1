@@ -109,10 +109,12 @@ describe("profile_scripts infinite lists", () => {
 
   test("follow list loader appends close friends items and reapplies filter", async () => {
     window.scrollTo = jest.fn();
+    const createSpy = jest.fn();
+    window.InfiniteList = { create: createSpy };
     const { initProfileScripts } = loadModule();
     document.body.innerHTML = `
       <input id="closeFriendsSearch" value="bob" />
-      <div id="closeFriendsModal">
+      <div id="closeFriendsModal" class="modal">
         <div class="modal-body" data-list-type="close_friends" data-endpoint="/friends" data-has-more="true" data-next-page="3">
           <ul id="closeFriendsList" class="follow-list-items">
             <li class="close-friend-item" data-name="bob"></li>
@@ -122,7 +124,6 @@ describe("profile_scripts infinite lists", () => {
       </div>
       <div id="profile-posts-grid"></div>
     `;
-    // mock fetch to return one extra item
     global.fetch = jest.fn(() =>
       Promise.resolve({
         ok: true,
@@ -137,11 +138,20 @@ describe("profile_scripts infinite lists", () => {
     );
 
     initProfileScripts(window);
+    document.getElementById("closeFriendsModal").dispatchEvent(new Event("shown.bs.modal"));
 
-    // allow queued promises to flush
-    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(createSpy).toHaveBeenCalledTimes(1);
+    const options = createSpy.mock.calls[0][0];
+    const payload = await options.fetchPage({ page: 3 });
+    expect(global.fetch).toHaveBeenCalledWith("http://localhost/friends?page=3", {
+      headers: { "X-Requested-With": "XMLHttpRequest" },
+      credentials: "same-origin",
+    });
+    options.append(payload.html);
+
     const closeFriendsItems = document.querySelectorAll("#closeFriendsList .close-friend-item");
-    expect(closeFriendsItems.length).toBe(1);
-    expect(closeFriendsItems[0].dataset.name).toBe("alice");
+    expect(closeFriendsItems.length).toBe(2);
+    expect(closeFriendsItems[1].dataset.name).toBe("alice");
+    expect(closeFriendsItems[1].style.display).toBe("none");
   });
 });

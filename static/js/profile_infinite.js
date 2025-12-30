@@ -35,6 +35,10 @@ function parseNextPage(value) {
   return Number.isNaN(parsed) ? null : parsed;
 }
 
+function parseHasMore(value) {
+  return String(value || "").toLowerCase() === "true";
+}
+
 function countCards(html) {
   return (html.match(/class=["']my-recipe-card["']/g) || []).length;
 }
@@ -68,7 +72,7 @@ function initProfilePostsInfinite(w, doc) {
   w.scrollTo(0, 0);
   const endpoint = sentinel.getAttribute("data-endpoint");
   const infinite = w.InfiniteList || {};
-  if (!infinite.create || !endpoint) return;
+  if (!endpoint || !infinite.create) return;
   const hasMore = sentinel.getAttribute("data-has-more") === "true";
   const nextPage = parseNextPage(sentinel.getAttribute("data-next-page"));
   const placeCards = createColumnPlacer(columns);
@@ -80,22 +84,25 @@ function initProfilePostsInfinite(w, doc) {
     append: createProfileAppendHtml(placeCards),
     columns,
     observerOptions: { root: null, threshold: 0, rootMargin: "1200px 0px" },
-    fallbackScroll: true,
-    fallbackMargin: 600,
-    fallbackMode: "document",
+    fallbackScroll: true, fallbackMargin: 600, fallbackMode: "document",
   });
 }
 
 function createFollowListAppend(doc, modalId, listType, attachAjaxModalForms, modalSuccessHandlers, applyCloseFriendsFilter, listEl) {
   return (html) => {
-    if (!html) return;
+    if (!html) return 0;
     const tmp = doc.createElement("div");
     tmp.innerHTML = html;
-    tmp.querySelectorAll("li").forEach((li) => listEl.appendChild(li));
+    let count = 0;
+    tmp.querySelectorAll("li").forEach((li) => {
+      listEl.appendChild(li);
+      count += 1;
+    });
     attachAjaxModalForms(modalId, modalSuccessHandlers[modalId]);
     if (listType === "close_friends") {
       applyCloseFriendsFilter();
     }
+    return count;
   };
 }
 
@@ -104,61 +111,91 @@ function getFollowListElements(doc, modalId) {
   if (!modalEl) return null;
   const modalBody = modalEl.querySelector(".modal-body[data-list-type]");
   const listEl = modalEl.querySelector(".follow-list-items");
-  return modalBody && listEl ? { modalBody, listEl } : null;
+  const sentinel = modalEl.querySelector(".follow-list-sentinel");
+  return modalBody && listEl && sentinel ? { modalEl, modalBody, listEl, sentinel } : null;
+}
+
+function getFollowOrigin(w) {
+  return (
+    (w && w.location && w.location.origin) ||
+    (globalWindow && globalWindow.location && globalWindow.location.origin) ||
+    "http://localhost"
+  );
 }
 
 function buildFollowListFetcher(w, endpoint) {
   if (!endpoint) return null;
-  const origin =
-    (w && w.location && w.location.origin) ||
-    (globalWindow && globalWindow.location && globalWindow.location.origin) ||
-    "http://localhost";
+  const origin = getFollowOrigin(w);
+  const mapPayload = (payload) => ({
+    html: (payload && payload.html) || "",
+    hasMore: Boolean(payload && payload.has_more),
+    nextPage: payload ? payload.next_page : null,
+    total: payload && payload.total,
+  });
+  const failPayload = { html: "", hasMore: false, nextPage: null, total: null };
 
   return ({ page, pageSize }) => {
-    if (!page && page !== 0) return Promise.resolve({ html: "", hasMore: false, nextPage: null, total: null });
-    const url = new URL(endpoint, origin || undefined);
+    if (!page && page !== 0) return Promise.resolve(failPayload);
+    const url = new URL(endpoint, origin);
     url.searchParams.set("page", String(page));
     if (pageSize) url.searchParams.set("page_size", String(pageSize));
+    const init = { headers: { "X-Requested-With": "XMLHttpRequest" }, credentials: "same-origin" };
     return w
-      .fetch(url.toString(), {
-        headers: { "X-Requested-With": "XMLHttpRequest" },
-        credentials: "same-origin",
-      })
-      .then((resp) => {
-        if (!resp.ok) throw new Error("Network response was not ok");
-        return resp.json();
-      })
-      .then((payload) => ({
-        html: (payload && payload.html) || "",
-        hasMore: Boolean(payload && payload.has_more),
-        nextPage: payload ? payload.next_page : null,
-        total: payload && payload.total,
-      }))
-      .catch(() => ({ html: "", hasMore: false, nextPage: null, total: null }));
+      .fetch(url.toString(), init)
+      .then((resp) => (resp && resp.ok ? resp.json() : Promise.reject()))
+      .then(mapPayload)
+      .catch(() => failPayload);
+  };
+}
+
+function createFollowInfinite(infinite, modalBody, config) {
+  if (modalBody.dataset.followInfinite === "1") return;
+  if (!infinite.create || !config.hasMore || !config.nextPage) return;
+  modalBody.dataset.followInfinite = "1";
+  infinite.create({
+    sentinel: config.sentinel,
+    hasMore: config.hasMore,
+    nextPage: config.nextPage,
+    fetchPage: config.fetchPage,
+    append: config.append,
+    observerOptions: { root: modalBody, threshold: 0, rootMargin: "400px 0px" },
+  });
+}
+
+function buildFollowConfig(modalBody, sentinel, fetchPage, append) {
+  return {
+    sentinel,
+    fetchPage,
+    append,
+    hasMore: parseHasMore(modalBody.getAttribute("data-has-more")),
+    nextPage: parseNextPage(modalBody.getAttribute("data-next-page")),
   };
 }
 
 function initFollowListLoader(w, doc, modalId, listType, attachAjaxModalForms, modalSuccessHandlers, applyCloseFriendsFilter) {
   const nodes = getFollowListElements(doc, modalId);
   if (!nodes) return;
-  const { modalBody, listEl } = nodes;
-  const modalEl = modalBody.closest(".modal");
+  const { modalEl, modalBody, listEl, sentinel } = nodes;
   const fetchPage = buildFollowListFetcher(w, modalBody.getAttribute("data-endpoint"));
-  if (!fetchPage) return;
-  const append = createFollowListAppend(doc, modalId, listType, attachAjaxModalForms, modalSuccessHandlers, applyCloseFriendsFilter, listEl);
-  const loadAll = async () => {
-    const payload = await fetchPage({ page: 1, pageSize: 100000 });
-    listEl.innerHTML = "";
-    if (payload && payload.html) append(payload.html);
-  };
+  if (!fetchPage || !sentinel) return;
+  const append = createFollowListAppend(
+    doc,
+    modalId,
+    listType,
+    attachAjaxModalForms,
+    modalSuccessHandlers,
+    applyCloseFriendsFilter,
+    listEl,
+  );
+  if (listType === "close_friends") applyCloseFriendsFilter();
+
+  const infinite = w.InfiniteList || {};
+  const startInfinite = () => createFollowInfinite(infinite, modalBody, buildFollowConfig(modalBody, sentinel, fetchPage, append));
 
   if (modalEl) {
-    modalEl.addEventListener("shown.bs.modal", () => {
-      loadAll();
-    });
-  } else {
-    loadAll();
+    modalEl.addEventListener("shown.bs.modal", startInfinite);
   }
+  startInfinite();
 }
 
 function initProfileInfinite(w, doc, deps) {
