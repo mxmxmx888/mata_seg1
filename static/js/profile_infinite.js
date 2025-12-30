@@ -78,9 +78,11 @@ function initProfilePostsInfinite(w, doc) {
     nextPage,
     fetchPage: createProfileFetcher(w, endpoint),
     append: createProfileAppendHtml(placeCards),
-    observerOptions: { root: null, threshold: 0, rootMargin: "600px 0px" },
+    columns,
+    observerOptions: { root: null, threshold: 0, rootMargin: "1200px 0px" },
     fallbackScroll: true,
-    fallbackMargin: 300,
+    fallbackMargin: 600,
+    fallbackMode: "document",
   });
 }
 
