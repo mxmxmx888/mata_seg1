@@ -6,7 +6,7 @@ from django.http import Http404, JsonResponse
 from django.shortcuts import redirect, render
 from django.template.loader import render_to_string
 
-FOLLOW_LIST_PAGE_SIZE = 25
+FOLLOW_LIST_PAGE_SIZE = 13
 
 
 @dataclass(frozen=True)
@@ -28,19 +28,13 @@ class ProfileDeps:
     recipe_post_model: object
 
 
-def paginate_follow_queryset(qs, user_attr, page_size=FOLLOW_LIST_PAGE_SIZE, page_number=1):
-    """Return total, sliced users, and pagination flags for a follow queryset."""
+def follow_page_data(qs, user_attr, page_number=1, page_size=FOLLOW_LIST_PAGE_SIZE):
     total = qs.count()
-    start = (max(1, page_number) - 1) * page_size
+    start = max(0, (page_number - 1) * page_size)
     end = start + page_size
     users = [getattr(relation, user_attr) for relation in qs[start:end]]
     has_more = total > end
     next_page = page_number + 1 if has_more else None
-    return total, users, has_more, next_page
-
-
-def follow_page_data(qs, user_attr):
-    total, users, has_more, next_page = paginate_follow_queryset(qs, user_attr, page_size=FOLLOW_LIST_PAGE_SIZE, page_number=1)
     return {"count": total, "users": users, "has_more": has_more, "next_page": next_page, "visible": True}
 
 
@@ -332,7 +326,6 @@ def profile_follow_list_response(request, deps):
     profile_user = profile_user_from_request(request, deps)
     is_own_profile = profile_user == request.user
     list_type = request.GET.get("list")
-    page_number = max(1, int(request.GET.get("page") or 1))
     follow_ctx = follow_context(profile_user, request.user, deps)
     if not follow_ctx["can_view_follow_lists"]:
         return JsonResponse({"error": "Not allowed"}, status=403)
@@ -340,13 +333,27 @@ def profile_follow_list_response(request, deps):
     if isinstance(selection, JsonResponse):
         return selection
     qs, user_attr, template = selection
-    total, users, has_more, next_page = paginate_follow_queryset(qs, user_attr, page_size=FOLLOW_LIST_PAGE_SIZE, page_number=page_number)
+    try:
+        page_number = int(request.GET.get("page") or 1)
+    except (TypeError, ValueError):
+        page_number = 1
+    try:
+        page_size = int(request.GET.get("page_size") or FOLLOW_LIST_PAGE_SIZE)
+    except (TypeError, ValueError):
+        page_size = FOLLOW_LIST_PAGE_SIZE
+    page_number = max(1, page_number)
+    page_size = max(1, min(page_size, 100000))
+
+    page_data = follow_page_data(qs, user_attr, page_number=page_number, page_size=page_size)
+    users = page_data["users"]
+    has_more = page_data["has_more"]
+    next_page = page_data["next_page"]
     html = render_to_string(
         template,
         {"users": users, "list_type": list_type, "is_own_profile": is_own_profile, "close_friend_ids": follow_ctx["close_friend_ids"]},
         request=request,
     )
-    return JsonResponse({"html": html, "has_more": has_more, "next_page": next_page, "total": total})
+    return JsonResponse({"html": html, "has_more": has_more, "next_page": next_page, "total": page_data["count"]})
 
 
 def profile_response(request, deps):

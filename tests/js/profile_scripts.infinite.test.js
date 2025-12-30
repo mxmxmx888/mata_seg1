@@ -109,20 +109,6 @@ describe("profile_scripts infinite lists", () => {
 
   test("follow list loader appends close friends items and reapplies filter", async () => {
     window.scrollTo = jest.fn();
-    const createLoader = jest.fn(() => {});
-    const buildJsonFetcher = jest.fn(({ mapResponse }) => async ({ page }) => {
-      if (page === 1) {
-        return mapResponse({
-          html: `<li class="close-friend-item" data-name="alice"><form action="/friends/add/1/"></form></li>`,
-          has_more: false,
-          next_page: null,
-          total: 2,
-        });
-      }
-      return mapResponse({ html: "", has_more: false, next_page: null, total: 2 });
-    });
-    window.InfiniteList = { create: createLoader, buildJsonFetcher };
-
     const { initProfileScripts } = loadModule();
     document.body.innerHTML = `
       <input id="closeFriendsSearch" value="bob" />
@@ -136,9 +122,22 @@ describe("profile_scripts infinite lists", () => {
       </div>
       <div id="profile-posts-grid"></div>
     `;
+    // mock fetch to return one extra item
+    global.fetch = jest.fn(() =>
+      Promise.resolve({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            html: `<li class="close-friend-item" data-name="alice"><form action="/friends/add/1/"></form></li>`,
+            has_more: false,
+            next_page: null,
+            total: 2,
+          }),
+      })
+    );
+
     initProfileScripts(window);
 
-    expect(buildJsonFetcher).toHaveBeenCalled();
     // allow queued promises to flush
     await new Promise((resolve) => setTimeout(resolve, 0));
     const closeFriendsItems = document.querySelectorAll("#closeFriendsList .close-friend-item");

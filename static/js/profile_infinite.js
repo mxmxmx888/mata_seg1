@@ -78,7 +78,7 @@ function initProfilePostsInfinite(w, doc) {
     nextPage,
     fetchPage: createProfileFetcher(w, endpoint),
     append: createProfileAppendHtml(placeCards),
-    observerOptions: { root: null, threshold: 0.1 },
+    observerOptions: { root: null, threshold: 0, rootMargin: "600px 0px" },
     fallbackScroll: true,
     fallbackMargin: 300,
   });
@@ -102,33 +102,15 @@ function getFollowListElements(doc, modalId) {
   if (!modalEl) return null;
   const modalBody = modalEl.querySelector(".modal-body[data-list-type]");
   const listEl = modalEl.querySelector(".follow-list-items");
-  const sentinel = modalEl.querySelector(".follow-list-sentinel");
-  return modalBody && listEl && sentinel ? { modalBody, listEl, sentinel } : null;
+  return modalBody && listEl ? { modalBody, listEl } : null;
 }
 
-function buildFollowListFetcher(w, infinite, endpoint) {
+function buildFollowListFetcher(w, endpoint) {
   if (!endpoint) return null;
-  const origin = (w && w.location && w.location.origin) || (globalWindow && globalWindow.location && globalWindow.location.origin) || "";
-
-  if (infinite && typeof infinite.buildJsonFetcher === "function") {
-    const baseFetcher = infinite.buildJsonFetcher({
-      endpoint,
-      pageParam: "page",
-      fetchInit: { headers: { "X-Requested-With": "XMLHttpRequest" }, credentials: "same-origin" },
-      mapResponse: (payload) => ({
-        html: (payload && payload.html) || "",
-        hasMore: Boolean(payload && payload.has_more),
-        nextPage: payload ? payload.next_page : null,
-        total: payload && payload.total,
-      }),
-    });
-    return ({ page, pageSize }) =>
-      baseFetcher({ page, pageSize }).then((payload) => {
-        const hasMore = Boolean(payload && payload.hasMore);
-        const nextPage = payload && (payload.nextPage ?? (hasMore && Number.isFinite(page) ? page + 1 : null));
-        return { html: payload ? payload.html : "", hasMore, nextPage, total: payload && payload.total };
-      });
-  }
+  const origin =
+    (w && w.location && w.location.origin) ||
+    (globalWindow && globalWindow.location && globalWindow.location.origin) ||
+    "http://localhost";
 
   return ({ page, pageSize }) => {
     if (!page && page !== 0) return Promise.resolve({ html: "", hasMore: false, nextPage: null, total: null });
@@ -144,16 +126,12 @@ function buildFollowListFetcher(w, infinite, endpoint) {
         if (!resp.ok) throw new Error("Network response was not ok");
         return resp.json();
       })
-      .then((payload) => {
-        const hasMore = Boolean(payload && payload.has_more);
-        const nextPage = payload && (payload.next_page ?? (hasMore && Number.isFinite(page) ? page + 1 : null));
-        return {
-          html: (payload && payload.html) || "",
-          hasMore,
-          nextPage,
-          total: payload && payload.total,
-        };
-      })
+      .then((payload) => ({
+        html: (payload && payload.html) || "",
+        hasMore: Boolean(payload && payload.has_more),
+        nextPage: payload ? payload.next_page : null,
+        total: payload && payload.total,
+      }))
       .catch(() => ({ html: "", hasMore: false, nextPage: null, total: null }));
   };
 }
@@ -161,10 +139,9 @@ function buildFollowListFetcher(w, infinite, endpoint) {
 function initFollowListLoader(w, doc, modalId, listType, attachAjaxModalForms, modalSuccessHandlers, applyCloseFriendsFilter) {
   const nodes = getFollowListElements(doc, modalId);
   if (!nodes) return;
-  const { modalBody, listEl, sentinel } = nodes;
+  const { modalBody, listEl } = nodes;
   const modalEl = modalBody.closest(".modal");
-  const infinite = w.InfiniteList || {};
-  const fetchPage = buildFollowListFetcher(w, infinite, modalBody.getAttribute("data-endpoint"));
+  const fetchPage = buildFollowListFetcher(w, modalBody.getAttribute("data-endpoint"));
   if (!fetchPage) return;
   const append = createFollowListAppend(doc, modalId, listType, attachAjaxModalForms, modalSuccessHandlers, applyCloseFriendsFilter, listEl);
   const loadAll = async () => {

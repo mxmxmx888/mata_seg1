@@ -92,9 +92,10 @@ const initForYouInfinite = (win) => {
     nextPage: ctx.initialHasMore ? ctx.state.offset : null,
     fetchPage: fetchPageFactory(w, ctx.state, ctx.loadingEl),
     append: appendHtmlToColumns(ctx.doc, ctx.infinite, ctx.columns, ctx.state),
-    observerOptions: { rootMargin: "600px 0px" },
+    columns: ctx.columns,
+    observerOptions: { rootMargin: "1200px 0px" },
     fallbackScroll: true,
-    fallbackMargin: 300,
+    fallbackMargin: 600,
     fallbackMode: "document",
   });
 };

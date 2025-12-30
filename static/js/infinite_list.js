@@ -68,6 +68,11 @@ const createInfiniteState = (win, opts) => {
   const w = resolveWindow(win);
   if (!w || !opts || !opts.sentinel || !opts.fetchPage || !opts.append) return null;
   if (!opts.hasMore || !opts.nextPage) return null;
+  if (opts.sentinel && opts.sentinel.offsetHeight === 0) {
+    opts.sentinel.style.minHeight = "1px";
+    opts.sentinel.style.display = "block";
+    if (!opts.sentinel.style.width) opts.sentinel.style.width = "100%";
+  }
   return {
     w,
     opts,
@@ -105,7 +110,7 @@ const fetchMore = (state) => {
 
 const setupObserver = (state) => {
   if (!("IntersectionObserver" in state.w)) return null;
-  const observerOptions = state.opts.observerOptions || { root: state.opts.root || null, threshold: 0.1 };
+  const observerOptions = state.opts.observerOptions || { root: state.opts.root || null, threshold: 0 };
   const observer = new state.w.IntersectionObserver((entries) => {
     entries.forEach((entry) => {
       if (entry.isIntersecting) fetchMore(state);
@@ -122,17 +127,41 @@ const shouldTriggerDocumentScroll = (state, margin) => {
   return scrollPosition >= threshold;
 };
 
+const getTriggerMargin = (state) => {
+  const margin = Number.isFinite(state.opts.fallbackMargin) ? state.opts.fallbackMargin : 300;
+  const viewportMargin = Math.floor((state.w.innerHeight || 0) * 0.6);
+  return Math.max(margin, viewportMargin);
+};
+
+const minColumnBottom = (state) => {
+  const cols = state.opts.columns;
+  const w = state.w;
+  if (!cols || !cols.length || !w || !w.document) return null;
+  let min = null;
+  cols.forEach((col) => {
+    if (!col || typeof col.getBoundingClientRect !== "function") return;
+    const rect = col.getBoundingClientRect();
+    const bottom = rect.bottom + (w.scrollY || 0);
+    if (min === null || bottom < min) min = bottom;
+  });
+  return min;
+};
+
+const shouldFetchFallback = (state, margin) => {
+  const minBottom = minColumnBottom(state);
+  const scrollPos = (state.w.scrollY || 0) + (state.w.innerHeight || 0);
+  if (minBottom !== null && scrollPos + margin >= minBottom) return true;
+  if (state.fallbackMode === "document") return shouldTriggerDocumentScroll(state, margin);
+  const rect = state.sentinel.getBoundingClientRect();
+  return rect.top - (state.w.innerHeight || 0) <= margin;
+};
+
 const setupFallbackScroll = (state) => {
   if (!state.opts.fallbackScroll) return null;
-  const margin = Number.isFinite(state.opts.fallbackMargin) ? state.opts.fallbackMargin : 300;
   const handler = () => {
     if (state.loading || !state.hasMore || !state.nextPage) return;
-    if (state.fallbackMode === "document") {
-      if (shouldTriggerDocumentScroll(state, margin)) fetchMore(state);
-    } else {
-      const rect = state.sentinel.getBoundingClientRect();
-      if (rect.top - (state.w.innerHeight || 0) <= margin) fetchMore(state);
-    }
+    const triggerMargin = getTriggerMargin(state);
+    if (shouldFetchFallback(state, triggerMargin)) fetchMore(state);
   };
   state.w.addEventListener("scroll", handler);
   return handler;
@@ -142,9 +171,7 @@ const createInfiniteList = (win, opts) => {
   const state = createInfiniteState(win, opts);
   if (!state) return null;
   state.observer = setupObserver(state);
-  if (!state.observer) {
-    state.scrollHandler = setupFallbackScroll(state);
-  }
+  state.scrollHandler = setupFallbackScroll(state);
   return {
     disconnect() {
       if (state.observer) state.observer.disconnect();

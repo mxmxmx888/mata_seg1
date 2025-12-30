@@ -156,7 +156,7 @@
             <ul class="list-unstyled mb-0 follow-list-items" id="followersList">
               {% include "partials/profile/follow_list_items.html" with users=followers_users list_type="followers" is_own_profile=is_own_profile %}
             </ul>
-            <div class="follow-list-sentinel infinite-sentinel" data-target-list="followers" aria-hidden="true"></div>
+            <div class="follow-list-sentinel" aria-hidden="true"></div>
           {% else %}
             <p class="text-muted mb-0 follow-empty-text">No followers yet.</p>
           {% endif %}
@@ -198,7 +198,7 @@
             <ul class="list-unstyled mb-0 follow-list-items" id="followingList">
               {% include "partials/profile/follow_list_items.html" with users=following_users list_type="following" is_own_profile=is_own_profile %}
             </ul>
-            <div class="follow-list-sentinel infinite-sentinel" data-target-list="following" aria-hidden="true"></div>
+            <div class="follow-list-sentinel" aria-hidden="true"></div>
           {% else %}
             <p class="text-muted mb-0 follow-empty-text">Not following anyone yet.</p>
           {% endif %}
@@ -248,7 +248,7 @@
           <ul class="list-unstyled mb-0 follow-list-items" id="closeFriendsList">
             {% include "partials/profile/close_friend_items.html" with users=followers_users close_friend_ids=close_friend_ids %}
           </ul>
-          <div class="follow-list-sentinel infinite-sentinel" data-target-list="close_friends" aria-hidden="true"></div>
+          <div class="follow-list-sentinel" aria-hidden="true"></div>
         {% else %}
           <p class="text-muted mb-0 follow-empty-text">No followers to add.</p>
         {% endif %}

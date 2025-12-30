@@ -307,6 +307,26 @@ class ProfileViewTest(TestCase):
         self.assertEqual(payload["next_page"], 3)
         self.assertIn("fol25", payload["html"])
 
+    def test_profile_follow_list_endpoint_defaults_invalid_page_params(self):
+        self.client.login(username=self.user.username, password="Password123")
+        for i in range(profile_view.FOLLOW_LIST_PAGE_SIZE + 1):
+            follower = User.objects.create_user(
+                username=f"err{i}",
+                email=f"err{i}@example.org",
+                password="Password123",
+            )
+            Follower.objects.create(author=self.user, follower=follower)
+
+        url = f"{reverse('profile_follow_list')}?user={self.user.username}&list=followers&page=bad&page_size=oops"
+
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertTrue(payload["has_more"])
+        self.assertEqual(payload["next_page"], 2)
+        self.assertIn("err0", payload["html"])
+
     def test_profile_follow_list_endpoint_returns_following(self):
         self.client.login(username=self.user.username, password="Password123")
         for i in range(3):

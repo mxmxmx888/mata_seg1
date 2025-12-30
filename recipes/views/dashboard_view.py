@@ -21,6 +21,9 @@ except Exception:  # pragma: no cover
     from recipes.models.recipe_post import RecipePost
 
 
+FEED_PAGE_LIMIT = 24
+
+
 def _base_discover_queryset(user):
     """Base queryset of published posts, excluding private tags from other authors."""
     return (
@@ -136,7 +139,7 @@ def _discover_queryset(params, user, privacy):
 
 def _for_you_ajax_response(request, seed, privacy):
     """Return the JSON payload for the 'for you' infinite scroll."""
-    limit = 12
+    limit = FEED_PAGE_LIMIT
     offset = _safe_offset(request.GET.get("for_you_offset"))
     seed = _ensure_for_you_seed(request, seed)
     posts = feed_service.for_you_posts(request.user, limit=limit, offset=offset, seed=seed, privacy=privacy)
@@ -148,7 +151,7 @@ def _for_you_ajax_response(request, seed, privacy):
 
 def _following_ajax_response(request):
     """Return the JSON payload for the 'following' infinite scroll."""
-    limit = 12
+    limit = FEED_PAGE_LIMIT
     offset = _safe_offset(request.GET.get("following_offset"))
     posts = feed_service.following_posts(request.user, limit=limit, offset=offset)
     html = render_to_string("partials/feed/feed_cards.html", {"posts": posts, "request": request}, request=request)
@@ -238,8 +241,8 @@ def _scope_recipes_results(request, params, discover_qs):
 def _default_feed(discover_qs, request, for_you_seed, privacy):
     """Build default feed bundles when no search filters are applied."""
     popular_recipes = list(discover_qs[:18])
-    for_you_posts = feed_service.for_you_posts(request.user, seed=for_you_seed, privacy=privacy)
-    following_posts = feed_service.following_posts(request.user, limit=None)
+    for_you_posts = feed_service.for_you_posts(request.user, seed=for_you_seed, privacy=privacy, limit=FEED_PAGE_LIMIT)
+    following_posts = feed_service.following_posts(request.user, limit=FEED_PAGE_LIMIT)
     return popular_recipes, for_you_posts, following_posts
 
 
