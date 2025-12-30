@@ -1,5 +1,9 @@
 (() => {
-const hasModuleExports = typeof module !== "undefined" && module.exports;
+const globalContext = typeof globalThis !== "undefined" ? globalThis : /* istanbul ignore next */ {};
+const hasModuleExports =
+  !globalContext.__PROFILE_SCRIPTS_BROWSER__ &&
+  typeof module !== "undefined" &&
+  module.exports;
 const globalWindow = typeof window !== "undefined" && window.document ? window : null;
 
 const modalsModule = hasModuleExports
