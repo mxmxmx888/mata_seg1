@@ -1,3 +1,5 @@
+import mimetypes
+
 from django import forms
 
 from .fields import MultiFileField, MultiFileInput
@@ -82,13 +84,13 @@ class RecipePostForm(forms.ModelForm):
     images = MultiFileField(
         label="Images",
         required=False,
-        widget=MultiFileInput(attrs={"multiple": True}),
+        widget=MultiFileInput(attrs={"multiple": True, "accept": "image/*"}),
         help_text="Upload up to 10 images",
     )
     shop_images = MultiFileField(
         label="Shopping images",
         required=False,
-        widget=MultiFileInput(attrs={"multiple": True}),
+        widget=MultiFileInput(attrs={"multiple": True, "accept": "image/*"}),
         help_text="Add one image per shopping link (select before clicking Add).",
     )
 
@@ -113,6 +115,7 @@ class RecipePostForm(forms.ModelForm):
         files = self.files.getlist("images")
         if len(files) > 10:
             raise forms.ValidationError("You can upload up to 10 images.")
+        self._validate_image_types(files, "images")
         self._validate_file_sizes(files, "image")
 
         has_existing_image = False
@@ -132,6 +135,7 @@ class RecipePostForm(forms.ModelForm):
         files = self.files.getlist("shop_images")
         if len(files) > 10:
             raise forms.ValidationError("You can upload up to 10 shopping images.")
+        self._validate_image_types(files, "shopping images")
         self._validate_file_sizes(files, "shopping image")
         return files
 
@@ -393,3 +397,19 @@ class RecipePostForm(forms.ModelForm):
         raise forms.ValidationError(
             f"Each {label} must be {MAX_IMAGE_UPLOAD_MB}MB or smaller. Remove: {names}."
         )
+
+    def _validate_image_types(self, files, label):
+        """Ensure uploads are image types based on content type or file extension."""
+        def is_image(file_obj):
+            content_type = (getattr(file_obj, "content_type", "") or "").lower()
+            if content_type.startswith("image/"):
+                return True
+            guessed, _ = mimetypes.guess_type(getattr(file_obj, "name", ""))
+            return bool(guessed and guessed.startswith("image/"))
+
+        invalid = [f.name for f in files if not is_image(f)]
+        if invalid:
+            joined = ", ".join(invalid)
+            raise forms.ValidationError(
+                f"Only image files are allowed for {label}. Remove: {joined}."
+            )

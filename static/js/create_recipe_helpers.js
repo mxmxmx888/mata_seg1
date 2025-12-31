@@ -240,6 +240,8 @@ const createImageManager =
     syncImageFiles: noop,
     restoreFromStorage: noop,
     persistSelection: noop,
+    syncInputFiles: noop,
+    getSelectedFiles: () => [],
   }));
 
 const createShoppingManager =

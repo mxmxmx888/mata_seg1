@@ -10,3 +10,7 @@ def fake_image(name="img.jpg"):
 
 def oversized_image(name="big.jpg"):
     return SimpleUploadedFile(name, b"x" * (MAX_IMAGE_UPLOAD_BYTES + 1), content_type="image/jpeg")
+
+
+def fake_non_image(name="doc.pdf", content_type="application/pdf"):
+    return SimpleUploadedFile(name, b"fake-doc-bytes", content_type=content_type)

@@ -25,11 +25,14 @@ class RecipePostAdmin(admin.ModelAdmin):
     actions = ['hide_content', 'approve_content']
     inlines = [ReportInline]
 
+    class Media:
+        css = {"all": ("css/admin/reports.css",)}
+
     def report_count_display(self, obj):
         """Return formatted count of unresolved reports."""
         count = obj.reports.filter(is_resolved=False).count()
         if count > 0:
-            return format_html('<span style="color:red; font-weight:bold;">{} Reports</span>', count)
+            return format_html('<span class="admin-report-count admin-report-count--alert">{} Reports</span>', count)
         return "0"
     report_count_display.short_description = "Active Reports"
 
@@ -52,6 +55,9 @@ class CommentAdmin(admin.ModelAdmin):
     search_fields = ('text', 'user__username')
     actions = ['hide_content', 'approve_content']
 
+    class Media:
+        css = {"all": ("css/admin/reports.css",)}
+
     def short_text(self, obj):
         """Shorten comment text for list display."""
         return obj.text[:50] + "..." if len(obj.text) > 50 else obj.text
@@ -60,7 +66,7 @@ class CommentAdmin(admin.ModelAdmin):
         """Return formatted count of unresolved comment reports."""
         count = obj.reports.filter(is_resolved=False).count()
         if count > 0:
-            return format_html('<span style="color:red; font-weight:bold;">{} Reports</span>', count)
+            return format_html('<span class="admin-report-count admin-report-count--alert">{} Reports</span>', count)
         return "0"
     report_count_display.short_description = "Active Reports"
 

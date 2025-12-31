@@ -24,6 +24,8 @@ const createImageManager = helpers.createImageManager || (() => ({
   restoreFromStorage: noop,
   persistSelection: noop,
   renderImagesList: noop,
+  syncInputFiles: noop,
+  getSelectedFiles: () => [],
 }));
 const createShoppingManager = helpers.createShoppingManager || (() => ({
   bind: noop,
@@ -85,11 +87,25 @@ const shoppingManagerFor = (ctx) =>
     existingShoppingItems: ctx.existingShoppingItems,
   });
 
-const buildManagers = (ctx) => ({
-  validator: createRequiredFieldValidator(ctx.doc, ctx.formEl, ctx.requiredFields, getFiles),
-  imageManager: imageManagerFor(ctx),
-  shoppingManager: shoppingManagerFor(ctx),
-});
+const buildManagers = (ctx) => {
+  const imageManager = imageManagerFor(ctx);
+  const getFilesForValidation = (input) => {
+    let files = getFiles(input);
+    if (input === ctx.imageInput && (!files || !files.length)) {
+      const selected = typeof imageManager.getSelectedFiles === "function" ? imageManager.getSelectedFiles() : null;
+      if (selected && selected.length) {
+        if (typeof imageManager.syncInputFiles === "function") imageManager.syncInputFiles();
+        files = selected;
+      }
+    }
+    return files;
+  };
+  return {
+    validator: createRequiredFieldValidator(ctx.doc, ctx.formEl, ctx.requiredFields, getFilesForValidation),
+    imageManager,
+    shoppingManager: shoppingManagerFor(ctx),
+  };
+};
 
 const resolveRequiredElements = (doc) => {
   const formEl = doc.querySelector(".create-recipe-card form");
@@ -125,21 +141,48 @@ const gatherContext = (w) => {
   return { w, doc, ...requiredEls, ...extras };
 };
 
+const clearAllImages = (ctx, imageManager) => {
+  clearStoredFiles(ctx.w, ctx.IMG_STORAGE_KEY);
+  const existingFiles = ctx.imageInput ? getFiles(ctx.imageInput) : null;
+  const shouldResetInput = !existingFiles || !existingFiles.length;
+  if (ctx.imageList && shouldResetInput) ctx.imageList.innerHTML = "";
+  if (ctx.imageInput && shouldResetInput) {
+    ctx.imageInput.value = "";
+    if (typeof imageManager.syncImageFiles === "function") {
+      imageManager.syncImageFiles([]);
+    }
+  }
+};
+
+const bindPageLifecycle = (ctx, clearImages) => {
+  if (!ctx.w || typeof ctx.w.addEventListener !== "function") return;
+  const resetIfFresh = () => {
+    if (!ctx.isBound) clearImages();
+  };
+  ctx.w.addEventListener("pageshow", resetIfFresh);
+  ctx.w.addEventListener("pagehide", resetIfFresh);
+};
+
 const bindManagers = (ctx, validator, shoppingManager, imageManager) => {
   validator.bindRequiredListeners();
   shoppingManager.bind();
   imageManager.bind();
+  const clearImages = () => clearAllImages(ctx, imageManager);
   if (!ctx.isBound) {
-    clearStoredFiles(ctx.w, ctx.IMG_STORAGE_KEY);
+    clearImages();
   } else if (ctx.hasErrors) {
     imageManager.restoreFromStorage();
   }
   shoppingManager.bootstrapExisting();
   shoppingManager.renderList();
+  bindPageLifecycle(ctx, clearImages);
 };
 
 const handleSubmit = (ctx, validator, shoppingManager, imageManager) => {
   ctx.formEl.addEventListener("submit", (event) => {
+    if (typeof imageManager.syncInputFiles === "function") {
+      imageManager.syncInputFiles();
+    }
     if (validator.renderRequiredFieldErrors()) {
       event.preventDefault();
       return;

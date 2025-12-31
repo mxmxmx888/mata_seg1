@@ -1,3 +1,4 @@
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from django.utils.datastructures import MultiValueDict
 
@@ -9,7 +10,7 @@ from recipes.models import User
 from recipes.models.recipe_post import RecipePost, RecipeImage
 from recipes.models.recipe_step import RecipeStep
 from recipes.models.ingredient import Ingredient
-from recipes.tests.forms.form_file_helpers import fake_image, oversized_image
+from recipes.tests.forms.form_file_helpers import fake_image, fake_non_image, oversized_image
 
 
 class RecipePostFormTests(TestCase):
@@ -178,6 +179,18 @@ class RecipePostFormTests(TestCase):
         self.assertIn("MB or smaller", str(form.errors["images"]))
         self.assertIn("big.jpg", str(form.errors["images"]))
 
+    def test_clean_images_rejects_non_image_files(self):
+        form = self.build_form(files=self.form_files(images=[fake_non_image("doc.pdf")]))
+        self.assertFalse(form.is_valid())
+        self.assertIn("images", form.errors)
+        self.assertIn("Only image files", str(form.errors["images"]))
+        self.assertIn("doc.pdf", str(form.errors["images"]))
+
+    def test_clean_images_allows_guessable_extension_without_content_type(self):
+        png_without_type = SimpleUploadedFile("guess.png", b"png-bytes", content_type="")
+        form = self.build_form(files=self.form_files(images=[png_without_type]))
+        self.assertTrue(form.is_valid(), form.errors)
+
     def test_clean_shop_images_limits_to_10(self):
         files = [fake_image(f"{i}.jpg") for i in range(11)]
         form = self.build_form(files=self.form_files(shop_images=files))
@@ -196,6 +209,19 @@ class RecipePostFormTests(TestCase):
         self.assertIn("shop_images", form.errors)
         self.assertIn("MB or smaller", str(form.errors["shop_images"]))
         self.assertIn("too-big.jpg", str(form.errors["shop_images"]))
+
+    def test_clean_shop_images_rejects_non_image_files(self):
+        form = self.build_form(
+            files=self.form_files(
+                images=[fake_image("cover.jpg")],
+                shop_images=[fake_non_image("bad.pdf")],
+            ),
+        )
+
+        self.assertFalse(form.is_valid())
+        self.assertIn("shop_images", form.errors)
+        self.assertIn("Only image files", str(form.errors["shop_images"]))
+        self.assertIn("bad.pdf", str(form.errors["shop_images"]))
 
     def test_clean_images_requires_one_on_create(self):
         form = self.build_form()

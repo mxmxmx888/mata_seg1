@@ -79,7 +79,10 @@ body[data-theme="light"] .modal-backdrop.custom-modal-backdrop.show {
 }
 
 .follow-modal .modal-dialog {
+  width: min(380px, calc(100vw - 1rem));
   max-width: 380px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 body.profile-body .follow-modal .modal-content {

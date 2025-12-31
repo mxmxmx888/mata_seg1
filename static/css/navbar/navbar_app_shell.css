@@ -247,6 +247,14 @@ body[data-theme="light"] .recipi-nav-search-input::placeholder {
   }
 }
 
+@media (max-width: 640px) {
+  /* Drop scale on small screens to avoid Chrome mobile transform bug and keep popover centered */
+  .recipi-nav-search,
+  .recipi-nav-search:focus-within {
+    transform: none;
+  }
+}
+
 
 .navbar-app .navbar-toggler-icon {
   color: var(--text-primary);

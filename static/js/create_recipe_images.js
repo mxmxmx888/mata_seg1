@@ -119,6 +119,10 @@ const createImageManager = (params) => {
     params;
   const removeAt = (idx) => removeImageAt(state, imageInput, imageList, w, setFiles, getFilesFn, persistFn, storageKey, idx);
   const hydrate = () => hydrateImagesFromInput(state, imageInput, imageList, w, getFilesFn, removeAt);
+  const syncInputFiles = () => {
+    if (!imageInput || !state.imageFiles.length) return;
+    setFiles(imageInput, state.imageFiles);
+  };
   return {
     bind: () => bind(state, imageInput, imageList, w, setFiles, getFilesFn, persistFn, restoreFn, storageKey),
     renderImagesList: () => renderImagesList(w, state, imageList, imageInput, removeAt),
@@ -127,6 +131,8 @@ const createImageManager = (params) => {
     syncImageFiles: (files) => syncImageFiles(state, imageInput, imageList, w, setFiles, getFilesFn, persistFn, storageKey, files),
     restoreFromStorage: () => restoreFn(w, imageInput, storageKey, hydrate),
     persistSelection: () => persistSelection(w, imageInput, persistFn, storageKey),
+    syncInputFiles,
+    getSelectedFiles: () => state.imageFiles.slice(),
   };
 };
 

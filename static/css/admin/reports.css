@@ -1,0 +1,5 @@
+/* Styling for admin report count badges */
+.admin-report-count--alert {
+    color: red;
+    font-weight: bold;
+}
