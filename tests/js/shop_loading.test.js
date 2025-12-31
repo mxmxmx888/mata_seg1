@@ -1,6 +1,6 @@
 const { initShop } = require("../../static/js/shop");
 
-function buildShopDom({ itemsHtml = '<div class="shop-masonry-item">Item</div>', hasNext = true } = {}) {
+const buildShopDom = ({ itemsHtml = '<div class="shop-masonry-item">Item</div>', hasNext = true } = {}) => {
   const nextValue = hasNext ? "true" : "false";
   document.body.innerHTML = `
     <div id="shop-items-container" data-page="1" data-seed="abc" data-has-next="${nextValue}">
@@ -9,7 +9,7 @@ function buildShopDom({ itemsHtml = '<div class="shop-masonry-item">Item</div>',
     <div id="shop-loading" class="d-none"></div>
     <div id="shop-sentinel"></div>
   `;
-}
+};
 
 describe("shop loading", () => {
   let originalFetch;
@@ -19,19 +19,21 @@ describe("shop loading", () => {
   let listeners = [];
   let lastObserverCallback = null;
 
-  beforeEach(() => {
-    document.body.innerHTML = "";
-    originalFetch = global.fetch;
-    global.fetch = jest.fn().mockResolvedValue({
+  const stubFetchOk = () =>
+    jest.fn().mockResolvedValue({
       ok: true,
       json: () => Promise.resolve({ html: "", has_next: false })
     });
-    originalIO = window.IntersectionObserver;
+
+  const stubIO = () => {
     window.IntersectionObserver = function (cb) {
       lastObserverCallback = cb;
       this.observe = jest.fn();
       this.disconnect = jest.fn();
     };
+  };
+
+  const wrapListeners = () => {
     originalAdd = window.addEventListener;
     originalRemove = window.removeEventListener;
     listeners = [];
@@ -40,6 +42,15 @@ describe("shop loading", () => {
       return originalAdd.call(window, type, fn, opts);
     };
     window.removeEventListener = (type, fn, opts) => originalRemove.call(window, type, fn, opts);
+  };
+
+  beforeEach(() => {
+    document.body.innerHTML = "";
+    originalFetch = global.fetch;
+    global.fetch = stubFetchOk();
+    originalIO = window.IntersectionObserver;
+    stubIO();
+    wrapListeners();
   });
 
   afterEach(() => {
@@ -53,12 +64,13 @@ describe("shop loading", () => {
     jest.clearAllMocks();
   });
 
-  test("falls back to scroll listener when IntersectionObserver missing", () => {
-    const originalIO = window.IntersectionObserver;
-    delete window.IntersectionObserver;
+  describe("scroll/infinite handling", () => {
+    test("falls back to scroll listener when IntersectionObserver missing", () => {
+      const originalIO = window.IntersectionObserver;
+      delete window.IntersectionObserver;
 
-    buildShopDom();
-    initShop(window);
+      buildShopDom();
+      initShop(window);
 
     expect(global.fetch).not.toHaveBeenCalled();
     window.dispatchEvent(new window.Event("scroll"));
@@ -67,12 +79,12 @@ describe("shop loading", () => {
     window.IntersectionObserver = originalIO;
   });
 
-  test("loads more items via fetch and appends html", async () => {
-    buildShopDom();
-    const html = '<div class="shop-masonry-item" id="new"></div>';
-    global.fetch.mockResolvedValueOnce({
-      ok: true,
-      json: () => Promise.resolve({ html, has_next: false })
+    test("loads more items via fetch and appends html", async () => {
+      buildShopDom();
+      const html = '<div class="shop-masonry-item" id="new"></div>';
+      global.fetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ html, has_next: false })
     });
 
     let observerCallback = null;
@@ -92,12 +104,12 @@ describe("shop loading", () => {
     expect(global.fetch).toHaveBeenCalled();
   });
 
-  test("handles fetch failure by decrementing page", async () => {
-    const originalIO = window.IntersectionObserver;
-    delete window.IntersectionObserver;
+    test("handles fetch failure by decrementing page", async () => {
+      const originalIO = window.IntersectionObserver;
+      delete window.IntersectionObserver;
 
-    buildShopDom();
-    global.fetch.mockRejectedValue(new Error("fail"));
+      buildShopDom();
+      global.fetch.mockRejectedValue(new Error("fail"));
     Object.defineProperty(window, "innerHeight", { value: 1000, writable: true });
     Object.defineProperty(window, "scrollY", { value: 1200, writable: true });
     Object.defineProperty(document.body, "offsetHeight", { value: 2000, writable: true });
@@ -113,17 +125,17 @@ describe("shop loading", () => {
     window.IntersectionObserver = originalIO;
   });
 
-  test("does nothing when container or sentinel missing", () => {
-    document.body.innerHTML = `<div id="shop-items-container"></div>`;
-    initShop(window);
-    expect(global.fetch).not.toHaveBeenCalled();
-  });
+    test("does nothing when container or sentinel missing", () => {
+      document.body.innerHTML = `<div id="shop-items-container"></div>`;
+      initShop(window);
+      expect(global.fetch).not.toHaveBeenCalled();
+    });
 
-  test("ignores empty html responses but resets loading", async () => {
-    buildShopDom({ itemsHtml: "" });
-    global.fetch.mockResolvedValueOnce({
-      ok: true,
-      json: () => Promise.resolve({ html: "", has_next: true })
+    test("ignores empty html responses but resets loading", async () => {
+      buildShopDom({ itemsHtml: "" });
+      global.fetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ html: "", has_next: true })
     });
     initShop(window);
     const loading = document.getElementById("shop-loading");
@@ -138,80 +150,83 @@ describe("shop loading", () => {
     expect(loading.classList.contains("d-none")).toBe(true);
   });
 
-  test("loadMoreShopItems skips when hasNext is false", () => {
-    buildShopDom({ hasNext: false });
-    initShop(window);
-    expect(document.getElementById("shop-items-container").dataset.hasNext).toBe("false");
-    window.dispatchEvent(new window.Event("scroll"));
-    expect(global.fetch).not.toHaveBeenCalled();
+    test("loadMoreShopItems skips when hasNext is false", () => {
+      buildShopDom({ hasNext: false });
+      initShop(window);
+      expect(document.getElementById("shop-items-container").dataset.hasNext).toBe("false");
+      window.dispatchEvent(new window.Event("scroll"));
+      expect(global.fetch).not.toHaveBeenCalled();
+    });
   });
 
-  test("waitForImages resolves after image load and places item", async () => {
-    buildShopDom({ itemsHtml: "" });
-    let disconnectSpy;
-    window.IntersectionObserver = jest.fn((cb) => {
-      lastObserverCallback = cb;
-      disconnectSpy = jest.fn();
-      return { observe: jest.fn(), disconnect: disconnectSpy };
-    });
-    global.fetch.mockResolvedValueOnce({
-      ok: true,
-      json: () => Promise.resolve({ html: '<div class="shop-masonry-item"><img id="img-load" /></div>', has_next: false })
+  describe("image and append handling", () => {
+    test("waitForImages resolves after image load and places item", async () => {
+      buildShopDom({ itemsHtml: "" });
+      let disconnectSpy;
+      window.IntersectionObserver = jest.fn((cb) => {
+        lastObserverCallback = cb;
+        disconnectSpy = jest.fn();
+        return { observe: jest.fn(), disconnect: disconnectSpy };
+      });
+      global.fetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ html: '<div class="shop-masonry-item"><img id="img-load" /></div>', has_next: false })
+      });
+
+      initShop(window);
+
+      const loadPromise = lastObserverCallback && lastObserverCallback([{ isIntersecting: true }]);
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      const img = document.getElementById("img-load");
+      expect(img).not.toBeNull();
+      img.dispatchEvent(new Event("load"));
+      await Promise.resolve(loadPromise);
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      expect(img.closest(".shop-column")).not.toBeNull();
+      lastObserverCallback && lastObserverCallback([{ isIntersecting: true }]);
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      expect(global.fetch).toHaveBeenCalledTimes(1);
     });
 
-    initShop(window);
-
-    const loadPromise = lastObserverCallback && lastObserverCallback([{ isIntersecting: true }]);
-    await new Promise((resolve) => setTimeout(resolve, 0));
-    const img = document.getElementById("img-load");
-    expect(img).not.toBeNull();
-    img.dispatchEvent(new Event("load"));
-    await Promise.resolve(loadPromise);
-    await new Promise((resolve) => setTimeout(resolve, 0));
-    await new Promise((resolve) => setTimeout(resolve, 0));
-    expect(img.closest(".shop-column")).not.toBeNull();
-    lastObserverCallback && lastObserverCallback([{ isIntersecting: true }]);
-    await new Promise((resolve) => setTimeout(resolve, 0));
-    expect(global.fetch).toHaveBeenCalledTimes(1);
-  });
-
-  test("appendHtml places items after wait", async () => {
-    buildShopDom({ itemsHtml: "" });
-    initShop(window);
-    const html = '<div class="shop-masonry-item" id="later"></div>';
-    global.fetch.mockResolvedValueOnce({
-      ok: true,
-      json: () => Promise.resolve({ html, has_next: false })
+    test("appendHtml places items after wait", async () => {
+      buildShopDom({ itemsHtml: "" });
+      initShop(window);
+      const html = '<div class="shop-masonry-item" id="later"></div>';
+      global.fetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ html, has_next: false })
+      });
+      lastObserverCallback && lastObserverCallback([{ isIntersecting: true }]);
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      expect(document.getElementById("later")).not.toBeNull();
     });
-    lastObserverCallback && lastObserverCallback([{ isIntersecting: true }]);
-    await new Promise((resolve) => setTimeout(resolve, 0));
-    await new Promise((resolve) => setTimeout(resolve, 0));
-    expect(document.getElementById("later")).not.toBeNull();
-  });
 
-  test("default column count fallback and disconnect on final page", async () => {
-    buildShopDom();
-    Object.defineProperty(window, "innerWidth", { value: -10, writable: true });
-    let disconnectSpy;
-    window.IntersectionObserver = jest.fn((cb) => {
-      lastObserverCallback = cb;
-      disconnectSpy = jest.fn();
-      return { observe: jest.fn(), disconnect: disconnectSpy };
+    test("default column count fallback and disconnect on final page", async () => {
+      buildShopDom();
+      Object.defineProperty(window, "innerWidth", { value: -10, writable: true });
+      let disconnectSpy;
+      window.IntersectionObserver = jest.fn((cb) => {
+        lastObserverCallback = cb;
+        disconnectSpy = jest.fn();
+        return { observe: jest.fn(), disconnect: disconnectSpy };
+      });
+      global.fetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ html: '<div class="shop-masonry-item"></div>', has_next: false })
+      });
+      initShop(window);
+      const columns = document.querySelectorAll(".shop-column");
+      Object.defineProperty(columns[0], "offsetHeight", { value: 10 });
+      Object.defineProperty(columns[1], "offsetHeight", { value: 0 });
+      lastObserverCallback && lastObserverCallback([{ isIntersecting: true }]);
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      expect(columns.length).toBe(2);
+      expect(typeof disconnectSpy).toBe("function");
     });
-    global.fetch.mockResolvedValueOnce({
-      ok: true,
-      json: () => Promise.resolve({ html: '<div class="shop-masonry-item"></div>', has_next: false })
-    });
-    initShop(window);
-    const columns = document.querySelectorAll(".shop-column");
-    Object.defineProperty(columns[0], "offsetHeight", { value: 10 });
-    Object.defineProperty(columns[1], "offsetHeight", { value: 0 });
-    lastObserverCallback && lastObserverCallback([{ isIntersecting: true }]);
-    await new Promise((resolve) => setTimeout(resolve, 0));
-    await new Promise((resolve) => setTimeout(resolve, 0));
-    await new Promise((resolve) => setTimeout(resolve, 0));
-    expect(columns.length).toBe(2);
-    expect(typeof disconnectSpy).toBe("function");
   });
 
   test("handles non-ok fetch response gracefully", async () => {

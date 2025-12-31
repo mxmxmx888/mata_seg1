@@ -1,3 +1,5 @@
+"""Views for creating, viewing, and interacting with recipe posts."""
+
 from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
@@ -95,6 +97,7 @@ def recipe_detail(request, post_id):
     return render(request, "post/post_detail.html", context)
 
 def _render_create_form(request, form):
+    """Render the create recipe form with cache-busting headers."""
     response = render(
         request,
         "app/create_recipe.html",
@@ -106,6 +109,7 @@ def _render_create_form(request, form):
     return response
 
 def _comments_page(recipe, request, page_size=50):
+    """Return a slice of comments for a recipe along with pagination metadata."""
     comments_qs = recipe.comments.select_related("user").order_by("-created_at")
     page_number = max(1, int(request.GET.get("comments_page") or 1))
     start = (page_number - 1) * page_size

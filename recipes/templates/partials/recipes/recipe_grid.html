@@ -1,4 +1,3 @@
-{# recipes/templates/partials/recipes/recipe_grid.html #}
 {% if posts %}
   <div class="my-recipes-grid"{% if grid_id %} id="{{ grid_id }}"{% endif %}>
     {% include "partials/recipes/recipe_grid_items.html" with posts=posts %}

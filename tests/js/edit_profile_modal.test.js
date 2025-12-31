@@ -41,6 +41,36 @@ function buildBaseDom({ showOnLoad = false } = {}) {
   `;
 }
 
+const qs = (selector) => document.querySelector(selector);
+
+function setupModal(options = {}) {
+  buildBaseDom(options);
+  const { initEditProfileModal } = loadModule();
+  initEditProfileModal(window);
+  return {
+    modal: qs("#editProfileModal"),
+    nav: (section) => qs(`[data-section="${section}"]`),
+    submitProfile: qs(".edit-profile-submit-profile"),
+    submitPassword: qs(".edit-profile-submit-password"),
+  };
+}
+
+function setFiles(input, files) {
+  Object.defineProperty(input, "files", { value: files });
+}
+
+function mockFileReader(result) {
+  class MockFileReader {
+    constructor() {
+      this.onload = null;
+    }
+    readAsDataURL() {
+      if (this.onload) this.onload({ target: { result } });
+    }
+  }
+  global.FileReader = MockFileReader;
+}
+
 describe("edit_profile_modal", () => {
   let originalFileReader;
   let originalAddEventListener;
@@ -59,28 +89,24 @@ describe("edit_profile_modal", () => {
   });
 
   test("activates password section and toggles submit buttons", () => {
-    buildBaseDom();
-    const { initEditProfileModal } = loadModule();
-    initEditProfileModal(window);
+    const { nav, submitPassword } = setupModal();
 
-    const passwordNav = document.querySelector('[data-section="password"]');
+    const passwordNav = nav("password");
     passwordNav.click();
 
-    expect(document.querySelector('[data-section="profile"]').classList.contains("active")).toBe(false);
+    expect(nav("profile").classList.contains("active")).toBe(false);
     expect(passwordNav.classList.contains("active")).toBe(true);
     expect(document.querySelector("#editProfileForm").classList.contains("d-none")).toBe(true);
-    expect(document.querySelector(".edit-profile-submit-password").classList.contains("d-none")).toBe(true);
+    expect(submitPassword.classList.contains("d-none")).toBe(true);
   });
 
   test("dirty tracking shows profile submit button", () => {
-    buildBaseDom();
-    const { initEditProfileModal } = loadModule();
-    initEditProfileModal(window);
+    const { submitProfile } = setupModal();
 
     const input = document.querySelector('input[name="full_name"]');
     input.value = "Bob";
     input.dispatchEvent(new Event("input"));
-    expect(document.querySelector(".edit-profile-submit-profile").classList.contains("d-none")).toBe(false);
+    expect(submitProfile.classList.contains("d-none")).toBe(false);
   });
 
   test("privacy toggle updates text and dirty state", async () => {
@@ -101,25 +127,12 @@ describe("edit_profile_modal", () => {
   });
 
   test("avatar change shows image and allows removal", () => {
-    buildBaseDom();
-    class MockFileReader {
-      constructor() {
-        this.onload = null;
-      }
-      readAsDataURL() {
-        if (this.onload) {
-          this.onload({ target: { result: "data:image/png;base64,abc" } });
-        }
-      }
-    }
-    global.FileReader = MockFileReader;
-
-    const { initEditProfileModal } = loadModule();
-    initEditProfileModal(window);
+    mockFileReader("data:image/png;base64,abc");
+    setupModal();
 
     const fileInput = document.querySelector("[data-avatar-input]");
     const file = new File(["x"], "pic.png", { type: "image/png" });
-    Object.defineProperty(fileInput, "files", { value: [file] });
+    setFiles(fileInput, [file]);
     fileInput.dispatchEvent(new Event("change"));
 
     expect(document.querySelector("[data-avatar-image]").classList.contains("d-none")).toBe(false);
@@ -223,9 +236,7 @@ describe("edit_profile_modal", () => {
   });
 
   test("privacy toggle switches back to public", () => {
-    buildBaseDom();
-    const { initEditProfileModal } = loadModule();
-    initEditProfileModal(window);
+    setupModal();
     const btn = document.querySelector("[data-privacy-button]");
     btn.click(); // to private
     btn.click(); // back to public
@@ -233,32 +244,20 @@ describe("edit_profile_modal", () => {
   });
 
   test("updates modal title on section activate and hides password submit in profile", () => {
-    buildBaseDom();
+    const { nav, submitPassword } = setupModal();
     document.getElementById("editProfileModalLabel").textContent = "";
-    const { initEditProfileModal } = loadModule();
-    initEditProfileModal(window);
-    const profileNav = document.querySelector('[data-section="profile"]');
+    const profileNav = nav("profile");
     profileNav.click();
     expect(document.getElementById("editProfileModalLabel").textContent.trim()).toBe("Profile");
-    expect(document.querySelector(".edit-profile-submit-password").classList.contains("d-none")).toBe(true);
+    expect(submitPassword.classList.contains("d-none")).toBe(true);
   });
 
   test("avatar preview falls back to initial url when reader result missing", () => {
-    class MockFileReader {
-      constructor() {
-        this.onload = null;
-      }
-      readAsDataURL() {
-        if (this.onload) this.onload({});
-      }
-    }
-    global.FileReader = MockFileReader;
-    buildBaseDom();
-    const { initEditProfileModal } = loadModule();
-    initEditProfileModal(window);
+    mockFileReader(undefined);
+    setupModal();
     const fileInput = document.querySelector("[data-avatar-input]");
     const file = new File(["x"], "pic.png", { type: "image/png" });
-    Object.defineProperty(fileInput, "files", { value: [file] });
+    setFiles(fileInput, [file]);
     fileInput.dispatchEvent(new Event("change"));
     expect(document.querySelector("[data-avatar-image]").getAttribute("src")).toBe("avatar.png");
   });
@@ -281,21 +280,16 @@ describe("edit_profile_modal", () => {
   });
 
   test("initially hides submit buttons when clean", () => {
-    buildBaseDom();
-    const { initEditProfileModal } = loadModule();
-    initEditProfileModal(window);
-    expect(document.querySelector(".edit-profile-submit-profile").classList.contains("d-none")).toBe(true);
-    expect(document.querySelector(".edit-profile-submit-password").classList.contains("d-none")).toBe(true);
+    const { submitProfile, submitPassword } = setupModal();
+    expect(submitProfile.classList.contains("d-none")).toBe(true);
+    expect(submitPassword.classList.contains("d-none")).toBe(true);
   });
 
   test("remove avatar click forces submit visible and dirty", () => {
-    buildBaseDom();
-    const { initEditProfileModal } = loadModule();
-    initEditProfileModal(window);
-    const submit = document.querySelector(".edit-profile-submit-profile");
+    const { submitProfile } = setupModal();
     const removeBtn = document.querySelector("[data-remove-avatar]");
     removeBtn.click();
-    expect(submit.classList.contains("d-none")).toBe(false);
+    expect(submitProfile.classList.contains("d-none")).toBe(false);
   });
 
   test("sets defaultValue for remove avatar input when missing", () => {
@@ -308,32 +302,26 @@ describe("edit_profile_modal", () => {
   });
 
   test("password change uses dirty tracking and shows submit", () => {
-    buildBaseDom();
-    const { initEditProfileModal } = loadModule();
-    initEditProfileModal(window);
-    document.querySelector('[data-section="password"]').click();
+    const { nav, submitPassword } = setupModal();
+    nav("password").click();
     const pwInput = document.querySelector('input[name="pw"]');
     pwInput.value = "newpw";
     pwInput.dispatchEvent(new Event("change"));
-    expect(document.querySelector(".edit-profile-submit-password").classList.contains("d-none")).toBe(false);
+    expect(submitPassword.classList.contains("d-none")).toBe(false);
   });
 
   test("avatar change with no file restores remove flag default", () => {
-    buildBaseDom();
-    const { initEditProfileModal } = loadModule();
-    initEditProfileModal(window);
+    setupModal();
     const removeInput = document.querySelector("[data-remove-avatar-input]");
     removeInput.value = "true";
     const avatarInput = document.querySelector("[data-avatar-input]");
-    Object.defineProperty(avatarInput, "files", { value: [] });
+    setFiles(avatarInput, []);
     avatarInput.dispatchEvent(new Event("change"));
     expect(removeInput.value).toBe(removeInput.defaultValue);
   });
 
   test("avatar edit button triggers primary file input click", () => {
-    buildBaseDom();
-    const { initEditProfileModal } = loadModule();
-    initEditProfileModal(window);
+    setupModal();
     const fileInput = document.querySelector("[data-avatar-input]");
     const clickSpy = jest.spyOn(fileInput, "click").mockImplementation(() => {});
     document.querySelector("[data-avatar-edit]").click();
@@ -342,21 +330,17 @@ describe("edit_profile_modal", () => {
   });
 
   test("checkbox change marks profile dirty via change listener", () => {
-    buildBaseDom();
-    const { initEditProfileModal } = loadModule();
-    initEditProfileModal(window);
+    const { submitProfile } = setupModal();
     const checkbox = document.querySelector('input[name="cb"]');
     checkbox.checked = true;
     checkbox.dispatchEvent(new Event("change"));
-    expect(document.querySelector(".edit-profile-submit-profile").classList.contains("d-none")).toBe(false);
+    expect(submitProfile.classList.contains("d-none")).toBe(false);
   });
 
   test("switching back to profile section hides password form", () => {
-    buildBaseDom();
-    const { initEditProfileModal } = loadModule();
-    initEditProfileModal(window);
-    const passwordNav = document.querySelector('[data-section="password"]');
-    const profileNav = document.querySelector('[data-section="profile"]');
+    const { nav } = setupModal();
+    const passwordNav = nav("password");
+    const profileNav = nav("profile");
     passwordNav.click();
     profileNav.click();
     expect(document.querySelector("#passwordForm").classList.contains("d-none")).toBe(true);

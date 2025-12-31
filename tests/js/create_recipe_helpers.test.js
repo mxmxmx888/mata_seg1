@@ -1,4 +1,5 @@
-const { getFiles } = require("../../static/js/create_recipe_helpers");
+const helpersPath = "../../static/js/create_recipe_helpers";
+const { getFiles } = require(helpersPath);
 
 function loadHelpersWithOverrides(overrides = {}) {
   jest.resetModules();
@@ -21,215 +22,202 @@ function loadHelpersWithOverrides(overrides = {}) {
   return helpers;
 }
 
+const requireHelpers = () => require(helpersPath);
+
+const makeFileCtor = (defaultType = "", defaultLastModified = 0) =>
+  class {
+    constructor(parts, name, opts = {}) {
+      this.parts = parts;
+      this.name = name;
+      this.type = opts.type || defaultType;
+      this.lastModified = opts.lastModified ?? defaultLastModified;
+    }
+  };
+
+const makeDataTransfer = (bucket = []) =>
+  class {
+    constructor() {
+      this.items = { add: (file) => bucket.push(file) };
+      this.files = bucket;
+    }
+  };
+
+function makePersistWin({ fail } = {}) {
+  const stored = {};
+  const win = {
+    sessionStorage: {
+      setItem: jest.fn((k, v) => {
+        stored[k] = v;
+      }),
+      removeItem: jest.fn((k) => delete stored[k])
+    },
+    FileReader: class {
+      readAsDataURL(file) {
+        if (fail && this.onerror) {
+          this.onerror(new Error("boom"));
+          return;
+        }
+        this.result = `data:${file.name}`;
+        if (this.onload) this.onload();
+      }
+    }
+  };
+  return { win, stored };
+}
+
 describe("create_recipe_helpers utilities", () => {
   afterEach(() => {
     jest.resetModules();
     jest.clearAllMocks();
   });
 
-  test("loadHelpersWithOverrides replaces dependent modules", () => {
-    const clear = jest.fn();
-    const imageManager = jest.fn();
-    const shoppingManager = jest.fn();
-    const validator = jest.fn();
-    const helpers = loadHelpersWithOverrides({
-      images: { clearStoredFiles: clear, createImageManager: imageManager },
-      shopping: { createShoppingManager: shoppingManager },
-      validation: { createRequiredFieldValidator: validator }
+  describe("module loading", () => {
+    test("loadHelpersWithOverrides replaces dependent modules", () => {
+      const clear = jest.fn();
+      const imageManager = jest.fn();
+      const shoppingManager = jest.fn();
+      const validator = jest.fn();
+      const helpers = loadHelpersWithOverrides({
+        images: { clearStoredFiles: clear, createImageManager: imageManager },
+        shopping: { createShoppingManager: shoppingManager },
+        validation: { createRequiredFieldValidator: validator }
+      });
+      expect(helpers.clearStoredFiles).toBe(clear);
+      expect(helpers.createImageManager).toBe(imageManager);
+      expect(helpers.createShoppingManager).toBe(shoppingManager);
+      expect(helpers.createRequiredFieldValidator).toBe(validator);
     });
-    expect(helpers.clearStoredFiles).toBe(clear);
-    expect(helpers.createImageManager).toBe(imageManager);
-    expect(helpers.createShoppingManager).toBe(shoppingManager);
-    expect(helpers.createRequiredFieldValidator).toBe(validator);
+
+    test("normalizeUrl handles blank, prefixed, and unprefixed urls", () => {
+      const helpers = requireHelpers();
+      expect(helpers.normalizeUrl("")).toBe("");
+      expect(helpers.normalizeUrl("https://example.com")).toBe("https://example.com");
+      expect(helpers.normalizeUrl("example.com")).toBe("https://example.com");
+    });
+
+    test("getFiles prefers real files then falls back to mock files", () => {
+      const helpers = requireHelpers();
+      const input = { files: [{ name: "real" }] };
+      expect(helpers.getFiles(input)[0].name).toBe("real");
+      const mockInput = { files: [], __mockFiles: ["mock"] };
+      expect(helpers.getFiles(mockInput)).toEqual(["mock"]);
+      expect(helpers.getFiles(null)).toBeNull();
+    });
   });
 
-  test("normalizeUrl handles blank, prefixed, and unprefixed urls", () => {
-    const helpers = require("../../static/js/create_recipe_helpers");
-    expect(helpers.normalizeUrl("")).toBe("");
-    expect(helpers.normalizeUrl("https://example.com")).toBe("https://example.com");
-    expect(helpers.normalizeUrl("example.com")).toBe("https://example.com");
+  describe("persistFiles", () => {
+    test("stores file metadata and clears when empty", async () => {
+      const helpers = requireHelpers();
+      const { win, stored } = makePersistWin();
+      const files = [{ name: "one.png", type: "image/png", lastModified: 5 }];
+      const input = { files };
+
+      helpers.persistFiles(win, input, "key");
+      await new Promise((r) => setTimeout(r, 0));
+      expect(win.sessionStorage.setItem).toHaveBeenCalledWith("key", expect.any(String));
+      const parsed = JSON.parse(stored.key);
+      expect(parsed[0].name).toBe("one.png");
+
+      helpers.persistFiles(win, { files: [] }, "key");
+      expect(win.sessionStorage.removeItem).toHaveBeenCalledWith("key");
+    });
+
+    test("removes storage when FileReader fails", async () => {
+      const helpers = requireHelpers();
+      const { win } = makePersistWin({ fail: true });
+      const files = [{ name: "bad.png", type: "image/png", lastModified: 2 }];
+
+      helpers.persistFiles(win, { files }, "bad");
+      await new Promise((r) => setTimeout(r, 0));
+
+      expect(win.sessionStorage.removeItem).toHaveBeenCalledWith("bad");
+    });
   });
 
-  test("getFiles prefers real files then falls back to mock files", () => {
-    const helpers = require("../../static/js/create_recipe_helpers");
-    const input = { files: [{ name: "real" }] };
-    expect(helpers.getFiles(input)[0].name).toBe("real");
-    const mockInput = { files: [], __mockFiles: ["mock"] };
-    expect(helpers.getFiles(mockInput)).toEqual(["mock"]);
-    expect(helpers.getFiles(null)).toBeNull();
-  });
-
-  test("persistFiles stores file metadata and clears when empty", async () => {
-    const helpers = require("../../static/js/create_recipe_helpers");
-    const stored = {};
-    const win = {
-      sessionStorage: {
-        setItem: jest.fn((k, v) => {
-          stored[k] = v;
-        }),
-        removeItem: jest.fn((k) => delete stored[k])
-      },
-      FileReader: class {
-        readAsDataURL(file) {
-          this.result = `data:${file.name}`;
-          if (this.onload) this.onload();
+  describe("restoreFiles", () => {
+    test("reconstructs FileList via DataTransfer", async () => {
+      const helpers = requireHelpers();
+      const onAfterRestore = jest.fn();
+      const filesAdded = [];
+      const stubBlob = { type: "text/plain" };
+      const win = {
+        DataTransfer: makeDataTransfer(filesAdded),
+        File: makeFileCtor(),
+        fetch: () => Promise.resolve({ blob: () => Promise.resolve(stubBlob) }),
+        sessionStorage: {
+          getItem: () =>
+            JSON.stringify([
+              {
+                name: "restored.txt",
+                type: "text/plain",
+                lastModified: 123,
+                data: "data:text/plain;base64,aGVsbG8="
+              }
+            ])
         }
-      }
-    };
-    const files = [{ name: "one.png", type: "image/png", lastModified: 5 }];
-    const input = { files };
+      };
+      const input = {};
 
-    helpers.persistFiles(win, input, "key");
-    await new Promise((r) => setTimeout(r, 0));
-    expect(win.sessionStorage.setItem).toHaveBeenCalledWith("key", expect.any(String));
-    const parsed = JSON.parse(stored.key);
-    expect(parsed[0].name).toBe("one.png");
+      await helpers.restoreFiles(win, input, "key", onAfterRestore);
 
-    helpers.persistFiles(win, { files: [] }, "key");
-    expect(win.sessionStorage.removeItem).toHaveBeenCalledWith("key");
-  });
+      expect(filesAdded.length).toBe(1);
+      expect(input.__mockFiles).toEqual(filesAdded);
+      expect(onAfterRestore).toHaveBeenCalled();
+    });
 
-  test("persistFiles removes storage when FileReader fails", async () => {
-    const helpers = require("../../static/js/create_recipe_helpers");
-    const win = {
-      sessionStorage: {
-        setItem: jest.fn(),
-        removeItem: jest.fn()
-      },
-      FileReader: class {
-        readAsDataURL() {
-          if (this.onerror) this.onerror(new Error("boom"));
+    test("uses defaults when metadata missing", async () => {
+      const helpers = requireHelpers();
+      const created = [];
+      const win = {
+        DataTransfer: makeDataTransfer(created),
+        File: makeFileCtor(),
+        fetch: () => Promise.resolve({ blob: () => Promise.resolve({ type: "" }) }),
+        sessionStorage: { getItem: () => JSON.stringify([{ data: "data:;base64,aGVsbG8=" }]) }
+      };
+      const input = {};
+
+      await helpers.restoreFiles(win, input, "key");
+
+      expect(created.length).toBe(1);
+      expect(created[0].name).toBe("upload");
+      expect(created[0].type).toBe("application/octet-stream");
+      expect(typeof created[0].lastModified).toBe("number");
+    });
+
+    test("skips when fetch fails", async () => {
+      const helpers = requireHelpers();
+      const win = {
+        File: makeFileCtor(),
+        fetch: () => Promise.reject(new Error("fail")),
+        sessionStorage: { getItem: () => JSON.stringify([{ data: "data:text/plain;base64,aGVsbG8=" }]) }
+      };
+      const input = {};
+
+      await helpers.restoreFiles(win, input, "key");
+
+      expect(input.__mockFiles).toBeUndefined();
+    });
+
+    test("falls back when DataTransfer unavailable", async () => {
+      const helpers = requireHelpers();
+      const stubBlob = { type: "text/plain" };
+      const win = {
+        File: makeFileCtor(),
+        fetch: () => Promise.resolve({ blob: () => Promise.resolve(stubBlob) }),
+        sessionStorage: {
+          getItem: () =>
+            JSON.stringify([
+              { name: "restored.txt", type: "text/plain", lastModified: 123, data: "data:text/plain;base64,aGVsbG8=" }
+            ])
         }
-      }
-    };
-    const files = [{ name: "bad.png", type: "image/png", lastModified: 2 }];
+      };
+      const input = {};
 
-    helpers.persistFiles(win, { files }, "bad");
-    await new Promise((r) => setTimeout(r, 0));
+      await helpers.restoreFiles(win, input, "key");
 
-    expect(win.sessionStorage.removeItem).toHaveBeenCalledWith("bad");
-  });
-
-  test("restoreFiles reconstructs FileList via DataTransfer", async () => {
-    const helpers = require("../../static/js/create_recipe_helpers");
-    const onAfterRestore = jest.fn();
-    const filesAdded = [];
-    const stubBlob = { type: "text/plain" };
-    const win = {
-      DataTransfer: class {
-        constructor() {
-          this.items = { add: (file) => filesAdded.push(file) };
-          this.files = filesAdded;
-        }
-      },
-      File: class {
-        constructor(parts, name, opts = {}) {
-          this.parts = parts;
-          this.name = name;
-          this.type = opts.type || "";
-          this.lastModified = opts.lastModified || 0;
-        }
-      },
-      fetch: () => Promise.resolve({ blob: () => Promise.resolve(stubBlob) }),
-      sessionStorage: {
-        getItem: () =>
-          JSON.stringify([
-            {
-              name: "restored.txt",
-              type: "text/plain",
-              lastModified: 123,
-              data: "data:text/plain;base64,aGVsbG8="
-            }
-          ])
-      }
-    };
-    const input = {};
-
-    await helpers.restoreFiles(win, input, "key", onAfterRestore);
-
-    expect(filesAdded.length).toBe(1);
-    expect(input.__mockFiles).toEqual(filesAdded);
-    expect(onAfterRestore).toHaveBeenCalled();
-  });
-
-  test("restoreFiles uses defaults when metadata missing", async () => {
-    const helpers = require("../../static/js/create_recipe_helpers");
-    const created = [];
-    const win = {
-      DataTransfer: class {
-        constructor() {
-          this.items = { add: (file) => created.push(file) };
-          this.files = created;
-        }
-      },
-      File: class {
-        constructor(parts, name, opts = {}) {
-          this.parts = parts;
-          this.name = name;
-          this.type = opts.type || "";
-          this.lastModified = opts.lastModified || 0;
-        }
-      },
-      fetch: () => Promise.resolve({ blob: () => Promise.resolve({ type: "" }) }),
-      sessionStorage: { getItem: () => JSON.stringify([{ data: "data:;base64,aGVsbG8=" }]) }
-    };
-    const input = {};
-
-    await helpers.restoreFiles(win, input, "key");
-
-    expect(created.length).toBe(1);
-    expect(created[0].name).toBe("upload");
-    expect(created[0].type).toBe("application/octet-stream");
-    expect(typeof created[0].lastModified).toBe("number");
-  });
-
-  test("restoreFiles skips when fetch fails", async () => {
-    const helpers = require("../../static/js/create_recipe_helpers");
-    const win = {
-      File: class {
-        constructor(parts, name, opts = {}) {
-          this.parts = parts;
-          this.name = name;
-          this.type = opts.type || "";
-          this.lastModified = opts.lastModified || 0;
-        }
-      },
-      fetch: () => Promise.reject(new Error("fail")),
-      sessionStorage: { getItem: () => JSON.stringify([{ data: "data:text/plain;base64,aGVsbG8=" }]) }
-    };
-    const input = {};
-
-    await helpers.restoreFiles(win, input, "key");
-
-    expect(input.__mockFiles).toBeUndefined();
-  });
-
-  test("restoreFiles falls back when DataTransfer unavailable", async () => {
-    const helpers = require("../../static/js/create_recipe_helpers");
-    const stubBlob = { type: "text/plain" };
-    const win = {
-      File: class {
-        constructor(parts, name, opts = {}) {
-          this.parts = parts;
-          this.name = name;
-          this.type = opts.type || "";
-          this.lastModified = opts.lastModified || 0;
-        }
-      },
-      fetch: () => Promise.resolve({ blob: () => Promise.resolve(stubBlob) }),
-      sessionStorage: {
-        getItem: () =>
-          JSON.stringify([
-            { name: "restored.txt", type: "text/plain", lastModified: 123, data: "data:text/plain;base64,aGVsbG8=" }
-          ])
-      }
-    };
-    const input = {};
-
-    await helpers.restoreFiles(win, input, "key");
-
-    expect(Array.isArray(input.__mockFiles)).toBe(true);
-    expect(input.__mockFiles.length).toBe(1);
+      expect(Array.isArray(input.__mockFiles)).toBe(true);
+      expect(input.__mockFiles.length).toBe(1);
+    });
   });
 
   test("createRequiredFieldValidator fallback renders and clears errors", () => {
