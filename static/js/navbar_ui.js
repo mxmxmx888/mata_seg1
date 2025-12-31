@@ -52,8 +52,7 @@ const createPrepPositioner = (w, toggleBtn, popover) => () =>
     offset: getDropdownOffset(w)
   });
 
-const createPrepToggleHandler = (popover, positionPopover) => (event) => {
-  event.stopPropagation();
+const createPrepToggleHandler = (popover, positionPopover) => () => {
   const shouldOpen = !popover.classList.contains("prep-filter-open");
   popover.classList.toggle("prep-filter-open", shouldOpen);
   if (shouldOpen) positionPopover();

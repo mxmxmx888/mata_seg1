@@ -63,7 +63,7 @@
 
 .app-fullscreen-menu-footer a:hover,
 .app-fullscreen-menu-footer a:focus-visible {
-  color: #ffffff;
+  color: var(--text-primary);
 }
 
 .app-fullscreen-menu-nav {
