@@ -91,14 +91,15 @@ const buildManagers = (ctx) => {
   const imageManager = imageManagerFor(ctx);
   const getFilesForValidation = (input) => {
     let files = getFiles(input);
-    if (input === ctx.imageInput && (!files || !files.length)) {
-      const selected = typeof imageManager.getSelectedFiles === "function" ? imageManager.getSelectedFiles() : null;
-      if (selected && selected.length) {
-        if (typeof imageManager.syncInputFiles === "function") imageManager.syncInputFiles();
-        files = selected;
-      }
-    }
-    return files;
+    const needsImageFallback = input === ctx.imageInput && (!files || !files.length);
+    if (!needsImageFallback) return files;
+
+    const selected =
+      typeof imageManager.getSelectedFiles === "function" ? imageManager.getSelectedFiles() : null;
+    if (!selected || !selected.length) return files;
+
+    if (typeof imageManager.syncInputFiles === "function") imageManager.syncInputFiles();
+    return selected;
   };
   return {
     validator: createRequiredFieldValidator(ctx.doc, ctx.formEl, ctx.requiredFields, getFilesForValidation),

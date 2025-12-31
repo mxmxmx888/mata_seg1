@@ -42,7 +42,6 @@ class PostRepoTestCase(TestCase):
         self.assertEqual(ids, [])
 
     # ---- list_all (if present) -------------------------------------------
-    # If your PostRepo does NOT have list_all, delete these two tests.
 
     def test_list_all_returns_all_posts(self):
         """Covers PostRepo.list_all if it exists."""

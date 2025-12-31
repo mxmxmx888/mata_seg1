@@ -117,6 +117,17 @@ class ShoppingFieldHelpers:
             )
         return position
 
+    def _iter_unique_shopping_items(self, shopping_links, seen_names):
+        for item in shopping_links:
+            name = (item.get("name") or "").strip()
+            if not name:
+                continue
+            key = name.lower()
+            if key in seen_names:
+                continue
+            seen_names.add(key)
+            yield name, item.get("url") or None
+
     def _add_shopping_ingredients(
         self,
         recipe,
@@ -127,19 +138,13 @@ class ShoppingFieldHelpers:
         start_position: int,
     ):
         position = start_position
-        for item in shopping_links:
-            name = (item.get("name") or "").strip()
-            if not name:
-                continue
-            key = name.lower()
-            if key in seen_names:
-                continue
-            seen_names.add(key)
+        for name, url in self._iter_unique_shopping_items(shopping_links, seen_names):
             position += 1
             Ingredient.objects.create(
                 recipe_post=recipe,
                 name=name,
-                shop_url=item.get("url") or None,
+                shop_url=url,
                 shop_image_upload=self._next_shop_image(shop_images, existing_shop_images),
                 position=position,
             )
+        return position
