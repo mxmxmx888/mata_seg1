@@ -1,4 +1,4 @@
-(() => {
+{
 const globalContext = typeof globalThis !== "undefined" ? globalThis : /* istanbul ignore next */ {};
 const hasModuleExports =
   !globalContext.__PROFILE_SCRIPTS_BROWSER__ &&
@@ -54,4 +54,4 @@ if (hasModuleExports) {
 
 /* istanbul ignore next */
 autoInitProfileScripts();
-})();
+}

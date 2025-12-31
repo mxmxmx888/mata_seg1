@@ -1,4 +1,4 @@
-(() => {
+{
 const FLOATING_MENU_PROPS = ["position", "top", "left", "right", "transform", "width", "max-width"];
 const DEFAULT_DROPDOWN_MARGIN = 12;
 const hasModuleExports = typeof module !== "undefined" && module.exports;
@@ -339,4 +339,4 @@ if (hasModuleExports) {
 
 /* istanbul ignore next */
 autoInitNavbar();
-})();
+}
