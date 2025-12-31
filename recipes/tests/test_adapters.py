@@ -15,6 +15,28 @@ from recipes.adapters import (
 from django.db import IntegrityError
 
 
+class DummyQS:
+    def __init__(self, exists_sequence):
+        self._seq = list(exists_sequence)
+
+    def exclude(self, pk=None):
+        return self
+
+    def exists(self):
+        return self._seq.pop(0)
+
+
+class DummyManager:
+    def __init__(self):
+        self.calls = []
+
+    def filter(self, username):
+        self.calls.append(username)
+        if username == "dup":
+            return DummyQS([True])
+        return DummyQS([False])
+
+
 class CustomAccountAdapterTests(TestCase):
 
     def setUp(self):
@@ -31,23 +53,6 @@ class CustomAccountAdapterTests(TestCase):
         self.assertEqual(result, "taken")
 
     def test_unique_username_skips_excluded_and_increments_for_others(self):
-        class DummyQS:
-            def __init__(self, exists_sequence):
-                self._seq = exists_sequence
-            def exclude(self, pk=None):
-                return self
-            def exists(self):
-                return self._seq.pop(0)
-
-        class DummyManager:
-            def __init__(self):
-                self.calls = []
-            def filter(self, username):
-                self.calls.append(username)
-                if username == "dup":
-                    return DummyQS([True])
-                return DummyQS([False])
-
         dummy_model = SimpleNamespace(objects=DummyManager())
         result = _unique_username("dup", dummy_model, exclude_user_id=1)
         self.assertEqual(result, "dup1")

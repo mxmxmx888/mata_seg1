@@ -130,6 +130,18 @@ def follow_list_selection(list_type, profile_user, is_own_profile, deps):
     return JsonResponse({"error": "Unknown list"}, status=400)
 
 
+def follow_list_pagination(request):
+    try:
+        page_number = int(request.GET.get("page") or 1)
+    except (TypeError, ValueError):
+        page_number = 1
+    try:
+        page_size = int(request.GET.get("page_size") or FOLLOW_LIST_PAGE_SIZE)
+    except (TypeError, ValueError):
+        page_size = FOLLOW_LIST_PAGE_SIZE
+    return max(1, page_number), max(1, min(page_size, 100000))
+
+
 def profile_stats(profile_user, follow_ctx, deps):
     data = deps.profile_data_for_user(profile_user)
     data["followers"] = follow_ctx["followers_count"]
@@ -333,17 +345,7 @@ def profile_follow_list_response(request, deps):
     if isinstance(selection, JsonResponse):
         return selection
     qs, user_attr, template = selection
-    try:
-        page_number = int(request.GET.get("page") or 1)
-    except (TypeError, ValueError):
-        page_number = 1
-    try:
-        page_size = int(request.GET.get("page_size") or FOLLOW_LIST_PAGE_SIZE)
-    except (TypeError, ValueError):
-        page_size = FOLLOW_LIST_PAGE_SIZE
-    page_number = max(1, page_number)
-    page_size = max(1, min(page_size, 100000))
-
+    page_number, page_size = follow_list_pagination(request)
     page_data = follow_page_data(qs, user_attr, page_number=page_number, page_size=page_size)
     users = page_data["users"]
     has_more = page_data["has_more"]
