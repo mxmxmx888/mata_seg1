@@ -74,72 +74,61 @@ describe("post_layout", () => {
     expect(grid.style.getPropertyValue("--similar-cols")).not.toBe("");
   });
 
-  test("escape key triggers back when no modal or lightbox", () => {
-    document.body.innerHTML = `
-      <a class="post-back-button" data-fallback="/fallback"></a>
-    `;
-    const { initPostLayout } = loadModule();
-    initPostLayout(window);
+  describe("escape handling", () => {
+    const renderBackButton = () => {
+      document.body.innerHTML = `<a class="post-back-button" data-fallback="/fallback"></a>`;
+    };
 
-    const event = new KeyboardEvent("keydown", { key: "Escape" });
-    document.dispatchEvent(event);
-    expect(window.location.assign).toHaveBeenCalledWith("/fallback");
-  });
+    const initWithBack = () => {
+      renderBackButton();
+      const { initPostLayout } = loadModule();
+      initPostLayout(window);
+    };
 
-  test("escape key handles legacy key values", () => {
-    document.body.innerHTML = `
-      <a class="post-back-button" data-fallback="/fallback"></a>
-    `;
-    const { initPostLayout } = loadModule();
-    initPostLayout(window);
+    test("escape key triggers back when no modal or lightbox", () => {
+      initWithBack();
+      document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
+      expect(window.location.assign).toHaveBeenCalledWith("/fallback");
+    });
 
-    document.dispatchEvent(new KeyboardEvent("keydown", { key: "Esc" }));
-    expect(window.location.assign).toHaveBeenCalledWith("/fallback");
+    test("escape key handles legacy key values", () => {
+      initWithBack();
+      document.dispatchEvent(new KeyboardEvent("keydown", { key: "Esc" }));
+      expect(window.location.assign).toHaveBeenCalledWith("/fallback");
+      window.location.assign.mockClear();
+      const keyCodeEvent = new KeyboardEvent("keydown", {});
+      Object.defineProperty(keyCodeEvent, "keyCode", { value: 27 });
+      document.dispatchEvent(keyCodeEvent);
+      expect(window.location.assign).toHaveBeenCalledWith("/fallback");
+    });
 
-    window.location.assign.mockClear();
-    const keyCodeEvent = new KeyboardEvent("keydown", {});
-    Object.defineProperty(keyCodeEvent, "keyCode", { value: 27 });
-    document.dispatchEvent(keyCodeEvent);
-    expect(window.location.assign).toHaveBeenCalledWith("/fallback");
-  });
+    test("escape key triggers only on keydown even if keyup follows", () => {
+      initWithBack();
+      document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
+      document.dispatchEvent(new KeyboardEvent("keyup", { key: "Escape" }));
+      expect(window.location.assign).toHaveBeenCalled();
+    });
 
-  test("escape key triggers only on keydown even if keyup follows", () => {
-    document.body.innerHTML = `
-      <a class="post-back-button" data-fallback="/fallback"></a>
-    `;
-    const { initPostLayout } = loadModule();
-    initPostLayout(window);
+    test("escape key still triggers when event is already handled", () => {
+      initWithBack();
+      const preventedEvent = new KeyboardEvent("keydown", { key: "Escape", cancelable: true });
+      preventedEvent.preventDefault();
+      document.dispatchEvent(preventedEvent);
+      expect(window.location.assign).toHaveBeenCalledWith("/fallback");
+    });
 
-    document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
-    document.dispatchEvent(new KeyboardEvent("keyup", { key: "Escape" }));
-    expect(window.location.assign).toHaveBeenCalled();
-  });
-
-  test("escape key still triggers when event is already handled", () => {
-    document.body.innerHTML = `
-      <a class="post-back-button" data-fallback="/fallback"></a>
-    `;
-    const { initPostLayout } = loadModule();
-    initPostLayout(window);
-
-    const preventedEvent = new KeyboardEvent("keydown", { key: "Escape", cancelable: true });
-    preventedEvent.preventDefault();
-    document.dispatchEvent(preventedEvent);
-    expect(window.location.assign).toHaveBeenCalledWith("/fallback");
-  });
-
-  test("escape still triggers when modal is open", () => {
-    document.body.innerHTML = `
-      <div class="modal show"></div>
-      <a class="post-back-button" data-fallback="/fallback"></a>
-    `;
-    const assignSpy = jest.spyOn(window.location, "assign");
-    const { initPostLayout } = loadModule();
-    initPostLayout(window);
-    const event = new KeyboardEvent("keydown", { key: "Escape" });
-    document.dispatchEvent(event);
-    expect(assignSpy).toHaveBeenCalledWith("/fallback");
-    assignSpy.mockRestore();
+    test("escape still triggers when modal is open", () => {
+      document.body.innerHTML = `
+        <div class="modal show"></div>
+        <a class="post-back-button" data-fallback="/fallback"></a>
+      `;
+      const assignSpy = jest.spyOn(window.location, "assign");
+      const { initPostLayout } = loadModule();
+      initPostLayout(window);
+      document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
+      expect(assignSpy).toHaveBeenCalledWith("/fallback");
+      assignSpy.mockRestore();
+    });
   });
 
   test("like form with missing csrf does nothing special", async () => {
