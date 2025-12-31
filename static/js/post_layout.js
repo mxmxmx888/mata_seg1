@@ -1,12 +1,10 @@
 {
 const hasModuleExports = typeof module !== "undefined" && module.exports;
 const globalWindow = typeof window !== "undefined" && window.document ? window : null;
-
 const resolveWindow = (win) => {
   const candidate = win || globalWindow;
   return candidate && candidate.document ? candidate : null;
 };
-
 const markInitialized = (w, flag) => {
   if (!w) return false;
   if (w[flag]) return false;
@@ -29,19 +27,16 @@ const ensureMasonryColumns = (doc, masonry) => {
   }
   return cols;
 };
-
 const resetMasonryColumns = (cols, colCount) => {
   cols.forEach((col, index) => {
     col.innerHTML = "";
     col.style.display = index < colCount ? "flex" : "none";
   });
 };
-
 const measureHeight = (el) => {
   const rect = el && typeof el.getBoundingClientRect === "function" ? el.getBoundingClientRect() : null;
   return rect && rect.height ? rect.height : 1;
 };
-
 const createMasonryRequester = (w, masonry, items) => {
   let layoutPending = false;
   const runLayout = () => {
@@ -58,7 +53,6 @@ const createMasonryRequester = (w, masonry, items) => {
     }
   };
 };
-
 const attachMasonryMediaHandlers = (items, requestLayout) => {
   items.forEach((item) => {
     const media = item.querySelector("img, video");
@@ -71,7 +65,6 @@ const attachMasonryMediaHandlers = (items, requestLayout) => {
     }
   });
 };
-
 const placeItemsInColumns = (items, activeCols) => {
   if (!items.length || !activeCols.length) return;
   const heights = activeCols.map((col) => col.offsetHeight || 0);
@@ -88,7 +81,6 @@ const placeItemsInColumns = (items, activeCols) => {
     heights[target] += measuredHeights[index] || 1;
   });
 };
-
 const buildMasonry = (w, masonry, items) => {
   if (!masonry || items.length === 0) return;
   const cols = ensureMasonryColumns(masonry.ownerDocument, masonry);
@@ -99,7 +91,6 @@ const buildMasonry = (w, masonry, items) => {
   resetMasonryColumns(cols, colCount);
   placeItemsInColumns(items, activeCols);
 };
-
 const setupMasonry = (w, masonry) => {
   if (!masonry) return;
   const items = Array.from(masonry.querySelectorAll(".post-media-masonry-item"));
@@ -114,7 +105,6 @@ const setupMasonry = (w, masonry) => {
 };
 
 const getSimilarGrids = (doc) => Array.from(doc.querySelectorAll(".view-similar-grid, .view-similar-grid-wide"));
-
 const setSimilarBaselines = (grids, baselines) => {
   grids.forEach((grid) => {
     const baseCols = grid.classList.contains("view-similar-grid-wide") ? 4 : 3;
@@ -124,7 +114,6 @@ const setSimilarBaselines = (grids, baselines) => {
     }
   });
 };
-
 const updateSimilarColumns = (w, grids, baselines) => {
   grids.forEach((grid) => {
     const baseWidth = baselines.get(grid);
@@ -134,7 +123,6 @@ const updateSimilarColumns = (w, grids, baselines) => {
     grid.style.setProperty("--similar-cols", cols);
   });
 };
-
 const setupSimilarGrid = (w, doc) => {
   const grids = getSimilarGrids(doc);
   const baselines = new Map();
@@ -153,7 +141,6 @@ const updateFadeAmount = (w, primary, similar) => {
   const progress = Math.min(1, Math.max(0, (fadeStart - rect.top) / (fadeStart - fadeEnd)));
   primary.style.setProperty("--post-fade-amount", progress.toFixed(2));
 };
-
 const setupScrollFade = (w, primary, similar) => {
   if (!primary || !similar) return;
   const handler = () => updateFadeAmount(w, primary, similar);
@@ -170,18 +157,15 @@ const parseUrl = (w, value) => {
     return null;
   }
 };
-
 const isActionReferrer = (w, value) => {
   const parsed = parseUrl(w, value);
   if (!parsed) return false;
   return /\/comment\/?$/i.test(parsed.pathname);
 };
-
 const cameFromCreate = (w, doc) => {
   const parsed = parseUrl(w, doc.referrer);
   return parsed ? /\/recipes\/create\/?$/i.test(parsed.pathname) : false;
 };
-
 const cameFromEdit = (w, doc) => {
   const parsed = parseUrl(w, doc.referrer);
   const fromQuery = new URL(w.location.href).searchParams.has("from_edit");
@@ -197,7 +181,6 @@ const storeEntry = (w, postId, entry) => {
     /* ignore */
   }
 };
-
 const getStoredEntry = (w, postId) => {
   if (!postId) return null;
   try {
@@ -206,7 +189,6 @@ const getStoredEntry = (w, postId) => {
     return null;
   }
 };
-
 const resolveBackTarget = (w, doc, backButton, preventReturn) => {
   if (!backButton) return { target: null, referrer: null, fallback: "/" };
   const fallbackHref = backButton.dataset.fallback || backButton.getAttribute("href") || "/";
@@ -231,7 +213,6 @@ const resolveBackTarget = (w, doc, backButton, preventReturn) => {
   backButton.setAttribute("href", target);
   return { target, fallback: fallbackHref, storedEntry, useStoredEntry };
 };
-
 const applyPreventReturnGuards = (w, preventReturn, backButton) => {
   if (!preventReturn || !w.history) return;
   if (typeof w.history.replaceState === "function") {
@@ -261,7 +242,6 @@ const updateBackHintVisibility = (w, doc) => {
   const shouldHide = !(verticalOverlap && leftOfGallery);
   backButton.classList.toggle("post-back-button--hide-hint", shouldHide);
 };
-
 const setupBackHintVisibility = (w, doc) => {
   const run = () => updateBackHintVisibility(w, doc);
   const requestRun = () => {
@@ -280,7 +260,6 @@ const setupBackHintVisibility = (w, doc) => {
     ro.observe(gallery);
   }
 };
-
 const triggerBack = (w, doc, backButton, preventReturn) => {
   const backState = resolveBackTarget(w, doc, backButton, preventReturn);
   const fallbackHref = backState.fallback || backState.target || "/";
@@ -297,7 +276,6 @@ const triggerBack = (w, doc, backButton, preventReturn) => {
   }
   w.history.back();
 };
-
 const setupBackNavigation = (w, doc) => {
   const backButton = doc.querySelector(".post-back-button");
   const preventReturn = cameFromCreate(w, doc) || cameFromEdit(w, doc);
@@ -323,7 +301,6 @@ const getCsrfToken = (doc, form) => {
   const csrfInput = form.querySelector("input[name=csrfmiddlewaretoken]") || doc.querySelector("input[name=csrfmiddlewaretoken]");
   return csrfInput ? csrfInput.value : "";
 };
-
 const setLikeState = (likeButton, likeIcon, likeCountEl, liked, count) => {
   if (!likeButton || !likeIcon) return;
   likeButton.dataset.liked = liked ? "true" : "false";
@@ -335,13 +312,11 @@ const setLikeState = (likeButton, likeIcon, likeCountEl, liked, count) => {
     likeCountEl.textContent = Math.max(0, count);
   }
 };
-
 const parseLikeCount = (likeCountEl) => {
   if (!likeCountEl) return 0;
   const parsed = parseInt(likeCountEl.textContent, 10);
   return Number.isNaN(parsed) ? 0 : parsed;
 };
-
 const submitLike = (w, form, csrfToken) =>
   w.fetch(form.action, {
     method: "POST",
@@ -352,7 +327,6 @@ const submitLike = (w, form, csrfToken) =>
     },
     body: ""
   });
-
 const handleLikeSubmit = (w, likeForm, likeButton, likeIcon, likeCountEl, csrfToken) => (event) => {
   if (!likeButton || !likeIcon || !csrfToken || typeof w.fetch === "undefined") return;
   event.preventDefault();
@@ -372,7 +346,6 @@ const handleLikeSubmit = (w, likeForm, likeButton, likeIcon, likeCountEl, csrfTo
       likeButton.disabled = false;
     });
 };
-
 const wireLikeForm = (w, doc) => {
   const likeForm = doc.querySelector("[data-like-form]");
   if (!likeForm) return;
@@ -394,7 +367,6 @@ const initPostLayout = (win) => {
   setupBackHintVisibility(w, doc);
   wireLikeForm(w, doc);
 };
-
 const autoInitPostLayout = () => {
   const w = resolveWindow();
   if (!w) return;
@@ -405,11 +377,9 @@ const autoInitPostLayout = () => {
     runInit();
   }
 };
-
 if (hasModuleExports) {
   module.exports = { initPostLayout };
 }
-
 /* istanbul ignore next */
 autoInitPostLayout();
 }

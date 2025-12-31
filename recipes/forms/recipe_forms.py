@@ -3,6 +3,7 @@ import mimetypes
 from django import forms
 
 from .fields import MultiFileField, MultiFileInput
+from .recipe_form_mixins import MAX_SHOPPING_LINKS, ShoppingFieldHelpers
 
 try:
     from recipes.models import RecipePost, Ingredient, RecipeStep, RecipeImage
@@ -22,10 +23,9 @@ CATEGORIES = [
 
 MAX_IMAGE_UPLOAD_MB = 10
 MAX_IMAGE_UPLOAD_BYTES = MAX_IMAGE_UPLOAD_MB * 1024 * 1024
-MAX_SHOPPING_LINKS = 10
 
 
-class RecipePostForm(forms.ModelForm):
+class RecipePostForm(ShoppingFieldHelpers, forms.ModelForm):
     """Form for creating and editing recipe posts with ingredients/steps/images."""
 
     field_order = [
@@ -163,78 +163,6 @@ class RecipePostForm(forms.ModelForm):
 
         return tags
 
-    def _split_lines(self, key):
-        """Split cleaned textarea content into stripped, non-empty lines."""
-        text = (self.cleaned_data.get(key) or "").strip()
-        if not text:
-            return []
-        lines = [line.strip() for line in text.splitlines()]
-        return [l for l in lines if l]
-
-    def _parse_shopping_links(self):
-        """Parse shopping_links_text into [{'name', 'url'}] records."""
-        text = (self.cleaned_data.get("shopping_links_text") or "").strip()
-        if not text:
-            return []
-
-        items = []
-        for line in text.splitlines():
-            name, url = self._parse_shop_line(line)
-            if not name:
-                continue
-            items.append({"name": name, "url": self._normalize_shop_url(url)})
-
-        return items
-
-    def _parse_shop_line(self, line: str):
-        raw = line.strip()
-        if not raw:
-            return None, None
-        if "|" in raw:
-            parts = raw.split("|", 1)
-            return (parts[0] or "").strip(), (parts[1] or "").strip()
-        return raw, ""
-
-    def _normalize_shop_url(self, url: str | None):
-        if not url:
-            return None
-        if url.lower().startswith(("http://", "https://")):
-            return url
-        return f"https://{url}"
-
-    def _enforce_link_limit(self, link_count: int):
-        if link_count <= MAX_SHOPPING_LINKS:
-            return
-        self.add_error(
-            "shopping_links_text",
-            forms.ValidationError(
-                f"Add up to {MAX_SHOPPING_LINKS} shopping links (you entered {link_count})."
-            ),
-        )
-
-    def _existing_shop_image_count(self):
-        if not getattr(self.instance, "pk", None):
-            return 0
-        if getattr(getattr(self.instance, "_state", None), "adding", True):
-            return 0
-        return Ingredient.objects.filter(
-            recipe_post=self.instance,
-            shop_url__isnull=False,
-            shop_url__gt="",
-            shop_image_upload__isnull=False,
-        ).count()
-
-    def _enforce_shop_image_requirements(self, link_count: int):
-        uploads = self.files.getlist("shop_images")
-        missing = link_count - (self._existing_shop_image_count() + len(uploads))
-        if link_count and missing > 0:
-            self.add_error(
-                "shop_images",
-                forms.ValidationError(
-                    f"Add one shopping image for each shopping link (need {link_count}, provided {link_count - missing})."
-                ),
-            )
-
     def create_ingredients(self, recipe):
         """Create Ingredient rows from ingredient/shopping link inputs."""
         existing_shop_images = self._existing_shop_images_for(recipe)
@@ -254,64 +182,6 @@ class RecipePostForm(forms.ModelForm):
             seen_names,
             start_position=position,
         )
-
-    def _add_standard_ingredients(self, recipe, lines, seen_names, start_position: int):
-        position = start_position
-        for line in lines:
-            name = line.strip()
-            if not name:
-                continue
-            key = name.lower()
-            if key in seen_names:
-                continue
-            seen_names.add(key)
-            position += 1
-            Ingredient.objects.create(
-                recipe_post=recipe,
-                name=name,
-                shop_url=None,
-                shop_image_upload=None,
-                position=position,
-            )
-        return position
-
-    def _add_shopping_ingredients(self, recipe, shopping_links, shop_images, existing_shop_images, seen_names, start_position: int):
-        position = start_position
-        for item in shopping_links:
-            name = (item.get("name") or "").strip()
-            if not name:
-                continue
-            key = name.lower()
-            if key in seen_names:
-                continue
-            seen_names.add(key)
-            position += 1
-            Ingredient.objects.create(
-                recipe_post=recipe,
-                name=name,
-                shop_url=item.get("url") or None,
-                shop_image_upload=self._next_shop_image(shop_images, existing_shop_images),
-                position=position,
-            )
-
-    def _existing_shop_images_for(self, recipe):
-        return list(
-            Ingredient.objects.filter(
-                recipe_post=recipe,
-                shop_url__isnull=False,
-                shop_url__gt="",
-                shop_image_upload__isnull=False,
-            ).order_by("position")
-        )
-
-    def _next_shop_image(self, shop_images, existing_shop_images):
-        if shop_images:
-            return shop_images.pop(0)
-        if existing_shop_images:
-            return existing_shop_images.pop(0).shop_image_upload
-        return None
-
-
 
     def __init__(self, *args, **kwargs):
         """Populate initial fields when editing an existing recipe."""

@@ -58,6 +58,10 @@ describe("base_theme_nav", () => {
 
     expect(panel.classList.contains("show")).toBe(true);
     expect(toggle.getAttribute("aria-expanded")).toBe("true");
+
+    toggle.click();
+    expect(panel.classList.contains("show")).toBe(false);
+    expect(toggle.getAttribute("aria-expanded")).toBe("false");
   });
 
   test("theme updates when system preference changes", () => {
@@ -144,6 +148,36 @@ describe("base_theme_nav", () => {
     const label = document.querySelector("label");
     expect(input.placeholder).toBe("Email");
     expect(label.style.display).toBe("none");
+  });
+
+  test("nav solid toggles off when scrolling back up", () => {
+    document.body.innerHTML = '<nav class="navbar-recipi"></nav>';
+    const nav = document.querySelector(".navbar-recipi");
+    initBaseInteractions(window);
+    window.scrollY = 100;
+    window.dispatchEvent(new window.Event("scroll"));
+    expect(nav.classList.contains("navbar-solid")).toBe(true);
+    window.scrollY = 0;
+    window.dispatchEvent(new window.Event("scroll"));
+    expect(nav.classList.contains("navbar-solid")).toBe(false);
+  });
+
+  test("theme sync applies body dataset and listens for changes", () => {
+    const listeners = [];
+    const mockPref = {
+      matches: false,
+      addEventListener: (event, cb) => listeners.push(cb),
+      removeEventListener: jest.fn()
+    };
+    window.matchMedia = jest.fn().mockReturnValue(mockPref);
+    document.body.dataset.theme = "";
+
+    initBaseInteractions(window);
+
+    expect(document.body.dataset.theme).toBe("light");
+    mockPref.matches = true;
+    listeners.forEach((cb) => cb());
+    expect(document.body.dataset.theme).toBe("dark");
   });
 
   test("dashboard filters autosize width", () => {
@@ -261,5 +295,11 @@ describe("base_theme_nav", () => {
     document.body.appendChild(nav);
     expect(() => initBaseInteractions(null)).not.toThrow();
     expect(() => initBaseInteractions(window)).not.toThrow();
+  });
+
+  test("setInitialTheme returns early when provided window lacks document", () => {
+    const stubWin = {};
+    setInitialTheme(stubWin);
+    expect(document.documentElement.dataset.theme).toBe("");
   });
 });

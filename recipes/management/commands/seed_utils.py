@@ -87,7 +87,7 @@ class SeedHelpers:
         """Create posts plus their images for a given author."""
         posts: List[RecipePost] = []
         images: List[RecipeImage] = []
-        count = randint(1, max(1, per_user))
+        count = randint(0, max(0, per_user))
         for _ in range(count):
             post = self._build_recipe_post(author_id, image_pool)
             posts.append(post)

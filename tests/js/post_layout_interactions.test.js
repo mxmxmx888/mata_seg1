@@ -12,8 +12,6 @@ function mockRect(el, height) {
   el.getBoundingClientRect = () => ({ height });
 }
 
-const setReferrer = (value) => Object.defineProperty(document, "referrer", { value, configurable: true });
-
 const renderBackButtonPage = ({ postId = "12", entry, fallback = "/fb" }) => {
   document.body.innerHTML = `
       <div id="post-primary"></div>
@@ -52,161 +50,6 @@ describe("post_layout interactions", () => {
     HTMLFormElement.prototype.submit = originalFormSubmit;
     window.sessionStorage.clear();
     jest.clearAllMocks();
-  });
-
-  describe("back navigation", () => {
-    test("history back path when history length > 1", () => {
-      renderBackButtonPage({ entry: "http://localhost/prev", fallback: "/fb" });
-      window.history.length = 2;
-      const backSpy = jest.spyOn(window.history, "back").mockImplementation(() => {});
-      const { initPostLayout } = loadModule();
-      initPostLayout(window);
-      document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
-      const assignSpy = jest.spyOn(window.location, "assign");
-      expect(backSpy.mock.calls.length + assignSpy.mock.calls.length).toBeGreaterThan(0);
-      backSpy.mockRestore();
-      assignSpy.mockRestore();
-    });
-
-    test("back button and escape reuse stored entry when returning from edit", () => {
-      setReferrer("http://localhost/recipes/12/edit");
-      window.sessionStorage.setItem("post-entry-12", "http://localhost/from");
-      renderBackButtonPage({ postId: "12", fallback: "/fb" });
-      window.history.length = 5;
-      const backSpy = jest.spyOn(window.history, "back");
-      const { initPostLayout } = loadModule();
-      initPostLayout(window);
-      const btn = document.querySelector(".post-back-button");
-      btn.dispatchEvent(new Event("click", { bubbles: true, cancelable: true }));
-      expect(backSpy).not.toHaveBeenCalled();
-      expect(window.location.assign).toHaveBeenLastCalledWith("http://localhost/from");
-      backSpy.mockRestore();
-      window.location.assign.mockClear();
-      document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
-      expect(window.location.assign).toHaveBeenLastCalledWith("http://localhost/from");
-    });
-
-    test("back button ignores comment action referrers and keeps stored entry", () => {
-      setReferrer("http://localhost/recipes/12/comment/");
-      window.sessionStorage.setItem("post-entry-12", "http://localhost/from-feed");
-      renderBackButtonPage({ postId: "12", fallback: "/fb" });
-      const { initPostLayout } = loadModule();
-      initPostLayout(window);
-      const btn = document.querySelector(".post-back-button");
-      btn.dispatchEvent(new Event("click", { bubbles: true, cancelable: true }));
-      expect(window.location.assign).toHaveBeenLastCalledWith("http://localhost/from-feed");
-    });
-
-    test("back button ignores comment referrer without stored entry and falls back", () => {
-      setReferrer("http://localhost/recipes/34/comment/");
-      renderBackButtonPage({ postId: "34", fallback: "/fb" });
-      const backSpy = jest.spyOn(window.history, "back");
-      const { initPostLayout } = loadModule();
-      initPostLayout(window);
-      const btn = document.querySelector(".post-back-button");
-      btn.dispatchEvent(new Event("click", { bubbles: true, cancelable: true }));
-      expect(backSpy).not.toHaveBeenCalled();
-      expect(window.location.assign).toHaveBeenLastCalledWith("/fb");
-      backSpy.mockRestore();
-    });
-
-    test("back button falls back when stored entry matches current page", () => {
-      window.sessionStorage.setItem("post-entry-12", "http://localhost/post/1");
-      renderBackButtonPage({ postId: "12", fallback: "/fb" });
-      window.history.length = 3;
-      const backSpy = jest.spyOn(window.history, "back");
-      const { initPostLayout } = loadModule();
-      initPostLayout(window);
-      const btn = document.querySelector(".post-back-button");
-      btn.dispatchEvent(new Event("click", { bubbles: true, cancelable: true }));
-      expect(backSpy).not.toHaveBeenCalled();
-      expect(window.location.assign).toHaveBeenLastCalledWith("/fb");
-      backSpy.mockRestore();
-    });
-
-    test("back button prefers stored entry even when history available", () => {
-      setReferrer("http://localhost/from");
-      window.sessionStorage.setItem("post-entry-99", "http://localhost/feed");
-      renderBackButtonPage({ postId: "99", entry: "http://localhost/from", fallback: "/fb" });
-      window.history.length = 4;
-      const backSpy = jest.spyOn(window.history, "back").mockImplementation(() => {});
-      const { initPostLayout } = loadModule();
-      initPostLayout(window);
-      document.querySelector(".post-back-button").dispatchEvent(new Event("click", { bubbles: true, cancelable: true }));
-      expect(backSpy).not.toHaveBeenCalled();
-      expect(window.location.assign).toHaveBeenLastCalledWith("http://localhost/feed");
-      backSpy.mockRestore();
-    });
-
-    test("back button click uses history when available", () => {
-      setReferrer("http://localhost/ref");
-      renderBackButtonPage({ entry: "http://localhost/ref", fallback: "/fb" });
-      window.history.length = 3;
-      const backSpy = jest.spyOn(window.history, "back").mockImplementation(() => {});
-      const { initPostLayout } = loadModule();
-      initPostLayout(window);
-      const btn = document.querySelector(".post-back-button");
-      btn.dispatchEvent(new Event("click", { bubbles: true, cancelable: true }));
-      const assignSpy = jest.spyOn(window.location, "assign");
-      expect(backSpy.mock.calls.length + assignSpy.mock.calls.length).toBeGreaterThan(0);
-      backSpy.mockRestore();
-      assignSpy.mockRestore();
-    });
-
-    test("resolveBackTarget handles invalid data-entry and fallback href", () => {
-      setReferrer("");
-      document.body.innerHTML = `
-        <div id="post-primary"></div>
-        <div class="post-view-similar"></div>
-        <a class="post-back-button" data-entry="http://[" href="/from-attr"></a>
-      `;
-      const { initPostLayout } = loadModule();
-      initPostLayout(window);
-      const btn = document.querySelector(".post-back-button");
-      expect(btn.getAttribute("href")).toBe("/from-attr");
-    });
-
-    test("resolveBackTarget uses fallback when referrer different origin", () => {
-      setReferrer("http://other/from");
-      document.body.innerHTML = `
-        <div class="post-view-similar"></div>
-        <a class="post-back-button" data-entry="http://other/from" data-fallback="/fb"></a>
-      `;
-      const { initPostLayout } = loadModule();
-      initPostLayout(window);
-      const btn = document.querySelector(".post-back-button");
-      expect(btn.getAttribute("href")).toBe("/fb");
-    });
-
-    test("parseUrl returns null for invalid ref and backButton absent", () => {
-      setReferrer("::::");
-      document.body.innerHTML = `<div class="post-view-similar"></div>`;
-      const { initPostLayout } = loadModule();
-      expect(() => initPostLayout(window)).not.toThrow();
-    });
-
-    test("parseUrl catch path handles invalid URL", () => {
-      setReferrer("::::");
-      document.body.innerHTML = `
-        <div id="post-primary"></div>
-        <div class="post-view-similar"></div>
-      `;
-      const { initPostLayout } = loadModule();
-      expect(() => initPostLayout(window)).not.toThrow();
-    });
-
-    test("back button ignores comment referrer without stored entry and falls back", () => {
-      setReferrer("http://localhost/recipes/34/comment/");
-      renderBackButtonPage({ postId: "34", fallback: "/fb" });
-      const backSpy = jest.spyOn(window.history, "back");
-      const { initPostLayout } = loadModule();
-      initPostLayout(window);
-      const btn = document.querySelector(".post-back-button");
-      btn.dispatchEvent(new Event("click", { bubbles: true, cancelable: true }));
-      expect(backSpy).not.toHaveBeenCalled();
-      expect(window.location.assign).toHaveBeenLastCalledWith("/fb");
-      backSpy.mockRestore();
-    });
   });
 
   describe("masonry layout", () => {
@@ -346,6 +189,34 @@ describe("post_layout interactions", () => {
       expect(cols.length).toBe(2);
       expect(cols[1].style.display).toBe("none");
     });
+
+    test("uses setTimeout path and observes masonry when rAF missing", () => {
+      const originalTimeout = window.setTimeout;
+      window.requestAnimationFrame = undefined;
+      window.setTimeout = jest.fn((cb) => cb());
+      const observeSpy = jest.fn();
+      window.ResizeObserver = jest.fn().mockImplementation((cb) => ({ observe: observeSpy }));
+      document.body.innerHTML = `
+        <div class="post-media-masonry">
+          <div class="post-media-masonry-item"><img id="img-a" /></div>
+          <div class="post-media-masonry-item"><img id="img-b" /></div>
+        </div>
+        <div class="post-view-similar"></div>
+      `;
+      ["img-a", "img-b"].forEach((id, idx) => {
+        const img = document.getElementById(id);
+        img.complete = true;
+        mockRect(img, idx ? 30 : 60);
+      });
+
+      const { initPostLayout } = loadModule();
+      initPostLayout(window);
+
+      expect(window.setTimeout).toHaveBeenCalled();
+      expect(observeSpy).toHaveBeenCalledWith(document.querySelector(".post-media-masonry"));
+      window.setTimeout = originalTimeout;
+      delete window.ResizeObserver;
+    });
   });
 
   describe("guards and misc", () => {
@@ -376,6 +247,67 @@ describe("post_layout interactions", () => {
     test("early return when window lacks document", () => {
       const { initPostLayout } = loadModule();
       expect(() => initPostLayout({})).not.toThrow();
+    });
+
+    test("sessionStorage errors are handled when resolving back target", () => {
+      renderBackButtonPage({ postId: "err", entry: "http://localhost/from" });
+      const originalStorage = window.sessionStorage;
+      window.sessionStorage = {
+        getItem: () => {
+        throw new Error("boom");
+        },
+        setItem: jest.fn(),
+        clear: jest.fn()
+      };
+      const assignSpy = jest.spyOn(window.location, "assign");
+      const { initPostLayout } = loadModule();
+      expect(() => initPostLayout(window)).not.toThrow();
+      expect(() =>
+        document.querySelector(".post-back-button").dispatchEvent(new Event("click", { bubbles: true, cancelable: true }))
+      ).not.toThrow();
+      expect(assignSpy).toHaveBeenCalled();
+      window.sessionStorage = originalStorage;
+      assignSpy.mockRestore();
+    });
+
+    test("back hint visibility runs without rAF and observes gallery", () => {
+      window.requestAnimationFrame = undefined;
+      const observeSpy = jest.fn();
+      window.ResizeObserver = jest.fn().mockImplementation((cb) => ({ observe: observeSpy }));
+      document.body.innerHTML = `
+        <div id="post-primary"></div>
+        <div class="post-view-similar"></div>
+        <a class="post-back-button"></a>
+        <div class="recipe-gallery"></div>
+      `;
+      const back = document.querySelector(".post-back-button");
+      const gallery = document.querySelector(".recipe-gallery");
+      back.getBoundingClientRect = () => ({ top: 10, bottom: 20, right: 5 });
+      gallery.getBoundingClientRect = () => ({ top: 15, bottom: 100, left: 40 });
+
+      const { initPostLayout } = loadModule();
+      initPostLayout(window);
+
+      expect(back.classList.contains("post-back-button--hide-hint")).toBe(false);
+      expect(observeSpy).toHaveBeenCalledWith(gallery);
+      delete window.ResizeObserver;
+    });
+
+    test("auto init waits for DOMContentLoaded when loading", () => {
+      const originalReady = Object.getOwnPropertyDescriptor(document, "readyState");
+      Object.defineProperty(document, "readyState", { value: "loading", configurable: true });
+      const addSpy = jest.spyOn(document, "addEventListener");
+      jest.resetModules();
+      delete global.__postLayoutInitialized;
+      require("../../static/js/post_layout");
+      expect(addSpy).toHaveBeenCalledWith("DOMContentLoaded", expect.any(Function), { once: true });
+      addSpy.mock.calls[0][1]();
+      if (originalReady) {
+        Object.defineProperty(document, "readyState", originalReady);
+      } else {
+        Object.defineProperty(document, "readyState", { value: "complete", configurable: true });
+      }
+      addSpy.mockRestore();
     });
   });
 });

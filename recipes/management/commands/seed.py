@@ -55,7 +55,7 @@ class Command(SeedHelpers, BaseCommand):
             self.reset_media_dirs()
         self.create_users()
         self.seed_followers_and_follows(follow_k=5)
-        self.seed_recipe_posts(per_user=2)
+        self.seed_recipe_posts(per_user=25)
         self.seed_recipe_steps(min_steps=4, max_steps=7)
         self.seed_favourites(per_user=2)
         self.seed_ingredients()
@@ -120,8 +120,8 @@ class Command(SeedHelpers, BaseCommand):
             Follower.objects.bulk_create(follower_rows, ignore_conflicts=True, batch_size=1000)
             Follows.objects.bulk_create(follows_rows, ignore_conflicts=True, batch_size=1000)
 
-    def seed_recipe_posts(self, *, per_user: int = 3) -> None:
-        """Generate recipe posts and images for all users."""
+    def seed_recipe_posts(self, *, per_user: int = 25) -> None:
+        """Generate up to `per_user` recipe posts (0..per_user) and images for all users."""
         user_ids = list(User.objects.values_list("id", flat=True))
         if not user_ids:
             return
