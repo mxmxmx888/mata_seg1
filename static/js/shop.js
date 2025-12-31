@@ -1,6 +1,124 @@
 (function (global) {
+  const breakpoints = [
+    { width: 1600, count: 6 },
+    { width: 1400, count: 5 },
+    { width: 1200, count: 4 },
+    { width: 992, count: 3 },
+    { width: 768, count: 3 },
+    { width: 520, count: 2 },
+    { width: 0, count: 2 }
+  ];
+
+  const resolveWindow = (win) => win || (typeof window !== "undefined" ? window : undefined);
+
+  function getColumnCount(w) {
+    const width = w.innerWidth;
+    for (const bp of breakpoints) {
+      if (width >= bp.width) return bp.count;
+    }
+    return 2;
+  }
+
+  function createColumns(doc, container, count) {
+    const cols = [];
+    for (let i = 0; i < count; i += 1) {
+      const col = doc.createElement("div");
+      col.className = "shop-column";
+      container.appendChild(col);
+      cols.push(col);
+    }
+    return cols;
+  }
+
+  function shortestColumn(columns) {
+    return columns.reduce((shortest, col) => (col.offsetHeight < shortest.offsetHeight ? col : shortest), columns[0]);
+  }
+
+  function placeItems(columns, nodes) {
+    /* istanbul ignore next */
+    if (!nodes || !nodes.length || !columns.length) return;
+    nodes.forEach((node) => {
+      const target = shortestColumn(columns);
+      target.appendChild(node);
+    });
+  }
+
+  function rebuildColumns(doc, container, columns, desiredCount, force) {
+    const cards = Array.from(container.querySelectorAll(".shop-masonry-item"));
+    if (!force && columns.length === desiredCount) return columns;
+    container.innerHTML = "";
+    const newColumns = createColumns(doc, container, desiredCount);
+    placeItems(newColumns, cards);
+    return newColumns;
+  }
+
+  function waitForImages(nodes) {
+    const imgs = [];
+    nodes.forEach((node) => {
+      imgs.push(...node.querySelectorAll("img"));
+    });
+    /* istanbul ignore next */
+    if (!imgs.length) return Promise.resolve();
+    return new Promise((resolve) => {
+      let done = 0;
+      const finish = () => {
+        done += 1;
+        if (done >= imgs.length) resolve();
+      };
+      imgs.forEach((img) => {
+        if (img.complete) {
+          finish();
+        } else {
+          img.addEventListener("load", finish, { once: true });
+          img.addEventListener("error", finish, { once: true });
+        }
+      });
+    });
+  }
+
+  function createAppendHtml(doc, placeInColumns) {
+    return (html) => {
+      /* istanbul ignore next */
+      if (!html) return Promise.resolve();
+      const temp = doc.createElement("div");
+      temp.innerHTML = html;
+      const items = Array.from(temp.children);
+      return Promise.resolve()
+        .then(() => {
+          placeInColumns(items);
+          return waitForImages(items);
+        })
+        .then(() => {
+          items.forEach((node) => {
+            if (node.parentElement) node.remove();
+          });
+          placeInColumns(items);
+        });
+    };
+  }
+
+  function buildNextPageUrl(w, seed, page) {
+    const nextPage = page + 1;
+    const url = new URL(w.location.href);
+    url.searchParams.set("page", String(nextPage));
+    if (seed) url.searchParams.set("seed", seed);
+    url.searchParams.set("ajax", "1");
+    return { href: url.toString(), nextPage };
+  }
+
+  const fetchShopPage = (w, href) =>
+    w.fetch(href, {
+      headers: { "X-Requested-With": "XMLHttpRequest" }
+    });
+
+  function shouldLoadFromScroll(doc, w) {
+    const scrollPosition = w.innerHeight + w.scrollY;
+    const threshold = doc.body.offsetHeight - 300;
+    return scrollPosition >= threshold;
+  }
+
   function initShop(win) {
-    const w = win || (typeof window !== "undefined" ? window : undefined);
+    const w = resolveWindow(win);
     /* istanbul ignore next */
     if (!w || !w.document) return;
 
@@ -12,90 +130,18 @@
     /* istanbul ignore next */
     if (!container || !sentinel) return;
 
-    const breakpoints = [
-      { width: 1600, count: 6 },
-      { width: 1400, count: 5 },
-      { width: 1200, count: 4 },
-      { width: 992, count: 3 },
-      { width: 768, count: 3 },
-      { width: 520, count: 2 },
-      { width: 0, count: 2 }
-    ];
-
-    function getColumnCount() {
-      const width = w.innerWidth;
-      for (const bp of breakpoints) {
-        if (width >= bp.width) return bp.count;
-      }
-      return 2;
-    }
-
     let columns = [];
-
-    function shortestColumn() {
-      let target = columns[0];
-      for (let i = 1; i < columns.length; i += 1) {
-        if (columns[i].offsetHeight < target.offsetHeight) {
-          target = columns[i];
-        }
-      }
-      return target;
-    }
-
-    function placeItems(nodes) {
-      /* istanbul ignore next */
-      if (!nodes || !nodes.length) return;
-      nodes.forEach((node) => {
-        const target = shortestColumn();
-        target.appendChild(node);
-      });
-    }
-
-    function buildColumns(force) {
-      const desiredCount = getColumnCount();
-      const cards = Array.from(container.querySelectorAll(".shop-masonry-item"));
-      if (!force && columns.length === desiredCount) return;
-
-      container.innerHTML = "";
-      columns = [];
-      for (let i = 0; i < desiredCount; i += 1) {
-        const col = doc.createElement("div");
-        col.className = "shop-column";
-        container.appendChild(col);
-        columns.push(col);
-      }
-      placeItems(cards);
-    }
-
-    function waitForImages(nodes) {
-      const imgs = [];
-      nodes.forEach((node) => {
-        imgs.push(...node.querySelectorAll("img"));
-      });
-      /* istanbul ignore next */
-      if (!imgs.length) return Promise.resolve();
-      return new Promise((resolve) => {
-        let done = 0;
-        const finish = () => {
-          done += 1;
-          if (done >= imgs.length) resolve();
-        };
-        imgs.forEach((img) => {
-          if (img.complete) {
-            finish();
-          } else {
-            img.addEventListener("load", finish, { once: true });
-            img.addEventListener("error", finish, { once: true });
-          }
-        });
-      });
-    }
+    const refreshColumns = (force = false) => {
+      columns = rebuildColumns(doc, container, columns, getColumnCount(w), force);
+    };
+    const placeInColumns = (nodes) => placeItems(columns, nodes);
 
     let page = Number(container.dataset.page || "1");
     let loading = false;
     let hasNext = String(container.dataset.hasNext) === "true";
+    let observer = null;
 
-    function setLoading(state) {
+    const setLoading = (state) => {
       loading = state;
       if (!loadingEl) return;
       if (state) {
@@ -103,39 +149,9 @@
       } else {
         loadingEl.classList.add("d-none");
       }
-    }
-
-    function appendHtml(html) {
-      /* istanbul ignore next */
-      if (!html) return Promise.resolve();
-      const temp = doc.createElement("div");
-      temp.innerHTML = html;
-      const items = Array.from(temp.children);
-      return Promise.resolve().then(() => {
-        placeItems(items);
-        return waitForImages(items).then(() => {
-          items.forEach((node) => {
-            if (node.parentElement) node.remove();
-          });
-          placeItems(items);
-        });
-      });
-    }
-
-    const buildNextPageUrl = () => {
-      const nextPage = page + 1;
-      const url = new URL(w.location.href);
-      url.searchParams.set("page", String(nextPage));
-      if (seed) url.searchParams.set("seed", seed);
-      url.searchParams.set("ajax", "1");
-      return { href: url.toString(), nextPage };
     };
 
-    const fetchShopPage = (href) =>
-      w.fetch(href, {
-        headers: { "X-Requested-With": "XMLHttpRequest" }
-      });
-
+    const appendHtml = createAppendHtml(doc, placeInColumns);
     const applyPageData = (data) =>
       appendHtml(data && data.html).then(() => {
         hasNext = Boolean(data && data.has_next);
@@ -144,35 +160,37 @@
         }
       });
 
-    function loadMoreShopItems() {
+    const loadMoreShopItems = () => {
       if (loading || !hasNext) return;
       setLoading(true);
-      const { href, nextPage } = buildNextPageUrl();
-      return fetchShopPage(href)
+      const { href, nextPage } = buildNextPageUrl(w, seed, page);
+      return fetchShopPage(w, href)
         .then((response) => {
           if (!response.ok) throw new Error("Network response was not ok");
           return response.json();
         })
-        .then((data) => applyPageData(data).then(() => {
-          page = nextPage;
-        }))
+        .then((data) =>
+          applyPageData(data).then(() => {
+            page = nextPage;
+          })
+        )
         .catch(() => {})
         .finally(() => {
           setLoading(false);
         });
-    }
+    };
 
     const initialItems = Array.from(container.querySelectorAll(".shop-masonry-item"));
-    buildColumns();
+    refreshColumns();
     waitForImages(initialItems).then(() => {
-      buildColumns(true);
+      refreshColumns(true);
     });
     w.addEventListener("resize", () => {
-      buildColumns(true);
+      refreshColumns(true);
     });
 
     if (hasNext) {
-      const observer =
+      observer =
         "IntersectionObserver" in w
           ? new w.IntersectionObserver(
               (entries) => {
@@ -191,9 +209,7 @@
       } else {
         w.addEventListener("scroll", () => {
           if (loading || !hasNext) return;
-          const scrollPosition = w.innerHeight + w.scrollY;
-          const threshold = doc.body.offsetHeight - 300;
-          if (scrollPosition >= threshold) {
+          if (shouldLoadFromScroll(doc, w)) {
             loadMoreShopItems();
           }
         });
