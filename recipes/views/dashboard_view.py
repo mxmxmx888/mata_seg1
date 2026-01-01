@@ -1,7 +1,7 @@
 """Dashboard view helpers for discovery feed, search scopes, and AJAX fragments."""
 
 from django.core.paginator import Paginator
-from django.db.models import Count, Exists, ExpressionWrapper, F, IntegerField, OuterRef, Q
+from django.db.models import Q
 from django.http import JsonResponse
 from django.shortcuts import render
 from django.template.loader import render_to_string
@@ -24,117 +24,19 @@ except Exception:  # pragma: no cover
 FEED_PAGE_LIMIT = 24
 
 
-def _base_discover_queryset(user):
-    """Base queryset of published posts, excluding private tags from other authors."""
-    return (
-        RecipePost.objects.filter(published_at__isnull=False)
-        .select_related("author")
-    ).exclude(
-        Q(tags__icontains="#private") & ~Q(author=user)
-    )
-
-
-def _apply_text_filters(qs, q):
-    """Filter posts by title/description/tag text when a search query is present."""
-    if not q:
-        return qs
-    return qs.filter(
-        Q(title__icontains=q)
-        | Q(description__icontains=q)
-        | Q(tags__icontains=q)
-    ).distinct()
-
-
-def _apply_category_filter(qs, category):
-    """Filter by category when provided."""
-    if category and category != "all":
-        return qs.filter(category__iexact=category)
-    return qs
-
-
-def _apply_ingredient_filter(qs, ingredient_q):
-    """Filter posts that contain an ingredient matching the query text."""
-    if ingredient_q:
-        return qs.filter(ingredients__name__icontains=ingredient_q.lower()).distinct()
-    return qs
-
-
-def _coerce_to_int(value):
-    try:
-        return int(value)
-    except (TypeError, ValueError):
-        return None
-
-
-def _apply_time_filters(qs, min_prep, max_prep):
-    """Filter posts by total prep+cook time bounds."""
-    min_bound = _coerce_to_int(min_prep)
-    max_bound = _coerce_to_int(max_prep)
-    if min_bound is None and max_bound is None:
-        return qs
-
-    total_time_expr = ExpressionWrapper(
-        F("prep_time_min") + F("cook_time_min"),
-        output_field=IntegerField(),
-    )
-    qs = qs.annotate(total_time_min=total_time_expr)
-
-    if min_bound is not None:
-        qs = qs.filter(total_time_min__gte=min_bound)
-
-    if max_bound is not None:
-        qs = qs.filter(total_time_min__lte=max_bound)
-
-    return qs
-
-
-def _apply_have_ingredients_filter(qs, have_ingredients_list):
-    """Filter posts that include at least one provided ingredient and no others."""
-    if not have_ingredients_list:
-        return qs
-
-    allowed_names = [name.lower() for name in have_ingredients_list]
-
-    disallowed_subquery = Ingredient.objects.filter(
-        recipe_post_id=OuterRef("pk")
-    ).exclude(name__in=allowed_names)
-
-    allowed_subquery = Ingredient.objects.filter(
-        recipe_post_id=OuterRef("pk"),
-        name__in=allowed_names,
-    )
-
-    return qs.annotate(
-        has_disallowed=Exists(disallowed_subquery),
-        has_allowed=Exists(allowed_subquery),
-    ).filter(has_disallowed=False, has_allowed=True)
-
-
-def _sort_discover(discover_qs, sort):
-    """Apply sort mode to the discover queryset."""
-    if sort == "popular":
-        return (
-            discover_qs.annotate(
-                likes_total=Count("likes", distinct=True),
-                popularity=F("saved_count") + F("likes_total"),
-            ).order_by("-popularity", "-published_at", "-created_at")
-        )
-    if sort == "oldest":
-        return discover_qs.order_by("published_at", "created_at")
-    return discover_qs.order_by("-published_at", "-created_at")
-
-
 def _discover_queryset(params, user, privacy):
     """Build the discovery queryset with all filters applied."""
-    discover_qs = _base_discover_queryset(user)
-    discover_qs = _apply_text_filters(discover_qs, params["q"])
-    discover_qs = _apply_category_filter(discover_qs, params["category"])
-    discover_qs = _apply_ingredient_filter(discover_qs, params["ingredient_q"])
-    discover_qs = _apply_time_filters(discover_qs, params["min_prep"], params["max_prep"])
-    discover_qs = _apply_have_ingredients_filter(discover_qs, params["have_ingredients_list"])
-
-    discover_qs = privacy.filter_visible_posts(discover_qs, user)
-    return _sort_discover(discover_qs, params["sort"])
+    return feed_service.discover_queryset(
+        user,
+        query=params["q"],
+        category=params["category"],
+        ingredient_q=params["ingredient_q"],
+        have_ingredients_list=params["have_ingredients_list"],
+        min_prep=params["min_prep"],
+        max_prep=params["max_prep"],
+        sort=params["sort"],
+        privacy=privacy,
+    )
 
 
 def _for_you_ajax_response(request, seed, privacy):

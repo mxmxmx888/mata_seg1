@@ -154,7 +154,14 @@ def delete_my_recipe(request, post_id):
 def toggle_favourite(request, post_id):
     """Toggle save/unsave for a recipe and return HX JSON or redirect."""
     recipe = get_object_or_404(RecipePost, id=post_id)
-    is_saved_now, new_count, collection = recipe_service.toggle_favourite(request, recipe)
+    collection_id = request.POST.get("collection_id") or request.GET.get("collection_id")
+    collection_name = request.POST.get("collection_name") or request.GET.get("collection_name")
+    is_saved_now, new_count, collection = recipe_service.toggle_favourite(
+        request.user,
+        recipe,
+        collection_id=collection_id,
+        collection_name=collection_name,
+    )
 
     if is_hx(request):
         return JsonResponse(

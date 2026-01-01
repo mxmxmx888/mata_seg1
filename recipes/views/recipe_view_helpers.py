@@ -1,11 +1,12 @@
 """Helper utilities used by recipe view functions and templates."""
 
 from django.http import HttpResponse
-from django.shortcuts import get_object_or_404, redirect
+from django.shortcuts import redirect
 from django.urls import reverse
 from django.utils import timezone
 
 from recipes.forms.comment_form import CommentForm
+from recipes.services.recipe_posts import RecipePostService
 from recipes.models import Favourite
 from recipes.models.favourite_item import FavouriteItem
 from recipes.models.ingredient import Ingredient
@@ -13,6 +14,8 @@ from recipes.models.like import Like
 from recipes.models.recipe_post import RecipePost
 from recipes.models.recipe_step import RecipeStep
 from recipes.models.followers import Follower
+
+_recipe_service = RecipePostService()
 
 
 def is_hx(request):
@@ -22,10 +25,7 @@ def is_hx(request):
 
 def set_primary_image(recipe):
     """Persist the first RecipeImage URL onto the legacy image field for display."""
-    primary_image = recipe.images.first()
-    if primary_image and primary_image.image:
-        recipe.image = primary_image.image.url
-        recipe.save(update_fields=["image"])
+    _recipe_service.set_primary_image(recipe)
 
 
 def _primary_image_url(recipe):
@@ -58,10 +58,7 @@ def _safe_image_url(image_obj):
 
 def collection_thumb(cover_post, fallback_post):
     """Choose a thumbnail URL for a collection using cover or fallback posts."""
-    thumb_url = getattr(cover_post, "primary_image_url", None) or getattr(cover_post, "image", None)
-    if not thumb_url and fallback_post:
-        thumb_url = getattr(fallback_post, "primary_image_url", None) or getattr(fallback_post, "image", None)
-    return thumb_url or "https://placehold.co/1200x800/0f0f14/ffffff?text=Collection"
+    return _recipe_service.collection_thumb(cover_post, fallback_post)
 
 
 def primary_image_url(recipe):
@@ -251,37 +248,16 @@ def resolve_collection(request, recipe):
     """Determine the Favourite collection to toggle, creating if needed."""
     collection_id = request.POST.get("collection_id") or request.GET.get("collection_id")
     collection_name = request.POST.get("collection_name") or request.GET.get("collection_name")
-
-    if collection_id:
-        favourite = get_object_or_404(Favourite, id=collection_id, user=request.user)
-        created_collection = False
-    else:
-        name = (collection_name or "favourites").strip() or "favourites"
-        favourite, created_collection = Favourite.objects.get_or_create(
-            user=request.user,
-            name=name,
-        )
-    return favourite, created_collection
+    return _recipe_service.resolve_collection(
+        request.user,
+        collection_id=collection_id,
+        collection_name=collection_name,
+    )
 
 
 def toggle_save(favourite, recipe):
     """Toggle save state for a recipe within a Favourite; return (is_saved_now, new_count)."""
-    existing = FavouriteItem.objects.filter(
-        favourite=favourite,
-        recipe_post=recipe,
-    )
-
-    if existing.exists():
-        existing.delete()
-        new_count = max(0, (recipe.saved_count or 0) - 1)
-        return False, new_count
-
-    FavouriteItem.objects.create(
-        favourite=favourite,
-        recipe_post=recipe,
-    )
-    new_count = (recipe.saved_count or 0) + 1
-    return True, new_count
+    return _recipe_service.toggle_save(favourite, recipe)
 
 
 def hx_response_or_redirect(request, target_url):

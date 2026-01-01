@@ -4,11 +4,20 @@ import random
 from typing import Iterable, List, Sequence, Tuple
 
 from django.contrib.auth import get_user_model
-from django.db.models import Q, QuerySet
+from django.db.models import (
+    Count,
+    Exists,
+    ExpressionWrapper,
+    F,
+    IntegerField,
+    OuterRef,
+    Q,
+    QuerySet,
+)
 from django.utils import timezone
 
 from .privacy import PrivacyService
-from recipes.models import RecipePost, Like, Follower
+from recipes.models import RecipePost, Like, Follower, Ingredient
 
 
 class FeedService:
@@ -72,6 +81,30 @@ class FeedService:
             | Q(description__icontains=query)
             | Q(tags__icontains=query)
         )
+
+    def discover_queryset(
+        self,
+        user,
+        *,
+        query: str | None,
+        category: str | None,
+        ingredient_q: str | None,
+        have_ingredients_list: Sequence[str] | None,
+        min_prep,
+        max_prep,
+        sort: str | None,
+        privacy: PrivacyService | None = None,
+    ) -> QuerySet:
+        """Build the discovery queryset with all filters applied."""
+        privacy_service = privacy or self.privacy_service
+        discover_qs = self._base_discover_queryset(user)
+        discover_qs = self.apply_query_filters(discover_qs, query)
+        discover_qs = self._apply_category_filter(discover_qs, category)
+        discover_qs = self._apply_ingredient_filter(discover_qs, ingredient_q)
+        discover_qs = self._apply_time_filters(discover_qs, min_prep, max_prep)
+        discover_qs = self._apply_have_ingredients_filter(discover_qs, have_ingredients_list)
+        discover_qs = privacy_service.filter_visible_posts(discover_qs, user)
+        return self._sort_discover(discover_qs, sort)
 
     def tag_filtered_qs(
         self, qs: QuerySet, preferred_tags: Sequence[str], liked_post_ids: Sequence[int]
@@ -203,6 +236,74 @@ class FeedService:
         if limit is None:
             return posts[offset:]
         return posts[offset : offset + limit]
+
+    def _base_discover_queryset(self, user):
+        """Base queryset of published posts, excluding private tags from other authors."""
+        return self.base_posts_queryset().exclude(
+            Q(tags__icontains="#private") & ~Q(author=user)
+        )
+
+    def _apply_category_filter(self, qs, category):
+        if category and category != "all":
+            return qs.filter(category__iexact=category)
+        return qs
+
+    def _apply_ingredient_filter(self, qs, ingredient_q):
+        if ingredient_q:
+            return qs.filter(ingredients__name__icontains=str(ingredient_q).lower()).distinct()
+        return qs
+
+    def _apply_time_filters(self, qs, min_prep, max_prep):
+        min_bound = self._safe_int(min_prep)
+        max_bound = self._safe_int(max_prep)
+        if min_bound is None and max_bound is None:
+            return qs
+
+        total_time_expr = ExpressionWrapper(
+            F("prep_time_min") + F("cook_time_min"),
+            output_field=IntegerField(),
+        )
+        qs = qs.annotate(total_time_min=total_time_expr)
+
+        if min_bound is not None:
+            qs = qs.filter(total_time_min__gte=min_bound)
+
+        if max_bound is not None:
+            qs = qs.filter(total_time_min__lte=max_bound)
+
+        return qs
+
+    def _apply_have_ingredients_filter(self, qs, have_ingredients_list):
+        if not have_ingredients_list:
+            return qs
+
+        allowed_names = [str(name).lower() for name in have_ingredients_list]
+
+        disallowed_subquery = Ingredient.objects.filter(
+            recipe_post_id=OuterRef("pk")
+        ).exclude(name__in=allowed_names)
+
+        allowed_subquery = Ingredient.objects.filter(
+            recipe_post_id=OuterRef("pk"),
+            name__in=allowed_names,
+        )
+
+        return qs.annotate(
+            has_disallowed=Exists(disallowed_subquery),
+            has_allowed=Exists(allowed_subquery),
+        ).filter(has_disallowed=False, has_allowed=True)
+
+    def _sort_discover(self, discover_qs, sort):
+        if sort == "popular":
+            return (
+                discover_qs.annotate(
+                    likes_total=Count("likes", distinct=True),
+                    popularity=F("saved_count") + F("likes_total"),
+                ).order_by("-popularity", "-published_at", "-created_at")
+            )
+        if sort == "oldest":
+            return discover_qs.order_by("published_at", "created_at")
+        return discover_qs.order_by("-published_at", "-created_at")
 
     def _user_base_filter(self, query: str):
         """Build a Q filter for user search by username/first name/last name/full name."""
