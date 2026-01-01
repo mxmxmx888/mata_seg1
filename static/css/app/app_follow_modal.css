@@ -76,6 +76,10 @@ body[data-theme="light"] .modal-backdrop.custom-modal-backdrop.show {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  --follow-modal-bg: var(--bg-2);
+  --follow-modal-text: var(--text-primary);
+  --follow-modal-border: var(--border-subtle);
+  --follow-modal-focus-border: var(--border-strong);
 }
 
 .follow-modal .modal-dialog {
@@ -86,13 +90,13 @@ body[data-theme="light"] .modal-backdrop.custom-modal-backdrop.show {
 }
 
 body.profile-body .follow-modal .modal-content {
-  background-color: var(--bg-2);
-  color: var(--text-primary);
+  background-color: var(--follow-modal-bg);
+  color: var(--follow-modal-text);
 }
 
 :is(:root[data-theme="dark"] body.profile-body, body[data-theme="dark"].profile-body) .follow-modal .modal-content {
-  background-color: var(--bg-2);
-  color: var(--text-primary);
+  background-color: var(--follow-modal-bg);
+  color: var(--follow-modal-text);
 }
 
 .follow-modal .form-control {
@@ -100,9 +104,10 @@ body.profile-body .follow-modal .modal-content {
 }
 
 body.profile-body .follow-modal .form-control {
-  background-color: #ffffff;
-  color: #111827;
-  border-color: #d1d5db;
+  background-color: var(--follow-modal-bg);
+  color: var(--follow-modal-text);
+  border-color: var(--follow-modal-border);
+  box-shadow: none;
 }
 
 .follow-modal .form-control:focus {
@@ -110,14 +115,7 @@ body.profile-body .follow-modal .form-control {
 }
 
 body.profile-body .follow-modal .form-control:focus {
-  border-color: #cbd5e1;
-}
-
-:is(:root[data-theme="dark"] body.profile-body, body[data-theme="dark"].profile-body) .follow-modal .form-control {
-  background-color: #0f1014;
-  color: #e5e5eb;
-  box-shadow: none;
-  border-color: #3a3b44;
+  border-color: var(--follow-modal-focus-border);
 }
 
 .follow-modal .modal-header {

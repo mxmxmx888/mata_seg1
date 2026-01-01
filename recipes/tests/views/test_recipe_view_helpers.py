@@ -142,7 +142,7 @@ class RecipeViewHelpersTests(TestCase):
         self.assertTrue(result["last_saved_at"] > fav.created_at)
         self.assertTrue(result["thumb_url"])
 
-    @patch("recipes.views.recipe_view_helpers.Favourite.objects.filter")
+    @patch("recipes.services.recipe_posts.Favourite.objects.filter")
     def test_collections_modal_state_updates_last_saved_and_cover_for_unsaved(self, mock_filter):
         added_at = timezone.now()
         item = SimpleNamespace(
@@ -167,7 +167,7 @@ class RecipeViewHelpersTests(TestCase):
         self.assertEqual(result["last_saved_at"], added_at)
         self.assertEqual(result["thumb_url"], "fromitem")
 
-    @patch("recipes.views.recipe_view_helpers.Favourite.objects.filter")
+    @patch("recipes.services.recipe_posts.Favourite.objects.filter")
     def test_collections_modal_state_handles_missing_added_at(self, mock_filter):
         class FakeQS(list):
             def prefetch_related(self, *args, **kwargs):
@@ -218,6 +218,18 @@ class RecipeViewHelpersTests(TestCase):
         items = [SimpleNamespace(recipe_post=self.recipe)]
 
         self.assertEqual(helpers._first_item_post(items), self.recipe)
+
+    def test_safe_image_url_handles_value_error(self):
+        class Bad:
+            @property
+            def url(self):
+                raise ValueError()
+        self.assertIsNone(helpers._safe_image_url(SimpleNamespace(image=Bad())))
+
+    def test_favourites_for_returns_user_collections(self):
+        fav = Favourite.objects.create(user=self.user, name="Mine")
+        result = helpers._favourites_for(self.user)
+        self.assertIn(fav, list(result))
 
     def test_first_item_post_skips_missing_posts(self):
         items = [SimpleNamespace(recipe_post=None), SimpleNamespace(recipe_post=self.recipe)]

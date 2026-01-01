@@ -1,4 +1,5 @@
 from datetime import timedelta
+from uuid import uuid4
 from types import SimpleNamespace
 from unittest.mock import patch
 
@@ -200,6 +201,58 @@ class DashboardUtilsTests(TestCase):
 
         self.assertIn(liked, posts)
         self.assertGreaterEqual(len(posts), 1)
+
+    def test_sort_posts_popular_and_oldest(self):
+        older = self.published("Old", timezone.now() - timezone.timedelta(days=10))
+        newer = self.published("New", timezone.now())
+        RecipePost.objects.filter(id=older.id).update(saved_count=1)
+        RecipePost.objects.filter(id=newer.id).update(saved_count=5)
+
+        popular_sorted = self.feed_service._sort_posts([older, newer], "popular")
+        self.assertEqual(popular_sorted[0].id, newer.id)
+
+        oldest_sorted = self.feed_service._sort_posts([older, newer], "oldest")
+        self.assertEqual([p.id for p in oldest_sorted], [older.id, newer.id])
+
+    def test_refresh_popularity_counts_returns_when_no_recipe_posts(self):
+        posts = [SimpleNamespace(saved_count=3)]
+
+        result = self.feed_service._refresh_popularity_counts(posts)
+
+        self.assertIsNone(result)
+        self.assertEqual(posts[0].saved_count, 3)
+
+    def test_refresh_popularity_counts_skips_missing_database_rows(self):
+        ghost = RecipePost(
+            id=uuid4(),
+            author=self.user,
+            title="Ghost",
+            description="d",
+            published_at=timezone.now(),
+        )
+
+        self.feed_service._refresh_popularity_counts([ghost])
+
+        self.assertFalse(hasattr(ghost, "_likes_total"))
+        self.assertEqual(ghost.saved_count, 0)
+
+    def test_popularity_score_handles_like_count_errors(self):
+        class BadLikes:
+            def count(self):
+                raise Exception("boom")
+
+        post = SimpleNamespace(saved_count=2, likes_count=None, likes=BadLikes())
+
+        score = self.feed_service._popularity_score(post)
+
+        self.assertEqual(score, 2)
+
+    def test_popularity_score_uses_likes_count_when_available(self):
+        post = SimpleNamespace(saved_count=1, likes_count=4)
+
+        score = self.feed_service._popularity_score(post)
+
+        self.assertEqual(score, 5)
 
     def test_get_following_posts_filters_and_offsets(self):
         author = make_user(username="author")

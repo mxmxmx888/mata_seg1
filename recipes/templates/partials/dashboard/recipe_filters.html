@@ -1,5 +1,7 @@
 <form method="get" class="mb-4 d-flex align-items-center justify-content-center dashboard-filters">
   <input type="hidden" name="scope" value="recipes">
+  <input type="hidden" name="mode" value="search">
+  <input type="hidden" name="q" value="{{ search_query|default:'' }}">
 
   <select
     name="category"

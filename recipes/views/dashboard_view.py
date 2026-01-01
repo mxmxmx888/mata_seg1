@@ -1,11 +1,15 @@
 """Dashboard view helpers for discovery feed, search scopes, and AJAX fragments."""
 
+from dataclasses import dataclass
+
 from django.core.paginator import Paginator
 from django.db.models import Q
 from django.http import JsonResponse
 from django.shortcuts import render
 from django.template.loader import render_to_string
 from django.views.decorators.http import require_GET
+
+from recipes.models import Ingredient, RecipePost
 from recipes.views.dashboard_params import (
     parse_dashboard_params,
     get_for_you_seed,
@@ -14,19 +18,24 @@ from recipes.views.dashboard_params import (
 )
 from recipes.views.dashboard_utils import feed_service, privacy_service
 
-try:
-    from recipes.models import Ingredient, RecipePost
-except Exception:  # pragma: no cover
-    from recipes.models.ingredient import Ingredient
-    from recipes.models.recipe_post import RecipePost
-
 
 FEED_PAGE_LIMIT = 24
 
 
-def _discover_queryset(params, user, privacy):
+@dataclass(frozen=True)
+class DashboardDeps:
+    feed_service: object
+    privacy_service: object
+
+
+def _deps():
+    """Provide injectable dependencies for dashboard view helpers."""
+    return DashboardDeps(feed_service=feed_service, privacy_service=privacy_service)
+
+
+def _discover_queryset(params, user, deps):
     """Build the discovery queryset with all filters applied."""
-    return feed_service.discover_queryset(
+    return deps.feed_service.discover_queryset(
         user,
         query=params["q"],
         category=params["category"],
@@ -35,16 +44,23 @@ def _discover_queryset(params, user, privacy):
         min_prep=params["min_prep"],
         max_prep=params["max_prep"],
         sort=params["sort"],
-        privacy=privacy,
+        privacy=deps.privacy_service,
     )
 
 
-def _for_you_ajax_response(request, seed, privacy):
+def _for_you_ajax_response(request, seed, deps, sort):
     """Return the JSON payload for the 'for you' infinite scroll."""
     limit = FEED_PAGE_LIMIT
     offset = _safe_offset(request.GET.get("for_you_offset"))
     seed = _ensure_for_you_seed(request, seed)
-    posts = feed_service.for_you_posts(request.user, limit=limit, offset=offset, seed=seed, privacy=privacy)
+    posts = deps.feed_service.for_you_posts(
+        request.user,
+        limit=limit,
+        offset=offset,
+        seed=seed,
+        privacy=deps.privacy_service,
+        sort=sort,
+    )
     html = render_to_string("partials/feed/feed_cards.html", {"posts": posts, "request": request}, request=request)
     return JsonResponse(
         {"html": html, "has_more": len(posts) == limit, "count": len(posts)}
@@ -55,16 +71,16 @@ def _following_ajax_response(request):
     """Return the JSON payload for the 'following' infinite scroll."""
     limit = FEED_PAGE_LIMIT
     offset = _safe_offset(request.GET.get("following_offset"))
-    posts = feed_service.following_posts(request.user, limit=limit, offset=offset)
+    posts = _deps().feed_service.following_posts(request.user, limit=limit, offset=offset)
     html = render_to_string("partials/feed/feed_cards.html", {"posts": posts, "request": request}, request=request)
     return JsonResponse(
         {"html": html, "has_more": len(posts) == limit, "count": len(posts)}
     )
 
 
-def _shopping_search(request, params, privacy):
+def _shopping_search(request, params, deps):
     """Return shopping results or an AJAX fragment when scope=shopping."""
-    items_qs = _shopping_items_queryset(request.user, params, privacy)
+    items_qs = _shopping_items_queryset(request.user, params, deps.privacy_service)
     paginator = Paginator(items_qs, 24)
     page_obj = paginator.get_page(params["page_number"])
     if params["is_ajax"]:
@@ -127,12 +143,12 @@ def _recipe_search(request, params, discover_qs):
 
 def _scope_users_results(params):
     """Return user search results for the dashboard scope=users."""
-    return feed_service.search_users(params["q"], limit=18)
+    return _deps().feed_service.search_users(params["q"], limit=18)
 
 
-def _scope_shopping_results(request, params, privacy):
+def _scope_shopping_results(request, params, deps):
     """Return shopping scope results or AJAX payload."""
-    return _shopping_search(request, params, privacy)
+    return _shopping_search(request, params, deps)
 
 
 def _scope_recipes_results(request, params, discover_qs):
@@ -140,11 +156,17 @@ def _scope_recipes_results(request, params, discover_qs):
     return _recipe_search(request, params, discover_qs)
 
 
-def _default_feed(discover_qs, request, for_you_seed, privacy):
+def _default_feed(discover_qs, request, for_you_seed, deps):
     """Build default feed bundles when no search filters are applied."""
     popular_recipes = list(discover_qs[:18])
-    for_you_posts = feed_service.for_you_posts(request.user, seed=for_you_seed, privacy=privacy, limit=FEED_PAGE_LIMIT)
-    following_posts = feed_service.following_posts(request.user, limit=FEED_PAGE_LIMIT)
+    for_you_posts = deps.feed_service.for_you_posts(
+        request.user,
+        seed=for_you_seed,
+        privacy=deps.privacy_service,
+        limit=FEED_PAGE_LIMIT,
+        sort=request.GET.get("sort") or None,
+    )
+    following_posts = deps.feed_service.following_posts(request.user, limit=FEED_PAGE_LIMIT)
     return popular_recipes, for_you_posts, following_posts
 
 
@@ -169,10 +191,10 @@ def _feed_context(pops, for_you_posts, following_posts, popular_has_next):
     }
 
 
-def _handle_dashboard_scope(request, params, privacy, discover_qs, for_you_seed):
+def _handle_dashboard_scope(request, params, deps, discover_qs, for_you_seed):
     """Branch dashboard rendering based on scope (default, users, shopping, recipes)."""
     if not params["has_search"]:
-        popular_recipes, for_you_posts, following_posts = _default_feed(discover_qs, request, for_you_seed, privacy)
+        popular_recipes, for_you_posts, following_posts = _default_feed(discover_qs, request, for_you_seed, deps)
         return None, (popular_recipes, False, [], [], False, params["page_number"], for_you_posts, following_posts)
 
     if params["scope"] == "users":
@@ -180,7 +202,7 @@ def _handle_dashboard_scope(request, params, privacy, discover_qs, for_you_seed)
 
     if params["scope"] == "shopping":
         response, shopping_items, shopping_has_next, shopping_page = _scope_shopping_results(
-            request, params, privacy
+            request, params, deps
         )
         if response:
             return response, None
@@ -210,10 +232,10 @@ def _dashboard_context(params, request, data, popular_has_next):
     }
 
 
-def _build_dashboard(request, params, privacy, for_you_seed):
+def _build_dashboard(request, params, deps, for_you_seed):
     """Compute dashboard context or AJAX responses based on parsed params."""
-    discover_qs = _discover_queryset(params, request.user, privacy)
-    response, data = _handle_dashboard_scope(request, params, privacy, discover_qs, for_you_seed)
+    discover_qs = _discover_queryset(params, request.user, deps)
+    response, data = _handle_dashboard_scope(request, params, deps, discover_qs, for_you_seed)
     if response:
         return response, None
     popular_recipes, popular_has_next, users_results, shopping_items, shopping_has_next, shopping_page, for_you_posts, following_posts = data
@@ -241,16 +263,16 @@ def dashboard(request):
         return render(request, "auth/discover_logged_out.html")
 
     params = parse_dashboard_params(request)
-    privacy = privacy_service
+    deps = _deps()
     for_you_seed = get_for_you_seed(request, params["for_you_ajax"])
 
     if params["following_ajax"]:
         return _following_ajax_response(request)
 
     if params["for_you_ajax"]:
-        return _for_you_ajax_response(request, for_you_seed, privacy)
+        return _for_you_ajax_response(request, for_you_seed, deps, params["sort"])
 
-    response, context = _build_dashboard(request, params, privacy, for_you_seed)
+    response, context = _build_dashboard(request, params, deps, for_you_seed)
     if response:  # pragma: no cover - AJAX paths handled earlier
         return response
     return render(request, "app/dashboard.html", context)

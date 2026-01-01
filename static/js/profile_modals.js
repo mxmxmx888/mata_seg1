@@ -143,13 +143,13 @@ const globalWindow = typeof window !== "undefined" ? window : {};
     });
   }
 
-  function setupCloseFriendsFilter(doc) {
-    const searchInput = doc.getElementById("closeFriendsSearch");
-    const list = doc.getElementById("closeFriendsList");
+  function createListFilter(doc, { inputId, listId, itemSelector }) {
+    const searchInput = doc.getElementById(inputId);
+    const list = doc.getElementById(listId);
     if (!searchInput || !list) return () => {};
     const apply = () => {
       const term = (searchInput.value || "").trim().toLowerCase();
-      list.querySelectorAll(".close-friend-item").forEach((item) => {
+      list.querySelectorAll(itemSelector).forEach((item) => {
         const name = item.getAttribute("data-name") || "";
         const match = !term || name.indexOf(term) !== -1;
         item.style.display = match ? "" : "none";
@@ -191,42 +191,76 @@ const globalWindow = typeof window !== "undefined" ? window : {};
     };
   }
 
-  function createModalSuccessHandlers(applyCloseFriendsFilter) {
+  function toggleCloseFriendsAction(form, url) {
+    const btn = form.querySelector("button");
+    const isAdd = url.indexOf("/add/") !== -1;
+    const toggled = isAdd ? url.replace("/add/", "/remove/") : url.replace("/remove/", "/add/");
+    form.setAttribute("action", toggled);
+    if (btn) {
+      btn.textContent = isAdd ? "Remove" : "Add";
+    }
+  }
+
+  function removeFollowListItem(ctx) {
+    const li = ctx.form.closest("li");
+    if (li) li.remove();
+  }
+
+  function createModalSuccessHandlers(applyFilters) {
+    const applyCloseFriendsFilter = applyFilters.closeFriends || (() => {});
+    const applyFollowersFilter = applyFilters.followers || (() => {});
+    const applyFollowingFilter = applyFilters.following || (() => {});
     return {
       closeFriendsModal: (ctx) => {
-        const form = ctx.form;
-        const url = ctx.url;
-        const btn = form.querySelector("button");
-        const isAdd = url.indexOf("/add/") !== -1;
-        const toggled = isAdd ? url.replace("/add/", "/remove/") : url.replace("/remove/", "/add/");
-        form.setAttribute("action", toggled);
-        if (btn) {
-          btn.textContent = isAdd ? "Remove" : "Add";
-        }
+        toggleCloseFriendsAction(ctx.form, ctx.url);
         applyCloseFriendsFilter();
       },
       followersModal: (ctx) => {
-        const li = ctx.form.closest("li");
-        if (li) li.remove();
+        removeFollowListItem(ctx);
+        applyFollowersFilter();
       },
       followingModal: (ctx) => {
-        const li = ctx.form.closest("li");
-        if (li) li.remove();
+        removeFollowListItem(ctx);
+        applyFollowingFilter();
       },
     };
   }
 
-  function initProfileModals(w, doc) {
-    const modalCtrl = createFallbackModalController(w, doc);
-    const applyCloseFriendsFilter = setupCloseFriendsFilter(doc);
-    const attachAjaxModalForms = createAjaxModalBinder(w, doc);
-    const modalSuccessHandlers = createModalSuccessHandlers(applyCloseFriendsFilter);
-    wireFollowModals(w, doc, modalCtrl);
-    bindFollowToggles(w, doc);
+  function createProfileFilters(doc) {
+    return {
+      closeFriends: createListFilter(doc, {
+        inputId: "closeFriendsSearch",
+        listId: "closeFriendsList",
+        itemSelector: ".close-friend-item",
+      }),
+      followers: createListFilter(doc, {
+        inputId: "followersSearch",
+        listId: "followersList",
+        itemSelector: ".follow-list-item",
+      }),
+      following: createListFilter(doc, {
+        inputId: "followingSearch",
+        listId: "followingList",
+        itemSelector: ".follow-list-item",
+      }),
+    };
+  }
+
+  function attachAjaxModals(attachAjaxModalForms, modalSuccessHandlers) {
     attachAjaxModalForms("closeFriendsModal", modalSuccessHandlers.closeFriendsModal);
     attachAjaxModalForms("followersModal", modalSuccessHandlers.followersModal);
     attachAjaxModalForms("followingModal", modalSuccessHandlers.followingModal);
-    return { applyCloseFriendsFilter, attachAjaxModalForms, modalSuccessHandlers };
+  }
+
+  function initProfileModals(w, doc) {
+    const modalCtrl = createFallbackModalController(w, doc);
+    const filters = createProfileFilters(doc);
+    const attachAjaxModalForms = createAjaxModalBinder(w, doc);
+    const modalSuccessHandlers = createModalSuccessHandlers(filters);
+    wireFollowModals(w, doc, modalCtrl);
+    bindFollowToggles(w, doc);
+    attachAjaxModals(attachAjaxModalForms, modalSuccessHandlers);
+    return { applyCloseFriendsFilter: filters.closeFriends, attachAjaxModalForms, modalSuccessHandlers };
   }
 
   const api = {

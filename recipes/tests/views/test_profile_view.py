@@ -242,7 +242,10 @@ class ProfileViewTest(TestCase):
         private_user.is_private = True
         private_user.save()
         fr = FollowRequest.objects.create(requester=self.user, target=private_user, status=FollowRequest.STATUS_PENDING)
-        deps = SimpleNamespace(follow_request_model=FollowRequest)
+        class StubFollowService:
+            def __init__(self, actor): self.actor = actor
+            def pending_request(self, target): return fr
+        deps = SimpleNamespace(follow_request_model=FollowRequest, follow_service_factory=StubFollowService)
 
         result = logic.pending_follow_request(self.user, private_user, False, deps)
 

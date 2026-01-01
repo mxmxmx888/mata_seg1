@@ -135,7 +135,7 @@ body.post-body {
 
 .post-author-link:hover {
   color: var(--text-primary);
-  text-decoration: underline;
+  text-decoration: none;
 }
 
 .post-ingredients,

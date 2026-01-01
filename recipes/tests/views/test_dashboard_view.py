@@ -141,6 +141,26 @@ class DashboardSearchViewTests(TestCase):
         posts = self.feed_service.for_you_posts(self.user, query="garlic", seed=0)
         self.assertEqual([p.id for p in posts], [match.id])
 
+    def test_for_you_posts_sort_oldest(self):
+        older = make_recipe_post(author=self.user, title="Old", published=True)
+        older.published_at = timezone.now() - timezone.timedelta(days=3)
+        older.save(update_fields=["published_at"])
+        newer = make_recipe_post(author=self.user, title="New", published=True)
+        newer.published_at = timezone.now()
+        newer.save(update_fields=["published_at"])
+
+        posts = self.feed_service.for_you_posts(self.user, sort="oldest", seed=1)
+
+        self.assertEqual([p.id for p in posts[:2]], [older.id, newer.id])
+
+    def test_for_you_posts_sort_popular(self):
+        less = make_recipe_post(author=self.user, title="Less", saved_count=1, published=True)
+        more = make_recipe_post(author=self.user, title="More", saved_count=5, published=True)
+
+        posts = self.feed_service.for_you_posts(self.user, sort="popular", seed=1)
+
+        self.assertEqual(posts[0].id, more.id)
+
     def test_get_following_posts_returns_only_followed(self):
         author = make_user(username="author1")
         Follower.objects.create(follower=self.user, author=author)

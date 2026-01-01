@@ -1,7 +1,7 @@
 import uuid
 from django.utils import timezone
 from django.test import TestCase
-from recipes.models import User, Follower, FollowRequest, Notification
+from recipes.models import User, Follower, FollowRequest, Notification, CloseFriend
 from recipes.services import FollowService
 
 class FollowServiceTestCase(TestCase):
@@ -175,3 +175,68 @@ class FollowServiceTestCase(TestCase):
     def test_unfollow_same_user_is_noop(self):
         service = FollowService(self.alice)
         self.assertFalse(service.unfollow(self.alice))
+
+    def test_remove_follower_drops_close_friend(self):
+        Follower.objects.create(author=self.alice, follower=self.bob)
+        CloseFriend.objects.create(owner=self.alice, friend=self.bob)
+        result = FollowService(self.alice).remove_follower(self.bob)
+        self.assertEqual(result["status"], "removed")
+        self.assertFalse(Follower.objects.filter(author=self.alice, follower=self.bob).exists())
+        self.assertFalse(CloseFriend.objects.filter(owner=self.alice, friend=self.bob).exists())
+
+    def test_remove_following_returns_removed(self):
+        Follower.objects.create(follower=self.alice, author=self.bob)
+        result = FollowService(self.alice).remove_following(self.bob)
+        self.assertEqual(result["status"], "removed")
+        self.assertFalse(Follower.objects.filter(follower=self.alice, author=self.bob).exists())
+
+    def test_add_close_friend_requires_follow(self):
+        out = FollowService(self.alice).add_close_friend(self.bob)
+        self.assertEqual(out["status"], "requires_follow")
+        self.assertFalse(CloseFriend.objects.filter(owner=self.alice, friend=self.bob).exists())
+
+    def test_add_close_friend_adds_when_following(self):
+        Follower.objects.create(author=self.alice, follower=self.bob)
+        out = FollowService(self.alice).add_close_friend(self.bob)
+        self.assertEqual(out["status"], "added")
+        self.assertTrue(CloseFriend.objects.filter(owner=self.alice, friend=self.bob).exists())
+
+    def test_remove_close_friend_returns_removed(self):
+        CloseFriend.objects.create(owner=self.alice, friend=self.bob)
+        out = FollowService(self.alice).remove_close_friend(self.bob)
+        self.assertEqual(out["status"], "removed")
+        self.assertFalse(CloseFriend.objects.filter(owner=self.alice, friend=self.bob).exists())
+
+    def test_remove_following_self_is_noop(self):
+        out = FollowService(self.alice).remove_following(self.alice)
+        self.assertEqual(out["status"], "noop")
+
+    def test_remove_follower_no_actor_is_noop(self):
+        out = FollowService(None).remove_follower(self.bob)
+        self.assertEqual(out["status"], "noop")
+
+    def test_remove_follower_none_target_is_noop(self):
+        out = FollowService(self.alice).remove_follower(None)
+        self.assertEqual(out["status"], "noop")
+
+    def test_add_close_friend_no_actor_is_noop(self):
+        out = FollowService(None).add_close_friend(self.bob)
+        self.assertEqual(out["status"], "noop")
+
+    def test_remove_close_friend_no_actor_is_noop(self):
+        out = FollowService(None).remove_close_friend(self.bob)
+        self.assertEqual(out["status"], "noop")
+
+    def test_is_following_checks_relationship(self):
+        Follower.objects.create(follower=self.alice, author=self.bob)
+        self.assertTrue(FollowService(self.alice).is_following(self.bob))
+        self.assertFalse(FollowService(self.alice).is_following(self.alice))
+        self.assertFalse(FollowService(None).is_following(self.bob))
+
+    def test_pending_request_fetches_pending_only(self):
+        pending = FollowRequest.objects.create(requester=self.alice, target=self.bob, status=FollowRequest.STATUS_PENDING)
+        FollowRequest.objects.filter(id=pending.id).update(status=FollowRequest.STATUS_REJECTED)
+        self.assertIsNone(FollowService(self.alice).pending_request(self.bob))
+        FollowRequest.objects.filter(id=pending.id).update(status=FollowRequest.STATUS_PENDING)
+        self.assertEqual(FollowService(self.alice).pending_request(self.bob), pending)
+        self.assertIsNone(FollowService(None).pending_request(self.bob))

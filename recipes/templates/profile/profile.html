@@ -135,7 +135,7 @@
 >
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
-      <div class="modal-header border-0">
+      <div class="modal-header border-0 pb-2">
         <h5 class="modal-title mb-0 follow-modal-title" id="followersModalLabel">Followers</h5>
         <button
           type="button"
@@ -145,13 +145,21 @@
         ></button>
       </div>
       <div
-        class="modal-body follow-list-body px-4"
+        class="modal-body follow-list-body px-4 pt-2"
         data-list-type="followers"
         data-endpoint="{% url 'profile_follow_list' %}?user={{ profile_user.username|urlencode }}&list=followers"
         data-next-page="{{ followers_next_page|default:'' }}"
         data-has-more="{{ followers_has_more|yesno:'true,false' }}"
       >
         {% if can_view_follow_lists %}
+          <div class="mb-4">
+            <input
+              type="text"
+              class="form-control"
+              id="followersSearch"
+              placeholder="Search followers"
+            >
+          </div>
           {% if followers_users %}
             <ul class="list-unstyled mb-0 follow-list-items" id="followersList">
               {% include "partials/profile/follow_list_items.html" with users=followers_users list_type="followers" is_own_profile=is_own_profile %}
@@ -177,7 +185,7 @@
 >
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
-      <div class="modal-header border-0">
+      <div class="modal-header border-0 pb-2">
         <h5 class="modal-title mb-0 follow-modal-title" id="followingModalLabel">Following</h5>
         <button
           type="button"
@@ -187,13 +195,21 @@
         ></button>
       </div>
       <div
-        class="modal-body follow-list-body px-4"
+        class="modal-body follow-list-body px-4 pt-2"
         data-list-type="following"
         data-endpoint="{% url 'profile_follow_list' %}?user={{ profile_user.username|urlencode }}&list=following"
         data-next-page="{{ following_next_page|default:'' }}"
         data-has-more="{{ following_has_more|yesno:'true,false' }}"
       >
         {% if can_view_follow_lists %}
+          <div class="mb-4">
+            <input
+              type="text"
+              class="form-control"
+              id="followingSearch"
+              placeholder="Search following"
+            >
+          </div>
           {% if following_users %}
             <ul class="list-unstyled mb-0 follow-list-items" id="followingList">
               {% include "partials/profile/follow_list_items.html" with users=following_users list_type="following" is_own_profile=is_own_profile %}
@@ -220,7 +236,7 @@
 >
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
-      <div class="modal-header border-0">
+      <div class="modal-header border-0 pb-2">
         <h5 class="modal-title mb-0 follow-modal-title" id="closeFriendsModalLabel">Close friends</h5>
         <button
           type="button"
@@ -230,13 +246,13 @@
         ></button>
       </div>
       <div
-        class="modal-body follow-list-body px-4"
+        class="modal-body follow-list-body px-4 pt-2"
         data-list-type="close_friends"
         data-endpoint="{% url 'profile_follow_list' %}?user={{ profile_user.username|urlencode }}&list=close_friends"
         data-next-page="{{ close_friends_next_page|default:'' }}"
         data-has-more="{{ close_friends_has_more|yesno:'true,false' }}"
       >
-        <div class="mb-3">
+        <div class="mb-4">
           <input
             type="text"
             class="form-control"

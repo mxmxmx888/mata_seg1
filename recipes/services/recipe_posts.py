@@ -5,6 +5,8 @@ from django.utils import timezone
 
 from recipes.models import Favourite, Ingredient, Like, RecipePost
 from recipes.models.favourite_item import FavouriteItem
+from recipes.models.followers import Follower
+from recipes.models.recipe_step import RecipeStep
 
 
 class RecipePostService:
@@ -132,3 +134,113 @@ class RecipePostService:
         if primary_image and primary_image.image:
             recipe.image = primary_image.image.url
             recipe.save(update_fields=["image"])
+
+    # --- view support helpers -------------------------------------------
+    def comments_page(self, recipe, request, page_size=50):
+        """Return a slice of comments for a recipe along with pagination metadata."""
+        comments_qs = recipe.comments.select_related("user").order_by("-created_at")
+        try:
+            page_number = max(1, int(request.GET.get("comments_page") or 1))
+        except (TypeError, ValueError):
+            page_number = 1
+        start = (page_number - 1) * page_size
+        end = start + page_size
+        comments_page = list(comments_qs[start:end])
+        has_more_comments = comments_qs.count() > end
+        return comments_page, has_more_comments, page_number
+
+    def saved_posts_for_user(self, user):
+        """List all unique recipes saved by the given user (most recent first)."""
+        favourite_items = (
+            FavouriteItem.objects.filter(favourite__user=user)
+            .select_related("recipe_post")
+            .order_by("-added_at")
+        )
+
+        seen_ids = set()
+        posts = []
+        for item in favourite_items:
+            post = item.recipe_post
+            if not post or post.id in seen_ids:
+                continue
+            seen_ids.add(post.id)
+            posts.append(post)
+        return posts
+
+    # --- query helpers moved from view layer for cohesion -----------------
+    def user_reactions(self, request_user, recipe):
+        """Return flags and counts for likes/saves and following for the current user."""
+        user_liked = Like.objects.filter(user=request_user, recipe_post=recipe).exists()
+        user_saved = FavouriteItem.objects.filter(
+            favourite__user=request_user,
+            recipe_post=recipe,
+        ).exists()
+        is_following_author = Follower.objects.filter(
+            follower=request_user,
+            author=recipe.author,
+        ).exists()
+        likes_count = Like.objects.filter(recipe_post=recipe).count()
+        saves_count = FavouriteItem.objects.filter(recipe_post=recipe).count()
+        return {
+            "user_liked": user_liked,
+            "user_saved": user_saved,
+            "is_following_author": is_following_author,
+            "likes_count": likes_count,
+            "saves_count": saves_count,
+        }
+
+    def ingredient_lists(self, recipe):
+        """Split ingredients into non-shop list and shop-linked list."""
+        ingredients_all = list(Ingredient.objects.filter(recipe_post=recipe).order_by("position"))
+        shop_ingredients = [
+            ing for ing in ingredients_all if getattr(ing, "shop_url", None) and str(ing.shop_url).strip()
+        ]
+        non_shop_ingredients = [ing for ing in ingredients_all if ing not in shop_ingredients]
+        return non_shop_ingredients, shop_ingredients
+
+    def recipe_steps(self, recipe):
+        """Return ordered step descriptions for a recipe."""
+        steps_qs = RecipeStep.objects.filter(recipe_post=recipe).order_by("position")
+        return [s.description for s in steps_qs]
+
+    def collections_modal_state(self, user, recipe):
+        """Build modal-friendly collection metadata for a user and target recipe."""
+        collections = [self._collection_entry(fav, recipe) for fav in self._favourites_for(user)]
+        collections.sort(key=lambda c: c.get("last_saved_at") or c.get("created_at"), reverse=True)
+        collections.sort(key=lambda c: 0 if c.get("saved") else 1)
+        return collections
+
+    def _favourites_for(self, user):
+        """Return all Favourite collections for a user with prefetched items and cover posts."""
+        return Favourite.objects.filter(user=user).prefetch_related("items__recipe_post", "cover_post")
+
+    def _collection_entry(self, fav, recipe):
+        """Build a dictionary entry representing a collection's state relative to a recipe."""
+        items = list(fav.items.all())
+        saved_here = any(item.recipe_post_id == recipe.id for item in items)
+        cover_post = fav.cover_post or self._first_item_post(items)
+        fallback_cover = recipe if saved_here else self._first_item_post(items)
+        return {
+            "id": str(fav.id),
+            "name": fav.name,
+            "saved": saved_here,
+            "count": len(items),
+            "thumb_url": self.collection_thumb(cover_post, fallback_cover),
+            "last_saved_at": self._last_saved_at(items, fav.created_at),
+            "created_at": fav.created_at,
+        }
+
+    def _first_item_post(self, items):
+        """Return the first recipe post found in a list of FavouriteItems, or None."""
+        for item in items:
+            if item.recipe_post:
+                return item.recipe_post
+        return None
+
+    def _last_saved_at(self, items, default):
+        """Find the most recent added_at timestamp from items, or return default."""
+        latest = default
+        for item in items:
+            if item.added_at and (latest is None or item.added_at > latest):
+                latest = item.added_at
+        return latest

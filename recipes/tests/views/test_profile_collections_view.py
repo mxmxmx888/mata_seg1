@@ -323,6 +323,14 @@ class ProfileCollectionViewTests(TestCase):
         resp4 = self.client.post(reverse("remove_close_friend", kwargs={"username": self.user.username}), HTTP_HX_REQUEST="true")
         self.assertEqual(resp4.status_code, 400)
 
+    def test_add_close_friend_ajax_handles_service_failure(self):
+        pal = User.objects.get(username="@janedoe")
+        self.client.login(username=self.user.username, password="Password123")
+        with patch("recipes.views.social_views.FollowService.add_close_friend", return_value={"status": "noop"}):
+            resp = self.client.post(reverse("add_close_friend", kwargs={"username": pal.username}), HTTP_HX_REQUEST="true")
+        self.assertEqual(resp.status_code, 400)
+        self.assertIn("Unable to add close friend", resp.json()["error"])
+
     def test_ajax_success_paths_for_follow_management(self):
         pal = User.objects.get(username="@janedoe")
         follower = User.objects.create_user(username="@other", email="o@example.com", password="Password123")

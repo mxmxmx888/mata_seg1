@@ -5,11 +5,20 @@ from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.views.decorators.http import require_POST
 
-from recipes.models import Follower
-from recipes.models.close_friend import CloseFriend
+from recipes.services import FollowService
 from recipes.views.view_utils import is_ajax_request
 
 User = get_user_model()
+
+
+def _redirect_back(request):
+    return redirect(request.META.get("HTTP_REFERER") or reverse("profile"))
+
+
+def _self_action_error(request, message):
+    if is_ajax_request(request):
+        return JsonResponse({"error": message}, status=400)
+    return _redirect_back(request)
 
 
 @login_required
@@ -18,14 +27,12 @@ def remove_follower(request, username):
     """Remove a follower from the current user; supports AJAX and redirect responses."""
     target = get_object_or_404(User, username=username)
     if target == request.user:
-        if is_ajax_request(request):
-            return JsonResponse({"error": "Cannot remove yourself"}, status=400)
-        return redirect(request.META.get("HTTP_REFERER") or reverse("profile"))
-    Follower.objects.filter(author=request.user, follower=target).delete()
-    CloseFriend.objects.filter(owner=request.user, friend=target).delete()
+        return _self_action_error(request, "Cannot remove yourself")
+
+    FollowService(request.user).remove_follower(target)
     if is_ajax_request(request):
         return JsonResponse({"status": "removed", "follower": target.username})
-    return redirect(request.META.get("HTTP_REFERER") or reverse("profile"))
+    return _redirect_back(request)
 
 
 @login_required
@@ -34,13 +41,12 @@ def remove_following(request, username):
     """Unfollow a user; supports AJAX and redirect responses."""
     target = get_object_or_404(User, username=username)
     if target == request.user:
-        if is_ajax_request(request):
-            return JsonResponse({"error": "Cannot unfollow yourself"}, status=400)
-        return redirect(request.META.get("HTTP_REFERER") or reverse("profile"))
-    Follower.objects.filter(follower=request.user, author=target).delete()
+        return _self_action_error(request, "Cannot unfollow yourself")
+
+    FollowService(request.user).remove_following(target)
     if is_ajax_request(request):
         return JsonResponse({"status": "removed", "following": target.username})
-    return redirect(request.META.get("HTTP_REFERER") or reverse("profile"))
+    return _redirect_back(request)
 
 
 @login_required
@@ -49,17 +55,17 @@ def add_close_friend(request, username):
     """Add a followed user to the current user's close friends."""
     friend = get_object_or_404(User, username=username)
     if friend == request.user:
-        if is_ajax_request(request):
-            return JsonResponse({"error": "Cannot add yourself"}, status=400)
-        return redirect(request.META.get("HTTP_REFERER") or reverse("profile"))
-    if not Follower.objects.filter(author=request.user, follower=friend).exists():
-        if is_ajax_request(request):
-            return JsonResponse({"error": "Must follow user first"}, status=400)
-        return redirect(request.META.get("HTTP_REFERER") or reverse("profile"))
-    CloseFriend.objects.get_or_create(owner=request.user, friend=friend)
+        return _self_action_error(request, "Cannot add yourself")
+
+    result = FollowService(request.user).add_close_friend(friend)
     if is_ajax_request(request):
+        if result["status"] == "requires_follow":
+            return JsonResponse({"error": "Must follow user first"}, status=400)
+        if result["status"] != "added":
+            return JsonResponse({"error": "Unable to add close friend"}, status=400)
         return JsonResponse({"status": "added", "friend": friend.username})
-    return redirect(request.META.get("HTTP_REFERER") or reverse("profile"))
+
+    return _redirect_back(request)
 
 
 @login_required
@@ -68,10 +74,9 @@ def remove_close_friend(request, username):
     """Remove a user from the current user's close friends."""
     friend = get_object_or_404(User, username=username)
     if friend == request.user:
-        if is_ajax_request(request):
-            return JsonResponse({"error": "Cannot remove yourself"}, status=400)
-        return redirect(request.META.get("HTTP_REFERER") or reverse("profile"))
-    CloseFriend.objects.filter(owner=request.user, friend=friend).delete()
+        return _self_action_error(request, "Cannot remove yourself")
+
+    FollowService(request.user).remove_close_friend(friend)
     if is_ajax_request(request):
         return JsonResponse({"status": "removed", "friend": friend.username})
-    return redirect(request.META.get("HTTP_REFERER") or reverse("profile"))
+    return _redirect_back(request)

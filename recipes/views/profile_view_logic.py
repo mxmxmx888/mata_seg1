@@ -73,17 +73,13 @@ def follow_summary(followers, following, close_friend_ids, close_friends, is_fol
 def is_following_profile(viewer, profile_user, deps):
     if profile_user == viewer:
         return False
-    return deps.follower_model.objects.filter(follower=viewer, author=profile_user).exists()
+    return deps.follow_service_factory(viewer).is_following(profile_user)
 
 
 def pending_follow_request(viewer, profile_user, is_following, deps):
     if profile_user == viewer or is_following or not getattr(profile_user, "is_private", False):
         return None
-    return deps.follow_request_model.objects.filter(
-        requester=viewer,
-        target=profile_user,
-        status=deps.follow_request_model.STATUS_PENDING,
-    ).first()
+    return deps.follow_service_factory(viewer).pending_request(profile_user)
 
 
 def follow_context(profile_user, viewer, deps):

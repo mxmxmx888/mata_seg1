@@ -40,17 +40,13 @@ class FeedService:
 
     def user_preference_tags(self, user) -> List[str]:
         """Collect unique tags from posts the user has liked."""
-        tags: List[str] = []
-        like_qs = Like.objects.filter(user=user).select_related("recipe_post")
-        for like in like_qs:
-            tags.extend(self.normalise_tags(getattr(like.recipe_post, "tags", [])))
-        seen = set()
-        result = []
-        for t in tags:
-            if t not in seen:
-                seen.add(t)
-                result.append(t)
-        return result
+        likes = Like.objects.filter(user=user).select_related("recipe_post")
+        tags = (
+            tag
+            for like in likes
+            for tag in self.normalise_tags(getattr(like.recipe_post, "tags", []))
+        )
+        return list(dict.fromkeys(tags))
 
     def preferred_tags_for_user(self, user) -> Tuple[List[int], List[str]]:
         """Return (liked_post_ids, preferred_tags) for the user."""
@@ -151,17 +147,23 @@ class FeedService:
         offset: int = 0,
         seed=None,
         privacy: PrivacyService | None = None,
+        sort: str | None = None,
     ) -> List:
-        """Return personalised 'for you' posts shuffled by a seed."""
+        """Return personalised 'for you' posts shuffled by a seed (or sorted when requested)."""
         privacy_service = privacy or self.privacy_service
         base_qs = privacy_service.filter_visible_posts(self.base_posts_queryset(), user)
-        liked_post_ids, preferred_tags = self.preferred_tags_for_user(user)
-        qs = self.apply_query_filters(base_qs, query)
         base_qs = self.apply_query_filters(base_qs, query)
-        if preferred_tags:
-            qs = self.tag_filtered_qs(qs, preferred_tags, liked_post_ids)
+        liked_post_ids, preferred_tags = self.preferred_tags_for_user(user)
+        qs = (
+            self.tag_filtered_qs(base_qs, preferred_tags, liked_post_ids)
+            if preferred_tags
+            else base_qs
+        )
         posts = self._for_you_posts_list(qs, base_qs, preferred_tags)
         posts = self.score_and_sort_posts(posts, preferred_tags)
+        if sort:
+            posts = self._sort_posts(posts, sort)
+            return self._slice_posts(posts, limit, offset)
         return self._shuffle_and_slice(posts, seed, limit, offset)
 
     def following_posts(
@@ -179,12 +181,7 @@ class FeedService:
             return []
         qs = self.base_posts_queryset().filter(author_id__in=followed_ids)
         qs = self.privacy_service.filter_visible_posts(qs, user)
-        if query:
-            qs = qs.filter(
-                Q(title__icontains=query)
-                | Q(description__icontains=query)
-                | Q(tags__icontains=query)
-            )
+        qs = self.apply_query_filters(qs, query)
         if limit is None:
             return list(qs[offset:])
         return list(qs[offset : offset + limit])
@@ -211,10 +208,7 @@ class FeedService:
 
     # --- in-memory filters ----------------------------------------------
     def filter_posts_by_prep_time(self, posts, min_prep=None, max_prep=None):
-        """
-        Filter in-memory posts by prep time bounds.
-        Values that cannot be coerced to ints or missing prep times are ignored.
-        """
+        """Filter in-memory posts by prep time bounds; ignores missing/invalid values."""
         min_val = self._safe_int(min_prep)
         max_val = self._safe_int(max_prep)
         if min_val is None and max_val is None:
@@ -233,6 +227,12 @@ class FeedService:
         """Shuffle posts using the provided seed and return a sliced subset."""
         rng = random.Random(seed)
         rng.shuffle(posts)
+        if limit is None:
+            return posts[offset:]
+        return posts[offset : offset + limit]
+
+    def _slice_posts(self, posts: List, limit: int | None, offset: int) -> List:
+        """Return a sliced subset without shuffling."""
         if limit is None:
             return posts[offset:]
         return posts[offset : offset + limit]
@@ -304,6 +304,49 @@ class FeedService:
         if sort == "oldest":
             return discover_qs.order_by("published_at", "created_at")
         return discover_qs.order_by("-published_at", "-created_at")
+
+    def _sort_posts(self, posts: List, sort: str):
+        """Sort in-memory posts by popularity or date."""
+        if sort == "popular":
+            self._refresh_popularity_counts(posts)
+            return sorted(posts, key=self._popularity_score, reverse=True)
+        reverse = sort != "oldest"
+        return sorted(posts, key=self._post_date, reverse=reverse)
+
+    def _refresh_popularity_counts(self, posts: List):
+        """Refresh saved/like counts for model instances to avoid stale in-memory values."""
+        recipe_posts = [
+            post for post in posts if isinstance(post, RecipePost) and getattr(post, "id", None)
+        ]
+        if not recipe_posts:
+            return
+        counts = (
+            RecipePost.objects.filter(id__in=[p.id for p in recipe_posts])
+            .annotate(likes_total=Count("likes", distinct=True))
+            .values("id", "saved_count", "likes_total")
+        )
+        by_id = {row["id"]: row for row in counts}
+        for post in recipe_posts:
+            data = by_id.get(post.id)
+            if not data:
+                continue
+            post.saved_count = data.get("saved_count", 0)
+            post._likes_total = data.get("likes_total", 0)
+
+    def _post_date(self, post):
+        return getattr(post, "published_at", None) or getattr(post, "created_at", None) or timezone.datetime.min
+
+    def _popularity_score(self, post):
+        saved = getattr(post, "saved_count", 0) or 0
+        likes = getattr(post, "_likes_total", None)
+        if likes is None:
+            likes = getattr(post, "likes_count", None)
+            if likes is None and hasattr(post, "likes"):
+                try:
+                    likes = post.likes.count()
+                except Exception:
+                    likes = 0
+        return saved + (likes or 0)
 
     def _user_base_filter(self, query: str):
         """Build a Q filter for user search by username/first name/last name/full name."""

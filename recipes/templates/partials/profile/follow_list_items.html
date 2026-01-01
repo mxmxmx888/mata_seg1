@@ -1,5 +1,5 @@
 {% for u in users %}
-  <li class="mb-3 follow-list-item">
+  <li class="mb-3 follow-list-item" data-name="{{ u.get_full_name|default:u.username|lower }} {{ u.username|lower }}">
     <div class="d-flex align-items-center justify-content-between gap-3">
       <a
         href="{% url 'profile' %}?user={{ u.username }}"

@@ -7,14 +7,6 @@ from django.utils import timezone
 
 from recipes.forms.comment_form import CommentForm
 from recipes.services.recipe_posts import RecipePostService
-from recipes.models import Favourite
-from recipes.models.favourite_item import FavouriteItem
-from recipes.models.ingredient import Ingredient
-from recipes.models.like import Like
-from recipes.models.recipe_post import RecipePost
-from recipes.models.recipe_step import RecipeStep
-from recipes.models.followers import Follower
-
 _recipe_service = RecipePostService()
 
 
@@ -73,66 +65,27 @@ def gallery_images(images_qs):
 
 def collections_modal_state(user, recipe):
     """Build modal-friendly collection metadata for a user and target recipe."""
-    collections = [_collection_entry(fav, recipe) for fav in _favourites_for(user)]
-    collections.sort(key=lambda c: c.get("last_saved_at") or c.get("created_at"), reverse=True)
-    collections.sort(key=lambda c: 0 if c.get("saved") else 1)
-    return collections
+    return _recipe_service.collections_modal_state(user, recipe)
 
 def _favourites_for(user):
     """Return all Favourite collections for a user with prefetched items and cover posts."""
-    return Favourite.objects.filter(user=user).prefetch_related("items__recipe_post", "cover_post")
+    return _recipe_service._favourites_for(user)
 
 def _collection_entry(fav, recipe):
     """Build a dictionary entry representing a collection's state relative to a recipe."""
-    items = list(fav.items.all())
-    saved_here = any(item.recipe_post_id == recipe.id for item in items)
-    cover_post = fav.cover_post or _first_item_post(items)
-    fallback_cover = recipe if saved_here else _first_item_post(items)
-    return {
-        "id": str(fav.id),
-        "name": fav.name,
-        "saved": saved_here,
-        "count": len(items),
-        "thumb_url": collection_thumb(cover_post, fallback_cover),
-        "last_saved_at": _last_saved_at(items, fav.created_at),
-        "created_at": fav.created_at,
-    }
+    return _recipe_service._collection_entry(fav, recipe)
 
 def _first_item_post(items):
     """Return the first recipe post found in a list of FavouriteItems, or None."""
-    for item in items:
-        if item.recipe_post:
-            return item.recipe_post
-    return None
+    return _recipe_service._first_item_post(items)
 
 def _last_saved_at(items, default):
     """Find the most recent added_at timestamp from items, or return default."""
-    latest = default
-    for item in items:
-        if item.added_at and (latest is None or item.added_at > latest):
-            latest = item.added_at
-    return latest
+    return _recipe_service._last_saved_at(items, default)
 
 def user_reactions(request_user, recipe):
     """Return flags and counts for likes/saves and following for the current user."""
-    user_liked = Like.objects.filter(user=request_user, recipe_post=recipe).exists()
-    user_saved = FavouriteItem.objects.filter(
-        favourite__user=request_user,
-        recipe_post=recipe,
-    ).exists()
-    is_following_author = Follower.objects.filter(
-        follower=request_user,
-        author=recipe.author,
-    ).exists()
-    likes_count = Like.objects.filter(recipe_post=recipe).count()
-    saves_count = FavouriteItem.objects.filter(recipe_post=recipe).count()
-    return {
-        "user_liked": user_liked,
-        "user_saved": user_saved,
-        "is_following_author": is_following_author,
-        "likes_count": likes_count,
-        "saves_count": saves_count,
-    }
+    return _recipe_service.user_reactions(request_user, recipe)
 
 
 def recipe_media(recipe):
@@ -168,18 +121,12 @@ def recipe_metadata(recipe):
 
 def ingredient_lists(recipe):
     """Split ingredients into non-shop list and shop-linked list."""
-    ingredients_all = list(Ingredient.objects.filter(recipe_post=recipe).order_by("position"))
-    shop_ingredients = [
-        ing for ing in ingredients_all if getattr(ing, "shop_url", None) and ing.shop_url.strip()
-    ]
-    non_shop_ingredients = [ing for ing in ingredients_all if ing not in shop_ingredients]
-    return non_shop_ingredients, shop_ingredients
+    return _recipe_service.ingredient_lists(recipe)
 
 
 def recipe_steps(recipe):
     """Return ordered step descriptions for a recipe."""
-    steps_qs = RecipeStep.objects.filter(recipe_post=recipe).order_by("position")
-    return [s.description for s in steps_qs]
+    return _recipe_service.recipe_steps(recipe)
 
 
 def build_recipe_context(recipe, request_user, comments):

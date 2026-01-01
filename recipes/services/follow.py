@@ -2,7 +2,7 @@
 
 from django.db import transaction
 from django.utils import timezone
-from recipes.models import Follower, Notification, FollowRequest
+from recipes.models import CloseFriend, Follower, Notification, FollowRequest
 
 class FollowService:
     """Domain service to manage follow relationships and requests."""
@@ -35,6 +35,22 @@ class FollowService:
             sender=self.actor,
             notification_type="follow_request",
         ).delete()
+
+    def is_following(self, target):
+        """Return True if the actor follows the target."""
+        if not self._can_act(target):
+            return False
+        return Follower.objects.filter(follower=self.actor, author=target).exists()
+
+    def pending_request(self, target):
+        """Return the pending follow request to the target if it exists."""
+        if not self._can_act(target):
+            return None
+        return FollowRequest.objects.filter(
+            requester=self.actor,
+            target=target,
+            status=FollowRequest.STATUS_PENDING,
+        ).first()
 
     @transaction.atomic
     def follow_user(self, target):
@@ -89,6 +105,37 @@ class FollowService:
             return False
         Follower.objects.filter(follower=self.actor, author=target).delete()
         return True
+
+    def remove_follower(self, target):
+        """Remove a follower from the actor and drop close-friend link if present."""
+        if not self._can_act(target):
+            return {"status": "noop"}
+        Follower.objects.filter(author=self.actor, follower=target).delete()
+        CloseFriend.objects.filter(owner=self.actor, friend=target).delete()
+        return {"status": "removed"}
+
+    def remove_following(self, target):
+        """Alias for unfollow to mirror remove_follower semantics."""
+        if not self._can_act(target):
+            return {"status": "noop"}
+        self.unfollow(target)
+        return {"status": "removed"}
+
+    def add_close_friend(self, target):
+        """Add a target as a close friend if they already follow the actor."""
+        if not self._can_act(target):
+            return {"status": "noop"}
+        if not Follower.objects.filter(author=self.actor, follower=target).exists():
+            return {"status": "requires_follow"}
+        CloseFriend.objects.get_or_create(owner=self.actor, friend=target)
+        return {"status": "added"}
+
+    def remove_close_friend(self, target):
+        """Remove a target from the actor's close friends list."""
+        if not self._can_act(target):
+            return {"status": "noop"}
+        CloseFriend.objects.filter(owner=self.actor, friend=target).delete()
+        return {"status": "removed"}
 
     @transaction.atomic
     def toggle_follow(self, target):

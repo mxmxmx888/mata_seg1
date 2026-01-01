@@ -1,18 +1,19 @@
 """Views for creating, viewing, and interacting with recipe posts."""
 
+import json
+from dataclasses import dataclass
+
 from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse, Http404, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
-import json
 from recipes.forms.recipe_forms import RecipePostForm
 from recipes.forms.comment_form import CommentForm
 from recipes.services import PrivacyService, FollowService
 from recipes.services.recipe_posts import RecipePostService
 from recipes.models import RecipePost, Comment
-from recipes.models.favourite_item import FavouriteItem
 
 from recipes.views.recipe_view_helpers import (
     build_recipe_context,
@@ -36,13 +37,30 @@ follow_service_factory = FollowService
 recipe_service = RecipePostService()
 
 
+@dataclass(frozen=True)
+class RecipeViewDeps:
+    privacy_service: object
+    follow_service_factory: object
+    recipe_service: object
+
+
+def _deps():
+    """Provide injectable dependencies for recipe views."""
+    return RecipeViewDeps(
+        privacy_service=privacy_service,
+        follow_service_factory=follow_service_factory,
+        recipe_service=recipe_service,
+    )
+
+
 @login_required
 def recipe_create(request):
     """Create a new recipe post from a submitted RecipePostForm."""
+    deps = _deps()
     form = RecipePostForm(request.POST or None, request.FILES or None)
     if request.method == "POST" and form.is_valid():
-        recipe = recipe_service.create_from_form(form, request.user)
-        recipe_service.persist_relations(form, recipe)
+        recipe = deps.recipe_service.create_from_form(form, request.user)
+        deps.recipe_service.persist_relations(form, recipe)
         return redirect("recipe_detail", post_id=recipe.id)
 
     return _render_create_form(request, form)
@@ -50,16 +68,17 @@ def recipe_create(request):
 @login_required
 def recipe_edit(request, post_id):
     """Edit an existing recipe post owned by the current user."""
+    deps = _deps()
     recipe = get_object_or_404(RecipePost, id=post_id, author=request.user)
     form = RecipePostForm(request.POST or None, request.FILES or None, instance=recipe)
     if request.method == "POST" and form.is_valid():
-        recipe_service.update_from_form(recipe, form)
-        recipe_service.persist_relations(form, recipe)
+        deps.recipe_service.update_from_form(recipe, form)
+        deps.recipe_service.persist_relations(form, recipe)
         messages.success(request, "Recipe updated.")
         detail_url = reverse("recipe_detail", kwargs={"post_id": recipe.id})
         return redirect(f"{detail_url}?from_edit=1")
 
-    shopping_items = recipe_service.shopping_items_for(recipe)
+    shopping_items = deps.recipe_service.shopping_items_for(recipe)
     return render(
         request,
         "app/edit_recipe.html",
@@ -76,9 +95,10 @@ def recipe_edit(request, post_id):
 @login_required
 def recipe_detail(request, post_id):
     """Display a single recipe post if the viewer is allowed."""
+    deps = _deps()
     recipe = get_object_or_404(RecipePost, id=post_id)
 
-    if not privacy_service.can_view_post(request.user, recipe):
+    if not deps.privacy_service.can_view_post(request.user, recipe):
         raise Http404("Post not available.")
 
     comments_page, has_more_comments, page_number = _comments_page(recipe, request)
@@ -110,32 +130,14 @@ def _render_create_form(request, form):
 
 def _comments_page(recipe, request, page_size=50):
     """Return a slice of comments for a recipe along with pagination metadata."""
-    comments_qs = recipe.comments.select_related("user").order_by("-created_at")
-    page_number = max(1, int(request.GET.get("comments_page") or 1))
-    start = (page_number - 1) * page_size
-    end = start + page_size
-    comments_page = list(comments_qs[start:end])
-    has_more_comments = comments_qs.count() > end
-    return comments_page, has_more_comments, page_number
+    deps = _deps()
+    return deps.recipe_service.comments_page(recipe, request, page_size)
 
 @login_required
 def saved_recipes(request):
     """List all unique recipes saved by the current user."""
-    favourite_items = (
-        FavouriteItem.objects.filter(favourite__user=request.user)
-        .select_related("recipe_post")
-        .order_by("-added_at")
-    )
-
-    seen_ids = set()
-    posts = []
-    for item in favourite_items:
-        post = item.recipe_post
-        if not post or post.id in seen_ids:
-            continue
-        seen_ids.add(post.id)
-        posts.append(post)
-
+    deps = _deps()
+    posts = deps.recipe_service.saved_posts_for_user(request.user)
     return render(request, "app/saved_recipes.html", {"posts": posts})
 
 @login_required
@@ -153,10 +155,11 @@ def delete_my_recipe(request, post_id):
 @login_required
 def toggle_favourite(request, post_id):
     """Toggle save/unsave for a recipe and return HX JSON or redirect."""
+    deps = _deps()
     recipe = get_object_or_404(RecipePost, id=post_id)
     collection_id = request.POST.get("collection_id") or request.GET.get("collection_id")
     collection_name = request.POST.get("collection_name") or request.GET.get("collection_name")
-    is_saved_now, new_count, collection = recipe_service.toggle_favourite(
+    is_saved_now, new_count, collection = deps.recipe_service.toggle_favourite(
         request.user,
         recipe,
         collection_id=collection_id,
@@ -177,8 +180,9 @@ def toggle_favourite(request, post_id):
 @login_required
 def toggle_like(request, post_id):
     """Toggle like/unlike for a recipe and return HX or redirect."""
+    deps = _deps()
     recipe = get_object_or_404(RecipePost, id=post_id)
-    recipe_service.toggle_like(request.user, recipe)
+    deps.recipe_service.toggle_like(request.user, recipe)
 
     if is_hx(request):
         return HttpResponse(status=204)
@@ -188,6 +192,7 @@ def toggle_like(request, post_id):
 @login_required
 def toggle_follow(request, username):
     """Follow/unfollow another user, ignoring self-follow attempts."""
+    deps = _deps()
     target_user = get_object_or_404(User, username=username)
 
     if target_user == request.user:
@@ -195,7 +200,7 @@ def toggle_follow(request, username):
             return HttpResponse(status=204)
         return redirect(request.META.get("HTTP_REFERER") or reverse("dashboard"))
 
-    service = follow_service_factory(request.user)
+    service = deps.follow_service_factory(request.user)
     result = service.toggle_follow(target_user)
 
     if is_hx(request):
