@@ -11,21 +11,34 @@ function loadModule() {
 describe("profile_scripts modals", () => {
   let originalFetch;
 
-  beforeEach(() => {
-    document.body.innerHTML = "";
-    originalFetch = global.fetch;
-    global.fetch = jest.fn(() => Promise.resolve({ ok: true, json: () => Promise.resolve({}) }));
-    delete global.bootstrap;
-  });
+  beforeEach(setupProfileModalsEnv);
 
-  afterEach(() => {
-    global.fetch = originalFetch;
-    delete global.bootstrap;
-    delete global.InfiniteList;
-    jest.useRealTimers();
-    jest.clearAllMocks();
-  });
+  afterEach(teardownProfileModalsEnv);
 
+  testOpensModalWithBootstrap();
+  testShowsFallbackModal();
+  testFallbackModalClosesOnBackdropAndClose();
+  testWireFollowModalExitsWhenMissing();
+  testWireFollowModalNoButtons();
+  testFallbackBackdropReusedAcrossOpens();
+});
+
+function setupProfileModalsEnv() {
+  document.body.innerHTML = "";
+  originalFetch = global.fetch;
+  global.fetch = jest.fn(() => Promise.resolve({ ok: true, json: () => Promise.resolve({}) }));
+  delete global.bootstrap;
+}
+
+function teardownProfileModalsEnv() {
+  global.fetch = originalFetch;
+  delete global.bootstrap;
+  delete global.InfiniteList;
+  jest.useRealTimers();
+  jest.clearAllMocks();
+}
+
+function testOpensModalWithBootstrap() {
   test("opens modal with bootstrap when available", () => {
     document.body.innerHTML = `
       <button data-bs-target="#followersModal"></button>
@@ -33,36 +46,34 @@ describe("profile_scripts modals", () => {
     `;
     const mockInstance = { show: jest.fn() };
     global.bootstrap = { Modal: { getOrCreateInstance: () => mockInstance } };
-
     const { initProfileScripts } = loadModule();
     initProfileScripts(window);
-
     document.querySelector('[data-bs-target="#followersModal"]').click();
     expect(mockInstance.show).toHaveBeenCalled();
   });
+}
 
+function testShowsFallbackModal() {
   test("shows fallback modal and hides on backdrop click without bootstrap", () => {
     jest.useFakeTimers();
     document.body.innerHTML = `
       <button data-bs-target="#closeFriendsModal"></button>
       <div id="closeFriendsModal" aria-hidden="true"></div>
     `;
-
     const { initProfileScripts } = loadModule();
     initProfileScripts(window);
-
     document.querySelector('[data-bs-target="#closeFriendsModal"]').click();
     jest.runAllTimers();
-
     const modal = document.getElementById("closeFriendsModal");
     const backdrop = document.querySelector(".custom-modal-backdrop");
     expect(modal.classList.contains("show")).toBe(true);
     expect(backdrop.classList.contains("show")).toBe(true);
-
     backdrop.click();
     expect(modal.classList.contains("show")).toBe(false);
   });
+}
 
+function testFallbackModalClosesOnBackdropAndClose() {
   test("fallback modal closes on backdrop and close button", () => {
     document.body.innerHTML = `
       <button data-bs-target="#followingModal"></button>
@@ -84,19 +95,25 @@ describe("profile_scripts modals", () => {
     expect(modal.classList.contains("show")).toBe(false);
     expect(backdrop.classList.contains("show")).toBe(false);
   });
+}
 
+function testWireFollowModalExitsWhenMissing() {
   test("wireFollowModal exits early when modal missing", () => {
     document.body.innerHTML = `<button data-bs-target="#missing"></button>`;
     const { initProfileScripts } = loadModule();
     expect(() => initProfileScripts(window)).not.toThrow();
   });
+}
 
+function testWireFollowModalNoButtons() {
   test("wireFollowModal with no buttons does nothing", () => {
     document.body.innerHTML = `<div id="followersModal"></div>`;
     const { initProfileScripts } = loadModule();
     expect(() => initProfileScripts(window)).not.toThrow();
   });
+}
 
+function testFallbackBackdropReusedAcrossOpens() {
   test("fallback backdrop reused across modal opens", () => {
     jest.useFakeTimers();
     document.body.innerHTML = `
@@ -117,4 +134,4 @@ describe("profile_scripts modals", () => {
     expect(backdrop2).toBe(backdrop1);
     jest.useRealTimers();
   });
-});
+}

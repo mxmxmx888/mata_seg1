@@ -11,6 +11,38 @@ const addShoppingLink = (item = "Banana", link = "banana.com", fileName = "pic.j
   document.getElementById("add-shop-link").click();
 };
 
+const createManagerMocks = () => ({
+  imageManager: { bind: jest.fn(), restoreFromStorage: jest.fn(), persistSelection: jest.fn() },
+  shoppingManager: {
+    bind: jest.fn(),
+    bootstrapExisting: jest.fn(),
+    renderList: jest.fn(),
+    syncShoppingField: jest.fn(),
+    syncShopImagesInput: jest.fn()
+  },
+  validator: { renderRequiredFieldErrors: jest.fn(() => false), bindRequiredListeners: jest.fn() }
+});
+
+function mockHelperFactories(managers) {
+  jest.doMock("../../static/js/create_recipe_helpers", () => ({
+    createImageManager: () => managers.imageManager,
+    createShoppingManager: () => managers.shoppingManager,
+    createRequiredFieldValidator: () => managers.validator,
+    getFiles: () => [],
+    setInputFiles: jest.fn()
+  }));
+}
+
+function capturePageEvents() {
+  const events = [];
+  const originalAdd = window.addEventListener;
+  window.addEventListener = (event, cb) => {
+    events.push(event);
+    if (cb) cb();
+  };
+  return { events, restore: () => { window.addEventListener = originalAdd; } };
+}
+
 test("normalizeUrl prefixes https when missing", () => {
   expect(normalizeUrl("example.com")).toBe("https://example.com");
   expect(normalizeUrl("http://example.com")).toBe("http://example.com");
@@ -138,40 +170,17 @@ test("bootstrapExisting handles lines without names and normalizes urls", () => 
 
 test("helper stubs still bind managers and lifecycle events", () => {
   jest.resetModules();
-  const imageManager = {
-    bind: jest.fn(),
-    restoreFromStorage: jest.fn(),
-    persistSelection: jest.fn()
-  };
-  const shoppingManager = {
-    bind: jest.fn(),
-    bootstrapExisting: jest.fn(),
-    renderList: jest.fn(),
-    syncShoppingField: jest.fn(),
-    syncShopImagesInput: jest.fn()
-  };
-  const validator = { renderRequiredFieldErrors: jest.fn(() => false), bindRequiredListeners: jest.fn() };
-  jest.doMock("../../static/js/create_recipe_helpers", () => ({
-    createImageManager: () => imageManager,
-    createShoppingManager: () => shoppingManager,
-    createRequiredFieldValidator: () => validator,
-    getFiles: () => [],
-    setInputFiles: jest.fn()
-  }));
+  const managers = createManagerMocks();
+  mockHelperFactories(managers);
   const { initCreateRecipe } = require("../../static/js/create_recipe");
   buildForm({ bound: true, hasErrors: true });
-  const pageEvents = [];
-  const originalAdd = window.addEventListener;
-  window.addEventListener = (event, cb) => {
-    pageEvents.push(event);
-    if (cb) cb();
-  };
+  const { events, restore } = capturePageEvents();
   initCreateRecipe(window);
   document.querySelector("form").dispatchEvent(new Event("submit", { cancelable: true }));
-  expect(imageManager.bind).toHaveBeenCalled();
-  expect(shoppingManager.bind).toHaveBeenCalled();
-  expect(pageEvents).toEqual(expect.arrayContaining(["pageshow", "pagehide"]));
-  window.addEventListener = originalAdd;
+  expect(managers.imageManager.bind).toHaveBeenCalled();
+  expect(managers.shoppingManager.bind).toHaveBeenCalled();
+  expect(events).toEqual(expect.arrayContaining(["pageshow", "pagehide"]));
+  restore();
 });
 
 test("uses internal fallbacks when helpers are missing", () => {

@@ -8,28 +8,42 @@ function loadModule() {
   return mod;
 }
 
+let originalFetch;
+let originalLocation;
+
 describe("collection_detail", () => {
-  let originalFetch;
-  let originalLocation;
+  beforeEach(setupCollectionDetailEnv);
+  afterEach(teardownCollectionDetailEnv);
+  testShowsModalAndUpdatesTitle();
+  testFallbackModalTogglesClasses();
+  testCloseButtonHidesFallbackModal();
+  testDeleteConfirmsAndRedirects();
+  testCancelDeleteAndEmptyTitle();
+  testHandlesMissingBootstrapInstance();
+  testEditSubmitHandlesFetchFailure();
+  testDeleteFetchFailureStillRedirects();
+  testEditSubmitRejectsAndHides();
+  testEarlyExitsWhenMissingRequirements();
+});
 
-  beforeEach(() => {
-    document.body.innerHTML = "";
-    originalFetch = global.fetch;
-    global.fetch = jest.fn(() => Promise.resolve({ ok: true, json: () => Promise.resolve({ title: "Updated" }) }));
-    originalLocation = global.location;
-    delete global.location;
-    global.location = { href: "" };
-  });
+function setupCollectionDetailEnv() {
+  document.body.innerHTML = "";
+  originalFetch = global.fetch;
+  global.fetch = jest.fn(() => Promise.resolve({ ok: true, json: () => Promise.resolve({ title: "Updated" }) }));
+  originalLocation = global.location;
+  delete global.location;
+  global.location = { href: "" };
+}
 
-  afterEach(() => {
-    global.fetch = originalFetch;
-    global.location = originalLocation;
-    delete global.bootstrap;
-    jest.clearAllMocks();
-  });
+function teardownCollectionDetailEnv() {
+  global.fetch = originalFetch;
+  global.location = originalLocation;
+  delete global.bootstrap;
+  jest.clearAllMocks();
+}
 
-  function buildDom() {
-    document.body.innerHTML = `
+function buildDom() {
+  document.body.innerHTML = `
       <input name="csrfmiddlewaretoken" value="token" />
       <button id="edit-collection-button" data-collection-id="abc" data-collection-title="Old" data-edit-endpoint="/edit"></button>
       <button id="delete-collection-button" data-delete-endpoint="/delete" data-redirect-url="/collections"></button>
@@ -41,8 +55,9 @@ describe("collection_detail", () => {
         </form>
       </div>
     `;
-  }
+}
 
+function testShowsModalAndUpdatesTitle() {
   test("shows modal and updates title via bootstrap path", async () => {
     buildDom();
     const show = jest.fn();
@@ -63,7 +78,9 @@ describe("collection_detail", () => {
     }));
     expect(document.querySelector(".collection-title").textContent).toBe("Updated");
   });
+}
 
+function testFallbackModalTogglesClasses() {
   test("fallback modal toggles classes without bootstrap", () => {
     buildDom();
     const { initCollectionDetail } = loadModule();
@@ -73,10 +90,12 @@ describe("collection_detail", () => {
     const modal = document.getElementById("editCollectionModal");
     expect(modal.classList.contains("show")).toBe(true);
 
-    modal.click(); // click backdrop on modal
+    modal.click();
     expect(modal.classList.contains("show")).toBe(false);
   });
+}
 
+function testCloseButtonHidesFallbackModal() {
   test("close button hides fallback modal", () => {
     buildDom();
     const { initCollectionDetail } = loadModule();
@@ -87,7 +106,9 @@ describe("collection_detail", () => {
     modal.querySelector(".save-modal-close").click();
     expect(modal.classList.contains("show")).toBe(false);
   });
+}
 
+function testDeleteConfirmsAndRedirects() {
   test("delete confirms and redirects", async () => {
     buildDom();
     global.confirm = jest.fn(() => true);
@@ -100,7 +121,9 @@ describe("collection_detail", () => {
     expect(global.fetch).toHaveBeenCalledWith("/delete", expect.any(Object));
     expect(global.location.href).toBe("/collections");
   });
+}
 
+function testCancelDeleteAndEmptyTitle() {
   test("cancel delete does nothing and empty title aborts submit", async () => {
     buildDom();
     global.confirm = jest.fn(() => false);
@@ -118,7 +141,9 @@ describe("collection_detail", () => {
     await new Promise((resolve) => setTimeout(resolve, 0));
     expect(global.fetch).not.toHaveBeenCalledWith("/edit", expect.any(Object));
   });
+}
 
+function testHandlesMissingBootstrapInstance() {
   test("handles missing bootstrap modal instance gracefully", () => {
     buildDom();
     global.bootstrap = { Modal: { getOrCreateInstance: () => ({ show: jest.fn(), hide: jest.fn() }) } };
@@ -126,7 +151,9 @@ describe("collection_detail", () => {
     initCollectionDetail(window);
     expect(() => document.getElementById("edit-collection-button").click()).not.toThrow();
   });
+}
 
+function testEditSubmitHandlesFetchFailure() {
   test("edit submit handles fetch failure", async () => {
     buildDom();
     global.fetch = jest.fn(() => Promise.resolve({ ok: false }));
@@ -137,7 +164,9 @@ describe("collection_detail", () => {
     await new Promise((resolve) => setTimeout(resolve, 0));
     expect(global.fetch).toHaveBeenCalledWith("/edit", expect.any(Object));
   });
+}
 
+function testDeleteFetchFailureStillRedirects() {
   test("delete fetch failure still redirects", async () => {
     buildDom();
     global.confirm = jest.fn(() => true);
@@ -148,7 +177,9 @@ describe("collection_detail", () => {
     await new Promise((resolve) => setTimeout(resolve, 0));
     expect(global.location.href).toBe("/collections");
   });
+}
 
+function testEditSubmitRejectsAndHides() {
   test("edit submit rejects and triggers hideEditModal catch", async () => {
     buildDom();
     global.fetch = jest.fn(() => Promise.reject(new Error("fail")));
@@ -161,7 +192,9 @@ describe("collection_detail", () => {
     await new Promise((resolve) => setTimeout(resolve, 0));
     expect(modal.classList.contains("show")).toBe(false);
   });
+}
 
+function testEarlyExitsWhenMissingRequirements() {
   test("early exits when missing required elements or already initialized", () => {
     document.body.innerHTML = ``;
     const { initCollectionDetail } = loadModule();
@@ -170,4 +203,4 @@ describe("collection_detail", () => {
     expect(() => initCollectionDetail(window)).not.toThrow();
     delete window.__collectionDetailInitialized;
   });
-});
+}

@@ -71,12 +71,14 @@ def parse_dashboard_params(request):
     max_prep = (request.GET.get("max_prep") or "").strip()
     category = (request.GET.get("category") or "all").strip()
     mode = (request.GET.get("mode") or "feed").strip()
+    sort_raw = (request.GET.get("sort") or "").strip()
     return {
         "q": q,
         "scope": _normalise_scope(request.GET.get("scope")),
         "category": category,
         "ingredient_q": ingredient_q,
-        "sort": (request.GET.get("sort") or "newest").strip(),
+        "sort": sort_raw or "newest",
+        "sort_provided": bool(sort_raw),
         "mode": mode, "min_prep": min_prep, "max_prep": max_prep,
         "have_ingredients_raw": have_ingredients_raw,
         "have_ingredients_list": have_ingredients_list,

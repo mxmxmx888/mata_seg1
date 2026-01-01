@@ -1,5 +1,4 @@
 <form method="get" class="mb-4 d-flex align-items-center justify-content-center dashboard-filters">
-  <input type="hidden" name="mode" value="search">
   <input type="hidden" name="scope" value="recipes">
 
   <select
@@ -30,7 +29,10 @@
     class="form-select dashboard-filter-select"
     onchange="this.form.submit()"
   >
-    <option value="newest"{% if not sort or sort == "newest" %} selected{% endif %}>
+    <option value=""{% if not sort_provided %} selected{% endif %}>
+      Sort
+    </option>
+    <option value="newest"{% if sort_provided and sort == "newest" %} selected{% endif %}>
       Newest
     </option>
     <option value="popular"{% if sort == "popular" %} selected{% endif %}>

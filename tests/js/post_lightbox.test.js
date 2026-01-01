@@ -14,28 +14,40 @@ function buildLightboxDom() {
 }
 
 describe("post_lightbox", () => {
-  beforeEach(() => {
-    document.body.innerHTML = "";
-  });
+  beforeEach(resetLightboxDom);
+  testOpensLightboxAndNavigates();
+  testClosesOnEscapeAndBackdrop();
+  testIgnoresKeyEventsWhenClosed();
+  testAdvancesWithArrowRight();
+  testEarlyExitWhenNoThumbs();
+  testWrapsToLastImage();
+  testFallsBackToThumbSrc();
+  testReturnsEarlyWhenWindowLacksDocument();
+  testIgnoresUnrelatedKeyPresses();
+});
 
+function resetLightboxDom() {
+  document.body.innerHTML = "";
+}
+
+function testOpensLightboxAndNavigates() {
   test("opens lightbox on thumb click and navigates images", () => {
     buildLightboxDom();
     initPostLightbox(window);
     const thumbs = document.querySelectorAll(".js-gallery-image");
     const lightbox = document.getElementById("lightbox");
     const img = document.getElementById("lightbox-image");
-
     thumbs[0].dispatchEvent(new Event("click", { bubbles: true }));
     expect(lightbox.classList.contains("d-none")).toBe(false);
     expect(img.src).toContain("full1.jpg");
-
     document.querySelector(".lightbox-arrow--right").click();
     expect(img.src).toContain("full2.jpg");
-
     document.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowLeft" }));
     expect(img.src).toContain("full1.jpg");
   });
+}
 
+function testClosesOnEscapeAndBackdrop() {
   test("closes on escape and backdrop", () => {
     buildLightboxDom();
     initPostLightbox(window);
@@ -44,24 +56,25 @@ describe("post_lightbox", () => {
     document.querySelector(".js-gallery-image").click();
     backdrop.click();
     expect(lightbox.classList.contains("d-none")).toBe(true);
-
     document.querySelector(".js-gallery-image").click();
     document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
     expect(lightbox.classList.contains("d-none")).toBe(true);
   });
+}
 
+function testIgnoresKeyEventsWhenClosed() {
   test("ignores key events when closed and exits when no thumbs", () => {
     document.body.innerHTML = `<div id="lightbox"><div class="lightbox-backdrop"></div><button class="lightbox-arrow lightbox-arrow--left"></button><img id="lightbox-image"><button class="lightbox-arrow lightbox-arrow--right"></button></div>`;
     initPostLightbox(window);
     expect(() => document.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowLeft" }))).not.toThrow();
-
     buildLightboxDom();
     initPostLightbox(window);
     document.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowLeft" }));
-    // still closed so img source not set
     expect(document.getElementById("lightbox-image").src).not.toContain("full1.jpg");
   });
+}
 
+function testAdvancesWithArrowRight() {
   test("advances with ArrowRight while open", () => {
     buildLightboxDom();
     initPostLightbox(window);
@@ -70,12 +83,16 @@ describe("post_lightbox", () => {
     document.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowRight" }));
     expect(img.src).toContain("full2.jpg");
   });
+}
 
+function testEarlyExitWhenNoThumbs() {
   test("early exit when no thumbs or lightbox elements", () => {
     document.body.innerHTML = `<div></div>`;
     expect(() => initPostLightbox(window)).not.toThrow();
   });
+}
 
+function testWrapsToLastImage() {
   test("wraps to last image when navigating left from first", () => {
     buildLightboxDom();
     initPostLightbox(window);
@@ -84,7 +101,9 @@ describe("post_lightbox", () => {
     document.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowLeft" }));
     expect(img.src).toContain("full2.jpg");
   });
+}
 
+function testFallsBackToThumbSrc() {
   test("falls back to thumb src when fullsrc missing", () => {
     document.body.innerHTML = `
       <div id="lightbox" class="d-none">
@@ -99,11 +118,15 @@ describe("post_lightbox", () => {
     document.querySelector(".js-gallery-image").click();
     expect(document.getElementById("lightbox-image").src).toContain("thumb-only.jpg");
   });
+}
 
+function testReturnsEarlyWhenWindowLacksDocument() {
   test("returns early when window lacks document", () => {
     expect(() => initPostLightbox({})).not.toThrow();
   });
+}
 
+function testIgnoresUnrelatedKeyPresses() {
   test("ignores unrelated key presses while open", () => {
     buildLightboxDom();
     initPostLightbox(window);
@@ -112,4 +135,4 @@ describe("post_lightbox", () => {
     document.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter" }));
     expect(img.src).toContain("full1.jpg");
   });
-});
+}

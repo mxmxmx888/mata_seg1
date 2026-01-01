@@ -1,46 +1,42 @@
 const { createShoppingManager } = require("../../static/js/create_recipe_shopping");
 
+const createFocusInput = (type = "input", extraProps = {}) =>
+  Object.assign(document.createElement(type), { focus: jest.fn(), ...extraProps });
+
+function wrapField(className, el) {
+  const div = document.createElement("div");
+  div.className = className;
+  div.appendChild(el);
+  document.body.appendChild(div);
+  return div;
+}
+
+function createWindowStubs(dtFiles) {
+  return {
+    URL: { createObjectURL: jest.fn(() => "blob:preview"), revokeObjectURL: jest.fn() },
+    DataTransfer: class {
+      constructor() {
+        this.items = { add: (f) => dtFiles.push(f) };
+        this.files = dtFiles;
+      }
+    }
+  };
+}
+
 const buildParams = (overrides = {}) => {
-  const itemInput = Object.assign(document.createElement("input"), { focus: jest.fn() });
-  const linkInput = Object.assign(document.createElement("input"), { focus: jest.fn() });
-  const shopImageInput = Object.assign(document.createElement("input"), { type: "file", focus: jest.fn() });
+  const itemInput = createFocusInput();
+  const linkInput = createFocusInput();
+  const shopImageInput = createFocusInput("input", { type: "file" });
   const shoppingField = document.createElement("textarea");
   const listBox = document.createElement("div");
   const shopImageList = document.createElement("div");
   const addBtn = document.createElement("button");
-  const wrap = (className, el) => {
-    const div = document.createElement("div");
-    div.className = className;
-    div.appendChild(el);
-    document.body.appendChild(div);
-    return div;
-  };
-  const itemWrapper = wrap("shopping-links-field", itemInput);
-  const linkWrapper = wrap("shopping-links-field", linkInput);
-  const uploadWrapper = wrap("shopping-links-upload", shopImageInput);
+  const itemWrapper = wrapField("shopping-links-field", itemInput);
+  const linkWrapper = wrapField("shopping-links-field", linkInput);
+  const uploadWrapper = wrapField("shopping-links-upload", shopImageInput);
   document.body.append(listBox);
   const dtFiles = [];
-  return {
-    w: {
-      URL: { createObjectURL: jest.fn(() => "blob:preview"), revokeObjectURL: jest.fn() },
-      DataTransfer: class { constructor() { this.items = { add: (f) => dtFiles.push(f) }; this.files = dtFiles; } }
-    },
-    doc: document,
-    addBtn,
-    itemInput,
-    linkInput,
-    shopImageInput,
-    itemWrapper,
-    linkWrapper,
-    uploadWrapper,
-    shopImageList,
-    shoppingField,
-    listBox,
-    setInputFiles: jest.fn(),
-    getFiles: jest.fn(() => []),
-    normalizeUrl: (url) => (url.startsWith("http") ? url : `https://${url}`),
-    ...overrides
-  };
+  return { w: createWindowStubs(dtFiles), doc: document, addBtn, itemInput, linkInput, shopImageInput, itemWrapper, linkWrapper, uploadWrapper, shopImageList, shoppingField, listBox, setInputFiles: jest.fn(), getFiles: jest.fn(() => []), normalizeUrl: (url) => (url.startsWith("http") ? url : `https://${url}`), ...overrides };
 };
 
 afterEach(() => {

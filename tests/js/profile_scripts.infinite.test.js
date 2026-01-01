@@ -57,25 +57,33 @@ function setupCloseFriends({ response }) {
   return { options: createSpy.mock.calls[0][0] };
 }
 
+let originalFetch;
+
 describe("profile_scripts infinite lists", () => {
-  let originalFetch;
+  beforeEach(setupProfileInfiniteListsEnv);
+  afterEach(teardownProfileInfiniteListsEnv);
+  testProfilePostsFallbackPlacement();
+  testProfilePostsUsesProvidedColumnPlacer();
+  testFollowListLoaderAppendsCloseFriends();
+});
 
-  beforeEach(() => {
-    document.body.innerHTML = "";
-    originalFetch = global.fetch;
-    global.fetch = jest.fn(() => Promise.resolve({ ok: true, json: () => Promise.resolve({}) }));
-    delete global.bootstrap;
-  });
+function setupProfileInfiniteListsEnv() {
+  document.body.innerHTML = "";
+  originalFetch = global.fetch;
+  global.fetch = jest.fn(() => Promise.resolve({ ok: true, json: () => Promise.resolve({}) }));
+  delete global.bootstrap;
+}
 
-  afterEach(() => {
-    global.fetch = originalFetch;
-    delete global.bootstrap;
-    delete global.InfiniteList;
-    delete window.scrollTo;
-    jest.useRealTimers();
-    jest.clearAllMocks();
-  });
+function teardownProfileInfiniteListsEnv() {
+  global.fetch = originalFetch;
+  delete global.bootstrap;
+  delete global.InfiniteList;
+  delete window.scrollTo;
+  jest.useRealTimers();
+  jest.clearAllMocks();
+}
 
+function testProfilePostsFallbackPlacement() {
   test("profile posts infinite falls back to manual placement when placeInColumns is missing", async () => {
     const { options } = setupProfilePosts();
     const columns = getColumns();
@@ -88,7 +96,9 @@ describe("profile_scripts infinite lists", () => {
     expect(columns[0].querySelector("#card-1")).not.toBeNull();
     expect(columns[1].querySelector("#card-2")).not.toBeNull();
   });
+}
 
+function testProfilePostsUsesProvidedColumnPlacer() {
   test("profile posts infinite uses provided column placer and profile fetcher branches", async () => {
     const placeInColumns = jest.fn();
     global.fetch = jest.fn();
@@ -99,18 +109,17 @@ describe("profile_scripts infinite lists", () => {
       placeInColumns,
     });
     expect(options.append(`<div class="my-recipe-card" id="append-card"></div>`)).toBe(1);
-
     global.fetch.mockResolvedValueOnce({ text: () => Promise.resolve("   ") });
     expect(await options.fetchPage({ page: 2 })).toEqual({ html: "", hasMore: false, nextPage: null });
-
     const dozen = Array.from({ length: 12 }, (_, i) => `<div class="my-recipe-card" id="c${i}"></div>`).join("");
     global.fetch.mockResolvedValueOnce({ text: () => Promise.resolve(dozen) });
     expect(await options.fetchPage({ page: 4 })).toEqual({ html: dozen, hasMore: true, nextPage: 5 });
-
     global.fetch.mockRejectedValueOnce(new Error("fail"));
     expect(await options.fetchPage({ page: 5 })).toEqual({ html: "", hasMore: false, nextPage: null });
   });
+}
 
+function testFollowListLoaderAppendsCloseFriends() {
   test("follow list loader appends close friends items and reapplies filter", async () => {
     const response = {
       ok: true,
@@ -129,10 +138,9 @@ describe("profile_scripts infinite lists", () => {
       credentials: "same-origin",
     });
     options.append(payload.html);
-
     const closeFriendsItems = document.querySelectorAll("#closeFriendsList .close-friend-item");
     expect(closeFriendsItems.length).toBe(2);
     expect(closeFriendsItems[1].dataset.name).toBe("alice");
     expect(closeFriendsItems[1].style.display).toBe("none");
   });
-});
+}

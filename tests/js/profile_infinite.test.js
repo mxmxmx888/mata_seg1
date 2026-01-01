@@ -64,36 +64,47 @@ const followersResponse = () => ({
 describe("profile_infinite", () => {
   let originalFetch;
 
-  beforeEach(() => {
-    document.body.innerHTML = "";
-    originalFetch = global.fetch;
-    window.scrollTo = jest.fn();
-    delete window.InfiniteList;
-  });
+  beforeEach(setupProfileInfiniteEnv);
 
-  afterEach(() => {
-    global.fetch = originalFetch;
-    delete window.InfiniteList;
-    jest.clearAllMocks();
-  });
+  afterEach(teardownProfileInfiniteEnv);
 
+  testSkipsProfilePostsInit();
+  testSetsScrollRestorationAndGuarding();
+  testCreatesFollowListInfiniteLoader();
+  testFollowFetcherHandlesFailures();
+  testIgnoresFollowLoadersWhenEndpointMissing();
+});
+
+function setupProfileInfiniteEnv() {
+  document.body.innerHTML = "";
+  originalFetch = global.fetch;
+  window.scrollTo = jest.fn();
+  delete window.InfiniteList;
+}
+
+function teardownProfileInfiniteEnv() {
+  global.fetch = originalFetch;
+  delete window.InfiniteList;
+  jest.clearAllMocks();
+}
+
+function testSkipsProfilePostsInit() {
   test("skips profile posts init when columns are missing", () => {
     const { initProfileInfinite } = loadModule();
     window.history.scrollRestoration = "auto";
     window.InfiniteList = { create: jest.fn() };
-
     document.body.innerHTML = `
       <div id="profile-posts-grid"></div>
       <div id="profile-posts-sentinel" data-endpoint="/profile/posts" data-has-more="true" data-next-page="3"></div>
     `;
-
     initProfileInfinite(window, document);
-
     expect(window.InfiniteList.create).not.toHaveBeenCalled();
     expect(window.history.scrollRestoration).toBe("auto");
     expect(window.scrollTo).not.toHaveBeenCalled();
   });
+}
 
+function testSetsScrollRestorationAndGuarding() {
   test("sets scroll restoration, parses next page, and guards append", async () => {
     const options = setupPostsInfinite();
     expect(window.history.scrollRestoration).toBe("manual");
@@ -104,7 +115,9 @@ describe("profile_infinite", () => {
     expect(global.fetch).toHaveBeenCalledWith("/profile/posts?page=5&posts_only=1", { headers: { "HX-Request": "true" } });
     expect(result).toEqual({ html: "<div class='my-recipe-card'></div>", hasMore: false, nextPage: null });
   });
+}
 
+function testCreatesFollowListInfiniteLoader() {
   test("creates follow list infinite loader when modal is shown", async () => {
     const modalSuccessHandlers = { followersModal: jest.fn() };
     const { options, attachAjaxModalForms, applyCloseFriendsFilter } = setupFollowList({
@@ -127,7 +140,9 @@ describe("profile_infinite", () => {
     expect(attachAjaxModalForms).toHaveBeenCalledWith("followersModal", modalSuccessHandlers.followersModal);
     expect(applyCloseFriendsFilter).not.toHaveBeenCalled();
   });
+}
 
+function testFollowFetcherHandlesFailures() {
   test("follow fetcher handles failures gracefully", async () => {
     const attachAjaxModalForms = jest.fn();
     const { options } = setupFollowList({
@@ -138,16 +153,16 @@ describe("profile_infinite", () => {
       attachAjaxModalForms,
     });
     const payload = await options.fetchPage({ page: 5 });
-
     expect(payload).toEqual({ html: "", hasMore: false, nextPage: null, total: null });
     expect(attachAjaxModalForms).not.toHaveBeenCalled();
   });
+}
 
+function testIgnoresFollowLoadersWhenEndpointMissing() {
   test("ignores follow loaders when endpoint is missing", async () => {
     const { initProfileInfinite } = loadModule();
     const attachAjaxModalForms = jest.fn();
     global.fetch = jest.fn();
-
     document.body.innerHTML = `
       <div id="closeFriendsModal" class="modal">
         <div class="modal-body" data-list-type="close_friends" data-endpoint="" data-has-more="false" data-next-page="">
@@ -156,13 +171,11 @@ describe("profile_infinite", () => {
         </div>
       </div>
     `;
-
     initProfileInfinite(window, document, { attachAjaxModalForms });
     document.getElementById("closeFriendsModal").dispatchEvent(new Event("shown.bs.modal"));
     await flushPromises();
-
     expect(global.fetch).not.toHaveBeenCalled();
     expect(document.querySelectorAll("#closeFriendsModal .follow-list-items li")).toHaveLength(1);
     expect(attachAjaxModalForms).not.toHaveBeenCalled();
   });
-});
+}

@@ -202,6 +202,7 @@ def _dashboard_context(params, request, data, popular_has_next):
         "category": params["category"],
         "ingredient": params["ingredient_q"],
         "sort": params["sort"],
+        "sort_provided": params["sort_provided"],
         "has_search": params["has_search"],
         "scope": params["scope"],
         "have_ingredients": params["have_ingredients_raw"],

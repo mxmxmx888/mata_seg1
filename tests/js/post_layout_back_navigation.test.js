@@ -18,38 +18,55 @@ function loadModule() {
   return mod;
 }
 
+let originalRAF;
+let originalLocation;
+let originalHistory;
+let originalFormSubmit;
+const realFetch = global.fetch;
+
 describe("post_layout back navigation", () => {
-  let originalRAF;
-  let originalLocation;
-  let originalHistory;
-  let originalFormSubmit;
-  const realFetch = global.fetch;
+  beforeEach(setupPostLayoutEnv);
+  afterEach(teardownPostLayoutEnv);
+  testHistoryBackPath();
+  testBackButtonReusesStoredEntryAfterEdit();
+  testBackButtonKeepsStoredEntryForComments();
+  testBackButtonFallsBackWithoutStoredEntry();
+  testBackButtonFallsBackWhenEntryMatchesCurrentPage();
+  testBackButtonPrefersStoredEntryOverHistory();
+  testBackButtonUsesHistoryWhenAvailable();
+  testResolveBackTargetHandlesInvalidEntry();
+  testResolveBackTargetUsesFallbackForOtherOrigin();
+  testParseUrlReturnsNullForInvalidRef();
+  testParseUrlCatchPathHandlesInvalidUrl();
+  testBackButtonFallsBackWithoutStoredEntryDuplicate();
+});
 
-  beforeEach(() => {
-    document.body.innerHTML = "";
-    delete window.__postLayoutInitialized;
-    originalRAF = window.requestAnimationFrame;
-    window.requestAnimationFrame = (cb) => cb();
-    global.fetch = jest.fn(() => Promise.resolve({ ok: true }));
-    originalLocation = window.location;
-    delete window.location;
-    window.location = { href: "http://localhost/post/1", origin: "http://localhost", assign: jest.fn(), replace: jest.fn() };
-    originalHistory = window.history;
-    window.history = { length: 0, back: jest.fn(), pushState: jest.fn(), replaceState: jest.fn() };
-    originalFormSubmit = HTMLFormElement.prototype.submit;
-    HTMLFormElement.prototype.submit = jest.fn();
-  });
+function setupPostLayoutEnv() {
+  document.body.innerHTML = "";
+  delete window.__postLayoutInitialized;
+  originalRAF = window.requestAnimationFrame;
+  window.requestAnimationFrame = (cb) => cb();
+  global.fetch = jest.fn(() => Promise.resolve({ ok: true }));
+  originalLocation = window.location;
+  delete window.location;
+  window.location = { href: "http://localhost/post/1", origin: "http://localhost", assign: jest.fn(), replace: jest.fn() };
+  originalHistory = window.history;
+  window.history = { length: 0, back: jest.fn(), pushState: jest.fn(), replaceState: jest.fn() };
+  originalFormSubmit = HTMLFormElement.prototype.submit;
+  HTMLFormElement.prototype.submit = jest.fn();
+}
 
-  afterEach(() => {
-    window.requestAnimationFrame = originalRAF;
-    global.fetch = realFetch;
-    window.location = originalLocation;
-    window.history = originalHistory;
-    HTMLFormElement.prototype.submit = originalFormSubmit;
-    window.sessionStorage.clear();
-    jest.clearAllMocks();
-  });
+function teardownPostLayoutEnv() {
+  window.requestAnimationFrame = originalRAF;
+  global.fetch = realFetch;
+  window.location = originalLocation;
+  window.history = originalHistory;
+  HTMLFormElement.prototype.submit = originalFormSubmit;
+  window.sessionStorage.clear();
+  jest.clearAllMocks();
+}
 
+function testHistoryBackPath() {
   test("history back path when history length > 1", () => {
     renderBackButtonPage({ entry: "http://localhost/prev", fallback: "/fb" });
     window.history.length = 2;
@@ -62,7 +79,9 @@ describe("post_layout back navigation", () => {
     backSpy.mockRestore();
     assignSpy.mockRestore();
   });
+}
 
+function testBackButtonReusesStoredEntryAfterEdit() {
   test("back button and escape reuse stored entry when returning from edit", () => {
     setReferrer("http://localhost/recipes/12/edit");
     window.sessionStorage.setItem("post-entry-12", "http://localhost/from");
@@ -80,7 +99,9 @@ describe("post_layout back navigation", () => {
     document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
     expect(window.location.assign).toHaveBeenLastCalledWith("http://localhost/from");
   });
+}
 
+function testBackButtonKeepsStoredEntryForComments() {
   test("back button ignores comment action referrers and keeps stored entry", () => {
     setReferrer("http://localhost/recipes/12/comment/");
     window.sessionStorage.setItem("post-entry-12", "http://localhost/from-feed");
@@ -91,7 +112,9 @@ describe("post_layout back navigation", () => {
     btn.dispatchEvent(new Event("click", { bubbles: true, cancelable: true }));
     expect(window.location.assign).toHaveBeenLastCalledWith("http://localhost/from-feed");
   });
+}
 
+function testBackButtonFallsBackWithoutStoredEntry() {
   test("back button ignores comment referrer without stored entry and falls back", () => {
     setReferrer("http://localhost/recipes/34/comment/");
     renderBackButtonPage({ postId: "34", fallback: "/fb" });
@@ -104,7 +127,9 @@ describe("post_layout back navigation", () => {
     expect(window.location.assign).toHaveBeenLastCalledWith("/fb");
     backSpy.mockRestore();
   });
+}
 
+function testBackButtonFallsBackWhenEntryMatchesCurrentPage() {
   test("back button falls back when stored entry matches current page", () => {
     window.sessionStorage.setItem("post-entry-12", "http://localhost/post/1");
     renderBackButtonPage({ postId: "12", fallback: "/fb" });
@@ -118,7 +143,9 @@ describe("post_layout back navigation", () => {
     expect(window.location.assign).toHaveBeenLastCalledWith("/fb");
     backSpy.mockRestore();
   });
+}
 
+function testBackButtonPrefersStoredEntryOverHistory() {
   test("back button prefers stored entry even when history available", () => {
     setReferrer("http://localhost/from");
     window.sessionStorage.setItem("post-entry-99", "http://localhost/feed");
@@ -132,7 +159,9 @@ describe("post_layout back navigation", () => {
     expect(window.location.assign).toHaveBeenLastCalledWith("http://localhost/feed");
     backSpy.mockRestore();
   });
+}
 
+function testBackButtonUsesHistoryWhenAvailable() {
   test("back button click uses history when available", () => {
     setReferrer("http://localhost/ref");
     renderBackButtonPage({ entry: "http://localhost/ref", fallback: "/fb" });
@@ -147,7 +176,9 @@ describe("post_layout back navigation", () => {
     backSpy.mockRestore();
     assignSpy.mockRestore();
   });
+}
 
+function testResolveBackTargetHandlesInvalidEntry() {
   test("resolveBackTarget handles invalid data-entry and fallback href", () => {
     setReferrer("");
     document.body.innerHTML = `
@@ -160,7 +191,9 @@ describe("post_layout back navigation", () => {
     const btn = document.querySelector(".post-back-button");
     expect(btn.getAttribute("href")).toBe("/from-attr");
   });
+}
 
+function testResolveBackTargetUsesFallbackForOtherOrigin() {
   test("resolveBackTarget uses fallback when referrer different origin", () => {
     setReferrer("http://other/from");
     document.body.innerHTML = `
@@ -172,14 +205,18 @@ describe("post_layout back navigation", () => {
     const btn = document.querySelector(".post-back-button");
     expect(btn.getAttribute("href")).toBe("/fb");
   });
+}
 
+function testParseUrlReturnsNullForInvalidRef() {
   test("parseUrl returns null for invalid ref and backButton absent", () => {
     setReferrer("::::");
     document.body.innerHTML = `<div class="post-view-similar"></div>`;
     const { initPostLayout } = loadModule();
     expect(() => initPostLayout(window)).not.toThrow();
   });
+}
 
+function testParseUrlCatchPathHandlesInvalidUrl() {
   test("parseUrl catch path handles invalid URL", () => {
     setReferrer("::::");
     document.body.innerHTML = `
@@ -189,7 +226,9 @@ describe("post_layout back navigation", () => {
     const { initPostLayout } = loadModule();
     expect(() => initPostLayout(window)).not.toThrow();
   });
+}
 
+function testBackButtonFallsBackWithoutStoredEntryDuplicate() {
   test("back button ignores comment referrer without stored entry and falls back", () => {
     setReferrer("http://localhost/recipes/34/comment/");
     renderBackButtonPage({ postId: "34", fallback: "/fb" });
@@ -202,4 +241,4 @@ describe("post_layout back navigation", () => {
     expect(window.location.assign).toHaveBeenLastCalledWith("/fb");
     backSpy.mockRestore();
   });
-});
+}
