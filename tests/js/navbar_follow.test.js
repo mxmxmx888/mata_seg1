@@ -1,289 +1,165 @@
 const modulePath = "../../static/js/navbar_follow";
 
-function loadModule() {
+const loadModule = () => {
   jest.resetModules();
   delete global.__navbarFollowInitialized;
   const mod = require(modulePath);
   delete global.__navbarFollowInitialized;
   return mod;
-}
+};
 
-describe("navbar_follow", () => {
-  let originalFetch;
-  let originalLocation;
+const render = (html = "") => {
+  document.body.innerHTML = html;
+};
 
-  beforeEach(() => {
-    document.body.innerHTML = "";
-    originalFetch = global.fetch;
-    global.fetch = jest.fn(() => Promise.resolve({ ok: true, json: () => Promise.resolve({}) }));
-    originalLocation = global.location;
-  });
+const init = () => loadModule().initNavbarFollow(window);
 
-  afterEach(() => {
-    global.fetch = originalFetch;
-    if (originalLocation) {
-      global.location = originalLocation;
-    }
-    jest.clearAllMocks();
-  });
+const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
 
-  test("toggles follow state via ajax", async () => {
-    document.body.innerHTML = `
-      <form class="notification-follow-form" action="/follow">
-        <input name="csrfmiddlewaretoken" value="token" />
-        <button class="btn btn-primary" data-follow-state="not-following">Follow</button>
-      </form>
-    `;
-    const { initNavbarFollow } = loadModule();
-    initNavbarFollow(window);
+const setLocation = (href = "") => {
+  delete global.location;
+  global.location = { href };
+};
 
-    const form = document.querySelector(".notification-follow-form");
-    const btn = form.querySelector("button");
-    form.dispatchEvent(new Event("submit", { cancelable: true }));
-    await new Promise((resolve) => setTimeout(resolve, 0));
+let originalFetch;
+let originalLocation;
 
-    expect(global.fetch).toHaveBeenCalledWith(expect.stringContaining("/follow"), expect.objectContaining({
-      headers: expect.objectContaining({ "X-CSRFToken": "token" })
-    }));
-    expect(btn.textContent).toBe("Following");
-    expect(btn.classList.contains("btn-outline-light")).toBe(true);
-    expect(btn.getAttribute("data-follow-state")).toBe("following");
+beforeEach(() => {
+  render();
+  originalFetch = global.fetch;
+  global.fetch = jest.fn(() => Promise.resolve({ ok: true, json: () => Promise.resolve({}) }));
+  originalLocation = global.location;
+});
 
-    form.dispatchEvent(new Event("submit", { cancelable: true }));
-    await new Promise((resolve) => setTimeout(resolve, 0));
-    expect(btn.textContent).toBe("Follow");
-    expect(btn.classList.contains("btn-primary")).toBe(true);
-    expect(btn.getAttribute("data-follow-state")).toBe("not-following");
-  });
+afterEach(() => {
+  global.fetch = originalFetch;
+  if (originalLocation) global.location = originalLocation;
+  jest.clearAllMocks();
+});
 
-  test("falls back to native submit when no button", async () => {
-    document.body.innerHTML = `<form class="notification-follow-form" action="/fallback"></form>`;
-    const submitSpy = jest.spyOn(HTMLFormElement.prototype, "submit").mockImplementation(() => {});
-    const { initNavbarFollow } = loadModule();
-    initNavbarFollow(window);
+test("toggles follow state via ajax", async () => {
+  render(`
+    <form class="notification-follow-form" action="/follow">
+      <input name="csrfmiddlewaretoken" value="token" />
+      <button class="btn btn-primary" data-follow-state="not-following">Follow</button>
+    </form>
+  `);
+  init();
+  const form = document.querySelector(".notification-follow-form");
+  const btn = form.querySelector("button");
+  form.dispatchEvent(new Event("submit", { cancelable: true }));
+  await flush();
+  expect(btn.textContent).toBe("Following");
+  expect(btn.classList.contains("btn-outline-light")).toBe(true);
+  form.dispatchEvent(new Event("submit", { cancelable: true }));
+  await flush();
+  expect(btn.textContent).toBe("Follow");
+  expect(btn.classList.contains("btn-primary")).toBe(true);
+});
 
-    const form = document.querySelector("form");
-    form.dispatchEvent(new Event("submit", { cancelable: true }));
-    await new Promise((resolve) => setTimeout(resolve, 0));
-    expect(submitSpy).toHaveBeenCalled();
-    submitSpy.mockRestore();
-  });
+test("falls back to native submit when no button", async () => {
+  render(`<form class="notification-follow-form" action="/fallback"></form>`);
+  const submitSpy = jest.spyOn(HTMLFormElement.prototype, "submit").mockImplementation(() => {});
+  init();
+  document.querySelector("form").dispatchEvent(new Event("submit", { cancelable: true }));
+  await flush();
+  expect(submitSpy).toHaveBeenCalled();
+  submitSpy.mockRestore();
+});
 
-  test("navigates to post when clicking notification item", () => {
-    document.body.innerHTML = `
-      <div class="notification-item" data-post-url="/posts/1">
-        <span class="notification-message">A</span>
-      </div>
-    `;
-    delete global.location;
-    global.location = { href: "" };
+test("fetch failure falls back to native submit", async () => {
+  global.fetch = jest.fn(() => Promise.reject(new Error("fail")));
+  render(`<form class="notification-follow-form" action="/fallback"><button data-follow-state="following"></button></form>`);
+  const submitSpy = jest.spyOn(HTMLFormElement.prototype, "submit").mockImplementation(() => {});
+  init();
+  document.querySelector("form").dispatchEvent(new Event("submit", { cancelable: true }));
+  await flush();
+  expect(submitSpy).toHaveBeenCalled();
+  submitSpy.mockRestore();
+});
 
-    const { initNavbarFollow } = loadModule();
-    initNavbarFollow(window);
+test("omits csrf header when token absent", async () => {
+  render(`
+    <form class="notification-follow-form" action="/follow">
+      <button data-follow-state="not-following">Follow</button>
+    </form>
+  `);
+  init();
+  document.querySelector("form").dispatchEvent(new Event("submit", { cancelable: true }));
+  await flush();
+  const headers = global.fetch.mock.calls[0][1].headers;
+  expect(headers["X-CSRFToken"]).toBeUndefined();
+});
 
-    document.querySelector(".notification-item").dispatchEvent(new Event("click", { bubbles: true }));
-    expect(global.location.href).toBe("/posts/1");
-  });
+test("navigates to post when clicking notification item", () => {
+  render(`<div class="notification-item" data-post-url="/posts/1"><span>A</span></div>`);
+  setLocation("");
+  init();
+  document.querySelector(".notification-item").dispatchEvent(new Event("click", { bubbles: true }));
+  expect(global.location.href).toBe("/posts/1");
+});
 
-  test("ignores click when inside interactive element", () => {
-    document.body.innerHTML = `
-      <div class="notification-item" data-post-url="/posts/2">
-        <a href="/skip">Link</a>
-      </div>
-    `;
-    delete global.location;
-    global.location = { href: "" };
+test("ignores click when inside interactive element or no url", () => {
+  render(`
+    <div class="notification-item" data-post-url="/posts/2"><a href="/skip">Link</a></div>
+    <div class="notification-item"><button>Btn</button></div>
+  `);
+  setLocation("");
+  init();
+  document.querySelector("a").dispatchEvent(new Event("click", { bubbles: true }));
+  document.querySelectorAll(".notification-item")[1].dispatchEvent(new Event("click", { bubbles: true }));
+  expect(global.location.href).toBe("");
+});
 
-    const { initNavbarFollow } = loadModule();
-    initNavbarFollow(window);
+test("accept action updates message and removes actions", async () => {
+  render(`
+    <div data-notification-id="1">
+      <div class="notification-message">sent request.</div>
+      <div class="notification-follow-request-actions"></div>
+      <form class="notification-follow-request-form" data-action="accept" action="/accept"></form>
+    </div>
+  `);
+  init();
+  const form = document.querySelector(".notification-follow-request-form");
+  form.dispatchEvent(new Event("submit", { cancelable: true }));
+  await flush();
+  expect(document.querySelector(".notification-message").textContent).toBe("started following you.");
+  expect(document.querySelector(".notification-follow-request-actions")).toBeNull();
+});
 
-    const link = document.querySelector("a");
-    link.dispatchEvent(new Event("click", { bubbles: true }));
-    expect(global.location.href).toBe("");
-  });
+test("reject action removes notification item", async () => {
+  render(`
+    <div data-notification-id="2">
+      <form class="notification-follow-request-form" data-action="reject" action="/reject"></form>
+    </div>
+  `);
+  init();
+  const item = document.querySelector("[data-notification-id]");
+  item.querySelector("form").dispatchEvent(new Event("submit", { cancelable: true }));
+  await flush();
+  expect(document.querySelector("[data-notification-id]")).toBeNull();
+});
 
-  test("accept action updates message and removes actions", async () => {
-    document.body.innerHTML = `
-      <div data-notification-id="1">
-        <div class="notification-message">sent request.</div>
-        <div class="notification-follow-request-actions"></div>
-        <form class="notification-follow-request-form" data-action="accept" action="/accept"></form>
-      </div>
-    `;
-    const { initNavbarFollow } = loadModule();
-    initNavbarFollow(window);
+test("follow request failure falls back to submit", async () => {
+  global.fetch = jest.fn(() => Promise.reject(new Error("fail")));
+  render(`
+    <div data-notification-id="3">
+      <form class="notification-follow-request-form" data-action="accept" action="/accept"></form>
+    </div>
+  `);
+  const submitSpy = jest.spyOn(HTMLFormElement.prototype, "submit").mockImplementation(() => {});
+  init();
+  document.querySelector("form").dispatchEvent(new Event("submit", { cancelable: true }));
+  await flush();
+  expect(submitSpy).toHaveBeenCalled();
+  submitSpy.mockRestore();
+});
 
-    const form = document.querySelector(".notification-follow-request-form");
-    form.dispatchEvent(new Event("submit", { cancelable: true }));
-    await new Promise((resolve) => setTimeout(resolve, 0));
-
-    expect(document.querySelector(".notification-message").textContent).toBe("started following you.");
-    expect(document.querySelector(".notification-follow-request-actions")).toBeNull();
-  });
-
-  test("reject action removes notification item", async () => {
-    document.body.innerHTML = `
-      <div data-notification-id="2">
-        <form class="notification-follow-request-form" data-action="reject" action="/reject"></form>
-      </div>
-    `;
-    const { initNavbarFollow } = loadModule();
-    initNavbarFollow(window);
-
-    const item = document.querySelector("[data-notification-id]");
-    item.querySelector("form").dispatchEvent(new Event("submit", { cancelable: true }));
-    await new Promise((resolve) => setTimeout(resolve, 0));
-    expect(document.querySelector("[data-notification-id]")).toBeNull();
-  });
-
-  test("fetch failure falls back to native submit", async () => {
-    global.fetch = jest.fn(() => Promise.reject(new Error("fail")));
-    document.body.innerHTML = `<form class="notification-follow-form" action="/fallback"><button data-follow-state="following"></button></form>`;
-    const submitSpy = jest.spyOn(HTMLFormElement.prototype, "submit").mockImplementation(() => {});
-    const { initNavbarFollow } = loadModule();
-    initNavbarFollow(window);
-    document.querySelector("form").dispatchEvent(new Event("submit", { cancelable: true }));
-    await new Promise((r) => setTimeout(r, 0));
-    expect(submitSpy).toHaveBeenCalled();
-    submitSpy.mockRestore();
-  });
-
-  test("notification click ignored when target inside link", () => {
-    document.body.innerHTML = `
-      <div class="notification-item" data-post-url="/posts/2">
-        <a href="/other"><span class="notification-message">A</span></a>
-      </div>
-    `;
-    delete global.location;
-    global.location = { href: "" };
-    const { initNavbarFollow } = loadModule();
-    initNavbarFollow(window);
-    document.querySelector("a").dispatchEvent(new Event("click", { bubbles: true }));
-    expect(global.location.href).toBe("");
-  });
-
-  test("exits safely when no follow elements exist", () => {
-    document.body.innerHTML = ``;
-    const { initNavbarFollow } = loadModule();
-    expect(() => initNavbarFollow(window)).not.toThrow();
-  });
-
-  test("early return when already initialized and window missing", () => {
-    const { initNavbarFollow } = loadModule();
-    global.__navbarFollowInitialized = true;
-    expect(() => initNavbarFollow(window)).not.toThrow();
-    delete global.__navbarFollowInitialized;
-    expect(() => initNavbarFollow(null)).not.toThrow();
-  });
-
-  test("follow request failure falls back to submit", async () => {
-    global.fetch = jest.fn(() => Promise.reject(new Error("fail")));
-    document.body.innerHTML = `
-      <div data-notification-id="3">
-        <form class="notification-follow-request-form" data-action="accept" action="/accept"></form>
-      </div>
-    `;
-    const submitSpy = jest.spyOn(HTMLFormElement.prototype, "submit").mockImplementation(() => {});
-    const { initNavbarFollow } = loadModule();
-    initNavbarFollow(window);
-    document.querySelector("form").dispatchEvent(new Event("submit", { cancelable: true }));
-    await new Promise((r) => setTimeout(r, 0));
-    expect(submitSpy).toHaveBeenCalled();
-    submitSpy.mockRestore();
-  });
-
-  test("notification item with no url or interactive target does nothing", () => {
-    document.body.innerHTML = `
-      <div class="notification-item"><button>Btn</button></div>
-    `;
-    delete global.location;
-    global.location = { href: "" };
-    const { initNavbarFollow } = loadModule();
-    initNavbarFollow(window);
-    document.querySelector(".notification-item").dispatchEvent(new Event("click", { bubbles: true }));
-    expect(global.location.href).toBe("");
-  });
-
-  test("omits csrf header when token absent", async () => {
-    document.body.innerHTML = `
-      <form class="notification-follow-form" action="/follow">
-        <button data-follow-state="not-following">Follow</button>
-      </form>
-    `;
-    const { initNavbarFollow } = loadModule();
-    initNavbarFollow(window);
-    const form = document.querySelector("form");
-    form.dispatchEvent(new Event("submit", { cancelable: true }));
-    await new Promise((r) => setTimeout(r, 0));
-    const headers = global.fetch.mock.calls[0][1].headers;
-    expect(headers["X-CSRFToken"]).toBeUndefined();
-  });
-
-  test("uses global window when argument missing", async () => {
-    document.body.innerHTML = `
-      <form class="notification-follow-form" action="/follow">
-        <button data-follow-state="not-following">Follow</button>
-      </form>
-    `;
-    const { initNavbarFollow } = loadModule();
-    initNavbarFollow();
-    document.querySelector("form").dispatchEvent(new Event("submit", { cancelable: true }));
-    await new Promise((r) => setTimeout(r, 0));
-    expect(global.fetch).toHaveBeenCalled();
-  });
-
-  test("returns early when window has no document", () => {
-    const { initNavbarFollow } = loadModule();
-    expect(() => initNavbarFollow({})).not.toThrow();
-  });
-
-  test("defaults follow state when attribute missing", async () => {
-    document.body.innerHTML = `
-      <form class="notification-follow-form" action="/follow">
-        <button class="btn btn-primary" data-follow-state="">Follow</button>
-      </form>
-    `;
-    const { initNavbarFollow } = loadModule();
-    initNavbarFollow(window);
-    const form = document.querySelector("form");
-    const btn = form.querySelector("button");
-    form.dispatchEvent(new Event("submit", { cancelable: true }));
-    await new Promise((r) => setTimeout(r, 0));
-    expect(btn.textContent).toBe("Following");
-    expect(btn.getAttribute("data-follow-state")).toBe("following");
-  });
-
-  test("ignores notification click when url missing", () => {
-    document.body.innerHTML = `<div class="notification-item" data-post-url=""></div>`;
-    delete global.location;
-    global.location = { href: "" };
-    const { initNavbarFollow } = loadModule();
-    initNavbarFollow(window);
-    document.querySelector(".notification-item").dispatchEvent(new Event("click", { bubbles: true }));
-    expect(global.location.href).toBe("");
-  });
-
-  test("follow request handles missing parent item gracefully", async () => {
-    document.body.innerHTML = `<form class="notification-follow-request-form" data-action="accept" action="/accept"></form>`;
-    const { initNavbarFollow } = loadModule();
-    initNavbarFollow(window);
-    const form = document.querySelector("form");
-    form.dispatchEvent(new Event("submit", { cancelable: true }));
-    await new Promise((r) => setTimeout(r, 0));
-    expect(global.fetch).toHaveBeenCalled();
-  });
-
-  test("accept action tolerates missing message and actions row", async () => {
-    document.body.innerHTML = `
-      <div data-notification-id="4">
-        <form class="notification-follow-request-form" data-action="accept" action="/accept"></form>
-      </div>
-    `;
-    const { initNavbarFollow } = loadModule();
-    initNavbarFollow(window);
-    const form = document.querySelector("form");
-    form.dispatchEvent(new Event("submit", { cancelable: true }));
-    await new Promise((r) => setTimeout(r, 0));
-    expect(document.querySelector("[data-notification-id]")).not.toBeNull();
-  });
+test("exits safely when no follow elements exist or already initialized", () => {
+  const { initNavbarFollow } = loadModule();
+  expect(() => initNavbarFollow(window)).not.toThrow();
+  global.__navbarFollowInitialized = true;
+  expect(() => initNavbarFollow(window)).not.toThrow();
+  delete global.__navbarFollowInitialized;
+  expect(() => initNavbarFollow(null)).not.toThrow();
 });

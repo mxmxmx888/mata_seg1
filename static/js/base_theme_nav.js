@@ -44,7 +44,9 @@ const attachThemeSync = (win, doc) => {
   const prefersDark = win.matchMedia && win.matchMedia("(prefers-color-scheme: dark)");
   applyThemeFromSystem(prefersDark, doc);
   if (prefersDark && prefersDark.addEventListener) {
-    prefersDark.addEventListener("change", () => applyThemeFromSystem(prefersDark, doc));
+    prefersDark.addEventListener("change", (event) =>
+      applyThemeFromSystem(event && typeof event.matches === "boolean" ? event : prefersDark, doc)
+    );
   }
 };
 

@@ -190,12 +190,14 @@ class FeedService:
 
     # --- internal helpers -----------------------------------------------
     def _for_you_posts_list(self, qs: QuerySet, fallback_qs: QuerySet, preferred_tags: Sequence[str]):
+        """Return posts from primary queryset or fallback when preferences yield no results."""
         posts = list(qs)
         if preferred_tags and not posts:
             return list(fallback_qs)
         return posts
 
     def _shuffle_and_slice(self, posts: List, seed, limit: int | None, offset: int) -> List:
+        """Shuffle posts using the provided seed and return a sliced subset."""
         rng = random.Random(seed)
         rng.shuffle(posts)
         if limit is None:
@@ -203,6 +205,7 @@ class FeedService:
         return posts[offset : offset + limit]
 
     def _user_base_filter(self, query: str):
+        """Build a Q filter for user search by username/first name/last name/full name."""
         username_query = query.replace(" ", "")
         return (
             Q(username__icontains=query)
@@ -213,6 +216,7 @@ class FeedService:
         )
 
     def _token_filter(self, query: str):
+        """Build a Q filter matching all tokens in the query against user fields."""
         tokens = [part for part in query.replace("@", " ").split() if part]
         if not tokens:
             return None
@@ -230,12 +234,14 @@ class FeedService:
         return combined
 
     def _safe_int(self, value):
+        """Safely convert a value to int, returning None on failure."""
         try:
             return int(value) if value is not None else None
         except (TypeError, ValueError):
             return None
 
     def _prep_within(self, post, min_val, max_val):
+        """Check if a post's prep time falls within the specified bounds."""
         try:
             prep = int(getattr(post, "prep_time_min", None))
         except (TypeError, ValueError):

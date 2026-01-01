@@ -1,4 +1,4 @@
-"""Firebase Admin client helpers with test-safe behaviors."""
+"""Firebase Admin client helpers with test-safe behaviours."""
 
 import logging
 import os
@@ -9,29 +9,26 @@ from firebase_admin import credentials, auth, firestore
 logger = logging.getLogger(__name__)
 
 def _is_mock(obj) -> bool:
-    """Return True when obj is a unittest.mock sentinel."""
+    """Return True if obj is a unittest.mock object."""
     try:
         return "unittest.mock" in type(obj).__module__
     except Exception:
         return False
 
 def _env_truthy(name: str, default: str = "false") -> bool:
-    """Return True when env var is set to a truthy value."""
+    """Return True if env var is '1', 'true', or 'yes'."""
     return os.getenv(name, default).lower() in ("1", "true", "yes")
 
 def _should_log() -> bool:
-    """Silence noisy Firebase logs during tests unless explicitly enabled."""
+    """Return True if Firebase logging should be enabled."""
     return not _is_running_tests() or _env_truthy("FIREBASE_VERBOSE_TEST_LOGS")
 
 def _is_running_tests():
-    """
-    Return True when Django is executing the test suite.
-    This prevents Firebase from attempting network calls during tests.
-    """
+    """Return True if running tests (Django/pytest)."""
     return any(arg in sys.argv for arg in ["test", "pytest"])
 
 def _should_skip_app_init() -> bool:
-    """Skip Firebase init during tests unless explicitly enabled or mocked."""
+    """Return True if Firebase app init should be skipped during tests."""
     if not _is_running_tests():
         return False
     if _env_truthy("FIREBASE_ALLOW_TEST_APP"):
@@ -39,6 +36,7 @@ def _should_skip_app_init() -> bool:
     return not _is_mock(firebase_admin.initialize_app)
 
 def _load_credential():
+    """Load Firebase credentials from FIREBASE_SERVICE_ACCOUNT_FILE env var."""
     cred_path = os.getenv("FIREBASE_SERVICE_ACCOUNT_FILE")
     if not cred_path or not os.path.exists(cred_path):
         if _should_log():
@@ -49,6 +47,7 @@ def _load_credential():
     return credentials.Certificate(cred_path)
 
 def _init_app(cred):
+    """Initialize Firebase Admin app with given credentials."""
     try:
         return firebase_admin.initialize_app(cred)
     except Exception as e:
@@ -57,9 +56,10 @@ def _init_app(cred):
 
 
 def _log_init_failure(error):
+    """Log Firebase initialization failure."""
     if not _should_log():
         return
-    message = f"Failed to initialize Firebase: {error}"
+    message = f"Failed to initialise Firebase: {error}"
     print(message)
     logger.error(message)
 
@@ -67,8 +67,8 @@ _app = None
 
 def get_app():
     """
-    Lazily initialise the Firebase Admin app.
-    Returns None if credentials are missing or invalid, preventing crashes.
+    Lazily initialize the Firebase Admin app.
+    Returns None if credentials are missing or invalid.
     """
     global _app
     if _app:
@@ -87,12 +87,10 @@ def get_app():
     return _app
 
 def get_firestore_client():
-    """Helper to get Firestore client safely."""
-    # Allow opting out entirely (useful for local dev/seed without Firestore).
+    """Return Firestore client or None if disabled/unavailable."""
     firebase_enabled = _env_truthy("FIREBASE_ENABLE_FIRESTORE", "true")
     if not firebase_enabled:
         return None
-    # Skip Firestore entirely during test runs to avoid network calls.
     if _is_running_tests():
         return None
     app = get_app()
@@ -101,12 +99,15 @@ def get_firestore_client():
     return firestore.client()
 
 def _auth_blocked_in_tests() -> bool:
+    """Return True if Firebase Auth should be blocked in tests."""
     return _is_running_tests() and not _env_truthy("FIREBASE_ALLOW_TEST_AUTH")
 
 def _auth_functions_mocked() -> bool:
+    """Return True if Firebase Auth functions are mocked."""
     return _is_mock(auth.get_user_by_email) or _is_mock(auth.create_user)
 
 def _fetch_user(email):
+    """Fetch Firebase user by email. Returns (UserRecord|None, allow_create)."""
     try:
         return auth.get_user_by_email(email), True
     except auth.UserNotFoundError:
@@ -116,6 +117,7 @@ def _fetch_user(email):
         return None, False
 
 def _create_firebase_user(email: str, display_name: str | None):
+    """Create new Firebase Auth user."""
     try:
         return auth.create_user(email=email, display_name=display_name)
     except Exception as e:
@@ -124,6 +126,7 @@ def _create_firebase_user(email: str, display_name: str | None):
 
 
 def _log_connection_error(error):
+    """Log Firebase connection error."""
     if not _should_log():
         return
     print(f"Firebase connection error: {error}")
@@ -131,6 +134,7 @@ def _log_connection_error(error):
 
 
 def _log_user_creation_error(error):
+    """Log Firebase user creation error."""
     if not _should_log():
         return
     print(f"Error creating Firebase user: {error}")
@@ -138,7 +142,8 @@ def _log_user_creation_error(error):
 
 def ensure_firebase_user(email: str, display_name: str | None = None):
     """
-    Ensure that a Firebase Auth user exists. Returns UserRecord or None.
+    Ensure Firebase Auth user exists for given email.
+    Returns UserRecord or None if unavailable.
     """
     if not email:
         return None

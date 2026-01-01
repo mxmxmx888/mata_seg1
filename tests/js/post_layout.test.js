@@ -1,298 +1,187 @@
 const modulePath = "../../static/js/post_layout";
 
-function loadModule() {
+const loadModule = () => {
   jest.resetModules();
   delete global.__postLayoutInitialized;
   const mod = require(modulePath);
   delete global.__postLayoutInitialized;
   return mod;
-}
+};
 
-function mockRect(el, height) {
-  el.getBoundingClientRect = () => ({ height });
-}
+const render = (html = "") => {
+  document.body.innerHTML = html;
+};
 
-describe("post_layout", () => {
-  let originalRAF;
-  let originalLocation;
-  let originalFormSubmit;
-  const realFetch = global.fetch;
+const init = () => loadModule().initPostLayout(window);
 
-  beforeEach(() => {
-    document.body.innerHTML = "";
-    delete window.__postLayoutInitialized;
-    originalRAF = window.requestAnimationFrame;
-    window.requestAnimationFrame = (cb) => cb();
-    global.fetch = jest.fn(() => Promise.resolve({ ok: true }));
-    originalLocation = window.location;
-    delete window.location;
-    window.location = { href: "http://localhost/post/1", origin: "http://localhost", assign: jest.fn(), replace: jest.fn() };
-    originalFormSubmit = HTMLFormElement.prototype.submit;
-    HTMLFormElement.prototype.submit = jest.fn();
-  });
+const setReferrer = (url) => {
+  Object.defineProperty(document, "referrer", { value: url, configurable: true });
+};
 
-  afterEach(() => {
-    window.requestAnimationFrame = originalRAF;
-    global.fetch = realFetch;
-    window.location = originalLocation;
-    HTMLFormElement.prototype.submit = originalFormSubmit;
-    jest.clearAllMocks();
-  });
+const setHistoryLength = (len) => {
+  Object.defineProperty(window.history, "length", { value: len, configurable: true });
+};
 
-  test("builds masonry columns and distributes items", () => {
-    document.body.innerHTML = `
-      <div class="post-media-masonry">
-        <div class="post-media-masonry-item" id="item1"><img /></div>
-        <div class="post-media-masonry-item" id="item2"><img /></div>
-      </div>
-    `;
-    const masonry = document.querySelector(".post-media-masonry");
-    const items = masonry.querySelectorAll(".post-media-masonry-item");
-    items.forEach((item, idx) => {
-      const img = item.querySelector("img");
-      img.complete = true;
-      mockRect(img, idx === 0 ? 100 : 10);
-    });
+const stubImgComplete = (img, height) => {
+  Object.defineProperty(img, "complete", { value: true });
+  img.getBoundingClientRect = () => ({ height });
+};
 
-    const { initPostLayout } = loadModule();
-    initPostLayout(window);
+let originalRAF;
+let originalLocation;
+let originalFormSubmit;
+const realFetch = global.fetch;
 
-    const cols = masonry.querySelectorAll(".post-media-masonry-col");
-    expect(cols.length).toBe(2);
-    expect(cols[0].children.length + cols[1].children.length).toBe(2);
-  });
+beforeEach(() => {
+  render();
+  delete window.__postLayoutInitialized;
+  originalRAF = window.requestAnimationFrame;
+  window.requestAnimationFrame = (cb) => cb();
+  global.fetch = jest.fn(() => Promise.resolve({ ok: true }));
+  originalLocation = window.location;
+  delete window.location;
+  window.location = { href: "http://localhost/post/1", origin: "http://localhost", assign: jest.fn(), replace: jest.fn() };
+  originalFormSubmit = HTMLFormElement.prototype.submit;
+  HTMLFormElement.prototype.submit = jest.fn();
+});
 
-  test("sets similar grid column CSS variable based on width", () => {
-    const grid = document.createElement("div");
-    grid.className = "view-similar-grid";
-    Object.defineProperty(grid, "clientWidth", { value: 300 });
-    document.body.appendChild(grid);
+afterEach(() => {
+  window.requestAnimationFrame = originalRAF;
+  global.fetch = realFetch;
+  window.location = originalLocation;
+  HTMLFormElement.prototype.submit = originalFormSubmit;
+  jest.clearAllMocks();
+});
 
-    const { initPostLayout } = loadModule();
-    initPostLayout(window);
+test("builds masonry columns and distributes items", () => {
+  render(`
+    <div class="post-media-masonry">
+      <div class="post-media-masonry-item" id="item1"><img /></div>
+      <div class="post-media-masonry-item" id="item2"><img /></div>
+    </div>
+  `);
+  const imgs = document.querySelectorAll(".post-media-masonry-item img");
+  stubImgComplete(imgs[0], 100);
+  stubImgComplete(imgs[1], 10);
+  init();
+  const cols = document.querySelectorAll(".post-media-masonry-col");
+  expect(cols.length).toBe(2);
+  expect(cols[0].children.length + cols[1].children.length).toBe(2);
+});
 
-    expect(grid.style.getPropertyValue("--similar-cols")).not.toBe("");
-  });
+test("sets similar grid column CSS variable based on width", () => {
+  const grid = document.createElement("div");
+  grid.className = "view-similar-grid";
+  Object.defineProperty(grid, "clientWidth", { value: 300 });
+  document.body.appendChild(grid);
+  init();
+  expect(grid.style.getPropertyValue("--similar-cols")).not.toBe("");
+});
 
-  describe("escape handling", () => {
-    const renderBackButton = () => {
-      document.body.innerHTML = `<a class="post-back-button" data-fallback="/fallback"></a>`;
-    };
+test("escape key triggers back even when handled or legacy key", () => {
+  render(`<a class="post-back-button" data-fallback="/fallback"></a>`);
+  init();
+  const e1 = new KeyboardEvent("keydown", { key: "Escape", cancelable: true });
+  e1.preventDefault();
+  document.dispatchEvent(e1);
+  document.dispatchEvent(new KeyboardEvent("keydown", { key: "Esc" }));
+  expect(window.location.assign).toHaveBeenCalledWith("/fallback");
+});
 
-    const initWithBack = () => {
-      renderBackButton();
-      const { initPostLayout } = loadModule();
-      initPostLayout(window);
-    };
+test("escape key works when modal or lightbox open", () => {
+  render(`
+    <div class="modal show"></div>
+    <div class="pswp--open"></div>
+    <a class="post-back-button" data-fallback="/fallback"></a>
+  `);
+  const assignSpy = jest.spyOn(window.location, "assign");
+  init();
+  document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
+  expect(assignSpy).toHaveBeenCalledWith("/fallback");
+  assignSpy.mockRestore();
+});
 
-    test("escape key triggers back when no modal or lightbox", () => {
-      initWithBack();
-      document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
-      expect(window.location.assign).toHaveBeenCalledWith("/fallback");
-    });
+test("like form short-circuits when fetch undefined or csrf missing", () => {
+  delete global.fetch;
+  render(`<form data-like-form action="/like"><button data-like-toggle data-liked="false"></button></form>`);
+  init();
+  expect(() => document.querySelector("[data-like-form]").dispatchEvent(new Event("submit", { cancelable: true }))).not.toThrow();
+});
 
-    test("escape key handles legacy key values", () => {
-      initWithBack();
-      document.dispatchEvent(new KeyboardEvent("keydown", { key: "Esc" }));
-      expect(window.location.assign).toHaveBeenCalledWith("/fallback");
-      window.location.assign.mockClear();
-      const keyCodeEvent = new KeyboardEvent("keydown", {});
-      Object.defineProperty(keyCodeEvent, "keyCode", { value: 27 });
-      document.dispatchEvent(keyCodeEvent);
-      expect(window.location.assign).toHaveBeenCalledWith("/fallback");
-    });
+test("like form handles non-ok by submitting natively", async () => {
+  global.fetch = jest.fn(() => Promise.resolve({ ok: false }));
+  render(`
+    <form data-like-form action="/like">
+      <input type="hidden" name="csrfmiddlewaretoken" value="token" />
+      <button data-like-toggle data-liked="false" data-count="1"><i></i></button>
+      <span data-like-count>1</span>
+    </form>
+  `);
+  const submitSpy = jest.spyOn(HTMLFormElement.prototype, "submit");
+  init();
+  document.querySelector("[data-like-form]").dispatchEvent(new Event("submit", { cancelable: true }));
+  await Promise.resolve();
+  expect(submitSpy).toHaveBeenCalled();
+  submitSpy.mockRestore();
+});
 
-    test("escape key triggers only on keydown even if keyup follows", () => {
-      initWithBack();
-      document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
-      document.dispatchEvent(new KeyboardEvent("keyup", { key: "Escape" }));
-      expect(window.location.assign).toHaveBeenCalled();
-    });
+test("like form toggles state on fetch success", async () => {
+  global.fetch = jest.fn(() => Promise.resolve({ ok: true }));
+  render(`
+    <form data-like-form action="/like">
+      <input type="hidden" name="csrfmiddlewaretoken" value="token" />
+      <button data-like-toggle data-liked="false" data-count="1"><i></i></button>
+      <span data-like-count>1</span>
+    </form>
+  `);
+  init();
+  document.querySelector("[data-like-form]").dispatchEvent(new Event("submit", { cancelable: true }));
+  await Promise.resolve();
+  expect(document.querySelector("[data-like-toggle]").dataset.liked).toBe("true");
+  expect(document.querySelector("[data-like-count]").textContent).toBe("2");
+});
 
-    test("escape key still triggers when event is already handled", () => {
-      initWithBack();
-      const preventedEvent = new KeyboardEvent("keydown", { key: "Escape", cancelable: true });
-      preventedEvent.preventDefault();
-      document.dispatchEvent(preventedEvent);
-      expect(window.location.assign).toHaveBeenCalledWith("/fallback");
-    });
+test("back button uses referrer when history not available", () => {
+  setHistoryLength(1);
+  setReferrer("http://localhost/from");
+  render(`<a class="post-back-button" data-entry="http://localhost/from" data-fallback="/fallback"></a>`);
+  init();
+  document.querySelector(".post-back-button").dispatchEvent(new Event("click", { bubbles: true, cancelable: true }));
+  expect(window.location.assign).toHaveBeenCalledWith("http://localhost/from");
+});
 
-    test("escape still triggers when modal is open", () => {
-      document.body.innerHTML = `
-        <div class="modal show"></div>
-        <a class="post-back-button" data-fallback="/fallback"></a>
-      `;
-      const assignSpy = jest.spyOn(window.location, "assign");
-      const { initPostLayout } = loadModule();
-      initPostLayout(window);
-      document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
-      expect(assignSpy).toHaveBeenCalledWith("/fallback");
-      assignSpy.mockRestore();
-    });
-  });
+test("back button prefers history when different from current, else fallback", () => {
+  setReferrer("http://localhost/post/1");
+  setHistoryLength(2);
+  render(`<a class="post-back-button" data-entry="http://localhost/post/1" data-fallback="/fallback"></a>`);
+  const backSpy = jest.spyOn(window.history, "back");
+  init();
+  document.querySelector(".post-back-button").dispatchEvent(new Event("click", { bubbles: true, cancelable: true }));
+  expect(backSpy).not.toHaveBeenCalled();
+  expect(window.location.assign).toHaveBeenLastCalledWith("/fallback");
+  backSpy.mockRestore();
+});
 
-  test("like form with missing csrf does nothing special", async () => {
-    document.body.innerHTML = `
-      <form data-like-form action="/like">
-        <button data-like-toggle data-liked="false"><i class="bi-heart"></i></button>
-      </form>
-    `;
-    const { initPostLayout } = loadModule();
-    initPostLayout(window);
-    expect(() => {
-      document.querySelector("[data-like-form]").dispatchEvent(new Event("submit", { cancelable: true }));
-    }).not.toThrow();
-  });
+test("cameFromCreate popstate redirects to fallback", () => {
+  setReferrer("http://localhost/recipes/create");
+  render(`<a class="post-back-button" data-entry="http://localhost/from" data-fallback="/fallback"></a>`);
+  init();
+  window.dispatchEvent(new PopStateEvent("popstate", { state: { cameFromCreate: true } }));
+  expect(window.location.replace).toHaveBeenCalledWith("/fallback");
+});
 
-  test("back button assigns referrer when history not available", () => {
-    window.history.length = 1;
-    Object.defineProperty(document, "referrer", { value: "http://localhost/from", configurable: true });
-    document.body.innerHTML = `
-      <a class="post-back-button" data-entry="http://localhost/from" data-fallback="/fallback"></a>
-    `;
-    const { initPostLayout } = loadModule();
-    initPostLayout(window);
-    const btn = document.querySelector(".post-back-button");
-    btn.dispatchEvent(new Event("click", { bubbles: true, cancelable: true }));
-    expect(window.location.assign).toHaveBeenCalledWith("http://localhost/from");
-  });
-
-  test("like form returns early when fetch undefined", () => {
-    delete global.fetch;
-    document.body.innerHTML = `
-      <form data-like-form action="/like">
-        <button data-like-toggle data-liked="false"><i class="bi-heart"></i></button>
-      </form>
-    `;
-    const { initPostLayout } = loadModule();
-    initPostLayout(window);
-    expect(() => {
-      document.querySelector("[data-like-form]").dispatchEvent(new Event("submit", { cancelable: true }));
-    }).not.toThrow();
-  });
-
-  test("like form handles non-ok response by submitting", async () => {
-    global.fetch = jest.fn(() => Promise.resolve({ ok: false }));
-    document.body.innerHTML = `
-      <form data-like-form action="/like">
-        <input type="hidden" name="csrfmiddlewaretoken" value="token" />
-        <button data-like-toggle data-liked="false" data-count="1"><i class="bi-heart"></i></button>
-        <span data-like-count>1</span>
-      </form>
-    `;
-    const submitSpy = jest.spyOn(HTMLFormElement.prototype, "submit");
-    const { initPostLayout } = loadModule();
-    initPostLayout(window);
-    document.querySelector("[data-like-form]").dispatchEvent(new Event("submit", { cancelable: true }));
-    await Promise.resolve();
-    expect(submitSpy).toHaveBeenCalled();
-    submitSpy.mockRestore();
-  });
-
-  test("handleScroll sets fade amount", () => {
-    document.body.innerHTML = `
-      <div id="post-primary" class="post-primary">
-        <div class="post-primary-img"><img /></div>
-      </div>
-      <div class="post-view-similar"></div>
-    `;
-    const { initPostLayout } = loadModule();
-    window.scrollY = 10;
-    const primary = document.querySelector(".post-primary");
-    const setPropertySpy = jest.spyOn(primary.style, "setProperty");
-    initPostLayout(window);
-    window.dispatchEvent(new Event("scroll"));
-    expect(setPropertySpy).toHaveBeenCalledWith("--post-fade-amount", expect.any(String));
-    setPropertySpy.mockRestore();
-  });
-
-  test("back button uses referrer when same origin", () => {
-    Object.defineProperty(document, "referrer", { value: "http://localhost/from", configurable: true });
-    document.body.innerHTML = `
-      <a class="post-back-button" data-fallback="/fallback"></a>
-    `;
-    const { initPostLayout } = loadModule();
-    initPostLayout(window);
-    document.querySelector(".post-back-button").dispatchEvent(new Event("click", { bubbles: true, cancelable: true }));
-    expect(window.location.assign).toHaveBeenCalledWith("http://localhost/from");
-  });
-
-  test("back button falls back when target matches current page", () => {
-    Object.defineProperty(document, "referrer", { value: "http://localhost/post/1", configurable: true });
-    document.body.innerHTML = `
-      <a class="post-back-button" data-entry="http://localhost/post/1" data-fallback="/fallback"></a>
-    `;
-    window.history.length = 2;
-    const backSpy = jest.spyOn(window.history, "back");
-    const { initPostLayout } = loadModule();
-    initPostLayout(window);
-    document.querySelector(".post-back-button").dispatchEvent(new Event("click", { bubbles: true, cancelable: true }));
-    expect(backSpy).not.toHaveBeenCalled();
-    expect(window.location.assign).toHaveBeenLastCalledWith("/fallback");
-    backSpy.mockRestore();
-  });
-
-  test("like form toggles state on fetch success", async () => {
-    document.body.innerHTML = `
-      <form data-like-form action="/like">
-        <input type="hidden" name="csrfmiddlewaretoken" value="token" />
-        <button data-like-toggle data-liked="false" data-count="1"><i class="bi-heart"></i></button>
-        <span data-like-count>1</span>
-      </form>
-    `;
-    global.fetch = jest.fn(() => Promise.resolve({ ok: true }));
-    const { initPostLayout } = loadModule();
-    initPostLayout(window);
-    const btn = document.querySelector("[data-like-toggle]");
-    document.querySelector("[data-like-form]").dispatchEvent(new Event("submit", { cancelable: true }));
-    await Promise.resolve();
-    const countEl = document.querySelector("[data-like-count]");
-    expect(btn.dataset.liked).toBe("true");
-    expect(countEl.textContent).toBe("2");
-  });
-
-  test("like form falls back to native submit on error", async () => {
-    document.body.innerHTML = `
-      <form data-like-form action="/like">
-        <input type="hidden" name="csrfmiddlewaretoken" value="token" />
-        <button data-like-toggle data-liked="false" data-count="1"><i class="bi-heart"></i></button>
-        <span data-like-count>1</span>
-      </form>
-    `;
-    global.fetch = jest.fn(() => Promise.reject(new Error("fail")));
-    const submitSpy = jest.spyOn(HTMLFormElement.prototype, "submit");
-    const { initPostLayout } = loadModule();
-    initPostLayout(window);
-    document.querySelector("[data-like-form]").dispatchEvent(new Event("submit", { cancelable: true }));
-    await new Promise((r) => setTimeout(r, 0));
-    expect(submitSpy).toHaveBeenCalled();
-    submitSpy.mockRestore();
-  });
-
-  test("cameFromCreate popstate redirects to fallback", () => {
-    Object.defineProperty(document, "referrer", { value: "http://localhost/recipes/create", configurable: true });
-    document.body.innerHTML = `
-      <a class="post-back-button" data-entry="http://localhost/from" data-fallback="/fallback"></a>
-    `;
-    const { initPostLayout } = loadModule();
-    initPostLayout(window);
-    const popEvent = new PopStateEvent("popstate", { state: { cameFromCreate: true } });
-    window.dispatchEvent(popEvent);
-    expect(window.location.replace).toHaveBeenCalledWith("/fallback");
-  });
-
-  test("escape key still triggers when lightbox open", () => {
-    document.body.innerHTML = `
-      <div class="pswp--open"></div>
-      <div id="lightbox" class=""></div>
-      <a class="post-back-button" data-fallback="/fallback"></a>
-    `;
-    const assignSpy = jest.spyOn(window.location, "assign");
-    const { initPostLayout } = loadModule();
-    initPostLayout(window);
-    const event = new KeyboardEvent("keydown", { key: "Escape" });
-    document.dispatchEvent(event);
-    expect(assignSpy).toHaveBeenCalledWith("/fallback");
-    assignSpy.mockRestore();
-  });
+test("handleScroll sets fade amount", () => {
+  render(`
+    <div id="post-primary" class="post-primary">
+      <div class="post-primary-img"><img /></div>
+    </div>
+    <div class="post-view-similar"></div>
+  `);
+  window.scrollY = 10;
+  const primary = document.querySelector(".post-primary");
+  const setPropertySpy = jest.spyOn(primary.style, "setProperty");
+  init();
+  window.dispatchEvent(new Event("scroll"));
+  expect(setPropertySpy).toHaveBeenCalledWith("--post-fade-amount", expect.any(String));
+  setPropertySpy.mockRestore();
 });

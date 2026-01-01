@@ -24,12 +24,14 @@ def _should_log():
     return not _is_running_tests() or _env_truthy("FIREBASE_VERBOSE_TEST_LOGS")
 
 def _display_name_for(user):
+    """Extract a display name from user's full name, username, or email."""
     full_name = ""
     if hasattr(user, "get_full_name"):
         full_name = (user.get_full_name() or "").strip()
     return full_name or (getattr(user, "username", "") or "").strip() or getattr(user, "email", "") or ""
 
 def _sync_user_to_firebase(user, context):
+    """Sync user email and display name to Firebase Authentication."""
     email = getattr(user, "email", None)
     if not email:
         return
@@ -40,6 +42,7 @@ def _sync_user_to_firebase(user, context):
 
 
 def _log_sync_warning(context, error):
+    """Log Firebase sync warnings when verbose logging is enabled."""
     if not _should_log():
         return
     logger.warning("Firebase sync (%s) failed: %s", context, error)
@@ -89,6 +92,7 @@ def sync_user_data_to_firestore(sender, instance, created, **kwargs):
         _log_sync_error(e)
 
 def _user_firestore_payload(instance):
+    """Build a dictionary payload for syncing user data to Firestore."""
     return {
         "username": instance.username,
         "email": instance.email,
@@ -98,11 +102,13 @@ def _user_firestore_payload(instance):
     }
 
 def _log_firestore_missing():
+    """Log a warning when Firestore database is not found."""
     if _should_log():  # pragma: no cover - defensive logging
         logger.warning(
             "Firestore database missing for project. Create it in GCP or set FIREBASE_ENABLE_FIRESTORE=false to disable syncing."
         )
 
 def _log_sync_error(error):
+    """Log Firestore sync errors when verbose logging is enabled."""
     if _should_log():
         logger.warning("Error syncing to Firestore: %s", error)

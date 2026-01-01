@@ -17,6 +17,10 @@ class ShoppingFieldHelpers:
         return [line for line in lines if line]
 
     def _parse_shop_line(self, line: str):
+        """Parse a shopping link line into name and URL.
+        
+        Format: 'name' or 'name|url'. Returns (name, url) tuple.
+        """
         raw = line.strip()
         if not raw:
             return None, None
@@ -26,6 +30,7 @@ class ShoppingFieldHelpers:
         return raw, ""
 
     def _normalize_shop_url(self, url: str | None):
+        """Normalize URL by adding https:// prefix if missing."""
         if not url:
             return None
         if url.lower().startswith(("http://", "https://")):
@@ -48,6 +53,7 @@ class ShoppingFieldHelpers:
         return items
 
     def _enforce_link_limit(self, link_count: int):
+        """Add validation error if link_count exceeds MAX_SHOPPING_LINKS."""
         if link_count <= MAX_SHOPPING_LINKS:
             return
         self.add_error(
@@ -58,6 +64,7 @@ class ShoppingFieldHelpers:
         )
 
     def _existing_shop_image_count(self):
+        """Count existing shopping images for the recipe instance."""
         if not getattr(self.instance, "pk", None):
             return 0
         if getattr(getattr(self.instance, "_state", None), "adding", True):
@@ -70,6 +77,7 @@ class ShoppingFieldHelpers:
         ).count()
 
     def _enforce_shop_image_requirements(self, link_count: int):
+        """Validate that enough shopping images are provided for all links."""
         uploads = self.files.getlist("shop_images")
         missing = link_count - (self._existing_shop_image_count() + len(uploads))
         if link_count and missing > 0:
@@ -81,6 +89,7 @@ class ShoppingFieldHelpers:
             )
 
     def _existing_shop_images_for(self, recipe):
+        """Get list of existing shopping ingredients with images for the recipe."""
         return list(
             Ingredient.objects.filter(
                 recipe_post=recipe,
@@ -91,6 +100,7 @@ class ShoppingFieldHelpers:
         )
 
     def _next_shop_image(self, shop_images, existing_shop_images):
+        """Get next available shopping image from new uploads or existing images."""
         if shop_images:
             return shop_images.pop(0)
         if existing_shop_images:
@@ -98,6 +108,10 @@ class ShoppingFieldHelpers:
         return None
 
     def _add_standard_ingredients(self, recipe, lines, seen_names, start_position: int):
+        """Create standard (non-shopping) ingredients from lines.
+        
+        Returns the last position used.
+        """
         position = start_position
         for line in lines:
             name = line.strip()
@@ -118,6 +132,7 @@ class ShoppingFieldHelpers:
         return position
 
     def _iter_unique_shopping_items(self, shopping_links, seen_names):
+        """Yield unique (name, url) tuples from shopping_links, skipping duplicates."""
         for item in shopping_links:
             name = (item.get("name") or "").strip()
             if not name:
@@ -137,6 +152,10 @@ class ShoppingFieldHelpers:
         seen_names,
         start_position: int,
     ):
+        """Create shopping ingredients with images from parsed links.
+        
+        Returns the last position used.
+        """
         position = start_position
         for name, url in self._iter_unique_shopping_items(shopping_links, seen_names):
             position += 1

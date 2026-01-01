@@ -82,9 +82,11 @@ def collections_modal_state(user, recipe):
     return collections
 
 def _favourites_for(user):
+    """Return all Favourite collections for a user with prefetched items and cover posts."""
     return Favourite.objects.filter(user=user).prefetch_related("items__recipe_post", "cover_post")
 
 def _collection_entry(fav, recipe):
+    """Build a dictionary entry representing a collection's state relative to a recipe."""
     items = list(fav.items.all())
     saved_here = any(item.recipe_post_id == recipe.id for item in items)
     cover_post = fav.cover_post or _first_item_post(items)
@@ -100,12 +102,14 @@ def _collection_entry(fav, recipe):
     }
 
 def _first_item_post(items):
+    """Return the first recipe post found in a list of FavouriteItems, or None."""
     for item in items:
         if item.recipe_post:
             return item.recipe_post
     return None
 
 def _last_saved_at(items, default):
+    """Find the most recent added_at timestamp from items, or return default."""
     latest = default
     for item in items:
         if item.added_at and (latest is None or item.added_at > latest):
@@ -195,6 +199,7 @@ def build_recipe_context(recipe, request_user, comments):
     )
 
 def _merge_recipe_context(recipe, comments, collections_for_modal, reactions, media, meta, ingredients_data, steps):
+    """Merge all recipe detail components into a single context dictionary."""
     image_url, gallery_images = media
     ingredients, shop_ingredients = ingredients_data
     return {
@@ -218,6 +223,7 @@ def _merge_recipe_context(recipe, comments, collections_for_modal, reactions, me
     }
 
 def _meta_context(recipe, meta):
+    """Extract metadata fields into a flat dictionary for template context."""
     return {
         "author_handle": meta["author_handle"],
         "title": recipe.title,
@@ -231,6 +237,7 @@ def _meta_context(recipe, meta):
     }
 
 def _reaction_context(reactions):
+    """Extract reaction fields into a flat dictionary for template context."""
     return {
         "user_liked": reactions["user_liked"],
         "user_saved": reactions["user_saved"],

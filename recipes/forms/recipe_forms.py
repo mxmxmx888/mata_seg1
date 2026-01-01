@@ -197,6 +197,7 @@ class RecipePostForm(ShoppingFieldHelpers, forms.ModelForm):
             self._prefill_steps(instance)
 
     def _set_nutrition_placeholder(self):
+        """Set placeholder text for the nutrition field."""
         nutrition_field = self.fields.get("nutrition")
         if not nutrition_field:
             return
@@ -206,17 +207,20 @@ class RecipePostForm(ShoppingFieldHelpers, forms.ModelForm):
         )
 
     def _prefill_tags(self, instance):
+        """Populate the tags_text field from existing instance tags (excluding category tags)."""
         tags = getattr(instance, "tags", None) or []
         tag_list = [tag for tag in tags if not str(tag).lower().startswith("category:")]
         if tag_list:
             self.fields["tags_text"].initial = ", ".join(tag_list)
 
     def _prefill_serves(self, instance):
+        """Populate the serves field from existing instance data."""
         serves = getattr(instance, "serves", 0) or 0
         if serves:
             self.fields["serves"].initial = serves  # pragma: no cover - optional initial value
 
     def _prefill_ingredients(self, instance):
+        """Populate ingredients_text and shopping_links_text from existing ingredients."""
         ingredients_qs = Ingredient.objects.filter(recipe_post=instance).order_by("position")
         ingredient_lines = []
         shopping_lines = []
@@ -229,6 +233,7 @@ class RecipePostForm(ShoppingFieldHelpers, forms.ModelForm):
         self.fields["shopping_links_text"].initial = "\n".join(shopping_lines)
 
     def _prefill_steps(self, instance):
+        """Populate steps_text from existing recipe steps."""
         steps_qs = RecipeStep.objects.filter(recipe_post=instance).order_by("position")
         self.fields["steps_text"].initial = "\n".join(step.description for step in steps_qs)
 

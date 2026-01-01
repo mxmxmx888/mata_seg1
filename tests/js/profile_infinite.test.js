@@ -7,6 +7,59 @@ function loadModule() {
 }
 
 const flushPromises = () => new Promise((resolve) => setTimeout(resolve, 0));
+const buildPostsDom = (nextPage = "not-a-number") => {
+  document.body.innerHTML = `
+      <div id="profile-posts-grid">
+        <div id="profile-posts-col-1"></div>
+        <div id="profile-posts-col-2"></div>
+        <div id="profile-posts-col-3"></div>
+      </div>
+      <div id="profile-posts-sentinel" data-endpoint="/profile/posts" data-has-more="true" data-next-page="${nextPage}"></div>
+    `;
+};
+
+function setupPostsInfinite({ fetchHtml = "<div class='my-recipe-card'></div>", nextPage } = {}) {
+  const { initProfileInfinite } = loadModule();
+  window.history.scrollRestoration = "auto";
+  window.InfiniteList = { create: jest.fn() };
+  global.fetch = jest.fn(() => Promise.resolve({ text: () => Promise.resolve(fetchHtml) }));
+  buildPostsDom(nextPage);
+  initProfileInfinite(window, document);
+  return window.InfiniteList.create.mock.calls[0][0];
+}
+
+function buildFollowModal({ id, listType, endpoint, nextPage = "2", hasMore = "true" }) {
+  document.body.innerHTML = `
+      <div id="${id}" class="modal">
+        <div class="modal-body" data-list-type="${listType}" data-endpoint="${endpoint}" data-has-more="${hasMore}" data-next-page="${nextPage}">
+          <ul class="follow-list-items"><li id="existing"></li></ul>
+          <div class="follow-list-sentinel"></div>
+        </div>
+      </div>
+    `;
+}
+
+function setupFollowList({ id, listType, endpoint, response, attachAjaxModalForms = jest.fn(), applyCloseFriendsFilter = jest.fn(), modalSuccessHandlers = { followersModal: jest.fn() } }) {
+  const { initProfileInfinite } = loadModule();
+  const createSpy = jest.fn();
+  window.InfiniteList = { create: createSpy };
+  global.fetch = jest.fn(() => Promise.resolve(response));
+  buildFollowModal({ id, listType, endpoint });
+  initProfileInfinite(window, document, { attachAjaxModalForms, applyCloseFriendsFilter, modalSuccessHandlers });
+  document.getElementById(id).dispatchEvent(new Event("shown.bs.modal"));
+  return { options: createSpy.mock.calls[0][0], attachAjaxModalForms, applyCloseFriendsFilter };
+}
+
+const followersResponse = () => ({
+  ok: true,
+  json: () =>
+    Promise.resolve({
+      html: `<li data-id="a"></li><li data-id="b"></li>`,
+      has_more: true,
+      next_page: 3,
+      total: 3,
+    }),
+});
 
 describe("profile_infinite", () => {
   let originalFetch;
@@ -42,27 +95,9 @@ describe("profile_infinite", () => {
   });
 
   test("sets scroll restoration, parses next page, and guards append", async () => {
-    const { initProfileInfinite } = loadModule();
-    window.history.scrollRestoration = "auto";
-    window.InfiniteList = { create: jest.fn() };
-    global.fetch = jest.fn(() => Promise.resolve({ text: () => Promise.resolve("<div class='my-recipe-card'></div>") }));
-
-    document.body.innerHTML = `
-      <div id="profile-posts-grid">
-        <div id="profile-posts-col-1"></div>
-        <div id="profile-posts-col-2"></div>
-        <div id="profile-posts-col-3"></div>
-      </div>
-      <div id="profile-posts-sentinel" data-endpoint="/profile/posts" data-has-more="true" data-next-page="not-a-number"></div>
-    `;
-
-    initProfileInfinite(window, document);
-
+    const options = setupPostsInfinite();
     expect(window.history.scrollRestoration).toBe("manual");
     expect(window.scrollTo).toHaveBeenCalledWith(0, 0);
-    expect(window.InfiniteList.create).toHaveBeenCalledTimes(1);
-
-    const options = window.InfiniteList.create.mock.calls[0][0];
     expect(options.nextPage).toBeNull();
     expect(options.append("")).toBe(0);
     const result = await options.fetchPage({ page: 5 });
@@ -71,39 +106,14 @@ describe("profile_infinite", () => {
   });
 
   test("creates follow list infinite loader when modal is shown", async () => {
-    const { initProfileInfinite } = loadModule();
-    const attachAjaxModalForms = jest.fn();
-    const applyCloseFriendsFilter = jest.fn();
     const modalSuccessHandlers = { followersModal: jest.fn() };
-    const createSpy = jest.fn();
-    window.InfiniteList = { create: createSpy };
-    global.fetch = jest.fn(() =>
-      Promise.resolve({
-        ok: true,
-        json: () =>
-          Promise.resolve({
-            html: `<li data-id="a"></li><li data-id="b"></li>`,
-            has_more: true,
-            next_page: 3,
-            total: 3,
-          }),
-      })
-    );
-
-    document.body.innerHTML = `
-      <div id="followersModal" class="modal">
-        <div class="modal-body" data-list-type="followers" data-endpoint="/followers" data-has-more="true" data-next-page="2">
-          <ul class="follow-list-items"><li id="existing"></li></ul>
-          <div class="follow-list-sentinel"></div>
-        </div>
-      </div>
-    `;
-
-    initProfileInfinite(window, document, { attachAjaxModalForms, applyCloseFriendsFilter, modalSuccessHandlers });
-    document.getElementById("followersModal").dispatchEvent(new Event("shown.bs.modal"));
-
-    expect(createSpy).toHaveBeenCalledTimes(1);
-    const options = createSpy.mock.calls[0][0];
+    const { options, attachAjaxModalForms, applyCloseFriendsFilter } = setupFollowList({
+      id: "followersModal",
+      listType: "followers",
+      endpoint: "/followers",
+      response: followersResponse(),
+      modalSuccessHandlers,
+    });
     const payload = await options.fetchPage({ page: 2 });
     expect(global.fetch).toHaveBeenCalledWith("http://localhost/followers?page=2", {
       headers: { "X-Requested-With": "XMLHttpRequest" },
@@ -119,26 +129,14 @@ describe("profile_infinite", () => {
   });
 
   test("follow fetcher handles failures gracefully", async () => {
-    const { initProfileInfinite } = loadModule();
     const attachAjaxModalForms = jest.fn();
-    const createSpy = jest.fn();
-    window.InfiniteList = { create: createSpy };
-    global.fetch = jest.fn(() => Promise.resolve({ ok: false }));
-
-    document.body.innerHTML = `
-      <div id="followingModal" class="modal">
-        <div class="modal-body" data-list-type="following" data-endpoint="/following" data-has-more="true" data-next-page="5">
-          <ul class="follow-list-items"><li id="keep"></li></ul>
-          <div class="follow-list-sentinel"></div>
-        </div>
-      </div>
-    `;
-
-    initProfileInfinite(window, document, { attachAjaxModalForms });
-    document.getElementById("followingModal").dispatchEvent(new Event("shown.bs.modal"));
-
-    expect(createSpy).toHaveBeenCalledTimes(1);
-    const options = createSpy.mock.calls[0][0];
+    const { options } = setupFollowList({
+      id: "followingModal",
+      listType: "following",
+      endpoint: "/following",
+      response: { ok: false },
+      attachAjaxModalForms,
+    });
     const payload = await options.fetchPage({ page: 5 });
 
     expect(payload).toEqual({ html: "", hasMore: false, nextPage: null, total: null });
