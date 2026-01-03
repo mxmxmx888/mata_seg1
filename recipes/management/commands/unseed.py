@@ -1,4 +1,5 @@
 from django.core.management.base import BaseCommand, CommandError
+from django.db import connection, transaction
 from recipes.models import User
 
 class Command(BaseCommand):
@@ -14,7 +15,7 @@ class Command(BaseCommand):
             `python manage.py help unseed`.
     """
     
-    help = 'Seeds the database with sample data'
+    help = 'Removes seeded sample data'
 
     def handle(self, *args, **options):
         """
@@ -31,4 +32,19 @@ class Command(BaseCommand):
             None
         """
 
-        User.objects.filter(is_staff=False).delete()
+        non_staff_users = User.objects.filter(is_staff=False)
+
+        with transaction.atomic():
+            # Legacy "follows" table is unmanaged, so delete dependent rows manually
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    """
+                    DELETE FROM follows
+                    WHERE author_id IN (SELECT id FROM recipes_user WHERE is_staff = 0)
+                       OR followee_id IN (SELECT id FROM recipes_user WHERE is_staff = 0)
+                    """
+                )
+
+            deleted_count, _ = non_staff_users.delete()
+
+        self.stdout.write(self.style.SUCCESS(f"Deleted {deleted_count} non-staff users and related data."))

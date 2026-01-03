@@ -54,7 +54,7 @@ class Command(SeedHelpers, BaseCommand):
             self.reset_media_dirs()
         self.create_users()
         self.seed_followers_and_follows(follow_k=5)
-        self.seed_recipe_posts(per_user=25)
+        self.seed_recipe_posts(per_user=2)
         self.seed_recipe_steps(min_steps=4, max_steps=7)
         self.seed_favourites(per_user=2)
         self.seed_ingredients()
