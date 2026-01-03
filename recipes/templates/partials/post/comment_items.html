@@ -17,9 +17,18 @@
   </div>
   <div class="comment-actions">
     {% if request.user == comment.user %}
-    <form action="{% url 'delete_comment' comment.id %}" method="post" onsubmit="return confirm('Delete this comment?');">
+    <form
+      action="{% url 'delete_comment' comment.id %}"
+      method="post"
+      data-comment-delete-form
+    >
       {% csrf_token %}
-      <button type="submit" class="comment-action-btn" title="Delete">
+      <button
+        type="button"
+        class="comment-action-btn"
+        title="Delete"
+        data-comment-delete-trigger
+      >
         <i class="bi bi-trash"></i>
       </button>
     </form>

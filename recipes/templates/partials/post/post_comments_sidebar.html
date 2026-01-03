@@ -164,6 +164,42 @@
   </div>
 </div>
 
+<div
+  class="modal fade delete-post-modal delete-comment-modal"
+  id="delete-comment-modal"
+  tabindex="-1"
+  aria-labelledby="delete-comment-modal-title"
+  aria-describedby="delete-comment-modal-text"
+  aria-hidden="true"
+  role="dialog"
+  aria-modal="true"
+  data-bs-backdrop="false"
+  data-bs-scroll="true"
+>
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-body">
+        <h2 class="delete-post-modal-title" id="delete-comment-modal-title">Delete comment?</h2>
+        <p class="delete-post-modal-text" id="delete-comment-modal-text">
+          This will permanently delete your comment. You can't undo this action.
+        </p>
+        <div class="delete-post-modal-actions">
+          <button
+            type="button"
+            class="btn delete-post-confirm w-100"
+            data-comment-delete-confirm
+          >
+            Delete
+          </button>
+          <button type="button" class="btn delete-post-cancel w-100" data-bs-dismiss="modal">
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
   <script>
   (function() {
     const doc = document;
@@ -225,4 +261,105 @@
 
     observer.observe(sentinel);
   })();
+</script>
+
+<script>
+(function () {
+  const doc = document;
+  const modalEl = doc.getElementById("delete-comment-modal");
+  if (!modalEl) return;
+
+  if (modalEl.parentElement !== doc.body) {
+    doc.body.appendChild(modalEl);
+  }
+
+  const bsModal = window.bootstrap && window.bootstrap.Modal
+    ? window.bootstrap.Modal.getOrCreateInstance(modalEl)
+    : null;
+  const confirmBtn = modalEl.querySelector("[data-comment-delete-confirm]");
+  const cancelBtn = modalEl.querySelector(".delete-post-cancel");
+  let pendingForm = null;
+
+  modalEl.addEventListener("hidden.bs.modal", () => {
+    pendingForm = null;
+  });
+
+  const removeBackdrop = () => {
+    doc.querySelectorAll('[data-comment-backdrop="true"]').forEach((el) => el.remove());
+  };
+
+  const hideFallbackModal = () => {
+    modalEl.classList.remove("show");
+    modalEl.style.display = "none";
+    modalEl.setAttribute("aria-hidden", "true");
+    doc.body.classList.remove("modal-open");
+    removeBackdrop();
+  };
+
+  const showFallbackModal = () => {
+    modalEl.style.display = "block";
+    modalEl.classList.add("show");
+    modalEl.removeAttribute("aria-hidden");
+    doc.body.classList.add("modal-open");
+    const backdrop = doc.createElement("div");
+    backdrop.className = "modal-backdrop fade show";
+    backdrop.dataset.commentBackdrop = "true";
+    doc.body.appendChild(backdrop);
+    confirmBtn?.focus();
+  };
+
+  const submitPending = () => {
+    if (!pendingForm) return;
+    const formToSubmit = pendingForm;
+    pendingForm = null;
+    formToSubmit.submit();
+  };
+
+  confirmBtn?.addEventListener("click", () => {
+    if (!pendingForm) return;
+    const formToSubmit = pendingForm;
+    if (bsModal) {
+      bsModal.hide();
+    } else {
+      hideFallbackModal();
+    }
+    pendingForm = formToSubmit;
+    submitPending();
+  });
+
+  cancelBtn?.addEventListener("click", () => {
+    if (bsModal) return;
+    hideFallbackModal();
+    pendingForm = null;
+  });
+
+  const list = doc.getElementById("post-comments-list");
+  if (!list) return;
+
+  const openModalForForm = (form) => {
+    pendingForm = form;
+    if (bsModal) {
+      bsModal.show();
+      confirmBtn?.focus();
+      return;
+    }
+    showFallbackModal();
+  };
+
+  list.addEventListener("click", (event) => {
+    const trigger = event.target.closest("[data-comment-delete-trigger]");
+    if (!trigger) return;
+    const form = trigger.closest("[data-comment-delete-form]");
+    if (!form) return;
+    event.preventDefault();
+    openModalForForm(form);
+  });
+
+  list.addEventListener("submit", (event) => {
+    const form = event.target.closest("[data-comment-delete-form]");
+    if (!form) return;
+    event.preventDefault();
+    openModalForForm(form);
+  });
+})();
 </script>

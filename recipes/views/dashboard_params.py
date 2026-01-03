@@ -19,13 +19,17 @@ def _is_ajax(request):
 
 def _has_search(mode, q, ingredient_q, have_list, min_prep, max_prep, category):
     """Return True when any search filter is active."""
-    return mode == "search" or bool(
-        q
-        or ingredient_q
-        or have_list
-        or min_prep
-        or max_prep
-        or (category and category != "all")
+    if mode == "search":
+        return True
+    return any(
+        (
+            q,
+            ingredient_q,
+            have_list,
+            min_prep,
+            max_prep,
+            category and category != "all",
+        )
     )
 
 

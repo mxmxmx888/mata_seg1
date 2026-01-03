@@ -1,9 +1,10 @@
-from django.shortcuts import get_object_or_404, redirect, render
+from django.shortcuts import redirect, render
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from recipes.models.recipe_post import RecipePost
-from recipes.models.comment import Comment
 from recipes.forms.report_form import ReportForm
+from recipes.services.reporting import ReportingService
+
+reporting_service = ReportingService()
 
 @login_required
 def report_content(request, content_type, object_id):
@@ -11,7 +12,7 @@ def report_content(request, content_type, object_id):
     Generic view to report either a recipe or a comment.
     content_type should be 'recipe' or 'comment'.
     """
-    recipe, comment = _get_report_target(content_type, object_id)
+    recipe, comment = reporting_service.report_for(content_type, object_id)
     if not (recipe or comment):
         messages.error(request, "Invalid content type.")
         return redirect('dashboard')
@@ -32,11 +33,7 @@ def report_content(request, content_type, object_id):
 
 def _get_report_target(content_type, object_id):
     """Identify the object being reported; return (recipe, comment) pair."""
-    if content_type == 'recipe':
-        return get_object_or_404(RecipePost, id=object_id), None
-    if content_type == 'comment':
-        return None, get_object_or_404(Comment, id=object_id)
-    return None, None
+    return reporting_service.report_for(content_type, object_id)
 
 
 def _handle_report_post(request, recipe, comment):
@@ -45,11 +42,7 @@ def _handle_report_post(request, recipe, comment):
     if not form.is_valid():
         return None, form
 
-    report = form.save(commit=False)
-    report.reporter = request.user
-    report.recipe_post = recipe
-    report.comment = comment
-    report.save()
+    reporting_service.save_report(form, request.user, recipe=recipe, comment=comment)
     messages.success(request, "Thank you. The content has been reported to administrators.")
 
     if recipe:

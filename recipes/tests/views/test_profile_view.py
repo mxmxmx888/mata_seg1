@@ -5,8 +5,8 @@ from django.test import TestCase
 from django.urls import reverse
 from recipes.forms import UserForm
 from recipes.models import User, Favourite, FavouriteItem, RecipePost, Follower, CloseFriend, FollowRequest
-from recipes.views import profile_view
-from recipes.views import profile_view_logic as logic
+import recipes.views.profile_view as profile_view
+import recipes.views.profile_view_logic as logic
 from recipes.views.profile_view import _profile_data_for_user, _collections_for_user
 from recipes.tests.test_utils import reverse_with_next
 

@@ -78,3 +78,7 @@ class PostRepo(DB_Accessor):
             qs = model_cls.objects.all()
 
         return qs.filter(author_id__in=followee_ids).order_by("-created_at")[:limit]
+
+    def slice_queryset(self, qs, *, offset=0, limit=None):
+        """Public wrapper to slice a queryset while preserving ordering."""
+        return self._apply_slice(qs, offset=offset, limit=limit)

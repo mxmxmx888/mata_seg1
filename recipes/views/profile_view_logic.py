@@ -20,6 +20,7 @@ class ProfileDeps:
     user_repo: object
     profile_data_for_user: object
     collections_for_user: object
+    follow_read_service: object
     follower_model: object
     close_friend_model: object
     follow_request_model: object
@@ -84,16 +85,14 @@ def pending_follow_request(viewer, profile_user, is_following, deps):
 
 def follow_context(profile_user, viewer, deps):
     followers = follow_page_data(
-        deps.follower_model.objects.filter(author=profile_user).select_related("follower"),
+        deps.follow_read_service.followers_qs(profile_user),
         "follower",
     )
     following = follow_page_data(
-        deps.follower_model.objects.filter(follower=profile_user).select_related("author"),
+        deps.follow_read_service.following_qs(profile_user),
         "author",
     )
-    close_friend_ids = set(
-        deps.close_friend_model.objects.filter(owner=profile_user).values_list("friend_id", flat=True)
-    )
+    close_friend_ids = deps.follow_read_service.close_friend_ids(profile_user)
     close_friends = [u for u in followers["users"] if u.id in close_friend_ids]
     is_following = is_following_profile(viewer, profile_user, deps)
     pending_request = pending_follow_request(viewer, profile_user, is_following, deps)
@@ -113,15 +112,15 @@ def profile_user_from_request(request, deps):
 
 def follow_list_selection(list_type, profile_user, is_own_profile, deps):
     if list_type == "followers":
-        qs = deps.follower_model.objects.filter(author=profile_user).select_related("follower")
+        qs = deps.follow_read_service.followers_qs(profile_user)
         return qs, "follower", "partials/profile/follow_list_items.html"
     if list_type == "following":
-        qs = deps.follower_model.objects.filter(follower=profile_user).select_related("author")
+        qs = deps.follow_read_service.following_qs(profile_user)
         return qs, "author", "partials/profile/follow_list_items.html"
     if list_type == "close_friends":
         if not is_own_profile:
             return JsonResponse({"error": "Not allowed"}, status=403)
-        qs = deps.follower_model.objects.filter(author=profile_user).select_related("follower")
+        qs = deps.follow_read_service.followers_qs(profile_user)
         return qs, "follower", "partials/profile/close_friend_items.html"
     return JsonResponse({"error": "Unknown list"}, status=400)
 
@@ -157,8 +156,7 @@ def profile_posts(profile_user, viewer, deps):
     if not can_view_profile:
         return deps.recipe_post_model.objects.none(), can_view_profile
     posts_qs = deps.post_repo.list_for_user(profile_user.id, order_by=("-created_at",))
-    if profile_user != viewer:
-        posts_qs = deps.privacy_service.filter_visible_posts(posts_qs, viewer)
+    posts_qs = deps.privacy_service.filter_visible_posts(posts_qs, viewer) if profile_user != viewer else posts_qs
     return posts_qs, can_view_profile
 
 
@@ -166,9 +164,9 @@ def profile_posts_page(profile_user, viewer, page_number, deps, page_size=12):
     posts_qs, can_view_profile = profile_posts(profile_user, viewer, deps)
     start = (page_number - 1) * page_size
     end = start + page_size
-    posts_page = list(posts_qs[start:end]) if can_view_profile else []
+    posts_page = deps.post_repo.slice_queryset(posts_qs, offset=start, limit=page_size) if can_view_profile else []
     posts_has_more = posts_qs.count() > end if can_view_profile else False
-    return posts_page, posts_has_more, can_view_profile
+    return list(posts_page), posts_has_more, can_view_profile
 
 
 def posts_for_profile(request, profile_user, deps):

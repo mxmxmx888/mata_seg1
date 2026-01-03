@@ -3,9 +3,11 @@ from django.core.mail import send_mail
 from django.urls import reverse_lazy
 from django.views.generic import FormView, TemplateView
 from recipes.forms import PasswordResetRequestForm, UsernameResetRequestForm
-from recipes.models import User
 from recipes.views.decorators import LoginProhibitedMixin
 from recipes.firebase_auth_services import generate_password_reset_link
+from recipes.services.users import UserService
+
+user_service = UserService()
 
 
 class PasswordResetRequestView(LoginProhibitedMixin, FormView):
@@ -21,7 +23,7 @@ class PasswordResetRequestView(LoginProhibitedMixin, FormView):
     def form_valid(self, form):
         """Send reset email if user exists, then redirect with neutral response."""
         email = form.cleaned_data['email']
-        user = User.objects.filter(email=email).first()
+        user = user_service.first_by_email(email)
 
         if user:
             link = self.reset_link_generator(email)
@@ -55,7 +57,7 @@ class UsernameResetRequestView(LoginProhibitedMixin, FormView):
     def form_valid(self, form):
         """Send username reminder if user exists, then redirect."""
         email = form.cleaned_data['email']
-        user = User.objects.filter(email=email).first()
+        user = user_service.first_by_email(email)
 
         if user:
             send_mail(

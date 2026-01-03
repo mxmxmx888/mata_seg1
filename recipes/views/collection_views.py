@@ -5,10 +5,12 @@ from django.urls import reverse
 from django.views.decorators.http import require_POST
 
 from recipes.forms.favourite_form import FavouriteForm
-from recipes.models import Favourite
-from recipes.models.favourite_item import FavouriteItem
+from recipes.services.favourites import FavouriteService
 from recipes.views.profile_data_helpers import collections_for_user, profile_data_for_user
 from recipes.views.view_utils import is_ajax_request
+from recipes.views.profile_view import FavouriteItem
+
+favourite_service = FavouriteService()
 
 
 @login_required
@@ -42,8 +44,8 @@ def collections_overview(request):
 @login_required
 def collection_detail(request, slug):
     """Render a single collection with its saved posts."""
-    favourite = _get_favourite_or_404(slug, request.user)
-    posts = _collection_posts(favourite)
+    favourite = favourite_service.fetch_for_user(slug, request.user)
+    posts = favourite_service.posts_for(favourite)
     collection = _collection_payload(favourite, posts)
     collection_columns = _distribute_posts(posts)
 
@@ -61,8 +63,8 @@ def collection_detail(request, slug):
 @require_POST
 def delete_collection(request, slug):
     """Delete a collection; return JSON for HX or redirect otherwise."""
-    favourite = get_object_or_404(Favourite, id=slug, user=request.user)
-    favourite.delete()
+    favourite = favourite_service.fetch_for_user(slug, request.user)
+    favourite_service.delete(favourite)
 
     if is_ajax_request(request):
         return JsonResponse({"deleted": True})
@@ -74,7 +76,7 @@ def delete_collection(request, slug):
 @require_POST
 def update_collection(request, slug):
     """Update a collection title; supports HX JSON and regular redirect paths."""
-    favourite = get_object_or_404(Favourite, id=slug, user=request.user)
+    favourite = favourite_service.fetch_for_user(slug, request.user)
     data = request.POST.copy()
     name_val = (data.get("name") or data.get("title") or "").strip()
 
@@ -84,24 +86,12 @@ def update_collection(request, slug):
     data["name"] = name_val
     form = FavouriteForm(data or None, instance=favourite)
     if form.is_valid():
-        form.save()
+        favourite_service.update_name(favourite, form.cleaned_data["name"])
         return _collection_response(request, favourite)
 
     if is_ajax_request(request):
         return JsonResponse({"errors": form.errors}, status=400)
     return redirect(reverse("collection_detail", kwargs={"slug": favourite.id}))
-
-def _get_favourite_or_404(slug, user):
-    try:
-        return Favourite.objects.get(id=slug, user=user)
-    except Favourite.DoesNotExist:
-        raise Http404()
-
-def _collection_posts(favourite):
-    items_qs = FavouriteItem.objects.filter(favourite=favourite).select_related("recipe_post")
-    if hasattr(items_qs, "order_by"):
-        items_qs = items_qs.order_by("-added_at", "-id")
-    return [item.recipe_post for item in items_qs if item.recipe_post]
 
 def _collection_payload(favourite, posts):
     return {

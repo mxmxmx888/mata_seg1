@@ -6,16 +6,25 @@
   --auth-card-pad-x: clamp(1.45rem, 3vw, 1.9rem);
   --auth-card-radius: var(--radius-surface);
   --auth-card-scale: clamp(0.86, 0.64 + 0.03vw + 0.03vh, 0.95);
+  --auth-page-pad-block: clamp(1.5rem, 4vh, 2.5rem);
+  --auth-page-pad-inline: clamp(1.5rem, 4vw, 3rem);
   min-height: 100vh;
   flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: clamp(1.5rem, 4vh, 2.5rem) clamp(1.5rem, 4vw, 3rem);
+  padding: var(--auth-page-pad-block) var(--auth-page-pad-inline);
   color: var(--text-primary);
   box-sizing: border-box;
+  padding-top: max(var(--auth-page-pad-block), env(safe-area-inset-top));
+  padding-bottom: max(var(--auth-page-pad-block), env(safe-area-inset-bottom));
 }
 
+@supports (min-height: 100dvh) {
+  .auth-page {
+    min-height: 100dvh;
+  }
+}
 
 .auth-page-split {
   min-height: 100vh;

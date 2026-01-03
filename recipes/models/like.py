@@ -22,7 +22,6 @@ class Like(models.Model):
 
     class Meta:
         """Enforce one like per user/post pair."""
-        # Composite PK is simulated using unique_together
         unique_together = (
             ('user', 'recipe_post'),
         )

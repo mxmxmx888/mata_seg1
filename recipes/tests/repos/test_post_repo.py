@@ -14,7 +14,6 @@ class PostRepoTestCase(TestCase):
         self.other = User.objects.get(username="@janedoe")
         self.repo = PostRepo()
 
-        # Base posts
         self.soup = RecipePost.objects.create(
             author=self.user,
             title="Soup",
@@ -28,8 +27,6 @@ class PostRepoTestCase(TestCase):
             category="breakfast",
         )
 
-    # ---- list_ids ---------------------------------------------------------
-
     def test_list_ids_has_values(self):
         ids = list(self.repo.list_ids())
         self.assertEqual(len(ids), 2)
@@ -40,8 +37,6 @@ class PostRepoTestCase(TestCase):
         RecipePost.objects.all().delete()
         ids = list(self.repo.list_ids())
         self.assertEqual(ids, [])
-
-    # ---- list_all (if present) -------------------------------------------
 
     def test_list_all_returns_all_posts(self):
         """Covers PostRepo.list_all if it exists."""
@@ -60,8 +55,6 @@ class PostRepoTestCase(TestCase):
         qs = self.repo.list_all()
         self.assertEqual(qs.count(), 0)
 
-    # ---- list_for_feed ---------------------------------------------------
-
     def test_list_for_feed_filters_category_and_author(self):
         qs = self.repo.list_for_feed(
             category="DINNER",  # case-insensitive
@@ -76,7 +69,6 @@ class PostRepoTestCase(TestCase):
         qs = self.repo.list_for_feed()
         self.assertEqual(qs.count(), 2)
 
-        # Explicit "all" should behave like no category filter
         qs_all = self.repo.list_for_feed(category="all")
         self.assertEqual(qs_all.count(), 2)
 
@@ -102,8 +94,6 @@ class PostRepoTestCase(TestCase):
         self.assertEqual(qs.count(), 1)
         self.assertEqual(qs.first().title, "Toast")
 
-    # ---- list_for_user ---------------------------------------------------
-
     def test_list_for_user_calls_feed_for_that_user(self):
         qs = self.repo.list_for_user(self.other.id)
         self.assertEqual(qs.count(), 1)
@@ -125,8 +115,6 @@ class PostRepoTestCase(TestCase):
         self.assertEqual(qs_offset.count(), 1)
         titles = {p.title for p in qs.union(qs_offset)}
         self.assertEqual(titles, {"Toast", "Rice"})
-
-    # ---- list_for_following ----------------------------------------------
 
     def test_list_for_following_handles_branches(self):
         from recipes import models as model_pkg

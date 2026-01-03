@@ -7,10 +7,8 @@ from .recipe_post import RecipePost
 
 class Comment(models.Model):
     """User-authored comment on a recipe post."""
-    # PK: uuid 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
-    # FK → recipe_post.id
     recipe_post = models.ForeignKey(
         RecipePost,
         on_delete=models.CASCADE,
@@ -18,7 +16,6 @@ class Comment(models.Model):
         related_name='comments'
     )
 
-    # FK → user.id
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
@@ -26,10 +23,8 @@ class Comment(models.Model):
         related_name='comments'
     )
 
-    # text (1–2000)
     text = models.TextField(max_length=2000)
 
-    
     created_at = models.DateTimeField(auto_now_add=True)
 
     is_hidden = models.BooleanField(default = False, help_text = "Hidden by admin due to reports")

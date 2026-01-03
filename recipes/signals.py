@@ -48,16 +48,19 @@ def _notify_post_author(comment):
 
 def _notify_mentions(comment):
     for username in re.findall(r'@(\w+)', comment.text):
-        tagged_user = _safe_get_user(username)
-        if not tagged_user or tagged_user == comment.user:
-            continue
-        Notification.objects.create(
-            recipient=tagged_user,
-            sender=comment.user,
-            notification_type='tag',
-            post=comment.recipe_post,
-            comment=comment,
-        )
+        _notify_tagged_user(username, comment)
+
+def _notify_tagged_user(username, comment):
+    tagged_user = _safe_get_user(username)
+    if not tagged_user or tagged_user == comment.user:
+        return
+    Notification.objects.create(
+        recipient=tagged_user,
+        sender=comment.user,
+        notification_type='tag',
+        post=comment.recipe_post,
+        comment=comment,
+    )
 
 def _safe_get_user(username):
     try:

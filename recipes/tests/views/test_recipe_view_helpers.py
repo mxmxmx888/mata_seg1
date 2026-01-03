@@ -11,7 +11,7 @@ from recipes.models.followers import Follower
 from recipes.models.like import Like
 from recipes.models.recipe_post import RecipePost, RecipeImage
 from recipes.models.recipe_step import RecipeStep
-from recipes.views import recipe_view_helpers as helpers
+import recipes.views.recipe_view_helpers as helpers
 
 
 class RecipeViewHelpersTests(TestCase):

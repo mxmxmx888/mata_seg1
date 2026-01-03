@@ -20,9 +20,6 @@ class PasswordAndUsernameResetViewsTests(TestCase):
             password="Password123",
         )
 
-    # -----------------------
-    # Password reset request
-    # -----------------------
     def test_password_reset_get_renders(self):
         url = reverse("password_reset")
         res = self.client.get(url)
@@ -67,9 +64,6 @@ class PasswordAndUsernameResetViewsTests(TestCase):
         res = self.client.get(url)
         self.assertEqual(res.status_code, 302)  # LoginProhibitedMixin should redirect
 
-    # -----------------------
-    # Username reset request
-    # -----------------------
     def test_username_reset_get_renders(self):
         url = reverse("username_reset")
         res = self.client.get(url)

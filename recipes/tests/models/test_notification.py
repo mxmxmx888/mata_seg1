@@ -31,11 +31,23 @@ class NotificationModelTestCase(TestCase):
         return kwargs
 
     def _skip_field(self, field):
-        if field.primary_key or getattr(field, "auto_created", False):
+        if field.primary_key:
             return True
-        if isinstance(field, models.DateTimeField) and (field.auto_now or field.auto_now_add):
+        if getattr(field, "auto_created", False):
             return True
-        return field.has_default() or getattr(field, "null", False) or getattr(field, "blank", False)
+        if isinstance(field, models.DateTimeField):
+            if field.auto_now:
+                return True
+            if field.auto_now_add:
+                return True
+        return self._is_optional_field(field)
+
+    def _is_optional_field(self, field):
+        if field.has_default():
+            return True
+        if getattr(field, "null", False):
+            return True
+        return getattr(field, "blank", False)
 
     def _resolve_fk(self, field):
         rel_model = field.remote_field.model

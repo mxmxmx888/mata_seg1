@@ -53,17 +53,19 @@ class CustomAccountAdapter(DefaultAccountAdapter):
         """
         UserModel = type(user)
 
-        base = (user.username or "").strip()
-        if base:
-            base = base.lstrip("@")
-        else:
-            email = (getattr(user, "email", "") or "").strip()
-            if email and "@" in email:
-                base = email.split("@", 1)[0]
-            else:
-                base = (getattr(user, "first_name", "") or "").strip() or "user"
+        base = self._preferred_username_base(user)
 
         return _unique_username(base, UserModel, exclude_user_id=user.pk or None)
+
+    def _preferred_username_base(self, user):
+        base = (user.username or "").strip().lstrip("@")
+        if base:
+            return base
+        email = (getattr(user, "email", "") or "").strip()
+        if email and "@" in email:
+            return email.split("@", 1)[0]
+        first = (getattr(user, "first_name", "") or "").strip()
+        return first or "user"
 
     def get_login_redirect_url(self, request):
         """Send users to ?next when provided, otherwise to the dashboard."""

@@ -4,22 +4,16 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 
 from recipes.forms import PasswordForm, UserForm
-from recipes.repos.post_repo import PostRepo
-from recipes.repos.user_repo import UserRepo
-from recipes.models.follow_request import FollowRequest
-from recipes.models.close_friend import CloseFriend
-from recipes.services import PrivacyService, FollowService
-from recipes.models import Follower, Favourite, RecipePost
-from recipes.models.favourite_item import FavouriteItem
-from recipes.views.profile_data_helpers import profile_data_for_user, collections_for_user
-from recipes.views import profile_view_logic as logic
+import recipes.views.profile_view_logic as logic
+from recipes.services.profile import ProfileDepsFactory
 
-post_repo = PostRepo()
-user_repo = UserRepo()
-privacy_service = PrivacyService()
-follow_service_factory = FollowService
-_profile_data_for_user = profile_data_for_user
-_collections_for_user = collections_for_user
+profile_deps_factory = ProfileDepsFactory()
+_profile_data_for_user = profile_deps_factory.profile_data_for_user
+_collections_for_user = profile_deps_factory.collections_for_user
+privacy_service = profile_deps_factory.privacy_service
+follow_service_factory = profile_deps_factory.follow_service_factory
+Favourite = profile_deps_factory.favourite_model
+FavouriteItem = profile_deps_factory.favourite_item_model
 FOLLOW_LIST_PAGE_SIZE = logic.FOLLOW_LIST_PAGE_SIZE
 
 
@@ -30,16 +24,17 @@ def _deps():
         password_form_cls=PasswordForm,
         follow_service_factory=follow_service_factory,
         privacy_service=privacy_service,
-        post_repo=post_repo,
-        user_repo=user_repo,
+        post_repo=profile_deps_factory.post_repo,
+        user_repo=profile_deps_factory.user_repo,
         profile_data_for_user=_profile_data_for_user,
         collections_for_user=_collections_for_user,
-        follower_model=Follower,
-        close_friend_model=CloseFriend,
-        follow_request_model=FollowRequest,
+        follow_read_service=profile_deps_factory.follow_read_service,
+        follower_model=profile_deps_factory.follower_model,
+        close_friend_model=profile_deps_factory.close_friend_model,
+        follow_request_model=profile_deps_factory.follow_request_model,
         favourite_model=Favourite,
         favourite_item_model=FavouriteItem,
-        recipe_post_model=RecipePost,
+        recipe_post_model=profile_deps_factory.recipe_post_model,
     )
 
 

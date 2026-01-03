@@ -7,7 +7,6 @@ from .recipe_post import RecipePost
 
 class Ingredient(models.Model):
     """Ingredient for a recipe, including optional shop metadata."""
-    # Composite key part 1: recipe_post_id
     recipe_post = models.ForeignKey(
         RecipePost,
         to_field='id',
@@ -16,10 +15,8 @@ class Ingredient(models.Model):
         related_name='ingredients'
     )
 
-    # Composite key part 2: name 
     name = models.CharField(max_length=255)
 
-    # position in the recipe
     position = models.PositiveIntegerField(default=1)
     
     quantity = models.DecimalField(
@@ -31,7 +28,6 @@ class Ingredient(models.Model):
 
     unit = models.CharField(max_length=50, null=True, blank=True)
     
-    # NEW: Link to buy the product
     shop_url = models.URLField(max_length=500, blank=True, null=True, help_text="Link to buy this product online")
 
     shop_image_upload = models.ImageField(

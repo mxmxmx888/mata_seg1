@@ -1,57 +1,12 @@
-import hashlib
 import secrets
 
 from django.contrib.auth.decorators import login_required
-from django.core.paginator import Paginator
-from django.db.models import Q
 from django.http import JsonResponse
 from django.shortcuts import render
 from django.template.loader import render_to_string
-from recipes.models import Ingredient
-from recipes.models import RecipePost
-from recipes.services import PrivacyService
+from recipes.services.shop import ShopService
 
-privacy_service = PrivacyService()
-
-def _visible_shop_items_for(user):
-    """Return Ingredient queryset limited to items with shop links visible to the user."""
-    items_qs = Ingredient.objects.filter(
-        Q(shop_url__isnull=False) & ~Q(shop_url__regex=r'^\s*$')
-    ).select_related("recipe_post")
-
-    visible_posts = privacy_service.filter_visible_posts(
-        RecipePost.objects.filter(
-            id__in=items_qs.values_list("recipe_post_id", flat=True).distinct()
-        ),
-        user,
-    ).values_list("id", flat=True)
-
-    return items_qs.filter(recipe_post_id__in=visible_posts)
-
-
-def _paginated_shuffled_items(user, seed, page_number):
-    """Shuffle shop items deterministically by seed and return the paginated page."""
-    items_qs = _visible_shop_items_for(user)
-    item_ids = list(items_qs.values_list("id", flat=True))
-    shuffled_ids = sorted(
-        item_ids, key=lambda pk: hashlib.sha256(f"{seed}-{pk}".encode("utf-8")).hexdigest()
-    )
-
-    paginator = Paginator(shuffled_ids, 24)
-    page_obj = paginator.get_page(page_number or 1)
-
-    current_ids = list(page_obj.object_list)
-    if not current_ids:  # pragma: no cover - empty page fallback
-        page_obj.object_list = []
-        return page_obj
-
-    id_positions = {pk: idx for idx, pk in enumerate(current_ids)}
-    current_items = sorted(
-        items_qs.filter(id__in=current_ids),
-        key=lambda obj: id_positions.get(obj.id, 0),
-    )
-    page_obj.object_list = current_items
-    return page_obj
+shop_service = ShopService()
 
 
 @login_required
@@ -59,13 +14,15 @@ def shop(request):
     """Display shoppable ingredients with deterministic shuffle/pagination."""
     seed = request.GET.get("seed") or secrets.token_hex(8)
     page_number = request.GET.get("page") or 1
-    page_obj = _paginated_shuffled_items(request.user, seed, page_number)
+    page_obj = shop_service.paginated_shuffled_items(request.user, seed, page_number)
     if _is_ajax(request):
         return _shop_ajax_response(request, page_obj)
     return render(request, "app/shop.html", {"items": page_obj.object_list, "page_obj": page_obj, "seed": seed})
 
+
 def _is_ajax(request):
     return request.headers.get("x-requested-with") == "XMLHttpRequest" or request.GET.get("ajax") == "1"
+
 
 def _shop_ajax_response(request, page_obj):
     shop_item_list = render_to_string(

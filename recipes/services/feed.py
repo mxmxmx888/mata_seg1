@@ -1,5 +1,4 @@
 """Feed and search service used by dashboard views."""
-
 import random
 from typing import Iterable, List, Sequence, Tuple
 
@@ -18,15 +17,12 @@ from django.utils import timezone
 
 from .privacy import PrivacyService
 from recipes.models import RecipePost, Like, Follower, Ingredient
-
-
 class FeedService:
     """Encapsulate feed ranking, filtering, and user search helpers."""
 
     def __init__(self, *, privacy_service: PrivacyService | None = None) -> None:
         self.privacy_service = privacy_service or PrivacyService()
 
-    # --- tag helpers -----------------------------------------------------
     def normalise_tags(self, tags) -> List[str]:
         """Return a lowercased list of tag strings from comma- or list-based input."""
         if not tags:
@@ -58,7 +54,6 @@ class FeedService:
         preferred_tags = self.user_preference_tags(user) if liked_post_ids else []
         return liked_post_ids, preferred_tags
 
-    # --- query building --------------------------------------------------
     def base_posts_queryset(self) -> QuerySet:
         """Base queryset for published recipe posts with related author and images."""
         return (
@@ -113,7 +108,6 @@ class FeedService:
             tag_filter |= Q(tags__icontains=tag)
         return qs.exclude(id__in=liked_post_ids).filter(tag_filter)
 
-    # --- scoring and sorting --------------------------------------------
     def score_post_for_user(self, post, preferred_tags: Sequence[str]) -> int:
         """Score a post based on preferred tags, saves, and recency."""
         score = 0
@@ -138,16 +132,9 @@ class FeedService:
         scored.sort(key=lambda x: x[0], reverse=True)
         return [p for _, p in scored]
 
-    # --- feed construction ----------------------------------------------
     def for_you_posts(
-        self,
-        user,
-        query: str | None = None,
-        limit: int | None = None,
-        offset: int = 0,
-        seed=None,
-        privacy: PrivacyService | None = None,
-        sort: str | None = None,
+        self, user, query: str | None = None, limit: int | None = None, offset: int = 0,
+        seed=None, privacy: PrivacyService | None = None, sort: str | None = None,
     ) -> List:
         """Return personalised 'for you' posts shuffled by a seed (or sorted when requested)."""
         privacy_service = privacy or self.privacy_service
@@ -186,7 +173,6 @@ class FeedService:
             return list(qs[offset:])
         return list(qs[offset : offset + limit])
 
-    # --- search ---------------------------------------------------------
     def search_users(self, query: str | None, limit: int = 18) -> List:
         """Search users by username or name substrings, tolerating spaces."""
         from django.db.models.functions import Concat
@@ -206,7 +192,6 @@ class FeedService:
             .order_by("username", "last_name", "first_name")[:limit]
         )
 
-    # --- in-memory filters ----------------------------------------------
     def filter_posts_by_prep_time(self, posts, min_prep=None, max_prep=None):
         """Filter in-memory posts by prep time bounds; ignores missing/invalid values."""
         min_val = self._safe_int(min_prep)
@@ -215,7 +200,6 @@ class FeedService:
             return list(posts)
         return [post for post in posts if self._prep_within(post, min_val, max_val)]
 
-    # --- internal helpers -----------------------------------------------
     def _for_you_posts_list(self, qs: QuerySet, fallback_qs: QuerySet, preferred_tags: Sequence[str]):
         """Return posts from primary queryset or fallback when preferences yield no results."""
         posts = list(qs)
@@ -338,15 +322,26 @@ class FeedService:
 
     def _popularity_score(self, post):
         saved = getattr(post, "saved_count", 0) or 0
+        return saved + self._resolved_likes(post)
+
+    def _resolved_likes(self, post):
         likes = getattr(post, "_likes_total", None)
-        if likes is None:
-            likes = getattr(post, "likes_count", None)
-            if likes is None and hasattr(post, "likes"):
-                try:
-                    likes = post.likes.count()
-                except Exception:
-                    likes = 0
-        return saved + (likes or 0)
+        if likes is not None:
+            return likes or 0
+
+        likes_count = getattr(post, "likes_count", None)
+        if likes_count is not None:
+            return likes_count or 0
+
+        return self._count_relationship_likes(post)
+
+    def _count_relationship_likes(self, post):
+        if not hasattr(post, "likes"):
+            return 0
+        try:
+            return post.likes.count() or 0
+        except Exception:
+            return 0
 
     def _user_base_filter(self, query: str):
         """Build a Q filter for user search by username/first name/last name/full name."""

@@ -9,28 +9,36 @@ from django.shortcuts import render
 from django.template.loader import render_to_string
 from django.views.decorators.http import require_GET
 
-from recipes.models import Ingredient, RecipePost
 from recipes.views.dashboard_params import (
     parse_dashboard_params,
     get_for_you_seed,
     _ensure_for_you_seed,
     _safe_offset,
 )
-from recipes.views.dashboard_utils import feed_service, privacy_service
-
-
+from recipes.services.feed import FeedService
+from recipes.services.shop import ShopService
 FEED_PAGE_LIMIT = 24
+
+# Module-level services for tests expecting these attributes
+feed_service = FeedService()
+privacy_service = feed_service.privacy_service
+shop_service = ShopService(privacy_service)
 
 
 @dataclass(frozen=True)
 class DashboardDeps:
     feed_service: object
     privacy_service: object
+    shop_service: object
 
 
 def _deps():
     """Provide injectable dependencies for dashboard view helpers."""
-    return DashboardDeps(feed_service=feed_service, privacy_service=privacy_service)
+    return DashboardDeps(
+        feed_service=feed_service,
+        privacy_service=privacy_service,
+        shop_service=shop_service,
+    )
 
 
 def _discover_queryset(params, user, deps):
@@ -80,9 +88,12 @@ def _following_ajax_response(request):
 
 def _shopping_search(request, params, deps):
     """Return shopping results or an AJAX fragment when scope=shopping."""
-    items_qs = _shopping_items_queryset(request.user, params, deps.privacy_service)
-    paginator = Paginator(items_qs, 24)
-    page_obj = paginator.get_page(params["page_number"])
+    page_obj = deps.shop_service.search_items_page(
+        request.user,
+        params["q"],
+        params["page_number"],
+        page_size=24,
+    )
     if params["is_ajax"]:
         html = render_to_string(
             "partials/shop/shop_items.html",
@@ -97,27 +108,6 @@ def _shopping_search(request, params, deps):
         ), None, None, None
 
     return None, list(page_obj.object_list), page_obj.has_next(), page_obj.number
-
-
-def _shopping_items_queryset(user, params, privacy):
-    """Return a filtered queryset of shopping items visible to the user."""
-    qs = (
-        Ingredient.objects.filter(
-            Q(shop_url__isnull=False) & ~Q(shop_url__regex=r"^\s*$")
-        )
-        .select_related("recipe_post")
-        .order_by("-id")
-    )
-    visible_posts = privacy.filter_visible_posts(
-        RecipePost.objects.filter(
-            id__in=qs.values_list("recipe_post_id", flat=True).distinct()
-        ),
-        user,
-    ).values_list("id", flat=True)
-    qs = qs.filter(recipe_post_id__in=visible_posts)
-    if params["q"]:
-        qs = qs.filter(Q(name__icontains=params["q"])).distinct()
-    return qs
 
 
 def _recipe_search(request, params, discover_qs):

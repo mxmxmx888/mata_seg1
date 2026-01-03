@@ -28,23 +28,42 @@ def _collection_meta(items, favourite):
     """Compute last_saved_at, cover image url, and item count for a favourite."""
 
     last_saved_at = favourite.created_at
-    cover_post = favourite.cover_post if _post_image_url(getattr(favourite, "cover_post", None)) else None
+    cover_post = _cover_candidate(favourite)
     first_image_post = None
     visible_posts = []
 
-    for item in items:
-        post = item.recipe_post
-        if not post:
-            continue
+    for post, added_at in _visible_posts(items):
         visible_posts.append(post)
-        if item.added_at and (last_saved_at is None or item.added_at > last_saved_at):
-            last_saved_at = item.added_at
-        if not first_image_post and _post_image_url(post):
-            first_image_post = post
+        last_saved_at = _update_last_saved(last_saved_at, added_at)
+        first_image_post = first_image_post or _first_image_post(post)
 
     cover_post = cover_post or first_image_post
     cover_url = _post_image_url(cover_post) if cover_post else None
     return last_saved_at, cover_url, len(visible_posts)
+
+
+def _cover_candidate(favourite):
+    cover = getattr(favourite, "cover_post", None)
+    return cover if _post_image_url(cover) else None
+
+
+def _visible_posts(items):
+    for item in items:
+        post = getattr(item, "recipe_post", None)
+        if post:
+            yield post, getattr(item, "added_at", None)
+
+
+def _update_last_saved(current, added_at):
+    if not added_at:
+        return current
+    if current is None or added_at > current:
+        return added_at
+    return current
+
+
+def _first_image_post(post):
+    return post if _post_image_url(post) else None
 
 
 def collections_for_user(user):

@@ -17,10 +17,8 @@ class RecipePost(models.Model):
         (VISIBILITY_FOLLOWERS, "Followers only"),
         (VISIBILITY_CLOSE_FRIENDS, "Close friends only"),
     ]
-    # Primary key: UUIDv7 simulated using uuid.uuid4 (closest available)
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
-    # Foreign key to User (uuid v7 → user.id)
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
@@ -28,23 +26,18 @@ class RecipePost(models.Model):
         db_column='author_id'
     )
 
-    # Basic fields
-    title = models.CharField(max_length=255)   # required
-    description = models.TextField(max_length=4000)  # 1–4000 chars
+    title = models.CharField(max_length=255)
+    description = models.TextField(max_length=4000)
     image = models.CharField(max_length=500, blank=True, null=True)
 
-    # Time fields
     prep_time_min = models.PositiveIntegerField(default=0)
     cook_time_min = models.PositiveIntegerField(default=0)
     serves = models.PositiveIntegerField(default=0)
 
-    # tags: stored as JSON (string array)
     tags = models.JSONField(default=list, blank=True)
 
-    # nutrition summary (free text or JSON string)
     nutrition = models.TextField(blank=True, null=True)
     
-    # category (breakfast, lunch, etc.)
     category = models.TextField(blank=True, null= True)
 
     visibility = models.CharField(
@@ -53,10 +46,8 @@ class RecipePost(models.Model):
         default=VISIBILITY_PUBLIC,
     )
 
-    # saved count
     saved_count = models.PositiveIntegerField(default=0)
 
-    # Timestamps
     published_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

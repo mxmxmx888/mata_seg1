@@ -18,8 +18,19 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import path, include
-from recipes.views import profile_view
-from recipes import views
+from recipes.views.home_view import home
+from recipes.views.dashboard_view import dashboard
+from recipes.views.log_in_view import LogInView
+from recipes.views.log_out_view import log_out
+from recipes.views.sign_up_view import SignUpView
+from recipes.views.password_reset_views import (
+    PasswordResetRequestView,
+    PasswordResetDoneView,
+    UsernameResetRequestView,
+    UsernameResetDoneView,
+)
+from recipes.views.password_view import PasswordView
+from recipes.views.profile_view import profile, profile_follow_list
 from recipes.views.recipe_views import (
     recipe_create,
     recipe_edit,
@@ -33,22 +44,30 @@ from recipes.views.recipe_views import (
 from recipes.views.follow_request_views import accept_follow_request, reject_follow_request
 from recipes.views.collection_views import collections_overview, collection_detail, update_collection, delete_collection
 from recipes.views.social_views import remove_follower, remove_following, add_close_friend, remove_close_friend
-from recipes.views.api_views import RecipeListApi, RecipeDetailApi
+from recipes.views.api_views import (
+    RecipeListApi,
+    RecipeDetailApi,
+    profile_api,
+    mark_notifications_read,
+)
+from recipes.views.report_view import report_content
+from recipes.views.shop_view import shop
+from recipes.views.recipe_views import add_comment, delete_comment
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('accounts/', include('allauth.urls')),
-    path('', views.home, name='home'),
-    path('dashboard/', views.dashboard, name='dashboard'),
-    path('log_in/', views.LogInView.as_view(), name='log_in'),
-    path('log_out/', views.log_out, name='log_out'),
-    path('sign_up/', views.SignUpView.as_view(), name='sign_up'),
-    path('password/reset/', views.PasswordResetRequestView.as_view(), name='password_reset'),
-    path('password/reset/done/', views.PasswordResetDoneView.as_view(), name='password_reset_done'),
-    path('username/reset/', views.UsernameResetRequestView.as_view(), name='username_reset'),
-    path('username/reset/done/', views.UsernameResetDoneView.as_view(), name='username_reset_done'),
-    path('password/', views.PasswordView.as_view(), name='password'),
-    path('profile/', views.profile, name='profile'),
+    path('', home, name='home'),
+    path('dashboard/', dashboard, name='dashboard'),
+    path('log_in/', LogInView.as_view(), name='log_in'),
+    path('log_out/', log_out, name='log_out'),
+    path('sign_up/', SignUpView.as_view(), name='sign_up'),
+    path('password/reset/', PasswordResetRequestView.as_view(), name='password_reset'),
+    path('password/reset/done/', PasswordResetDoneView.as_view(), name='password_reset_done'),
+    path('username/reset/', UsernameResetRequestView.as_view(), name='username_reset'),
+    path('username/reset/done/', UsernameResetDoneView.as_view(), name='username_reset_done'),
+    path('password/', PasswordView.as_view(), name='password'),
+    path('profile/', profile, name='profile'),
     path('collections/', collections_overview, name='collections'),
     path('profile/collections/<slug:slug>/', collection_detail, name='collection_detail'),
     path('profile/collections/<slug:slug>/edit/', update_collection, name='update_collection'),
@@ -60,20 +79,20 @@ urlpatterns = [
     path('recipes/<uuid:post_id>/like/', toggle_like, name='toggle_like'),
     path('my-recipes/<uuid:post_id>/delete/', delete_my_recipe, name='delete_my_recipe'),
     path('saved/', saved_recipes, name='saved_recipes'),
-    path('api/profile', views.profile_api, name='profile_api'),
+    path('api/profile', profile_api, name='profile_api'),
     path('u/<str:username>/follow/', toggle_follow, name='toggle_follow'),
-    path('profile/follows/', profile_view.profile_follow_list, name='profile_follow_list'),
+    path('profile/follows/', profile_follow_list, name='profile_follow_list'),
     path('followers/<str:username>/remove/', remove_follower, name='remove_follower'),
     path('following/<str:username>/remove/', remove_following, name='remove_following'),
     path('close-friends/<str:username>/add/', add_close_friend, name='add_close_friend'),
     path('close-friends/<str:username>/remove/', remove_close_friend, name='remove_close_friend'),
     path('follow-requests/<uuid:request_id>/accept/', accept_follow_request, name='accept_follow_request'),
     path('follow-requests/<uuid:request_id>/reject/', reject_follow_request, name='reject_follow_request'),
-    path('report/<str:content_type>/<uuid:object_id>/', views.report_content, name='report_content'),
-    path('shop/', views.shop, name='shop'),
-    path('api/notifications/read/', views.mark_notifications_read, name='mark_notifications_read'),
-    path('recipes/<uuid:post_id>/comment/', views.add_comment, name='add_comment'),
-    path('comments/<uuid:comment_id>/delete/', views.delete_comment, name='delete_comment'),
+    path('report/<str:content_type>/<uuid:object_id>/', report_content, name='report_content'),
+    path('shop/', shop, name='shop'),
+    path('api/notifications/read/', mark_notifications_read, name='mark_notifications_read'),
+    path('recipes/<uuid:post_id>/comment/', add_comment, name='add_comment'),
+    path('comments/<uuid:comment_id>/delete/', delete_comment, name='delete_comment'),
     path('api/recipes/', RecipeListApi.as_view(), name='recipe_list_api'),
     path('api/recipes/<uuid:pk>/', RecipeDetailApi.as_view(), name='recipe_detail_api'),
 ]

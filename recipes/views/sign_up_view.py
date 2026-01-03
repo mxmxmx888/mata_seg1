@@ -25,23 +25,19 @@ class SignUpView(LoginProhibitedMixin, FormView):
 
     def form_valid(self, form):
         """Create user, ensure Firebase account, log in, and redirect."""
-        # 1) Create the Django user in the local DB
         user = form.save()
 
-        # 2) Make sure a Firebase Auth user exists for this email
         ensure_firebase_user(
             email=user.email,
             display_name=user.get_full_name() or user.username,
         )
 
-        # 3) Log them into Django using the explicit backend
         auth_login(
             self.request,
             user,
             backend="django.contrib.auth.backends.ModelBackend",
         )
 
-        # 4) Redirect to dashboard (or whatever success_url you have)
         return redirect(self.get_success_url())
 
     def form_invalid(self, form):

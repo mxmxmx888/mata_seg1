@@ -27,8 +27,6 @@ class DBAccessorTests(TestCase):
 
         self.repo = DB_Accessor(RecipePost)
 
-    # ---------- list() ----------
-
     def test_list_default_returns_queryset(self):
         qs = self.repo.list()
         self.assertEqual(qs.count(), 2)
@@ -63,13 +61,9 @@ class DBAccessorTests(TestCase):
         qs = self.repo.list(limit=1, offset=10)
         self.assertEqual(qs.count(), 0)
 
-    # ---------- get() ----------
-
     def test_get(self):
         obj = self.repo.get(id=self.obj1.id)
         self.assertEqual(obj, self.obj1)
-
-    # ---------- create() ----------
 
     def test_create(self):
         created = self.repo.create(
@@ -81,15 +75,11 @@ class DBAccessorTests(TestCase):
         self.assertEqual(created.title, "New")
         self.assertEqual(RecipePost.objects.count(), 3)
 
-    # ---------- update() ----------
-
     def test_update(self):
         count = self.repo.update({"id": self.obj1.id}, title="Updated")
         self.assertEqual(count, 1)
         self.obj1.refresh_from_db()
         self.assertEqual(self.obj1.title, "Updated")
-
-    # ---------- delete() ----------
 
     def test_delete(self):
         count = self.repo.delete(id=self.obj2.id)

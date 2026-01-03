@@ -6,9 +6,11 @@ from django.urls import reverse
 from django.views.decorators.http import require_POST
 
 from recipes.services import FollowService
+from recipes.services.users import UserService
 from recipes.views.view_utils import is_ajax_request
 
 User = get_user_model()
+user_service = UserService()
 
 
 def _redirect_back(request):
@@ -25,7 +27,7 @@ def _self_action_error(request, message):
 @require_POST
 def remove_follower(request, username):
     """Remove a follower from the current user; supports AJAX and redirect responses."""
-    target = get_object_or_404(User, username=username)
+    target = user_service.fetch_by_username(username)
     if target == request.user:
         return _self_action_error(request, "Cannot remove yourself")
 
@@ -39,7 +41,7 @@ def remove_follower(request, username):
 @require_POST
 def remove_following(request, username):
     """Unfollow a user; supports AJAX and redirect responses."""
-    target = get_object_or_404(User, username=username)
+    target = user_service.fetch_by_username(username)
     if target == request.user:
         return _self_action_error(request, "Cannot unfollow yourself")
 
@@ -53,7 +55,7 @@ def remove_following(request, username):
 @require_POST
 def add_close_friend(request, username):
     """Add a followed user to the current user's close friends."""
-    friend = get_object_or_404(User, username=username)
+    friend = user_service.fetch_by_username(username)
     if friend == request.user:
         return _self_action_error(request, "Cannot add yourself")
 
@@ -72,7 +74,7 @@ def add_close_friend(request, username):
 @require_POST
 def remove_close_friend(request, username):
     """Remove a user from the current user's close friends."""
-    friend = get_object_or_404(User, username=username)
+    friend = user_service.fetch_by_username(username)
     if friend == request.user:
         return _self_action_error(request, "Cannot remove yourself")
 

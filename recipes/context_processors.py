@@ -2,8 +2,10 @@ from __future__ import annotations
 from typing import Dict
 from django.http import HttpRequest
 from recipes.forms import UserForm, PasswordForm
-from recipes.models import Notification, Follower
 from recipes.services import ProfileDisplayService
+from recipes.services.notifications import NotificationService
+
+_notification_service = NotificationService()
 
 def edit_profile_form(request: HttpRequest) -> Dict[str, object]:
   """Inject profile edit and password forms plus avatar URLs into templates."""
@@ -19,37 +21,13 @@ def edit_profile_form(request: HttpRequest) -> Dict[str, object]:
   }
 
 def _fetch_notifications(user):
-  return (
-    Notification.objects.filter(recipient=user)
-    .exclude(notification_type="follow_request", follow_request__status__in=["accepted", "rejected"])
-    .select_related("sender", "post", "follow_request")
-    .prefetch_related("post__images")
-    .order_by("-created_at", "-id")
-  )
+  return _notification_service.fetch(user)
 
 def _pending_follow_request_sender_ids(user):
-  return set(
-    Notification.objects.filter(
-      recipient=user,
-      notification_type="follow_request",
-      follow_request__status="pending",
-    ).values_list("sender_id", flat=True)
-  )
+  return _notification_service.pending_request_sender_ids(user)
 
 def _filter_notifications(notifs, pending_request_ids):
-  seen_follow_senders = set()
-  filtered = []
-  for notif in notifs:
-    if notif.notification_type != "follow":
-      filtered.append(notif)
-      continue
-    if notif.sender_id in pending_request_ids:
-      continue
-    if notif.sender_id in seen_follow_senders:
-      continue
-    seen_follow_senders.add(notif.sender_id)
-    filtered.append(notif)
-  return filtered
+  return _notification_service.filter_notifications(notifs, pending_request_ids)
 
 def notifications(request):
   """Provide notifications list/count and following IDs to templates."""
@@ -64,7 +42,5 @@ def notifications(request):
   return {
     "notifications": filtered[:50],
     "unread_notifications_count": sum(1 for n in filtered if not n.is_read),
-    "following_ids": set(
-      Follower.objects.filter(follower=user).values_list("author_id", flat=True)
-    ),
+    "following_ids": _notification_service.following_ids(user),
   }

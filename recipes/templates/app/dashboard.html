@@ -149,7 +149,9 @@
         </div>
       </div>
 
-      {% include "partials/dashboard/recipe_filters.html" %}
+      <div id="dashboard-filters-container">
+        {% include "partials/dashboard/recipe_filters.html" %}
+      </div>
 
       <div class="tab-content">
 
@@ -196,5 +198,21 @@
 {% include "partials/dashboard/following_infinite_scroll.html" %}
 {% include "partials/dashboard/shopping_infinite_scroll.html" %}
 <script src="{% static 'js/dashboard_scroll.js' %}" defer></script>
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const filters = document.getElementById("dashboard-filters-container");
+    const forYouTab = document.getElementById("forYou-tab");
+    const followingTab = document.getElementById("following-tab");
+    if (!filters || !forYouTab || !followingTab) return;
+
+    const showFilters = () => filters.classList.remove("d-none");
+    const hideFilters = () => filters.classList.add("d-none");
+
+    showFilters();
+
+    forYouTab.addEventListener("shown.bs.tab", showFilters);
+    followingTab.addEventListener("shown.bs.tab", hideFilters);
+  });
+</script>
 
 {% endblock %}

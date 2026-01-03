@@ -9,7 +9,7 @@ from recipes.models.favourite_item import FavouriteItem
 from recipes.models.like import Like
 from recipes.models.recipe_post import RecipePost
 from recipes.tests.views.base import RecipeViewTestCase, add_session_and_messages
-from recipes.views import recipe_views
+import recipes.views.recipe_views as recipe_views
 from recipes.views.recipe_views import (
     add_comment,
     delete_comment,

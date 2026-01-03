@@ -4,7 +4,7 @@ from django.urls import reverse
 from django.utils import timezone
 from recipes.models import Ingredient, Follower, Like
 from recipes.tests.test_utils import make_recipe_post, make_user
-from recipes.views import dashboard_view
+import recipes.views.dashboard_view as dashboard_view
 
 class DashboardSearchViewTests(TestCase):
     def setUp(self):

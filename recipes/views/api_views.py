@@ -5,9 +5,12 @@ from rest_framework.response import Response
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
 
-from recipes.models import Notification, RecipePost
+from recipes.models import RecipePost
 from recipes.serializers import RecipeSerializer
 from recipes.permissions import IsOwnerOrReadOnly
+from recipes.services.notifications import NotificationService
+
+notification_service = NotificationService()
 
 
 @api_view(['GET'])
@@ -27,7 +30,7 @@ def profile_api(request):
 @login_required
 def mark_notifications_read(request):
     """Mark all unread notifications for the current user as read."""
-    Notification.objects.filter(recipient=request.user, is_read=False).update(is_read=True)
+    notification_service.mark_all_read(request.user)
     return JsonResponse({'status': 'success'})
 
 

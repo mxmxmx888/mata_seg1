@@ -9,7 +9,7 @@ from django.utils import timezone
 
 from recipes.models import Follower, Like, RecipePost
 from recipes.tests.test_utils import make_recipe_post, make_user
-from recipes.views import dashboard_params
+import recipes.views.dashboard_params as dashboard_params
 from recipes.services.feed import FeedService
 
 

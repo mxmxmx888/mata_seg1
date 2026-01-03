@@ -4,7 +4,7 @@ from django.test import TestCase
 from django.urls import reverse
 
 from recipes.models import Follower, User
-from recipes.views import profile_view
+import recipes.views.profile_view as profile_view
 
 
 class ProfileFollowListViewTest(TestCase):

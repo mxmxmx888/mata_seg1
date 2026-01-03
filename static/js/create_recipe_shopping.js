@@ -61,23 +61,23 @@ const clearPendingFile = (state) => {
 
 const renderShopImagesList = (state) => {
   if (!state.shopImageList) return;
-  if (!state.pendingFile) {
-    const uploadedNames = state.shopImageFiles.filter(Boolean).map((f) => f.name).filter(Boolean);
+  if (state.pendingFile) {
     clearPendingPreview(state);
-    state.shopImageList.textContent = uploadedNames.join(", ");
+    const url = createObjectUrl(state, state.pendingFile);
+    state.pendingPreviewUrl = url;
+    state.shopImageList.innerHTML = buildPreviewHtml(state.pendingFile, url);
+    const removeBtn = state.shopImageList.querySelector(".image-remove");
+    if (removeBtn) {
+      removeBtn.addEventListener("click", () => {
+        clearPendingFile(state);
+        renderShopImagesList(state);
+      });
+    }
     return;
   }
   clearPendingPreview(state);
-  const url = createObjectUrl(state, state.pendingFile);
-  state.pendingPreviewUrl = url;
-  state.shopImageList.innerHTML = buildPreviewHtml(state.pendingFile, url);
-  const removeBtn = state.shopImageList.querySelector(".image-remove");
-  if (removeBtn) {
-    removeBtn.addEventListener("click", () => {
-      clearPendingFile(state);
-      renderShopImagesList(state);
-    });
-  }
+  const names = state.shopImageFiles.filter(Boolean).map((file) => file.name).filter(Boolean);
+  state.shopImageList.textContent = names.length ? names.join(", ") : "";
 };
 
 const toFileList = (state) => {

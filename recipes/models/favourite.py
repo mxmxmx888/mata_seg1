@@ -14,10 +14,8 @@ class Favourite(models.Model):
         related_name="favourites",
     )
 
-    # collection name, e.g. "favourites", "dinner ideas"
     name = models.CharField(max_length=255)
 
-    # optional explicit cover recipe for this collection
     cover_post = models.ForeignKey(
         "recipes.RecipePost",
         on_delete=models.SET_NULL,

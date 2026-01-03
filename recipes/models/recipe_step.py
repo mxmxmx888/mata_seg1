@@ -12,27 +12,21 @@ class RecipeStep(models.Model):
         related_name='steps'
     )
 
-    # position (PK component)
     position = models.PositiveIntegerField()
 
-    # description (1–1000 chars)
     description = models.TextField(max_length=1000)
 
     class Meta:
         """Uniqueness and ordering constraints for steps."""
-        # Composite PK simulation: enforce uniqueness at DB level
         unique_together = (
             ('recipe_post', 'position'),
         )
 
         constraints = [
-            # position > 0
             models.CheckConstraint(
                 check=models.Q(position__gt=0),
                 name="recipe_step_position_gt_0"
             ),
-
-            # description length >= 1 implicitly enforced by required field
         ]
 
         db_table = "recipe_step"

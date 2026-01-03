@@ -13,7 +13,7 @@ from recipes.forms.recipe_forms import RecipePostForm
 from recipes.forms.comment_form import CommentForm
 from recipes.services import PrivacyService, FollowService
 from recipes.services.recipe_posts import RecipePostService
-from recipes.models import RecipePost, Comment
+from recipes.services.comments import CommentService
 
 from recipes.views.recipe_view_helpers import (
     build_recipe_context,
@@ -35,6 +35,7 @@ User = get_user_model()
 privacy_service = PrivacyService()
 follow_service_factory = FollowService
 recipe_service = RecipePostService()
+comment_service = CommentService()
 
 
 @dataclass(frozen=True)
@@ -42,6 +43,7 @@ class RecipeViewDeps:
     privacy_service: object
     follow_service_factory: object
     recipe_service: object
+    comment_service: object
 
 
 def _deps():
@@ -50,6 +52,7 @@ def _deps():
         privacy_service=privacy_service,
         follow_service_factory=follow_service_factory,
         recipe_service=recipe_service,
+        comment_service=comment_service,
     )
 
 
@@ -69,7 +72,7 @@ def recipe_create(request):
 def recipe_edit(request, post_id):
     """Edit an existing recipe post owned by the current user."""
     deps = _deps()
-    recipe = get_object_or_404(RecipePost, id=post_id, author=request.user)
+    recipe = deps.recipe_service.fetch_owned_post(request.user, post_id)
     form = RecipePostForm(request.POST or None, request.FILES or None, instance=recipe)
     if request.method == "POST" and form.is_valid():
         deps.recipe_service.update_from_form(recipe, form)
@@ -96,7 +99,7 @@ def recipe_edit(request, post_id):
 def recipe_detail(request, post_id):
     """Display a single recipe post if the viewer is allowed."""
     deps = _deps()
-    recipe = get_object_or_404(RecipePost, id=post_id)
+    recipe = deps.recipe_service.fetch_post(post_id)
 
     if not deps.privacy_service.can_view_post(request.user, recipe):
         raise Http404("Post not available.")
@@ -143,7 +146,8 @@ def saved_recipes(request):
 @login_required
 def delete_my_recipe(request, post_id):
     """Delete a recipe post owned by the current user."""
-    recipe = get_object_or_404(RecipePost, id=post_id, author=request.user)
+    deps = _deps()
+    recipe = deps.recipe_service.fetch_owned_post(request.user, post_id)
 
     if request.method == "POST":
         recipe.delete()
@@ -156,7 +160,7 @@ def delete_my_recipe(request, post_id):
 def toggle_favourite(request, post_id):
     """Toggle save/unsave for a recipe and return HX JSON or redirect."""
     deps = _deps()
-    recipe = get_object_or_404(RecipePost, id=post_id)
+    recipe = deps.recipe_service.fetch_post(post_id)
     collection_id = request.POST.get("collection_id") or request.GET.get("collection_id")
     collection_name = request.POST.get("collection_name") or request.GET.get("collection_name")
     is_saved_now, new_count, collection = deps.recipe_service.toggle_favourite(
@@ -181,7 +185,7 @@ def toggle_favourite(request, post_id):
 def toggle_like(request, post_id):
     """Toggle like/unlike for a recipe and return HX or redirect."""
     deps = _deps()
-    recipe = get_object_or_404(RecipePost, id=post_id)
+    recipe = deps.recipe_service.fetch_post(post_id)
     deps.recipe_service.toggle_like(request.user, recipe)
 
     if is_hx(request):
@@ -196,9 +200,7 @@ def toggle_follow(request, username):
     target_user = get_object_or_404(User, username=username)
 
     if target_user == request.user:
-        if request.headers.get("HX-Request") or request.headers.get("x-requested-with") == "XMLHttpRequest":
-            return HttpResponse(status=204)
-        return redirect(request.META.get("HTTP_REFERER") or reverse("dashboard"))
+        return _self_follow_response(request)
 
     service = deps.follow_service_factory(request.user)
     result = service.toggle_follow(target_user)
@@ -211,14 +213,11 @@ def toggle_follow(request, username):
 @login_required
 def add_comment(request, post_id):
     """Create a new comment on a recipe for the current user."""
-    recipe = get_object_or_404(RecipePost, id=post_id)
+    deps = _deps()
+    recipe = deps.recipe_service.fetch_post(post_id)
     if request.method == "POST":
         form = CommentForm(request.POST)
-        if form.is_valid():
-            comment = form.save(commit=False)
-            comment.recipe_post = recipe
-            comment.user = request.user
-            comment.save()
+        if deps.comment_service.create_comment(recipe, request.user, form):
             messages.success(request, "Comment posted.")
         else:
             messages.error(request, "Error posting comment.")
@@ -228,11 +227,18 @@ def add_comment(request, post_id):
 @login_required
 def delete_comment(request, comment_id):
     """Delete the current user's comment by id."""
-    comment = get_object_or_404(Comment, id=comment_id)
-    if comment.user != request.user:
+    deps = _deps()
+    comment = deps.comment_service.fetch(comment_id)
+    if not deps.comment_service.can_delete(comment, request.user):
         messages.error(request, "You are not allowed to delete this comment.")
         return redirect('recipe_detail', post_id=comment.recipe_post.id)
-    post_id = comment.recipe_post.id
-    comment.delete()
+    post_id = deps.comment_service.delete_comment(comment)
     messages.success(request, "Comment deleted.")
     return redirect('recipe_detail', post_id=post_id)
+
+
+def _self_follow_response(request):
+    """Return appropriate response when a user attempts to follow themselves."""
+    if request.headers.get("HX-Request") or request.headers.get("x-requested-with") == "XMLHttpRequest":
+        return HttpResponse(status=204)
+    return redirect(request.META.get("HTTP_REFERER") or reverse("dashboard"))

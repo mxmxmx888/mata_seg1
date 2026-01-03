@@ -12,6 +12,14 @@ from recipes.models.recipe_step import RecipeStep
 class RecipePostService:
     """Encapsulate recipe post lifecycle and engagement operations."""
 
+    def fetch_post(self, post_id):
+        """Fetch a recipe post by id or raise 404."""
+        return get_object_or_404(RecipePost, id=post_id)
+
+    def fetch_owned_post(self, user, post_id):
+        """Fetch a recipe post owned by the given user or raise 404."""
+        return get_object_or_404(RecipePost, id=post_id, author=user)
+
     def create_from_form(self, form, user):
         """Create and return a recipe post from a validated form."""
         cleaned = form.cleaned_data
@@ -160,10 +168,9 @@ class RecipePostService:
         seen_ids = set()
         posts = []
         for item in favourite_items:
-            post = item.recipe_post
-            if not post or post.id in seen_ids:
+            post = self._valid_saved_post(item, seen_ids)
+            if not post:
                 continue
-            seen_ids.add(post.id)
             posts.append(post)
         return posts
 
@@ -241,6 +248,19 @@ class RecipePostService:
         """Find the most recent added_at timestamp from items, or return default."""
         latest = default
         for item in items:
-            if item.added_at and (latest is None or item.added_at > latest):
-                latest = item.added_at
+            latest = self._maybe_update_latest(latest, getattr(item, "added_at", None))
         return latest
+
+    def _valid_saved_post(self, item, seen_ids):
+        post = getattr(item, "recipe_post", None)
+        if not post or post.id in seen_ids:
+            return None
+        seen_ids.add(post.id)
+        return post
+
+    def _maybe_update_latest(self, current, added_at):
+        if not added_at:
+            return current
+        if current is None or added_at > current:
+            return added_at
+        return current
