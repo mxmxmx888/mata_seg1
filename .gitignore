@@ -389,3 +389,4 @@ FodyWeavers.xsd
 /venv
 firebase-service-account.json
 coverage/
+tmp_trace/
