@@ -5,23 +5,24 @@ from django.http import JsonResponse
 from django.shortcuts import render
 from django.template.loader import render_to_string
 from recipes.services.shop import ShopService
+from recipes.utils.http import is_ajax
 
-shop_service = ShopService()
+
+def _deps():
+    """Provide injectable dependencies for shop views."""
+    return {"shop_service": ShopService()}
 
 
 @login_required
 def shop(request):
     """Display shoppable ingredients with deterministic shuffle/pagination."""
+    deps = _deps()
     seed = request.GET.get("seed") or secrets.token_hex(8)
     page_number = request.GET.get("page") or 1
-    page_obj = shop_service.paginated_shuffled_items(request.user, seed, page_number)
-    if _is_ajax(request):
+    page_obj = deps["shop_service"].paginated_shuffled_items(request.user, seed, page_number)
+    if is_ajax(request):
         return _shop_ajax_response(request, page_obj)
     return render(request, "app/shop.html", {"items": page_obj.object_list, "page_obj": page_obj, "seed": seed})
-
-
-def _is_ajax(request):
-    return request.headers.get("x-requested-with") == "XMLHttpRequest" or request.GET.get("ajax") == "1"
 
 
 def _shop_ajax_response(request, page_obj):

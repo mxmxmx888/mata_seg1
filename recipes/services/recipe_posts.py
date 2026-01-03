@@ -1,4 +1,4 @@
-"""Service helpers for recipe post creation, updates, and engagement."""
+"""Service helpers for recipe post content and engagement."""
 
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
@@ -9,8 +9,8 @@ from recipes.models.followers import Follower
 from recipes.models.recipe_step import RecipeStep
 
 
-class RecipePostService:
-    """Encapsulate recipe post lifecycle and engagement operations."""
+class RecipeContentService:
+    """Handle recipe post CRUD and content-related helpers."""
 
     def fetch_post(self, post_id):
         """Fetch a recipe post by id or raise 404."""
@@ -70,6 +70,44 @@ class RecipePostService:
             }
             for ing in Ingredient.objects.filter(recipe_post=recipe, shop_url__isnull=False).order_by("position")
         ]
+
+    def set_primary_image(self, recipe):
+        """Persist the first RecipeImage URL onto the legacy image field for display."""
+        primary_image = recipe.images.first()
+        if primary_image and primary_image.image:
+            recipe.image = primary_image.image.url
+            recipe.save(update_fields=["image"])
+
+    def comments_page(self, recipe, request, page_size=50):
+        """Return a slice of comments for a recipe along with pagination metadata."""
+        comments_qs = recipe.comments.select_related("user").order_by("-created_at")
+        try:
+            page_number = max(1, int(request.GET.get("comments_page") or 1))
+        except (TypeError, ValueError):
+            page_number = 1
+        start = (page_number - 1) * page_size
+        end = start + page_size
+        comments_page = list(comments_qs[start:end])
+        has_more_comments = comments_qs.count() > end
+        return comments_page, has_more_comments, page_number
+
+    def ingredient_lists(self, recipe):
+        """Split ingredients into non-shop list and shop-linked list."""
+        ingredients_all = list(Ingredient.objects.filter(recipe_post=recipe).order_by("position"))
+        shop_ingredients = [
+            ing for ing in ingredients_all if getattr(ing, "shop_url", None) and str(ing.shop_url).strip()
+        ]
+        non_shop_ingredients = [ing for ing in ingredients_all if ing not in shop_ingredients]
+        return non_shop_ingredients, shop_ingredients
+
+    def recipe_steps(self, recipe):
+        """Return ordered step descriptions for a recipe."""
+        steps_qs = RecipeStep.objects.filter(recipe_post=recipe).order_by("position")
+        return [s.description for s in steps_qs]
+
+
+class RecipeEngagementService:
+    """Handle saves/likes/favourites and collection/UI helpers."""
 
     def resolve_collection(self, user, *, collection_id=None, collection_name=None):
         """Find or create a Favourite collection for a user."""
@@ -136,27 +174,6 @@ class RecipePostService:
         Like.objects.create(user=user, recipe_post=recipe)
         return True
 
-    def set_primary_image(self, recipe):
-        """Persist the first RecipeImage URL onto the legacy image field for display."""
-        primary_image = recipe.images.first()
-        if primary_image and primary_image.image:
-            recipe.image = primary_image.image.url
-            recipe.save(update_fields=["image"])
-
-    # --- view support helpers -------------------------------------------
-    def comments_page(self, recipe, request, page_size=50):
-        """Return a slice of comments for a recipe along with pagination metadata."""
-        comments_qs = recipe.comments.select_related("user").order_by("-created_at")
-        try:
-            page_number = max(1, int(request.GET.get("comments_page") or 1))
-        except (TypeError, ValueError):
-            page_number = 1
-        start = (page_number - 1) * page_size
-        end = start + page_size
-        comments_page = list(comments_qs[start:end])
-        has_more_comments = comments_qs.count() > end
-        return comments_page, has_more_comments, page_number
-
     def saved_posts_for_user(self, user):
         """List all unique recipes saved by the given user (most recent first)."""
         favourite_items = (
@@ -174,7 +191,13 @@ class RecipePostService:
             posts.append(post)
         return posts
 
-    # --- query helpers moved from view layer for cohesion -----------------
+    def collections_modal_state(self, user, recipe):
+        """Build modal-friendly collection metadata for a user and target recipe."""
+        collections = [self._collection_entry(fav, recipe) for fav in self._favourites_for(user)]
+        collections.sort(key=lambda c: c.get("last_saved_at") or c.get("created_at"), reverse=True)
+        collections.sort(key=lambda c: 0 if c.get("saved") else 1)
+        return collections
+
     def user_reactions(self, request_user, recipe):
         """Return flags and counts for likes/saves and following for the current user."""
         user_liked = Like.objects.filter(user=request_user, recipe_post=recipe).exists()
@@ -195,27 +218,6 @@ class RecipePostService:
             "likes_count": likes_count,
             "saves_count": saves_count,
         }
-
-    def ingredient_lists(self, recipe):
-        """Split ingredients into non-shop list and shop-linked list."""
-        ingredients_all = list(Ingredient.objects.filter(recipe_post=recipe).order_by("position"))
-        shop_ingredients = [
-            ing for ing in ingredients_all if getattr(ing, "shop_url", None) and str(ing.shop_url).strip()
-        ]
-        non_shop_ingredients = [ing for ing in ingredients_all if ing not in shop_ingredients]
-        return non_shop_ingredients, shop_ingredients
-
-    def recipe_steps(self, recipe):
-        """Return ordered step descriptions for a recipe."""
-        steps_qs = RecipeStep.objects.filter(recipe_post=recipe).order_by("position")
-        return [s.description for s in steps_qs]
-
-    def collections_modal_state(self, user, recipe):
-        """Build modal-friendly collection metadata for a user and target recipe."""
-        collections = [self._collection_entry(fav, recipe) for fav in self._favourites_for(user)]
-        collections.sort(key=lambda c: c.get("last_saved_at") or c.get("created_at"), reverse=True)
-        collections.sort(key=lambda c: 0 if c.get("saved") else 1)
-        return collections
 
     def _favourites_for(self, user):
         """Return all Favourite collections for a user with prefetched items and cover posts."""
@@ -264,3 +266,21 @@ class RecipePostService:
         if current is None or added_at > current:
             return added_at
         return current
+
+
+class RecipePostService:
+    """
+    Deprecated shim that delegates to content/engagement services.
+
+    Prefer using RecipeContentService and RecipeEngagementService directly.
+    """
+
+    def __init__(self):
+        self.content = RecipeContentService()
+        self.engagement = RecipeEngagementService()
+
+    def __getattr__(self, name):
+        for target in (self.engagement, self.content):
+            if hasattr(target, name):
+                return getattr(target, name)
+        raise AttributeError(f"{type(self).__name__} has no attribute {name}")

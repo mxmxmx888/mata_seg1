@@ -1,5 +1,5 @@
 from django.test import TestCase
-from recipes.models import User, RecipePost, Follows
+from recipes.models import User, RecipePost, Follower
 from recipes.repos.post_repo import PostRepo
 
 
@@ -129,7 +129,7 @@ class PostRepoTestCase(TestCase):
         none_list = self.repo.list_for_following(self.user.id, limit=1)
         self.assertEqual(list(none_list), [])
 
-        Follows.objects.create(author=self.user, followee=self.other)
+        Follower.objects.create(follower=self.user, author=self.other)
         feed_titles = [p.title for p in self.repo.list_for_following(self.user.id, limit=5)]
         self.assertIn("Toast", feed_titles)
 
@@ -140,7 +140,7 @@ class PostRepoTestCase(TestCase):
         if hasattr(model_pkg, "Post"):
             delattr(model_pkg, "Post")
 
-        Follows.objects.filter(author_id=self.user.id).delete()
+        Follower.objects.filter(follower_id=self.user.id).delete()
         result = self.repo.list_for_following(self.user.id, limit=1)
         self.assertEqual(list(result), [])
 
@@ -153,7 +153,7 @@ class PostRepoTestCase(TestCase):
         NoFeedRepo.list_for_following = PostRepo.list_for_following
 
         repo = NoFeedRepo()
-        Follows.objects.create(author=self.user, followee=self.other)
+        Follower.objects.create(follower=self.user, author=self.other)
         RecipePost.objects.create(
             author=self.other,
             title="Rice",
@@ -175,7 +175,7 @@ class PostRepoTestCase(TestCase):
         MinimalRepo.list_for_following = PostRepo.list_for_following
 
         repo = MinimalRepo()
-        Follows.objects.create(author=self.user, followee=self.other)
+        Follower.objects.create(follower=self.user, author=self.other)
 
         qs = repo.list_for_following(self.user.id, limit=1)
         self.assertEqual(qs.count(), 1)

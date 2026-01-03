@@ -1,6 +1,8 @@
 import random
 import re
 
+from recipes.utils.http import is_ajax
+
 
 def _parse_have_ingredients(request):
     """Parse have_ingredients GET param into raw string and cleaned list."""
@@ -11,10 +13,7 @@ def _parse_have_ingredients(request):
 
 def _is_ajax(request):
     """Detect HTMX/explicit ajax GET flag."""
-    return (
-        request.headers.get("x-requested-with") == "XMLHttpRequest"
-        or request.GET.get("ajax") == "1"
-    )
+    return is_ajax(request)
 
 
 def _has_search(mode, q, ingredient_q, have_list, min_prep, max_prep, category):

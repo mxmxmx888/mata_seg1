@@ -43,13 +43,43 @@ const placeItems = (columns, nodes) => {
   });
 };
 
-const rebuildColumns = (doc, container, columns, desiredCount) => {
-  if (columns.length === desiredCount) return columns;
+const rebuildColumns = (doc, container, columns, desiredCount, force = false) => {
   const cards = Array.from(container.querySelectorAll(".shop-masonry-item"));
+  if (!force && columns.length === desiredCount) return columns;
+  if (columns.length === desiredCount && force) {
+    columns.forEach((col) => {
+      col.innerHTML = "";
+    });
+    placeItems(columns, cards);
+    return columns;
+  }
   container.innerHTML = "";
   const newColumns = createColumns(doc, container, desiredCount);
   placeItems(newColumns, cards);
   return newColumns;
+};
+
+const waitForImages = (nodes) => {
+  const imgs = [];
+  nodes.forEach((node) => {
+    imgs.push(...node.querySelectorAll("img"));
+  });
+  if (!imgs.length) return Promise.resolve();
+  return new Promise((resolve) => {
+    let done = 0;
+    const finish = () => {
+      done += 1;
+      if (done >= imgs.length) resolve();
+    };
+    imgs.forEach((img) => {
+      if (img.complete) {
+        finish();
+      } else {
+        img.addEventListener("load", finish, { once: true });
+        img.addEventListener("error", finish, { once: true });
+      }
+    });
+  });
 };
 
 const createPlaceNodes = (infinite, getColumns) => (nodes) => {
@@ -63,11 +93,21 @@ const createPlaceNodes = (infinite, getColumns) => (nodes) => {
 };
 
 const appendHtmlFactory = (doc, placeNodes) => (html) => {
-  if (!html) return;
+  if (!html) return Promise.resolve();
   const temp = doc.createElement("div");
   temp.innerHTML = html;
   const items = Array.from(temp.children);
-  placeNodes(items);
+  return Promise.resolve()
+    .then(() => {
+      placeNodes(items);
+      return waitForImages(items);
+    })
+    .then(() => {
+      items.forEach((node) => {
+        if (node.parentElement) node.remove();
+      });
+      placeNodes(items);
+    });
 };
 
 const buildNextPageUrl = (w, targetPage) => {
@@ -132,8 +172,8 @@ const buildShoppingContext = (w) => {
   };
 };
 
-const createRefreshColumns = (ctx) => () => {
-  ctx.columns = rebuildColumns(ctx.doc, ctx.container, ctx.columns, getColumnCount(ctx.w));
+const createRefreshColumns = (ctx) => (force = false) => {
+  ctx.columns = rebuildColumns(ctx.doc, ctx.container, ctx.columns, getColumnCount(ctx.w), force);
 };
 
 const createSetLoading = (ctx) => (state) => {
@@ -149,12 +189,14 @@ const createFetchPage = (ctx, setLoading, appendHtml) => ({ page }) => {
       return response.json();
     })
     .then((data) => {
-      if (data && data.html) appendHtml(data.html);
+      const maybeAppend = data && data.html ? appendHtml(data.html) : Promise.resolve();
       const more = Boolean(data && data.has_next);
-      if (more) {
-        ctx.page = page;
-      }
-      return { html: "", hasMore: more, nextPage: more ? page + 1 : null };
+      return Promise.resolve(maybeAppend).then(() => {
+        if (more) {
+          ctx.page = page;
+        }
+        return { html: "", hasMore: more, nextPage: more ? page + 1 : null };
+      });
     })
     .finally(() => setLoading(false));
 };
@@ -175,17 +217,23 @@ function wireShoppingGrid(ctx) {
   const setLoading = createSetLoading(ctx);
   const placeNodes = createPlaceNodes(ctx.infinite, () => ctx.columns);
   const appendHtml = appendHtmlFactory(ctx.doc, placeNodes);
+  const initialItems = Array.from(ctx.container.querySelectorAll(".shop-masonry-item"));
+
+  const setupInitialLayout = () => {
+    refreshColumns();
+    waitForImages(initialItems).then(() => refreshColumns(true));
+  };
 
   if (!ctx.infinite.create) {
-    refreshColumns();
-    ctx.w.addEventListener("resize", refreshColumns);
+    setupInitialLayout();
+    ctx.w.addEventListener("resize", () => refreshColumns(true));
     return;
   }
 
   ctx.infinite.create(buildInfiniteConfig(ctx, appendHtml, setLoading));
 
-  refreshColumns();
-  ctx.w.addEventListener("resize", refreshColumns);
+  setupInitialLayout();
+  ctx.w.addEventListener("resize", () => refreshColumns(true));
 }
 
 function initShoppingInfinite(win) {

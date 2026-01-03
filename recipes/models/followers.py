@@ -1,15 +1,15 @@
 """Model representing follower→author relationships."""
 
 from __future__ import annotations
-import uuid
+
 from django.conf import settings
 from django.db import models
 from django.db.models import Q, F
+from recipes.utils.uuid import uuid7_or_4
 
 
-def _uuid7_or_4() -> uuid.UUID:
-    """Return uuid7 when available, else uuid4 (for primary keys)."""
-    return getattr(uuid, "uuid7", uuid.uuid4)()
+# Backward compat for migrations pointing at this module-level name
+_uuid7_or_4 = uuid7_or_4
 
 class Follower(models.Model):
     """Follower relationship where follower subscribes to author."""

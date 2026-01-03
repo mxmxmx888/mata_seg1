@@ -1,10 +1,10 @@
 from django.test import RequestFactory, TestCase
 
 from recipes.models import Favourite, FavouriteItem, RecipePost, User, Comment
-from recipes.services.recipe_posts import RecipePostService
+from recipes.services.recipe_posts import RecipeContentService, RecipeEngagementService
 
 
-class RecipePostServiceTests(TestCase):
+class RecipeContentServiceTests(TestCase):
     def setUp(self):
         self.factory = RequestFactory()
         self.user = User.objects.create_user(
@@ -17,13 +17,14 @@ class RecipePostServiceTests(TestCase):
             title="Title",
             description="Desc",
         )
-        self.service = RecipePostService()
+        self.content = RecipeContentService()
+        self.engagement = RecipeEngagementService()
 
     def test_comments_page_paginates(self):
         for i in range(3):
             Comment.objects.create(recipe_post=self.post, user=self.user, text=f"c{i}")
         request = self.factory.get("/?comments_page=1")
-        page, has_more, page_number = self.service.comments_page(self.post, request, page_size=2)
+        page, has_more, page_number = self.content.comments_page(self.post, request, page_size=2)
         self.assertEqual(len(page), 2)
         self.assertTrue(has_more)
         self.assertEqual(page_number, 1)
@@ -34,7 +35,7 @@ class RecipePostServiceTests(TestCase):
         FavouriteItem.objects.create(favourite=fav1, recipe_post=self.post)
         FavouriteItem.objects.create(favourite=fav2, recipe_post=self.post)
 
-        posts = self.service.saved_posts_for_user(self.user)
+        posts = self.engagement.saved_posts_for_user(self.user)
 
         self.assertEqual(len(posts), 1)
         self.assertEqual(posts[0], self.post)
@@ -44,7 +45,7 @@ class RecipePostServiceTests(TestCase):
         Comment.objects.create(recipe_post=self.post, user=self.user, text="c2")
         request = self.factory.get("/?comments_page=bad")
 
-        page, has_more, page_number = self.service.comments_page(self.post, request, page_size=1)
+        page, has_more, page_number = self.content.comments_page(self.post, request, page_size=1)
 
         self.assertEqual(page_number, 1)
         self.assertTrue(has_more)

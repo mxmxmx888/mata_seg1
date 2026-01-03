@@ -6,11 +6,15 @@ from django.urls import reverse
 from django.utils import timezone
 
 from recipes.forms.comment_form import CommentForm
-from recipes.services.recipe_posts import RecipePostService
+from recipes.services.recipe_posts import RecipeContentService, RecipeEngagementService
 
 
-def _recipe_service():
-    return RecipePostService()
+def _content_service():
+    return RecipeContentService()
+
+
+def _engagement_service():
+    return RecipeEngagementService()
 
 
 def is_hx(request):
@@ -20,7 +24,7 @@ def is_hx(request):
 
 def set_primary_image(recipe):
     """Persist the first RecipeImage URL onto the legacy image field for display."""
-    _recipe_service().set_primary_image(recipe)
+    _content_service().set_primary_image(recipe)
 
 
 def _primary_image_url(recipe):
@@ -53,7 +57,7 @@ def _safe_image_url(image_obj):
 
 def collection_thumb(cover_post, fallback_post):
     """Choose a thumbnail URL for a collection using cover or fallback posts."""
-    return _recipe_service().collection_thumb(cover_post, fallback_post)
+    return _engagement_service().collection_thumb(cover_post, fallback_post)
 
 
 def primary_image_url(recipe):
@@ -68,27 +72,27 @@ def gallery_images(images_qs):
 
 def collections_modal_state(user, recipe):
     """Build modal-friendly collection metadata for a user and target recipe."""
-    return _recipe_service().collections_modal_state(user, recipe)
+    return _engagement_service().collections_modal_state(user, recipe)
 
 def _favourites_for(user):
     """Return all Favourite collections for a user with prefetched items and cover posts."""
-    return _recipe_service()._favourites_for(user)
+    return _engagement_service()._favourites_for(user)
 
 def _collection_entry(fav, recipe):
     """Build a dictionary entry representing a collection's state relative to a recipe."""
-    return _recipe_service()._collection_entry(fav, recipe)
+    return _engagement_service()._collection_entry(fav, recipe)
 
 def _first_item_post(items):
     """Return the first recipe post found in a list of FavouriteItems, or None."""
-    return _recipe_service()._first_item_post(items)
+    return _engagement_service()._first_item_post(items)
 
 def _last_saved_at(items, default):
     """Find the most recent added_at timestamp from items, or return default."""
-    return _recipe_service()._last_saved_at(items, default)
+    return _engagement_service()._last_saved_at(items, default)
 
 def user_reactions(request_user, recipe):
     """Return flags and counts for likes/saves and following for the current user."""
-    return _recipe_service().user_reactions(request_user, recipe)
+    return _engagement_service().user_reactions(request_user, recipe)
 
 
 def recipe_media(recipe):
@@ -124,12 +128,12 @@ def recipe_metadata(recipe):
 
 def ingredient_lists(recipe):
     """Split ingredients into non-shop list and shop-linked list."""
-    return _recipe_service().ingredient_lists(recipe)
+    return _content_service().ingredient_lists(recipe)
 
 
 def recipe_steps(recipe):
     """Return ordered step descriptions for a recipe."""
-    return _recipe_service().recipe_steps(recipe)
+    return _content_service().recipe_steps(recipe)
 
 
 def build_recipe_context(recipe, request_user, comments):
@@ -198,7 +202,7 @@ def resolve_collection(request, recipe):
     """Determine the Favourite collection to toggle, creating if needed."""
     collection_id = request.POST.get("collection_id") or request.GET.get("collection_id")
     collection_name = request.POST.get("collection_name") or request.GET.get("collection_name")
-    return _recipe_service().resolve_collection(
+    return _engagement_service().resolve_collection(
         request.user,
         collection_id=collection_id,
         collection_name=collection_name,
@@ -207,7 +211,7 @@ def resolve_collection(request, recipe):
 
 def toggle_save(favourite, recipe):
     """Toggle save state for a recipe within a Favourite; return (is_saved_now, new_count)."""
-    return _recipe_service().toggle_save(favourite, recipe)
+    return _engagement_service().toggle_save(favourite, recipe)
 
 
 def hx_response_or_redirect(request, target_url):

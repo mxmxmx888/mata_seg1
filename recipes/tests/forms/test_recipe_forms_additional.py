@@ -3,16 +3,12 @@ from unittest.mock import patch
 from django import forms
 from django.test import TestCase
 from django.utils.datastructures import MultiValueDict
-from django.core.files.uploadedfile import SimpleUploadedFile
 
 from recipes.forms.recipe_forms import RecipePostForm
 from recipes.models import User
 from recipes.models.ingredient import Ingredient
 from recipes.models.recipe_post import RecipePost, RecipeImage
-
-
-def fake_image(name="img.jpg"):
-    return SimpleUploadedFile(name, b"fake-image-bytes", content_type="image/jpeg")
+from recipes.tests.forms.form_file_helpers import fake_image
 
 
 class RecipePostFormAdditionalTests(TestCase):

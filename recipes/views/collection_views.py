@@ -1,14 +1,14 @@
 from django.contrib.auth.decorators import login_required
-from django.http import Http404, JsonResponse
-from django.shortcuts import get_object_or_404, redirect, render
+from django.http import JsonResponse
+from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_POST
 
 from recipes.forms.favourite_form import FavouriteForm
 from recipes.services.favourites import FavouriteService
-from recipes.views.profile_data_helpers import collections_for_user, profile_data_for_user
+from recipes.services.profile_data import collections_for_user, profile_data_for_user
 from recipes.views.view_utils import is_ajax_request
-from recipes.views.profile_view import FavouriteItem
+from recipes.models.favourite_item import FavouriteItem  # compat for tests patching this symbol
 
 favourite_service = FavouriteService()
 

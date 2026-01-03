@@ -6,7 +6,6 @@ from .like import Like
 from .comment import Comment
 from .favourite import Favourite
 from .favourite_item import FavouriteItem
-from .follows import Follows
 from .followers import Follower
 from .report import Report
 from .notification import Notification
@@ -22,7 +21,6 @@ __all__ = [
     "Comment",
     "Favourite",
     "FavouriteItem",
-    "Follows",
     "Follower",
     "Report",
     "Notification",

@@ -35,7 +35,7 @@ class RecipeViewActionsTests(RecipeViewTestCase):
         self.assertTrue(response.context["user_saved"])
         self.assertTrue(response.context["save_collections"][0]["saved"])
 
-    @patch("recipes.views.recipe_views.privacy_service.can_view_post", return_value=False)
+    @patch("recipes.services.PrivacyService.can_view_post", return_value=False)
     def test_recipe_detail_respects_privacy(self, _mock_can_view):
         request = self.factory.get(f"/fake/recipe/{self.post.id}/")
         request.user = self.user

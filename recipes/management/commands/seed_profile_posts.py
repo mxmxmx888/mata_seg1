@@ -3,13 +3,14 @@
 from datetime import timedelta
 from random import choice, randint, sample
 
-from django.core.management.base import BaseCommand, CommandError
+from django.core.management.base import BaseCommand
 from django.utils import timezone
 from faker import Faker
 
 from recipes.management.commands.seed_data import categories, recipe_image_file_pool, tags_pool
+from recipes.management.commands.seed_helpers import get_user_or_error
 from recipes.management.commands.seed_utils import SeedHelpers
-from recipes.models import RecipePost, User
+from recipes.models import RecipePost
 from recipes.models.recipe_post import RecipeImage
 
 
@@ -43,7 +44,7 @@ class Command(SeedHelpers, BaseCommand):
         count = max(1, min(int(options["count"]), 500))
         prefix = options["prefix"]
 
-        author = self._get_author(username)
+        author = get_user_or_error(username)
         posts, images = self._generate_posts(author, count, prefix)
 
         RecipePost.objects.bulk_create(posts, batch_size=500)
@@ -56,12 +57,6 @@ class Command(SeedHelpers, BaseCommand):
                 f"Attached images: {len(images)}"
             )
         )
-
-    def _get_author(self, username):
-        try:
-            return User.objects.get(username=username)
-        except User.DoesNotExist as exc:
-            raise CommandError(f"User '{username}' not found") from exc
 
     def _generate_posts(self, author, count, prefix):
         faker = Faker("en_GB")

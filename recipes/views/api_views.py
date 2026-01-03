@@ -10,7 +10,9 @@ from recipes.serializers import RecipeSerializer
 from recipes.permissions import IsOwnerOrReadOnly
 from recipes.services.notifications import NotificationService
 
-notification_service = NotificationService()
+
+def _notification_service():
+    return NotificationService()
 
 
 @api_view(['GET'])
@@ -30,7 +32,7 @@ def profile_api(request):
 @login_required
 def mark_notifications_read(request):
     """Mark all unread notifications for the current user as read."""
-    notification_service.mark_all_read(request.user)
+    _notification_service().mark_all_read(request.user)
     return JsonResponse({'status': 'success'})
 
 

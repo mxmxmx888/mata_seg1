@@ -12,7 +12,6 @@ from django.db import transaction
 
 from recipes.models import User
 from recipes.models.followers import Follower
-from recipes.models.follows import Follows
 from recipes.models.comment import Comment
 from recipes.models.like import Like
 from .seed_data import (
@@ -114,11 +113,9 @@ class Command(SeedHelpers, BaseCommand):
                 edges.add((author, f))
 
         follower_rows = [Follower(follower_id=a, author_id=b) for (a, b) in edges]
-        follows_rows = [Follows(author_id=a, followee_id=b) for (a, b) in edges]
 
         with transaction.atomic():
             Follower.objects.bulk_create(follower_rows, ignore_conflicts=True, batch_size=1000)
-            Follows.objects.bulk_create(follows_rows, ignore_conflicts=True, batch_size=1000)
 
     def seed_recipe_posts(self, *, per_user: int = 25) -> None:
         """Generate up to `per_user` recipe posts (0..per_user) and images for all users."""

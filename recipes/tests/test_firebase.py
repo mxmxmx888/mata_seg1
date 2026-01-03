@@ -58,24 +58,22 @@ class FirebaseAdminClientTests(TestCase):
 
 class FirebaseAuthServicesTests(TestCase):
 
-    def test_sign_in_skips_network_when_tests_and_not_mocked(self):
-        def dummy_post(*_, **__):
-            return None
-        dummy_post.__module__ = "recipes.tests.dummy"
+    @staticmethod
+    def _dummy_post(*_, **__):
+        post = lambda *args, **kwargs: None
+        post.__module__ = "recipes.tests.dummy"
+        return post
 
+    def test_sign_in_skips_network_when_tests_and_not_mocked(self):
         with patch("recipes.firebase_auth_services._is_running_tests", return_value=True):
-            with patch("recipes.firebase_auth_services.requests.post", dummy_post):
+            with patch("recipes.firebase_auth_services.requests.post", self._dummy_post()):
                 res = firebase_auth_services.sign_in_with_email_and_password("u", "p")
                 self.assertIsNone(res)
 
     def test_sign_in_handles_mock_detection_exception(self):
-        def dummy_post(*_, **__):
-            return None
-        dummy_post.__module__ = "recipes.tests.dummy"
-
         with patch("recipes.firebase_auth_services._is_running_tests", return_value=True), \
              patch("recipes.firebase_auth_services.type", side_effect=Exception("boom")), \
-             patch("recipes.firebase_auth_services.requests.post", dummy_post):
+             patch("recipes.firebase_auth_services.requests.post", self._dummy_post()):
             res = firebase_auth_services.sign_in_with_email_and_password("u", "p")
             self.assertIsNone(res)
 

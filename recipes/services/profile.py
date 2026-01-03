@@ -6,7 +6,7 @@ from recipes.models import Favourite, FavouriteItem, Follower, CloseFriend, Foll
 from recipes.services.privacy import PrivacyService
 from recipes.services.follow import FollowService
 from recipes.services.follow_read import FollowReadService
-from recipes.views.profile_data_helpers import profile_data_for_user, collections_for_user
+from recipes.services.profile_data import profile_data_for_user, collections_for_user
 
 
 class ProfileDisplayService:
@@ -26,9 +26,7 @@ class ProfileDisplayService:
         """Return avatar URL used in profile editing contexts."""
         return self._user_avatar()
 
-    def navbar_avatar_url(self):
-        """Return avatar URL used in navbar display."""
-        return self._user_avatar()
+    navbar_avatar_url = editing_avatar_url
 
 
 class ProfileDepsFactory:

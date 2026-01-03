@@ -19,11 +19,6 @@ from recipes.services.feed import FeedService
 from recipes.services.shop import ShopService
 FEED_PAGE_LIMIT = 24
 
-# Module-level services for tests expecting these attributes
-feed_service = FeedService()
-privacy_service = feed_service.privacy_service
-shop_service = ShopService(privacy_service)
-
 
 @dataclass(frozen=True)
 class DashboardDeps:
@@ -34,10 +29,12 @@ class DashboardDeps:
 
 def _deps():
     """Provide injectable dependencies for dashboard view helpers."""
+    local_feed = FeedService()
+    local_privacy = local_feed.privacy_service
     return DashboardDeps(
-        feed_service=feed_service,
-        privacy_service=privacy_service,
-        shop_service=shop_service,
+        feed_service=local_feed,
+        privacy_service=local_privacy,
+        shop_service=ShopService(local_privacy),
     )
 
 

@@ -1,8 +1,9 @@
 """Management command to seed heavy follow/following lists for testing scroll UI."""
 
-from django.core.management.base import BaseCommand, CommandError
+from django.core.management.base import BaseCommand
 from django.db import transaction
 
+from recipes.management.commands.seed_helpers import get_user_or_error
 from recipes.models import User, Follower
 
 
@@ -44,7 +45,7 @@ class Command(BaseCommand):
         following_count = max(0, options["following"])
         prefix = options["prefix"]
 
-        target = self._get_target(username)
+        target = get_user_or_error(username)
         follower_edges, following_edges, created_users = self._build_edges(prefix, target, follower_count, following_count)
 
         with transaction.atomic():
@@ -57,12 +58,6 @@ class Command(BaseCommand):
                 f"Created {len(created_users)} new users (prefix '{prefix}')."
             )
         )
-
-    def _get_target(self, username):
-        try:
-            return User.objects.get(username=username)
-        except User.DoesNotExist as exc:
-            raise CommandError(f"User '{username}' not found") from exc
 
     def _build_edges(self, prefix, target, follower_count, following_count):
         created_users = []

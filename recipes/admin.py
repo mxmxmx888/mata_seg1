@@ -6,6 +6,20 @@ from recipes.models.recipe_post import RecipePost
 from recipes.models.comment import Comment
 from recipes.models.report import Report 
 
+
+class ActiveReportCountMixin:
+    """Shared display helper for unresolved report counts."""
+
+    @staticmethod
+    def report_count_display(obj):
+        """Return formatted count of unresolved reports."""
+        count = obj.reports.filter(is_resolved=False).count()
+        if count > 0:
+            return format_html('<span class="admin-report-count admin-report-count--alert">{} Reports</span>', count)
+        return "0"
+
+    report_count_display.short_description = "Active Reports"
+
 class ReportInline(admin.StackedInline):
     """Show reports directly on the Recipe/Comment page in Admin."""
     model = Report
@@ -17,7 +31,7 @@ class ReportInline(admin.StackedInline):
         return super().get_queryset(request).filter(is_resolved=False)
 
 @admin.register(RecipePost)
-class RecipePostAdmin(admin.ModelAdmin):
+class RecipePostAdmin(ActiveReportCountMixin, admin.ModelAdmin):
     """Admin configuration for recipe posts with moderation actions."""
     list_display = ('title', 'author', 'created_at', 'is_hidden', 'report_count_display')
     list_filter = ('is_hidden', 'created_at')
@@ -27,14 +41,6 @@ class RecipePostAdmin(admin.ModelAdmin):
 
     class Media:
         css = {"all": ("css/admin/reports.css",)}
-
-    def report_count_display(self, obj):
-        """Return formatted count of unresolved reports."""
-        count = obj.reports.filter(is_resolved=False).count()
-        if count > 0:
-            return format_html('<span class="admin-report-count admin-report-count--alert">{} Reports</span>', count)
-        return "0"
-    report_count_display.short_description = "Active Reports"
 
     @admin.action(description='Hide selected recipes (Remove)')
     def hide_content(self, request, queryset):
@@ -48,7 +54,7 @@ class RecipePostAdmin(admin.ModelAdmin):
 
 
 @admin.register(Comment)
-class CommentAdmin(admin.ModelAdmin):
+class CommentAdmin(ActiveReportCountMixin, admin.ModelAdmin):
     """Admin configuration for comments with moderation actions."""
     list_display = ('short_text', 'user', 'recipe_post', 'is_hidden', 'report_count_display')
     list_filter = ('is_hidden', 'created_at')
@@ -61,14 +67,6 @@ class CommentAdmin(admin.ModelAdmin):
     def short_text(self, obj):
         """Shorten comment text for list display."""
         return obj.text[:50] + "..." if len(obj.text) > 50 else obj.text
-
-    def report_count_display(self, obj):
-        """Return formatted count of unresolved comment reports."""
-        count = obj.reports.filter(is_resolved=False).count()
-        if count > 0:
-            return format_html('<span class="admin-report-count admin-report-count--alert">{} Reports</span>', count)
-        return "0"
-    report_count_display.short_description = "Active Reports"
 
     @admin.action(description='Hide selected comments')
     def hide_content(self, request, queryset):

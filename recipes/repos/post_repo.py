@@ -4,7 +4,7 @@ from typing import Any, Dict, List, Optional, Sequence
 from django.db.models import QuerySet
 from recipes.db_accessor import DB_Accessor
 from recipes.models.recipe_post import RecipePost
-from recipes.models import Follows
+from recipes.models import Follower
 
 
 class PostRepo(DB_Accessor):
@@ -60,9 +60,9 @@ class PostRepo(DB_Accessor):
     def list_for_following(self, user_id, limit=50):
         """Return recent posts from authors the user follows."""
         followee_ids = (
-            Follows.objects
-            .filter(author_id=user_id)
-            .values_list("followee_id", flat=True)
+            Follower.objects
+            .filter(follower_id=user_id)
+            .values_list("author_id", flat=True)
         )
 
         if not followee_ids:

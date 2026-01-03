@@ -1,6 +1,9 @@
+from recipes.utils.http import is_ajax
+
+
 def is_ajax_request(request):
     """
-    Return True when the request was triggered via HTMX or XMLHttpRequest headers.
+    Return True when the request was triggered via HTMX/XMLHttpRequest headers
+    or an explicit ajax query flag.
     """
-    header = request.headers.get("HX-Request") or request.headers.get("x-requested-with")
-    return bool(header == "XMLHttpRequest" or header)
+    return is_ajax(request)

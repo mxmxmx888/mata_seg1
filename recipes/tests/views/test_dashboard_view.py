@@ -9,7 +9,7 @@ import recipes.views.dashboard_view as dashboard_view
 class DashboardSearchViewTests(TestCase):
     def setUp(self):
         self.user = make_user(username="searcher")
-        self.feed_service = dashboard_view.feed_service
+        self.feed_service = dashboard_view.FeedService()
         self.client.login(username=self.user.username, password="Password123")
         self.url = reverse("dashboard")
         self.make_published = lambda title, days_ago, saves: self._publish(

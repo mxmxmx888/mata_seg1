@@ -12,7 +12,10 @@ from django.urls import reverse
 from recipes.forms.recipe_forms import RecipePostForm
 from recipes.forms.comment_form import CommentForm
 from recipes.services import PrivacyService, FollowService
-from recipes.services.recipe_posts import RecipePostService
+from recipes.services.recipe_posts import (
+    RecipeContentService,
+    RecipeEngagementService,
+)
 from recipes.services.comments import CommentService
 
 from recipes.views.recipe_view_helpers import (
@@ -32,27 +35,27 @@ _collections_modal_state = collections_modal_state
 _gallery_images = gallery_images
 
 User = get_user_model()
-privacy_service = PrivacyService()
+# Compatibility export for tests patching this symbol
 follow_service_factory = FollowService
-recipe_service = RecipePostService()
-comment_service = CommentService()
 
 
 @dataclass(frozen=True)
 class RecipeViewDeps:
     privacy_service: object
     follow_service_factory: object
-    recipe_service: object
+    content_service: object
+    engagement_service: object
     comment_service: object
 
 
 def _deps():
     """Provide injectable dependencies for recipe views."""
     return RecipeViewDeps(
-        privacy_service=privacy_service,
+        privacy_service=PrivacyService(),
         follow_service_factory=follow_service_factory,
-        recipe_service=recipe_service,
-        comment_service=comment_service,
+        content_service=RecipeContentService(),
+        engagement_service=RecipeEngagementService(),
+        comment_service=CommentService(),
     )
 
 
@@ -62,8 +65,8 @@ def recipe_create(request):
     deps = _deps()
     form = RecipePostForm(request.POST or None, request.FILES or None)
     if request.method == "POST" and form.is_valid():
-        recipe = deps.recipe_service.create_from_form(form, request.user)
-        deps.recipe_service.persist_relations(form, recipe)
+        recipe = deps.content_service.create_from_form(form, request.user)
+        deps.content_service.persist_relations(form, recipe)
         return redirect("recipe_detail", post_id=recipe.id)
 
     return _render_create_form(request, form)
@@ -72,16 +75,16 @@ def recipe_create(request):
 def recipe_edit(request, post_id):
     """Edit an existing recipe post owned by the current user."""
     deps = _deps()
-    recipe = deps.recipe_service.fetch_owned_post(request.user, post_id)
+    recipe = deps.content_service.fetch_owned_post(request.user, post_id)
     form = RecipePostForm(request.POST or None, request.FILES or None, instance=recipe)
     if request.method == "POST" and form.is_valid():
-        deps.recipe_service.update_from_form(recipe, form)
-        deps.recipe_service.persist_relations(form, recipe)
+        deps.content_service.update_from_form(recipe, form)
+        deps.content_service.persist_relations(form, recipe)
         messages.success(request, "Recipe updated.")
         detail_url = reverse("recipe_detail", kwargs={"post_id": recipe.id})
         return redirect(f"{detail_url}?from_edit=1")
 
-    shopping_items = deps.recipe_service.shopping_items_for(recipe)
+    shopping_items = deps.content_service.shopping_items_for(recipe)
     return render(
         request,
         "app/edit_recipe.html",
@@ -99,7 +102,7 @@ def recipe_edit(request, post_id):
 def recipe_detail(request, post_id):
     """Display a single recipe post if the viewer is allowed."""
     deps = _deps()
-    recipe = deps.recipe_service.fetch_post(post_id)
+    recipe = deps.content_service.fetch_post(post_id)
 
     if not deps.privacy_service.can_view_post(request.user, recipe):
         raise Http404("Post not available.")
@@ -134,20 +137,20 @@ def _render_create_form(request, form):
 def _comments_page(recipe, request, page_size=50):
     """Return a slice of comments for a recipe along with pagination metadata."""
     deps = _deps()
-    return deps.recipe_service.comments_page(recipe, request, page_size)
+    return deps.content_service.comments_page(recipe, request, page_size)
 
 @login_required
 def saved_recipes(request):
     """List all unique recipes saved by the current user."""
     deps = _deps()
-    posts = deps.recipe_service.saved_posts_for_user(request.user)
+    posts = deps.engagement_service.saved_posts_for_user(request.user)
     return render(request, "app/saved_recipes.html", {"posts": posts})
 
 @login_required
 def delete_my_recipe(request, post_id):
     """Delete a recipe post owned by the current user."""
     deps = _deps()
-    recipe = deps.recipe_service.fetch_owned_post(request.user, post_id)
+    recipe = deps.content_service.fetch_owned_post(request.user, post_id)
 
     if request.method == "POST":
         recipe.delete()
@@ -160,10 +163,10 @@ def delete_my_recipe(request, post_id):
 def toggle_favourite(request, post_id):
     """Toggle save/unsave for a recipe and return HX JSON or redirect."""
     deps = _deps()
-    recipe = deps.recipe_service.fetch_post(post_id)
+    recipe = deps.content_service.fetch_post(post_id)
     collection_id = request.POST.get("collection_id") or request.GET.get("collection_id")
     collection_name = request.POST.get("collection_name") or request.GET.get("collection_name")
-    is_saved_now, new_count, collection = deps.recipe_service.toggle_favourite(
+    is_saved_now, new_count, collection = deps.engagement_service.toggle_favourite(
         request.user,
         recipe,
         collection_id=collection_id,
@@ -185,8 +188,8 @@ def toggle_favourite(request, post_id):
 def toggle_like(request, post_id):
     """Toggle like/unlike for a recipe and return HX or redirect."""
     deps = _deps()
-    recipe = deps.recipe_service.fetch_post(post_id)
-    deps.recipe_service.toggle_like(request.user, recipe)
+    recipe = deps.content_service.fetch_post(post_id)
+    deps.engagement_service.toggle_like(request.user, recipe)
 
     if is_hx(request):
         return HttpResponse(status=204)
@@ -214,7 +217,7 @@ def toggle_follow(request, username):
 def add_comment(request, post_id):
     """Create a new comment on a recipe for the current user."""
     deps = _deps()
-    recipe = deps.recipe_service.fetch_post(post_id)
+    recipe = deps.content_service.fetch_post(post_id)
     if request.method == "POST":
         form = CommentForm(request.POST)
         if deps.comment_service.create_comment(recipe, request.user, form):
