@@ -76,6 +76,8 @@ Seed the development database with initial data:
 python3 manage.py seed
 ```
 
+Optional: if you later want to remove the seeded sample data (non-staff users, etc.), run `python3 manage.py unseed`.
+
 ### 6) Create a superuser (for admin access)
 
 To access the admin panel and configure social authentication, create a superuser account:
@@ -156,4 +158,4 @@ The packages used by this application are specified in `requirements.txt`. Key t
 - **Bootstrap 5:** Frontend framework for responsive design
 - **Bootstrap Icons:** Icon library
 - **Google Fonts:** "Rethink Sans" font family
-- **Local Assets:** Custom fonts ("Ortica", "Awesome Serif") located in the `static` directory
+- **Local Assets:** Custom font ("Awesome Serif") located in the `static` directory

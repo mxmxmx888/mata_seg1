@@ -126,7 +126,6 @@ body[data-theme="dark"]:not(.auth-body) .post-gallery-tile {
 }
 
 .recipe-create-hero h1 {
-  font-family: "OrticaLinear", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   font-weight: 500;
   font-size: clamp(2.1rem, 3vw, 2.6rem);
   margin-bottom: 0.75rem;
