@@ -22,12 +22,14 @@ def create_firebase_user(uid: str, email: str, password: str):
     return user
 
 def _requests_call_mocked():
+    """Check if requests.post is currently mocked (for testing)."""
     try:
         return "unittest.mock" in type(requests.post).__module__
     except Exception:
         return False
 
 def _get_api_key(is_test_run: bool):
+    """Retrieve Firebase API key from settings, with logging if missing."""
     api_key = getattr(settings, "FIREBASE_API_KEY", None)
     if api_key or is_test_run:
         return api_key
@@ -37,6 +39,7 @@ def _get_api_key(is_test_run: bool):
     return None
 
 def _log_sign_in_failure(email, response):
+    """Log Firebase sign-in failure details including status and response body."""
     body = getattr(response, "text", "")
     print("Firebase sign-in failed")
     print(f"status={response.status_code}")
@@ -93,6 +96,7 @@ def generate_password_reset_link(email: str):
 
 
 def _log_missing_user(email, is_test_run):
+    """Log when a Firebase user is not found during password reset."""
     if is_test_run:
         return
     message = f"Firebase user not found for password reset: {email}"
@@ -101,6 +105,7 @@ def _log_missing_user(email, is_test_run):
 
 
 def _log_reset_error(error, is_test_run):
+    """Log errors encountered while generating Firebase password reset link."""
     if is_test_run:
         return
     message = f"Error generating Firebase password reset link: {error}"

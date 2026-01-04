@@ -6,7 +6,6 @@ import django.contrib.auth.models
 import django.core.validators
 import django.utils.timezone
 import recipes.models.followers
-import recipes.models.follows
 from django.conf import settings
 from django.db import migrations, models
 
@@ -37,10 +36,9 @@ REPORT_REASONS = [
     ('other', 'Other'),
 ]
 
-
 class Migration(migrations.Migration):
 
-    replaces = [('recipes', '0001_initial'), ('recipes', '0002_recipepost_ingredient'), ('recipes', '0003_recipestep'), ('recipes', '0004_like'), ('recipes', '0005_comment'), ('recipes', '0006_favourite'), ('recipes', '0007_follows'), ('recipes', '0008_follower_remove_follows_uniq_follow_author_followee_and_more'), ('recipes', '0002_recipe'), ('recipes', '0009_merge_20251203_1708'), ('recipes', '0010_delete_recipe'), ('recipes', '0009_comment_is_hidden_recipepost_is_hidden_report'), ('recipes', '0011_merge_20251206_2021'), ('recipes', '0011_merge_20251206_1452'), ('recipes', '0012_merge_20251206_2112'), ('recipes', '0011_recipepost_category'), ('recipes', '0013_merge_20251209_2112'), ('recipes', '0014_ingredient_shop_url_alter_user_username'), ('recipes', '0015_remove_ingredient_shop_url'), ('recipes', '0016_ingredient_shop_url'), ('recipes', '0015_alter_user_username'), ('recipes', '0011_merge_20251206_2040'), ('recipes', '0012_merge_20251206_2100'), ('recipes', '0013_merge_20251207_2334'), ('recipes', '0014_merge_20251209_1218'), ('recipes', '0017_merge_20251210_1658'), ('recipes', '0018_notification'), ('recipes', '0015_merge_20251211_1050'), ('recipes', '0019_merge_0015_merge_20251211_1050_0018_notification'), ('recipes', '0019_merge_0014_merge_20251209_1218_0018_notification'), ('recipes', '0020_merge_20251211_1113'), ('recipes', '0021_ingredient_shop_image_url'), ('recipes', '0022_alter_ingredient_shop_image_url'), ('recipes', '0023_remove_ingredient_ingredient_position_gt_0_and_more'), ('recipes', '0020_user_avatar'), ('recipes', '0024_merge_20251212_0209'), ('recipes', '0021_recipeimage'), ('recipes', '0025_merge_0021_recipeimage_0024_merge_20251212_0209'), ('recipes', '0026_alter_ingredient_unique_together_and_more'), ('recipes', '0022_favouriteitem_remove_recipeimage_recipe_post_and_more'), ('recipes', '0002_user_bio'), ('recipes', '0023_merge_20251212_2018'), ('recipes', '0027_merge_20251212_2224'), ('recipes', '0028_recipeimage'), ('recipes', '0023_merge_20251212_2005'), ('recipes', '0029_merge_0023_merge_20251212_2005_0028_recipeimage'), ('recipes', '0024_user_is_private'), ('recipes', '0025_followrequest'), ('recipes', '0026_notification_follow_request'), ('recipes', '0027_closefriend'), ('recipes', '0028_recipepost_visibility'), ('recipes', '0030_merge_20251213_0426'), ('recipes', '0029_favourite_cover_post'), ('recipes', '0027_merge_20251212_2235'), ('recipes', '0031_merge_20251213_2356'), ('recipes', '0032_alter_ingredient_position'), ('recipes', '0033_merge_20251216_0059'), ('recipes', '0031_merge_20251214_1356'), ('recipes', '0034_merge_20251216_2348'), ('recipes', '0035_alter_user_bio_alter_user_username'), ('recipes', '0036_merge_20251219_2340'), ('recipes', '0037_recipepost_serves')]
+    replaces = [('recipes', '0001_initial'), ('recipes', '0002_recipepost_ingredient'), ('recipes', '0003_recipestep'), ('recipes', '0004_like'), ('recipes', '0005_comment'), ('recipes', '0006_favourite'), ('recipes', '0007_follows'), ('recipes', '0008_follower_remove_follows_uniq_follow_author_followee_and_more'), ('recipes', '0002_recipe'), ('recipes', '0009_merge_20251203_1708'), ('recipes', '0010_delete_recipe'), ('recipes', '0009_comment_is_hidden_recipepost_is_hidden_report'), ('recipes', '0011_merge_20251206_2021'), ('recipes', '0011_merge_20251206_1452'), ('recipes', '0012_merge_20251206_2112'), ('recipes', '0011_recipepost_category'), ('recipes', '0013_merge_20251209_2112'), ('recipes', '0014_ingredient_shop_url_alter_user_username'), ('recipes', '0015_remove_ingredient_shop_url'), ('recipes', '0016_ingredient_shop_url'), ('recipes', '0015_alter_user_username'), ('recipes', '0011_merge_20251206_2040'), ('recipes', '0012_merge_20251206_2100'), ('recipes', '0013_merge_20251207_2334'), ('recipes', '0014_merge_20251209_1218'), ('recipes', '0017_merge_20251210_1658'), ('recipes', '0018_notification'), ('recipes', '0015_merge_20251211_1050'), ('recipes', '0019_merge_0015_merge_20251211_1050_0018_notification'), ('recipes', '0019_merge_0014_merge_20251209_1218_0018_notification'), ('recipes', '0020_merge_20251211_1113'), ('recipes', '0021_ingredient_shop_image_url'), ('recipes', '0022_alter_ingredient_shop_image_url'), ('recipes', '0023_remove_ingredient_ingredient_position_gt_0_and_more'), ('recipes', '0020_user_avatar'), ('recipes', '0024_merge_20251212_0209'), ('recipes', '0021_recipeimage'), ('recipes', '0025_merge_0021_recipeimage_0024_merge_20251212_0209'), ('recipes', '0026_alter_ingredient_unique_together_and_more'), ('recipes', '0022_favouriteitem_remove_recipeimage_recipe_post_and_more'), ('recipes', '0002_user_bio'), ('recipes', '0023_merge_20251212_2018'), ('recipes', '0027_merge_20251212_2224'), ('recipes', '0028_recipeimage'), ('recipes', '0023_merge_20251212_2005'), ('recipes', '0029_merge_0023_merge_20251212_2005_0028_recipeimage'), ('recipes', '0024_user_is_private'), ('recipes', '0025_followrequest'), ('recipes', '0026_notification_follow_request'), ('recipes', '0027_closefriend'), ('recipes', '0028_recipepost_visibility'), ('recipes', '0030_merge_20251213_0426'), ('recipes', '0029_favourite_cover_post'), ('recipes', '0027_merge_20251212_2235'), ('recipes', '0031_merge_20251213_2356'), ('recipes', '0032_alter_ingredient_position'), ('recipes', '0033_merge_20251216_0059'), ('recipes', '0031_merge_20251214_1356'), ('recipes', '0034_merge_20251216_2348'), ('recipes', '0035_alter_user_bio_alter_user_username'), ('recipes', '0036_merge_20251219_2340'), ('recipes', '0037_recipepost_serves'), ('recipes', '0038_drop_follows')]
 
     initial = True
 
@@ -229,19 +227,6 @@ class Migration(migrations.Migration):
                 'db_table': 'followers',
                 'constraints': [models.UniqueConstraint(fields=('follower', 'author'), name='uniq_followers_follower_author'), models.CheckConstraint(check=~models.Q(follower=models.F('author')), name='chk_followers_not_self')],
                 'indexes': [models.Index(fields=['follower'], name='followers_followe_36be73_idx'), models.Index(fields=['author'], name='followers_author__5c6749_idx')],
-            },
-        ),
-        migrations.CreateModel(
-            name='Follows',
-            fields=[
-                ('id', models.UUIDField(default=recipes.models.follows._uuid7_or_4, editable=False, primary_key=True, serialize=False)),
-                ('author', models.ForeignKey(db_column='author_id', on_delete=models.CASCADE, related_name='+', to=settings.AUTH_USER_MODEL)),
-                ('followee', models.ForeignKey(db_column='followee_id', on_delete=models.CASCADE, related_name='+', to=settings.AUTH_USER_MODEL)),
-            ],
-            options={
-                'db_table': 'follows',
-                'constraints': [models.UniqueConstraint(fields=('author', 'followee'), name='uniq_follows_author_followee'), models.CheckConstraint(check=~models.Q(author=models.F('followee')), name='chk_follows_not_self')],
-                'indexes': [models.Index(fields=['author'], name='follows_author__32d43c_idx'), models.Index(fields=['followee'], name='follows_followe_b47de1_idx')],
             },
         ),
         migrations.CreateModel(
