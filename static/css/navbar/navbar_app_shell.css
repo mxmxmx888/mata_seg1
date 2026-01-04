@@ -82,7 +82,7 @@
 
 .navbar-app .container-fluid {
   display: grid;
-  grid-template-columns: auto minmax(260px, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 640px) minmax(0, 1fr);
   align-items: center;
   column-gap: 1rem;
   position: relative;
@@ -95,7 +95,7 @@
   justify-content: center;
   min-width: 220px;
   align-items: center;
-  max-width: 520px;
+  max-width: 640px;
   justify-self: center;
 }
 
@@ -177,8 +177,19 @@ body[data-theme="light"] .recipi-nav-search-input::placeholder {
 
 
 .navbar-app .navbar-actions {
-  margin-left: auto;
+  margin-left: 0;
   padding-left: 0.75rem;
+  justify-self: end;
+}
+
+@media (max-width: 1199.98px) {
+  .navbar-app .container-fluid {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+  }
+
+  .navbar-search-wrapper {
+    max-width: 520px;
+  }
 }
 
 @media (max-width: 991.98px) {
@@ -187,6 +198,7 @@ body[data-theme="light"] .recipi-nav-search-input::placeholder {
     margin: 0.18rem 0.75rem 0;
     transform: none;
     justify-self: center;
+    width: min(100%, 520px);
   }
 
   .navbar-app .navbar-search-wrapper .recipi-nav-search {
